@@ -27,15 +27,36 @@ export default function Show({ provider }: any) {
             <div className="grid grid-cols-1 gap-10 p-4 lg:grid-cols-2 lg:gap-4">
                 {/* ================= CLIENT INFORMATION ================= */}
                 <Card className="rounded-xl">
-                    <CardHeader>
-                        <CardTitle>Provider Information</CardTitle>
-                    </CardHeader>
+                    <div className="flex justify-between">
+                        <CardHeader>
+                            <CardTitle>Provider Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="mt-3 h-20 w-20 overflow-hidden rounded-full border-2 border-gray-100 shadow-sm">
+                                {provider?.avatar ? (
+                                    <img
+                                        src={`/storage/${provider.avatar}`}
+                                        alt={provider.name}
+                                        className="h-full w-full object-cover"
+                                        onError={(e: any) => {
+                                            e.target.src = 'https://ui-avatars.com/api/?name=' + provider.name;
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xl font-bold text-gray-500">
+                                        {provider?.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </div>
 
                     <CardContent className="space-y-4">
                         <div>
                             <p className="text-sm font-semibold">Provider Name</p>
                             <p className="text-sm text-gray-600">{provider?.name}</p>
                         </div>
+
                         <div>
                             <p className="text-sm font-semibold">Provider Type</p>
                             <p className="text-sm text-gray-600">{provider?.provider_type?.name}</p>
@@ -62,7 +83,6 @@ export default function Show({ provider }: any) {
                             <p className="text-sm font-semibold">Status</p>
                             <p className="text-sm text-gray-600">{provider?.status}</p>
                         </div>
-
                         <div>
                             <p className="text-sm font-semibold">Created At</p>
                             <p className="text-sm text-gray-600">{formatDateUS(provider.created_at, DATE_PRESETS.SHORT)}</p>

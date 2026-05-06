@@ -14,12 +14,26 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { STATUS } from '@/utils/constants';
+import { useState } from 'react';
 
 const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
 
 /* ================= SCHEMA ================= */
 const ProviderSchema = z.object({
     name: z.string().min(3, { message: 'Name is Required!' }),
+    avatar: z
+        .any()
+        .optional()
+        .nullable()
+        .refine((file) => !file || file instanceof File, {
+            message: 'Invalid file',
+        })
+        .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
+            message: 'Image must be less than 5MB',
+        })
+        .refine((file) => !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
+            message: 'Only jpg, png, webp allowed',
+        }),
     region: z.string().optional(),
     service: z.string().optional(),
     bio: z.string().optional(),
@@ -32,6 +46,8 @@ const ProviderSchema = z.object({
 });
 
 export default function Edit({ provider, provider_type }: any) {
+    // const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(provider?.avatar ? `/storage/${provider.avatar}` : null);
     const {
         register,
         control,
@@ -49,6 +65,7 @@ export default function Edit({ provider, provider_type }: any) {
             status: provider?.status || '',
             bio: provider?.bio || '',
             location: provider?.location || '',
+            avatar: provider?.avatar || '',
         },
     });
 
@@ -63,35 +80,66 @@ export default function Edit({ provider, provider_type }: any) {
                 status: provider.status || '',
                 bio: provider.bio || '',
                 location: provider.location || '',
+                avatar: provider.avatar || '',
             });
         }
     }, [provider]);
 
     /* ================= SUBMIT ================= */
     const saveProvider = (data: any) => {
-        const payload = {
-            name: data.name,
-            provider_type_id: data.provider_type_id ? Number(data.provider_type_id) : null,
-            region: data.region || null,
-            service: data.service || null,
-            bio: data.bio || null,
-            location: data.location || null,
-            status: data.status || null,
-        };
+        router.post(
+            route('providers.update', provider.id),
+            {
+                ...data,
+                _method: 'put',
 
-        router.put(route('providers.update', provider.id), payload, {
-            onSuccess: () => {
-                toast.success('Provider updated successfully');
+                provider_type_id: data.provider_type_id ? String(Number(data.provider_type_id)) : '',
+                avatar: data.avatar,
             },
-            onError: (errors) => {
-                console.log(errors);
-                Object.keys(errors).forEach((key) => {
-                    setError(key as any, { message: errors[key] });
-                });
-                toast.error('Please fix the errors in the form.');
+            {
+                forceFormData: true,
+                onProgress: (progress) => {
+                    console.log(`Upload progress: ${progress?.percentage}%`);
+                },
+                onSuccess: () => {
+                    toast.success('Provider created successfully');
+                },
+                onError: (errors) => {
+                    Object.keys(errors).forEach((key) => {
+                        setError(key as any, {
+                            message: errors[key],
+                        });
+                    });
+
+                    toast.error('Please fix the errors in the form.');
+                },
             },
-        });
+        );
     };
+    // const saveProvider = (data: any) => {
+    //     const payload = {
+    //         name: data.name,
+    //         provider_type_id: data.provider_type_id ? Number(data.provider_type_id) : null,
+    //         region: data.region || null,
+    //         service: data.service || null,
+    //         bio: data.bio || null,
+    //         location: data.location || null,
+    //         status: data.status || null,
+    //     };
+
+    //     router.put(route('providers.update', provider.id), payload, {
+    //         onSuccess: () => {
+    //             toast.success('Provider updated successfully');
+    //         },
+    //         onError: (errors) => {
+    //             console.log(errors);
+    //             Object.keys(errors).forEach((key) => {
+    //                 setError(key as any, { message: errors[key] });
+    //             });
+    //             toast.error('Please fix the errors in the form.');
+    //         },
+    //     });
+    // };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -187,6 +235,41 @@ export default function Edit({ provider, provider_type }: any) {
 
                                     {errors.bio && <span className="text-sm text-red-500">{(errors.bio as any)?.message}</span>}
                                 </div>
+
+                                <Controller
+                                    name="avatar"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div className="grid gap-2">
+                                            <Label>Avatar</Label>
+
+                                            {avatarPreview && (
+                                                <img
+                                                    src={avatarPreview}
+                                                    alt="Avatar Preview"
+                                                    className="mt-2 h-20 w-20 rounded-full border object-cover"
+                                                />
+                                            )}
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0] || null;
+
+                                                    field.onChange(file); // react-hook-form
+
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = () => {
+                                                            setAvatarPreview(reader.result as string);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                />
                             </div>
                         </div>
 

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { STATUS } from '@/utils/constants';
+import { useState } from 'react';
 
 const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
 
@@ -23,7 +24,20 @@ const ProviderSchema = z.object({
     service: z.string().optional(),
     bio: z.string().optional(),
     location: z.string().optional(),
-    avartar: z.string().optional(),
+
+    avatar: z
+        .any()
+        .optional()
+        .nullable()
+        .refine((file) => !file || file instanceof File, {
+            message: 'Invalid file',
+        })
+        .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
+            message: 'Image must be less than 5MB',
+        })
+        .refine((file) => !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
+            message: 'Only jpg, png, webp allowed',
+        }),
 
     provider_type_id: z.string().nullable().optional(),
 
@@ -36,13 +50,13 @@ const ProviderSchema = z.object({
 });
 
 export default function Create({ provider_type = [] }: any) {
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
     const {
         register,
         control,
         handleSubmit,
-        setValue,
         setError,
-        watch,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(ProviderSchema),
@@ -60,31 +74,33 @@ export default function Create({ provider_type = [] }: any) {
 
     /* ================= SUBMIT ================= */
     const saveProvider = (data: any) => {
-        const payload = {
-            name: data.name,
-            provider_type_id: data.provider_type_id ? Number(data.provider_type_id) : null,
-            region: data.region || null,
-            service: data.service || null,
-            bio: data.bio || null,
-            location: data.location || null,
-            status: data.status || null,
-        };
+        router.post(
+            route('providers.store'),
+            {
+                ...data,
 
-        router.post(route('providers.store'), payload, {
-            onSuccess: () => {
-                toast.success('Provider created successfully');
+                provider_type_id: data.provider_type_id ? String(Number(data.provider_type_id)) : '',
+                avatar: data.avatar,
             },
-
-            onError: (errors) => {
-                Object.keys(errors).forEach((key) => {
-                    setError(key as any, {
-                        message: errors[key],
+            {
+                forceFormData: true,
+                onProgress: (progress) => {
+                    console.log(`Upload progress: ${progress?.percentage}%`);
+                },
+                onSuccess: () => {
+                    toast.success('Provider created successfully');
+                },
+                onError: (errors) => {
+                    Object.keys(errors).forEach((key) => {
+                        setError(key as any, {
+                            message: errors[key],
+                        });
                     });
-                });
 
-                toast.error('Please fix the errors in the form.');
+                    toast.error('Please fix the errors in the form.');
+                },
             },
-        });
+        );
     };
 
     return (
@@ -94,7 +110,7 @@ export default function Create({ provider_type = [] }: any) {
             <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="rounded-xl border p-5">
                     <form onSubmit={handleSubmit(saveProvider)}>
-                        {/* ================= CLIENT INFO ================= */}
+                        {/* ================= PROVIDER INFO ================= */}
                         <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
                             <h2 className="mb-4 text-lg font-semibold">Provider Information</h2>
 
@@ -119,7 +135,7 @@ export default function Create({ provider_type = [] }: any) {
 
                             {/* ================= GRID ================= */}
                             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {/* INDUSTRY */}
+                                {/* PROVIDER TYPE */}
                                 <div className="grid gap-2">
                                     <Label>Provider Type</Label>
 
@@ -151,7 +167,7 @@ export default function Create({ provider_type = [] }: any) {
                                         name="status"
                                         control={control}
                                         render={({ field }) => (
-                                            <Select value={field.value} onValueChange={field.onChange}>
+                                            <Select value={field.value || ''} onValueChange={field.onChange}>
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select Status" />
                                                 </SelectTrigger>
@@ -167,16 +183,53 @@ export default function Create({ provider_type = [] }: any) {
                                         )}
                                     />
                                 </div>
+
+                                {/* BIO */}
                                 <div className="grid gap-2 md:col-span-3">
                                     <Label>Bio</Label>
+
                                     <textarea
                                         {...register('bio')}
                                         className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-black"
                                         rows={5}
                                         placeholder="Write note..."
                                     />
+
                                     {errors.bio && <span className="text-sm text-red-500">{(errors.bio as any)?.message}</span>}
                                 </div>
+
+                                {/* AVATAR */}
+                                <Controller
+                                    name="avatar"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div className="grid gap-2">
+                                            <Label>Avatar</Label>
+
+                                            {avatarPreview && <img src={avatarPreview} className="h-20 w-20 rounded-full border object-cover" />}
+
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0] || null;
+
+                                                    field.onChange(file);
+
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = () => {
+                                                            setAvatarPreview(reader.result as string);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    } else {
+                                                        setAvatarPreview(null);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                />
                             </div>
                         </div>
 

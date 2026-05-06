@@ -14,13 +14,13 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Provider',
-        href: '/admin/providers',
+        title: 'Provider Type',
+        href: '/admin/provider-type',
         icon: CalendarDays,
     },
     {
-        title: 'Provider Type',
-        href: '/admin/provider-type',
+        title: 'Provider',
+        href: '/admin/providers',
         icon: CalendarDays,
     },
 

@@ -4,6 +4,7 @@ namespace App\Services\Admin\Provider;
 
 use App\Models\Provider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProviderService
 {
@@ -42,30 +43,49 @@ class ProviderService
 
     public function create($data): Provider
     {
+        $avatarPath = null;
 
-        $provider = Provider::create([
-            'name'         => $data->name,
-            'provider_type_id' => $data->provider_type_id,
-            'region' => $data->region,
-            'service' => $data->service,
-            'status' => $data->status,
-            'bio' => $data->bio,
-            'location' => $data->location,
+        if ($data->hasFile('avatar') && $data->file('avatar')->isValid()) {
+            $avatarPath = $data->file('avatar')->store('providers/avatars', 'public');
+        }
+
+        return Provider::create([
+            'name'             => $data->name,
+            'provider_type_id' => $data->provider_type_id ?: null,
+            'region'           => $data->region,
+            'service'          => $data->service,
+            'status'           => $data->status ?? 'Draft',
+            'bio'              => $data->bio,
+            'location'         => $data->location,
+            'avatar'           => $avatarPath,
         ]);
-
-        return $provider;
     }
 
     public function update(Provider $provider, $data): Provider
     {
+        $avatarPath = $provider->avatar;
+
+        // 🔥 New avatar uploaded
+        if ($data->hasFile('avatar') && $data->file('avatar')->isValid()) {
+
+            // ✅ delete old avatar if exists
+            if ($provider->avatar && Storage::disk('public')->exists($provider->avatar)) {
+                Storage::disk('public')->delete($provider->avatar);
+            }
+
+            // ✅ store new avatar
+            $avatarPath = $data->file('avatar')->store('providers/avatars', 'public');
+        }
+
         $provider->update([
-            'name'         => $data->name,
-            'provider_type_id' => $data->provider_type_id,
-            'region' => $data->region,
-            'service' => $data->service,
-            'status' => $data->status,
-            'bio' => $data->bio,
-            'location' => $data->location,
+            'name'             => $data->name,
+            'provider_type_id' => $data->provider_type_id ?: null,
+            'region'           => $data->region,
+            'service'          => $data->service,
+            'status'           => $data->status ?? 'Draft',
+            'bio'              => $data->bio,
+            'location'         => $data->location,
+            'avatar'           => $avatarPath, // ✅ updated
         ]);
 
         return $provider->fresh();

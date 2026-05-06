@@ -19,12 +19,11 @@ return new class extends Migration
             $table->string('region')->nullable();
             $table->string('service')->nullable();
 
-            // Lifecycle status
             $table->string('status')->default('draft');
 
-            // Public fields
             $table->text('bio')->nullable();
             $table->string('location')->nullable();
+            $table->string('avatar')->nullable();
 
             $table->timestamps();
         });

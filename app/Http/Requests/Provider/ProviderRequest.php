@@ -19,11 +19,13 @@ class ProviderRequest extends BaseRequest
 
             'service' => 'required|string|max:50',
 
-            'status' => 'nullable|string|max:500',
+            'status' => 'nullable|string|max:50',
+
+            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
 
             'bio' => 'nullable|string',
 
-            'location	' => 'nullable | string',
+            'location' => 'nullable|string',
 
         ];
     }

@@ -16,7 +16,8 @@ class Provider extends Model
         'service',
         'status',
         'bio',
-        'location'
+        'location',
+        'avatar'
     ];
 
     public function providerType()

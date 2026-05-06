@@ -56,6 +56,22 @@ export default function Index({ providers, meta, filters: initialFilters }) {
             label: 'Status',
             render: (row) => <span className="block w-40">{row.status}</span>,
         },
+        {
+            key: 'avatar',
+            label: 'Avatar',
+            render: (row) => (
+                <div className="h-10 w-10 overflow-hidden rounded-full border border-gray-200 shadow-sm">
+                    <img
+                        src={row.avatar ? `/storage/${row.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}`}
+                        alt={row.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}`;
+                        }}
+                    />
+                </div>
+            ),
+        },
     ];
 
     return (
