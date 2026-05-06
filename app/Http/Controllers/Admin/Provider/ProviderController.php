@@ -97,4 +97,14 @@ class ProviderController extends Controller
             ->route('providers.index')
             ->with('success', 'Provider deleted successfully.');
     }
+
+
+
+    // GET /api/providers
+    public function getProviders()
+    {
+        return response()->json([
+            'data' => $this->service->getAllProviders()
+        ]);
+    }
 }

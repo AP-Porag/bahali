@@ -110,4 +110,12 @@ class ProviderService
             ]),
         ];
     }
+
+    //Api Provider
+    public function getAllProviders()
+    {
+        return Provider::with(['providerType'])
+            ->latest()
+            ->get();
+    }
 }
