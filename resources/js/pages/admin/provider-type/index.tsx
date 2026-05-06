@@ -12,7 +12,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Index({ provider_types, filters: initialFilters }) {
+export default function Index({ provider_types, meta, filters: initialFilters }) {
     const [filters, setFilters] = useState({
         search: initialFilters?.search || '',
         perPage: initialFilters?.perPage || 5,
@@ -73,6 +73,7 @@ export default function Index({ provider_types, filters: initialFilters }) {
                         total: provider_types.total,
                         current_page: provider_types.current_page,
                         last_page: provider_types.last_page,
+                        searchPlaceholderText: meta.searchPlaceholderText,
                     }}
                     actions={(row) => ({
                         view: false,

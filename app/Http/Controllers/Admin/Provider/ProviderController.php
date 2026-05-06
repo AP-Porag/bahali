@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin\Provider;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Provider\ProviderRequest;
+use App\Models\Provider;
+use App\Models\ProviderType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\Admin\Provider\ProviderService;
@@ -22,13 +25,7 @@ class ProviderController extends Controller
     public function index(Request $request)
     {
 
-        return Inertia::render('admin/provider/index', [
-            'providers' => $this->service->list(
-                $request->perPage ?? 10,
-                $request->search ?? null
-            ),
-            'filters' => $request->only(['search', 'perPage', 'page']),
-        ]);
+        return Inertia::render('admin/provider/index', $this->service->list($request));
     }
 
     /**
@@ -36,7 +33,9 @@ class ProviderController extends Controller
      */
     public function create()
     {
-        return Inertia::render('admin/provider-type/create');
+        return Inertia::render('admin/provider/create', [
+            'provider_type' => ProviderType::select('id', 'name')->get(),
+        ]);
     }
 
     /**
@@ -44,62 +43,58 @@ class ProviderController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:industries,name',
-        ]);
-
-        $this->service->create($validated);
-
+        $this->service->create($request);
         return redirect()
-            ->route('admin.industries.index')
-            ->with('success', 'Industry created successfully.');
+            ->route('providers.index')
+            ->with('success', 'Provider created successfully.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Industry $industry)
+    public function show(string $id)
     {
-        return Inertia::render('Admin/Industry/Show', [
-            'industry' => $industry,
-        ]);
+
+        $provider = Provider::findOrFail($id);
+
+
+        $data = $this->service->detail($provider);
+
+        return Inertia::render('admin/provider/show', $data);
     }
+
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Industry $industry)
+    public function edit(Provider $provider)
     {
-        return Inertia::render('admin/industry/edit', [
-            'industry' => $industry,
+        return inertia('admin/provider/edit', [
+            'provider' => $provider->load('providerType:id,name'),
+            'provider_type' => ProviderType::select('id', 'name')->get()
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Industry $industry)
+    public function update(ProviderRequest $request, Provider $provider)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:industries,name,' . $industry->id,
-        ]);
-
-        $this->service->update($industry, $validated);
+        $this->service->update($provider, $request);
 
         return redirect()
-            ->route('admin.industries.index')
-            ->with('success', 'Industry updated successfully.');
+            ->route('providers.index')
+            ->with('success', 'Provider updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Industry $industry)
+    public function destroy(Provider $provider)
     {
-        $this->service->delete($industry);
-
+        $this->service->delete($provider);
         return redirect()
-            ->route('admin.industries.index')
-            ->with('success', 'Industry deleted successfully.');
+            ->route('providers.index')
+            ->with('success', 'Provider deleted successfully.');
     }
 }

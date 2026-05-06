@@ -3,17 +3,35 @@
 namespace App\Services\Admin\ProviderType;
 
 use App\Models\ProviderType;
+use Illuminate\Http\Request;
 
 class ProviderTypeService
 {
-    public function list($perPage = 10, $search = null)
+    public function list(Request $request): array
     {
-        return ProviderType::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->latest()
-            ->paginate($perPage);
+        $search = $request->input('search', '');
+        $status = $request->input('status', 'all');
+        $perPage = $request->input('perPage', 5);
+
+        $query = ProviderType::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        $providerTypes = $query->latest()->paginate($perPage ?? 10);
+
+        return [
+            'provider_types' => $providerTypes,
+            'meta' => pagination_meta($providerTypes, 'Search by name'),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'perPage' => $perPage,
+            ],
+        ];
     }
 
     public function create(array $data)

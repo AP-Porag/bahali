@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
-        title: 'Clients',
-        href: '/clients/index',
+        title: 'Providers',
+        href: '/providers/index',
     },
 ];
 
@@ -43,7 +43,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
         {
             key: 'type',
             label: 'Type',
-            render: (row) => <span className="block w-30 truncate">{row.type}</span>,
+            render: (row) => <span className="block w-30 truncate">{row.provider_type?.name}</span>,
         },
         {
             key: 'service',
@@ -63,7 +63,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
             <Head title="Clients" />
             <div className="p-4">
                 <div className="my-4 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Clients</h1>
+                    <h1 className="text-2xl font-bold">Providers</h1>
                     <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
                         <Plus className="mr-2" /> Create Provider
                     </Button>
@@ -87,7 +87,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
                         status_filter: true,
                         per_page_filter: true,
                     }}
-                    baseRoute="provider"
+                    baseRoute="providers"
                     filters={filters}
                     onFilterChange={setFilters}
                 />

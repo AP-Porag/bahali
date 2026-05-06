@@ -14,10 +14,9 @@ return new class extends Migration
         Schema::create('providers', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            $table->string('type')->nullable();
+            $table->foreignId('provider_type_id')->nullable();
 
             $table->string('region')->nullable();
-
             $table->string('service')->nullable();
 
             // Lifecycle status

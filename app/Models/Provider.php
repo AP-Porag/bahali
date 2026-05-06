@@ -11,12 +11,16 @@ class Provider extends Model
 
     protected $fillable = [
         'name',
+        'provider_type_id',
         'region',
-        'services',
+        'service',
         'status',
         'bio',
-        'location',
-        'type',
-        'status'
+        'location'
     ];
+
+    public function providerType()
+    {
+        return $this->belongsTo(ProviderType::class, 'provider_type_id');
+    }
 }

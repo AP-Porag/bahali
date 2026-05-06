@@ -23,13 +23,7 @@ class ProviderTypeController extends Controller
      */
     public function index(Request $request)
     {
-        return Inertia::render('admin/provider-type/index', [
-            'provider_types' => $this->service->list(
-                $request->perPage ?? 10,
-                $request->search ?? null
-            ),
-            'filters' => $request->only(['search', 'perPage', 'page']),
-        ]);
+        return Inertia::render('admin/provider-type/index', $this->service->list($request));
     }
 
     /**
