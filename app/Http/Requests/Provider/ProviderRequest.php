@@ -13,11 +13,17 @@ class ProviderRequest extends BaseRequest
 
             'name' => 'required|string|max:255',
 
+            'email' => 'required|string|email|max:255|unique:users,email',
+
+            'phone' => 'nullable|string|max:255',
+
             'provider_type_id' => 'nullable|exists:provider_types,id',
 
-            'region' => 'required|string|max:255',
+            'region' => 'nullable|string|max:255',
 
-            'service' => 'required|string|max:50',
+            'verification_status' => 'nullable|string|max:255',
+
+            'service' => 'nullable|string|max:50',
 
             'status' => 'nullable|string|max:50',
 

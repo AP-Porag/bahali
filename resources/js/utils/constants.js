@@ -7,6 +7,12 @@ export const STATUS = {
     EXPIRED: 'Expired',
 };
 
+export const VERIFICATION_STATUS = {
+    APPROVED: 'Approved',
+    REJECTED: 'Rejected',
+    PROVISIONAL: 'Provisional',
+};
+
 export const FLASH = {
     SUCCESS: 'success',
     ERROR: 'error',

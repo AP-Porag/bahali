@@ -12,10 +12,13 @@ class Provider extends Model
 
     protected $fillable = [
         'name',
+        'email',
+        'phone',
         'provider_type_id',
         'region',
         'service',
         'status',
+        'verification_status',
         'bio',
         'location',
         'avatar'

@@ -12,7 +12,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { STATUS } from '@/utils/constants';
+import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
 import { useState } from 'react';
 
 const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
@@ -24,6 +24,9 @@ const ProviderSchema = z.object({
     service: z.string().optional(),
     bio: z.string().optional(),
     location: z.string().optional(),
+    verification_status: z.string().optional(),
+    email: z.email(),
+    phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
 
     avatar: z
         .any()
@@ -62,6 +65,9 @@ export default function Create({ provider_type = [] }: any) {
         resolver: zodResolver(ProviderSchema),
         defaultValues: {
             name: '',
+            email: '',
+            phone: '',
+            verification_status: '',
             provider_type_id: '',
             region: '',
             service: '',
@@ -117,6 +123,8 @@ export default function Create({ provider_type = [] }: any) {
                             <div className="grid gap-4 md:grid-cols-2">
                                 {[
                                     ['name', 'Name'],
+                                    ['email', 'Email'],
+                                    ['phone', 'Phone'],
                                     ['service', 'Service'],
                                     ['region', 'Region'],
                                     ['location', 'Location'],
@@ -145,7 +153,7 @@ export default function Create({ provider_type = [] }: any) {
                                         render={({ field }) => (
                                             <Select value={field.value || ''} onValueChange={field.onChange}>
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select Industry" />
+                                                    <SelectValue placeholder="Select Provider Type" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {provider_type.map((i: any) => (
@@ -175,9 +183,31 @@ export default function Create({ provider_type = [] }: any) {
                                                     <SelectItem value={STATUS.DRAFT.toString()}>Draft</SelectItem>
                                                     <SelectItem value={STATUS.PENDING.toString()}>Pending</SelectItem>
                                                     <SelectItem value={STATUS.VERIFIED.toString()}>Verified</SelectItem>
-                                                    <SelectItem value={STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
+
                                                     <SelectItem value={STATUS.SUSPENDED.toString()}>Suspended</SelectItem>
                                                     <SelectItem value={STATUS.EXPIRED.toString()}>Expired</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
+
+                                {/* STATUS */}
+                                <div className="grid gap-2">
+                                    <Label>Verification Status</Label>
+
+                                    <Controller
+                                        name="verification_status"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select value={field.value || ''} onValueChange={field.onChange}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select Verification Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value={VERIFICATION_STATUS.APPROVED.toString()}>Approved</SelectItem>
+                                                      <SelectItem value={VERIFICATION_STATUS.REJECTED.toString()}>Rejected</SelectItem>
+                                                      <SelectItem value={VERIFICATION_STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}

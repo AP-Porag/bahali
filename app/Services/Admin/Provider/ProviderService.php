@@ -51,6 +51,9 @@ class ProviderService
 
         return Provider::create([
             'name'             => $data->name,
+            'email'             => $data->email,
+            'phone'             => $data->phone,
+            'verification_status'             => $data->verification_status,
             'provider_type_id' => $data->provider_type_id ?: null,
             'region'           => $data->region,
             'service'          => $data->service,
