@@ -47,13 +47,16 @@ const ProviderSchema = z.object({
         message: 'Phone number must be at least 10 digits',
     }),
 
-    verification_status: z.string().optional(),
+    verification_status: z
+        .enum([VERIFICATION_STATUS.APPROVED, VERIFICATION_STATUS.REJECTED, VERIFICATION_STATUS.PROVISIONAL], {
+            message: 'Invalid status',
+        })
+        .optional(),
     location: z.string().optional(),
     provider_type_id: z.string().nullable().optional(),
 
     status: z
-        .string()
-        .refine((val) => !val || ['Draft', 'Pending', 'Verified', 'Provisional', 'Suspended', 'Expired'].includes(val), {
+        .enum([STATUS.DRAFT, STATUS.PENDING, STATUS.VERIFIED, STATUS.SUSPENDED, STATUS.EXPIRED], {
             message: 'Invalid status',
         })
         .optional(),
@@ -313,7 +316,7 @@ export default function Edit({ provider, provider_type }: any) {
 
                         {/* ================= SUBMIT ================= */}
                         <div className="flex justify-end">
-                            <Button type="submit" disabled={isSubmitting}>
+                            <Button type="submit" disabled={isSubmitting} className="cursor-pointer">
                                 {isSubmitting ? (
                                     <>
                                         <RotateCw className="mr-2 h-4 w-4 animate-spin" />
