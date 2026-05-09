@@ -53,8 +53,16 @@ export default function Show({ provider }: any) {
 
                     <CardContent className="space-y-4">
                         <div>
-                            <p className="text-sm font-semibold">Provider Name</p>
+                            <p className="text-sm font-semibold">Name</p>
                             <p className="text-sm text-gray-600">{provider?.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold">Email</p>
+                            <p className="text-sm text-gray-600">{provider?.email}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold">Phone</p>
+                            <p className="text-sm text-gray-600">{provider?.phone}</p>
                         </div>
 
                         <div>
@@ -82,6 +90,10 @@ export default function Show({ provider }: any) {
                         <div>
                             <p className="text-sm font-semibold">Status</p>
                             <p className="text-sm text-gray-600">{provider?.status}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold">Provider Verifiction Status</p>
+                            <p className="text-sm text-gray-600">{provider?.verification_status}</p>
                         </div>
                         <div>
                             <p className="text-sm font-semibold">Created At</p>

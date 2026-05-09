@@ -27,7 +27,34 @@ class ProviderRequest extends BaseRequest
 
             'status' => 'nullable|string|max:50',
 
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'avatar' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+
+                    // old image path/string হলে skip
+                    if (is_string($value)) {
+                        return;
+                    }
+
+                    // new uploaded file হলে validate
+                    if ($value instanceof \Illuminate\Http\UploadedFile) {
+
+                        $allowedMimeTypes = [
+                            'image/jpeg',
+                            'image/png',
+                            'image/webp',
+                        ];
+
+                        if (! in_array($value->getMimeType(), $allowedMimeTypes)) {
+                            $fail('The avatar must be a jpg, png, or webp image.');
+                        }
+
+                        if ($value->getSize() > 5 * 1024 * 1024) {
+                            $fail('The avatar must not be greater than 5MB.');
+                        }
+                    }
+                },
+            ],
 
             'bio' => 'nullable|string',
 

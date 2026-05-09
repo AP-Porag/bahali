@@ -82,6 +82,9 @@ class ProviderService
 
         $provider->update([
             'name'             => $data->name,
+            'email'            => $data->email,
+            'phone' => $data->phone,
+            'verification_status' => $data->verification_status,
             'provider_type_id' => $data->provider_type_id ?: null,
             'region'           => $data->region,
             'service'          => $data->service,
@@ -112,13 +115,5 @@ class ProviderService
                 'providerType',
             ]),
         ];
-    }
-
-    //Api Provider
-    public function getAllProviders()
-    {
-        return Provider::with(['providerType'])
-            ->latest()
-            ->get();
     }
 }

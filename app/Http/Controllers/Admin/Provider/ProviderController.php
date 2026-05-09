@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\ProviderRequest;
+use App\Http\Resources\ProviderCollection;
 use App\Models\Provider;
 use App\Models\ProviderType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Utils\GlobalConstant;
 use App\Services\Admin\Provider\ProviderService;
 
 class ProviderController extends Controller
@@ -101,10 +103,9 @@ class ProviderController extends Controller
 
 
     // GET /api/providers
-    public function getProviders()
+    public function getProvidersForApi()
     {
-        return response()->json([
-            'data' => $this->service->getAllProviders()
-        ]);
+        $providers = Provider::where('verification_status', GlobalConstant::VERIFICATION_STATUS_APPROVED)->with('providerType')->get();
+        return new ProviderCollection($providers);
     }
 }

@@ -15,13 +15,4 @@ use App\Http\Controllers\Admin\Provider\ProviderController;
 |
 */
 
-Route::prefix('admin')->group(function () {
-
-    /*
-    |--------------------------------------------------------------------------
-    | Provider Routes
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get('providers', [ProviderController::class, 'getProviders']);
-});
+Route::get('providers', [ProviderController::class, 'getProvidersForApi']);

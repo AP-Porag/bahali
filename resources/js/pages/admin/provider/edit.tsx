@@ -8,49 +8,60 @@ import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Head, router } from '@inertiajs/react';
 import { RotateCw } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
-import { useState } from 'react';
 
-const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
+const breadcrumbs = [{ title: 'Edit Provider', href: '/providers/create' }];
 
 /* ================= SCHEMA ================= */
 const ProviderSchema = z.object({
     name: z.string().min(3, { message: 'Name is Required!' }),
+
     avatar: z
         .any()
         .optional()
         .nullable()
-        .refine((file) => !file || file instanceof File, {
+        .refine((file) => !file || file instanceof File || typeof file === 'string', {
             message: 'Invalid file',
         })
-        .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
+        .refine((file) => !file || typeof file === 'string' || file.size <= 5 * 1024 * 1024, {
             message: 'Image must be less than 5MB',
         })
-        .refine((file) => !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
+        .refine((file) => !file || typeof file === 'string' || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
             message: 'Only jpg, png, webp allowed',
         }),
+
     region: z.string().optional(),
     service: z.string().optional(),
     bio: z.string().optional(),
-    email: z.email(),
-    phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
+
+    email: z.string().email({
+        message: 'Invalid email address',
+    }),
+
+    phone: z.string().min(10, {
+        message: 'Phone number must be at least 10 digits',
+    }),
+
     verification_status: z.string().optional(),
     location: z.string().optional(),
     provider_type_id: z.string().nullable().optional(),
+
     status: z
         .string()
-        .refine((val) => !val || ['Draft', 'Pending', 'Verified', 'Provisional', 'Suspended', 'Expired'].includes(val), { message: 'Invalid status' })
+        .refine((val) => !val || ['Draft', 'Pending', 'Verified', 'Provisional', 'Suspended', 'Expired'].includes(val), {
+            message: 'Invalid status',
+        })
         .optional(),
 });
 
 export default function Edit({ provider, provider_type }: any) {
-    // const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(provider?.avatar ? `/storage/${provider.avatar}` : null);
+
     const {
         register,
         control,
@@ -60,12 +71,16 @@ export default function Edit({ provider, provider_type }: any) {
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(ProviderSchema),
+
         defaultValues: {
             name: provider?.name || '',
+            email: provider?.email || '',
+            phone: provider?.phone || '',
             provider_type_id: provider?.provider_type_id ? String(provider.provider_type_id) : '',
             region: provider?.region || '',
             service: provider?.service || '',
             status: provider?.status || '',
+            verification_status: provider?.verification_status || '',
             bio: provider?.bio || '',
             location: provider?.location || '',
             avatar: provider?.avatar || '',
@@ -76,20 +91,20 @@ export default function Edit({ provider, provider_type }: any) {
     useEffect(() => {
         if (provider) {
             reset({
-                name: provider.name || '',
-                provider_type_id: provider.provider_type_id ? String(provider.provider_type_id) : '',
-                email: '',
-                phone: '',
-                verification_status: '',
-                region: provider.region || '',
-                service: provider.service || '',
-                status: provider.status || '',
-                bio: provider.bio || '',
-                location: provider.location || '',
-                avatar: provider.avatar || '',
+                name: provider?.name || '',
+                email: provider?.email || '',
+                phone: provider?.phone || '',
+                provider_type_id: provider?.provider_type_id ? String(provider.provider_type_id) : '',
+                verification_status: provider?.verification_status || '',
+                region: provider?.region || '',
+                service: provider?.service || '',
+                status: provider?.status || '',
+                bio: provider?.bio || '',
+                location: provider?.location || '',
+                avatar: provider?.avatar || '',
             });
         }
-    }, [provider]);
+    }, [provider, reset]);
 
     /* ================= SUBMIT ================= */
     const saveProvider = (data: any) => {
@@ -100,17 +115,23 @@ export default function Edit({ provider, provider_type }: any) {
                 _method: 'put',
 
                 provider_type_id: data.provider_type_id ? String(Number(data.provider_type_id)) : '',
+
                 avatar: data.avatar,
             },
             {
                 forceFormData: true,
+
                 onProgress: (progress) => {
                     console.log(`Upload progress: ${progress?.percentage}%`);
                 },
+
                 onSuccess: () => {
-                    toast.success('Provider created successfully');
+                    toast.success('Provider updated successfully');
                 },
+
                 onError: (errors) => {
+                    console.log(errors);
+
                     Object.keys(errors).forEach((key) => {
                         setError(key as any, {
                             message: errors[key],
@@ -122,30 +143,6 @@ export default function Edit({ provider, provider_type }: any) {
             },
         );
     };
-    // const saveProvider = (data: any) => {
-    //     const payload = {
-    //         name: data.name,
-    //         provider_type_id: data.provider_type_id ? Number(data.provider_type_id) : null,
-    //         region: data.region || null,
-    //         service: data.service || null,
-    //         bio: data.bio || null,
-    //         location: data.location || null,
-    //         status: data.status || null,
-    //     };
-
-    //     router.put(route('providers.update', provider.id), payload, {
-    //         onSuccess: () => {
-    //             toast.success('Provider updated successfully');
-    //         },
-    //         onError: (errors) => {
-    //             console.log(errors);
-    //             Object.keys(errors).forEach((key) => {
-    //                 setError(key as any, { message: errors[key] });
-    //             });
-    //             toast.error('Please fix the errors in the form.');
-    //         },
-    //     });
-    // };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -193,6 +190,7 @@ export default function Edit({ provider, provider_type }: any) {
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select Provider Type" />
                                                 </SelectTrigger>
+
                                                 <SelectContent>
                                                     {provider_type.map((i: any) => (
                                                         <SelectItem key={i.id} value={String(i.id)}>
@@ -217,54 +215,60 @@ export default function Edit({ provider, provider_type }: any) {
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select Status" />
                                                 </SelectTrigger>
+
                                                 <SelectContent>
-                                                    <SelectItem value={STATUS.DRAFT.toString()}>Draft</SelectItem>
-                                                    <SelectItem value={STATUS.PENDING.toString()}>Pending</SelectItem>
-                                                    <SelectItem value={STATUS.VERIFIED.toString()}>Verified</SelectItem>
-                                                    <SelectItem value={STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
-                                                    <SelectItem value={STATUS.SUSPENDED.toString()}>Suspended</SelectItem>
-                                                    <SelectItem value={STATUS.EXPIRED.toString()}>Expired</SelectItem>
+                                                    <SelectItem value={STATUS.DRAFT}>Draft</SelectItem>
+
+                                                    <SelectItem value={STATUS.PENDING}>Pending</SelectItem>
+
+                                                    <SelectItem value={STATUS.VERIFIED}>Verified</SelectItem>
+
+                                                    <SelectItem value={STATUS.PROVISIONAL}>Provisional</SelectItem>
+
+                                                    <SelectItem value={STATUS.SUSPENDED}>Suspended</SelectItem>
+
+                                                    <SelectItem value={STATUS.EXPIRED}>Expired</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         )}
                                     />
                                 </div>
-                                 {/* VERIFICATION STATUS */}
-                                                                <div className="grid gap-2">
-                                                                    <Label>Verification Status</Label>
 
-                                                                    <Controller
-                                                                        name="verification_status"
-                                                                        control={control}
-                                                                        render={({ field }) => (
-                                                                            <Select value={field.value || ''} onValueChange={field.onChange}>
-                                                                                <SelectTrigger className="w-full">
-                                                                                    <SelectValue placeholder="Select Verification Status" />
-                                                                                </SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    <SelectItem value={VERIFICATION_STATUS.APPROVED.toString()}>Approved</SelectItem>
-                                                                                      <SelectItem value={VERIFICATION_STATUS.REJECTED.toString()}>Rejected</SelectItem>
-                                                                                      <SelectItem value={VERIFICATION_STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
-                                                                                </SelectContent>
-                                                                            </Select>
-                                                                        )}
-                                                                    />
-                                                                </div>
+                                {/* VERIFICATION STATUS */}
+                                <div className="grid gap-2">
+                                    <Label>Verification Status</Label>
+
+                                    <Controller
+                                        name="verification_status"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select value={field.value || ''} onValueChange={field.onChange}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select Verification Status" />
+                                                </SelectTrigger>
+
+                                                <SelectContent>
+                                                    <SelectItem value={VERIFICATION_STATUS.APPROVED}>Approved</SelectItem>
+
+                                                    <SelectItem value={VERIFICATION_STATUS.REJECTED}>Rejected</SelectItem>
+
+                                                    <SelectItem value={VERIFICATION_STATUS.PROVISIONAL}>Provisional</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
 
                                 {/* BIO */}
                                 <div className="grid gap-2 md:col-span-3">
                                     <Label>Bio</Label>
 
-                                    <textarea
-                                        {...register('bio')}
-                                        defaultValue={provider?.bio || ''}
-                                        className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-black"
-                                        rows={5}
-                                    />
+                                    <textarea {...register('bio')} className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-black" rows={5} />
 
                                     {errors.bio && <span className="text-sm text-red-500">{(errors.bio as any)?.message}</span>}
                                 </div>
 
+                                {/* AVATAR */}
                                 <Controller
                                     name="avatar"
                                     control={control}
@@ -279,23 +283,28 @@ export default function Edit({ provider, provider_type }: any) {
                                                     className="mt-2 h-20 w-20 rounded-full border object-cover"
                                                 />
                                             )}
+
                                             <Input
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0] || null;
 
-                                                    field.onChange(file); // react-hook-form
+                                                    field.onChange(file);
 
                                                     if (file) {
                                                         const reader = new FileReader();
+
                                                         reader.onload = () => {
                                                             setAvatarPreview(reader.result as string);
                                                         };
+
                                                         reader.readAsDataURL(file);
                                                     }
                                                 }}
                                             />
+
+                                            {errors.avatar && <span className="text-sm text-red-500">{(errors.avatar as any)?.message}</span>}
                                         </div>
                                     )}
                                 />
