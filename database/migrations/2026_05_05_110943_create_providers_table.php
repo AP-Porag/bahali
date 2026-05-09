@@ -33,7 +33,7 @@ return new class extends Migration
                 GlobalConstant::STATUS_VERIFIED,
                 GlobalConstant::STATUS_SUSPENDED,
                 GlobalConstant::STATUS_EXPIRED,
-            ])->default(GlobalConstant::STATUS_DRAFT);
+            ])->default(GlobalConstant::STATUS_DRAFT)->default(GlobalConstant::STATUS_DRAFT);
 
             $table->text('bio')->nullable();
             $table->string('location')->nullable();

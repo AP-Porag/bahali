@@ -192,7 +192,7 @@ export default function Create({ provider_type = [] }: any) {
                                     />
                                 </div>
 
-                                {/* STATUS */}
+                                {/* VERIFICATION STATUS */}
                                 <div className="grid gap-2">
                                     <Label>Verification Status</Label>
 

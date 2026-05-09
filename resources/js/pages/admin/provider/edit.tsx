@@ -13,7 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { STATUS } from '@/utils/constants';
+import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
 import { useState } from 'react';
 
 const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
@@ -37,6 +37,9 @@ const ProviderSchema = z.object({
     region: z.string().optional(),
     service: z.string().optional(),
     bio: z.string().optional(),
+    email: z.email(),
+    phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
+    verification_status: z.string().optional(),
     location: z.string().optional(),
     provider_type_id: z.string().nullable().optional(),
     status: z
@@ -75,6 +78,9 @@ export default function Edit({ provider, provider_type }: any) {
             reset({
                 name: provider.name || '',
                 provider_type_id: provider.provider_type_id ? String(provider.provider_type_id) : '',
+                email: '',
+                phone: '',
+                verification_status: '',
                 region: provider.region || '',
                 service: provider.service || '',
                 status: provider.status || '',
@@ -155,6 +161,8 @@ export default function Edit({ provider, provider_type }: any) {
                             <div className="grid gap-4 md:grid-cols-2">
                                 {[
                                     ['name', 'Name'],
+                                    ['email', 'Email'],
+                                    ['phone', 'Phone'],
                                     ['service', 'Service'],
                                     ['region', 'Region'],
                                     ['location', 'Location'],
@@ -221,6 +229,27 @@ export default function Edit({ provider, provider_type }: any) {
                                         )}
                                     />
                                 </div>
+                                 {/* VERIFICATION STATUS */}
+                                                                <div className="grid gap-2">
+                                                                    <Label>Verification Status</Label>
+
+                                                                    <Controller
+                                                                        name="verification_status"
+                                                                        control={control}
+                                                                        render={({ field }) => (
+                                                                            <Select value={field.value || ''} onValueChange={field.onChange}>
+                                                                                <SelectTrigger className="w-full">
+                                                                                    <SelectValue placeholder="Select Verification Status" />
+                                                                                </SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    <SelectItem value={VERIFICATION_STATUS.APPROVED.toString()}>Approved</SelectItem>
+                                                                                      <SelectItem value={VERIFICATION_STATUS.REJECTED.toString()}>Rejected</SelectItem>
+                                                                                      <SelectItem value={VERIFICATION_STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        )}
+                                                                    />
+                                                                </div>
 
                                 {/* BIO */}
                                 <div className="grid gap-2 md:col-span-3">
