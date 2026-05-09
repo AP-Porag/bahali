@@ -12,25 +12,29 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
 import { useState } from 'react';
 
 const breadcrumbs = [{ title: 'Create Provider', href: '/providers/create' }];
 
-/* ================= SCHEMA ================= */
+/* ================= CLEAN CREATE SCHEMA ================= */
 const ProviderSchema = z.object({
     name: z.string().min(3, { message: 'Name is Required!' }),
-    region: z.string().optional(),
-    service: z.string().optional(),
-    bio: z.string().optional(),
-    location: z.string().optional(),
-    verification_status: z
-        .enum([VERIFICATION_STATUS.APPROVED, VERIFICATION_STATUS.REJECTED, VERIFICATION_STATUS.PROVISIONAL], {
-            message: 'Invalid status',
-        })
-        .optional(),
+
     email: z.email(),
+
     phone: z.string().min(10, { message: 'Phone number must be at least 10 digits' }),
+
+    provider_type_id: z.string().nullable().optional(),
+
+    region: z.string().optional(),
+
+    service: z.string().optional(),
+
+    bio: z.string().optional(),
+
+    location: z.string().optional(),
+
+    is_public: z.boolean().optional(),
 
     avatar: z
         .any()
@@ -45,14 +49,6 @@ const ProviderSchema = z.object({
         .refine((file) => !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type), {
             message: 'Only jpg, png, webp allowed',
         }),
-
-    provider_type_id: z.string().nullable().optional(),
-
-    status: z
-        .enum([STATUS.DRAFT, STATUS.PENDING, STATUS.VERIFIED, STATUS.SUSPENDED, STATUS.EXPIRED], {
-            message: 'Invalid status',
-        })
-        .optional(),
 });
 
 export default function Create({ provider_type = [] }: any) {
@@ -66,17 +62,17 @@ export default function Create({ provider_type = [] }: any) {
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(ProviderSchema),
+
         defaultValues: {
             name: '',
             email: '',
             phone: '',
-            verification_status: '',
             provider_type_id: '',
             region: '',
             service: '',
-            status: '',
             bio: '',
             location: '',
+            is_public: false,
             avatar: null,
         },
     });
@@ -87,18 +83,16 @@ export default function Create({ provider_type = [] }: any) {
             route('providers.store'),
             {
                 ...data,
-
                 provider_type_id: data.provider_type_id ? String(Number(data.provider_type_id)) : '',
                 avatar: data.avatar,
             },
             {
                 forceFormData: true,
-                onProgress: (progress) => {
-                    console.log(`Upload progress: ${progress?.percentage}%`);
-                },
+
                 onSuccess: () => {
                     toast.success('Provider created successfully');
                 },
+
                 onError: (errors) => {
                     Object.keys(errors).forEach((key) => {
                         setError(key as any, {
@@ -158,6 +152,7 @@ export default function Create({ provider_type = [] }: any) {
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select Provider Type" />
                                                 </SelectTrigger>
+
                                                 <SelectContent>
                                                     {provider_type.map((i: any) => (
                                                         <SelectItem key={i.id} value={String(i.id)}>
@@ -170,51 +165,10 @@ export default function Create({ provider_type = [] }: any) {
                                     />
                                 </div>
 
-                                {/* STATUS */}
-                                <div className="grid gap-2">
-                                    <Label>Status</Label>
-
-                                    <Controller
-                                        name="status"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select value={field.value || ''} onValueChange={field.onChange}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select Status" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value={STATUS.DRAFT.toString()}>Draft</SelectItem>
-                                                    <SelectItem value={STATUS.PENDING.toString()}>Pending</SelectItem>
-                                                    <SelectItem value={STATUS.VERIFIED.toString()}>Verified</SelectItem>
-
-                                                    <SelectItem value={STATUS.SUSPENDED.toString()}>Suspended</SelectItem>
-                                                    <SelectItem value={STATUS.EXPIRED.toString()}>Expired</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    />
-                                </div>
-
-                                {/* VERIFICATION STATUS */}
-                                <div className="grid gap-2">
-                                    <Label>Verification Status</Label>
-
-                                    <Controller
-                                        name="verification_status"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select value={field.value || ''} onValueChange={field.onChange}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select Verification Status" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value={VERIFICATION_STATUS.APPROVED.toString()}>Approved</SelectItem>
-                                                    <SelectItem value={VERIFICATION_STATUS.REJECTED.toString()}>Rejected</SelectItem>
-                                                    <SelectItem value={VERIFICATION_STATUS.PROVISIONAL.toString()}>Provisional</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        )}
-                                    />
+                                {/* PUBLIC VISIBILITY */}
+                                <div className="flex items-center gap-3 pt-8">
+                                    <input type="checkbox" {...register('is_public')} />
+                                    <Label>Publicly Visible</Label>
                                 </div>
 
                                 {/* BIO */}
@@ -225,7 +179,7 @@ export default function Create({ provider_type = [] }: any) {
                                         {...register('bio')}
                                         className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-black"
                                         rows={5}
-                                        placeholder="Write note..."
+                                        placeholder="Write bio..."
                                     />
 
                                     {errors.bio && <span className="text-sm text-red-500">{(errors.bio as any)?.message}</span>}
@@ -251,9 +205,11 @@ export default function Create({ provider_type = [] }: any) {
 
                                                     if (file) {
                                                         const reader = new FileReader();
+
                                                         reader.onload = () => {
                                                             setAvatarPreview(reader.result as string);
                                                         };
+
                                                         reader.readAsDataURL(file);
                                                     } else {
                                                         setAvatarPreview(null);

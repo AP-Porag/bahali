@@ -60,7 +60,7 @@ export default function Index({ provider_types, meta, filters: initialFilters })
                         className="cursor-pointer bg-black text-white hover:bg-gray-800"
                     >
                         <Plus className="mr-2 h-4 w-4" />
-                        Create Provider
+                        Create Provider Type
                     </Button>
                 </div>
 

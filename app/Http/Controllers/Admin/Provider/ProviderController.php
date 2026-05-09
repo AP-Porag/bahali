@@ -102,6 +102,52 @@ class ProviderController extends Controller
 
 
 
+
+    public function verify(Provider $provider)
+    {
+        $this->service->setVerified($provider);
+
+        return response()->json(['message' => 'Provider verified successfully']);
+    }
+
+    public function provisional(Provider $provider)
+    {
+        $this->service->setProvisional($provider);
+
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider set to provisional');
+    }
+
+    public function suspend(Provider $provider)
+    {
+        $this->service->suspend($provider);
+
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider Suspended');
+    }
+
+    public function expire(Provider $provider)
+    {
+        $this->service->expire($provider);
+
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider Expired');
+    }
+
+    public function publish(Provider $provider)
+    {
+        $this->service->publish($provider);
+
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider Published');
+    }
+
+
+
     // GET /api/providers
     public function getProvidersForApi()
     {

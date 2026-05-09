@@ -8,9 +8,7 @@ class ProviderRequest extends BaseRequest
 {
     public function rules()
     {
-
         return [
-
             'name' => 'required|string|max:255',
 
             'email' => 'required|string|email|max:255|unique:users,email',
@@ -21,22 +19,24 @@ class ProviderRequest extends BaseRequest
 
             'region' => 'nullable|string|max:255',
 
-            'verification_status' => 'nullable|string|max:255',
-
             'service' => 'nullable|string|max:50',
 
-            'status' => 'nullable|string|max:50',
+            'bio' => 'nullable|string',
 
+            'location' => 'nullable|string',
+
+            // frontend uses is_public checkbox
+            'is_public' => 'nullable|boolean',
+
+            // avatar upload (unchanged logic)
             'avatar' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
 
-                    // old image path/string হলে skip
                     if (is_string($value)) {
                         return;
                     }
 
-                    // new uploaded file হলে validate
                     if ($value instanceof \Illuminate\Http\UploadedFile) {
 
                         $allowedMimeTypes = [
@@ -45,7 +45,7 @@ class ProviderRequest extends BaseRequest
                             'image/webp',
                         ];
 
-                        if (! in_array($value->getMimeType(), $allowedMimeTypes)) {
+                        if (!in_array($value->getMimeType(), $allowedMimeTypes)) {
                             $fail('The avatar must be a jpg, png, or webp image.');
                         }
 
@@ -55,11 +55,6 @@ class ProviderRequest extends BaseRequest
                     }
                 },
             ],
-
-            'bio' => 'nullable|string',
-
-            'location' => 'nullable|string',
-
         ];
     }
 }

@@ -51,16 +51,19 @@ class ProviderService
 
         return Provider::create([
             'name'             => $data->name,
-            'email'             => $data->email,
-            'phone'             => $data->phone,
-            'verification_status'             => $data->verification_status,
+            'email'            => $data->email,
+            'phone'            => $data->phone,
             'provider_type_id' => $data->provider_type_id ?: null,
             'region'           => $data->region,
             'service'          => $data->service,
-            'status'           => $data->status ?? 'Draft',
             'bio'              => $data->bio,
             'location'         => $data->location,
+            'is_public'        => $data->is_public ?? false,
             'avatar'           => $avatarPath,
+
+            // system defaults (important for lifecycle consistency)
+            'status'           => 'draft',
+            'verification_status' => 'unverified',
         ]);
     }
 
@@ -116,4 +119,67 @@ class ProviderService
             ]),
         ];
     }
+
+
+
+
+    public function setVerified(Provider $provider): Provider
+    {
+        $provider->update([
+            'status' => 'published',
+            'verification_status' => 'verified',
+            'is_public' => true,
+            'verified_at' => now(),
+        ]);
+
+        return $provider;
+    }
+
+    public function setProvisional(Provider $provider): Provider
+    {
+        $provider->update([
+            'status' => 'published',
+            'verification_status' => 'provisional',
+            'is_public' => true,
+        ]);
+    }
+
+    public function suspend(Provider $provider): Provider
+    {
+        $provider->update([
+            'status' => 'suspended',
+            'verification_status' => 'revoked',
+            'is_public' => false,
+            'suspended_at' => now(),
+        ]);
+
+        return $provider;
+    }
+
+    public function expire(Provider $provider): Provider
+    {
+        $provider->update([
+            'status' => 'expired',
+            'verification_status' => 'expired',
+            'is_public' => false,
+        ]);
+
+        return $provider;
+    }
+
+    public function publish(Provider $provider): Provider
+    {
+        $provider->update([
+            'status' => 'published',
+            'is_public' => true,
+        ]);
+
+        return $provider;
+    }
+
+    // private function update(Provider $provider, array $data): Provider
+    // {
+    //     $provider->update($data);
+    //     return $provider;
+    // }
 }

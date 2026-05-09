@@ -12,6 +12,8 @@ class Provider extends Model
 
     protected $fillable = [
         'name',
+        'slug',
+        'is_public',
         'email',
         'phone',
         'provider_type_id',
@@ -21,7 +23,14 @@ class Provider extends Model
         'verification_status',
         'bio',
         'location',
-        'avatar'
+        'avatar',
+        'verified_at',
+        'published_at',
+        'verification_expires_at',
+        'suspended_at',
+        'internal_notes	',
+        'suspension_reason',
+        'approved_by',
     ];
 
     public function providerType()
