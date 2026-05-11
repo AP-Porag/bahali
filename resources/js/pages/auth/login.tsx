@@ -38,14 +38,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-       <div className="relative h-[100vh] w-full bg-[url('/images/bahali-background.jpg')] bg-cover bg-center">
+       <div className="flex justify-center items-center h-[100vh] w-full bg-[url('/images/bahali-background.jpg')] bg-cover bg-center">
     
     {/* Overlay */}
     
 
     {/* Form Container */}
-    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 md:-translate-x-3/4 flex justify-center">
-        <div className="bg-white/90 flex items-center justify-center rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
+    <div className="flex justify-center w-[100%]">
+        <div className="bg-white/90 flex items-center justify-center w-[80%] sm:w-[68%] md:w-[55%] lg:w-[40%] rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
         <form className="flex w-[100%] p-10 flex-col" onSubmit={submit}>
                     
             {/* <form className="flex flex-col gap-6" onSubmit={submit}> */}
@@ -94,13 +94,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         </div>
                         <InputError message={errors.password} />
 
-                        <div className="flex items-center justify-end">
+                        {/* <div className="flex items-center justify-end">
                             {canResetPassword && (
                                 <TextLink href={route('password.request')} className="ml-auto font-medium no-underline text-sm text-[#3b7890]" tabIndex={5}>
                                     Forgot password?
                                 </TextLink>
                             )}
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* <div className="flex items-center space-x-3">
@@ -108,7 +108,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div> */}
 
-                    <Button type="submit" className=" transition-all duration-300 ease-in-out hover:scale-105 mt-4 mb-6 w-full rounded-3xl bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className=" transition-all duration-300 ease-in-out hover:scale-105 mt-4 mb-6 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
@@ -127,5 +127,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
         {/* </AuthLayout> */}
         </div>
+
     );
 }
