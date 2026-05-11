@@ -100,70 +100,30 @@ class ProviderController extends Controller
             ->with('success', 'Provider deleted successfully.');
     }
 
-
-
-
-    public function verify(Provider $provider)
-    {
-        $this->service->setVerified($provider);
-
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider Verified');
-    }
-
-    public function provisional(Provider $provider)
-    {
-        $this->service->setProvisional($provider);
-
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider set to provisional');
-    }
-
-    public function suspend(Provider $provider)
-    {
-        $this->service->suspend($provider);
-
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider Suspended');
-    }
-
-    public function expire(Provider $provider)
-    {
-        $this->service->expire($provider);
-
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider Expired');
-    }
-
-    public function publish(Provider $provider)
-    {
-        $this->service->publish($provider);
-
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider Published');
-    }
-
+    /**
+     * Change Verification Status
+     */
 
     public function changeStatus(Request $request, $id)
     {
         $request->validate([
             'status' => ['required', 'string'],
+            'type' => ['nullable', 'string'],
         ]);
 
         $provider = Provider::findOrFail($id);
 
-        $provider->update([
-            'status' => $request->status,
-        ]);
+        if ($request->type === 'verification_status') {
+            $provider->update([
+                'verification_status' => $request->status,
+            ]);
+        } else {
+            $provider->update([
+                'status' => $request->status,
+            ]);
+        }
 
-        return redirect()
-            ->route('providers.index')
-            ->with('success', 'Provider Status Updated');
+        return back()->with('success', 'Updated successfully');
     }
 
 

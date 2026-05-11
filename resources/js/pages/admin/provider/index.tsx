@@ -1,6 +1,9 @@
 import DataTable from '@/components/common/DataTable';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout.js';
+import { capitalize } from '@/utils/helpers';
+import { getStatusBadge } from '@/utils/statusBadge';
+import { getVerificationBadge } from '@/utils/verificationStatusBadge';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -53,13 +56,25 @@ export default function Index({ providers, meta, filters: initialFilters }) {
         {
             key: 'verification_status',
             label: 'Verification Status',
-            render: (row) => <span className="block w-40">{row.verification_status}</span>,
+            render: (row) => (
+                <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getVerificationBadge(
+                        row.verification_status,
+                    )}`}
+                >
+                    {capitalize(row.verification_status)}
+                </span>
+            ),
         },
 
         {
             key: 'status',
             label: 'Status',
-            render: (row) => <span className="block w-40">{row.status}</span>,
+            render: (row) => (
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadge(row.status)}`}>
+                    {capitalize(row.status)}
+                </span>
+            ),
         },
         {
             key: 'avatar',
@@ -102,14 +117,10 @@ export default function Index({ providers, meta, filters: initialFilters }) {
                     }}
                     actions={{
                         view: true,
-                        edit: true,
+                        edit: false,
                         delete: true,
                         change_status: true,
-                        verify: false,
-                        provisional: false,
-                        suspend: false,
-                        expire: false,
-                        publish: false,
+                        change_verification_status: true,
                         search_filter: true,
                         status_filter: true,
                         per_page_filter: true,

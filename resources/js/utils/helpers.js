@@ -41,15 +41,12 @@ export function formatDateUS(date, options = {}) {
         // Invalid date check
         if (isNaN(d.getTime())) return '—';
 
-        return new Intl.DateTimeFormat(
-            'en-US',
-            {
-                year: 'numeric',
-                month: 'short',
-                day: '2-digit',
-                ...options,
-            }
-        ).format(d);
+        return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            ...options,
+        }).format(d);
     } catch (error) {
         console.error('formatDateUS error:', error);
         return '—';
@@ -111,11 +108,7 @@ export const DATE_PRESETS = {
 /**
  * Safely format a number as currency (USD by default)
  */
-export function formatCurrency(
-    value,
-    currency = 'USD',
-    locale = 'en-US'
-) {
+export function formatCurrency(value, currency = 'USD', locale = 'en-US') {
     if (value === null || value === undefined || value === '') return '—';
 
     try {
@@ -138,7 +131,11 @@ export function toTitleCase(str) {
     return str
         .replace(/[_\-]/g, ' ')
         .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/\w\S*/g, (txt) =>
-            txt.charAt(0).toUpperCase() + txt.slice(1)
-        );
+        .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1));
 }
+
+//capitalize
+export const capitalize = (str) => {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};

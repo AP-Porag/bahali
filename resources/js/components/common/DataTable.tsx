@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
 import { router } from '@inertiajs/react';
-import { BadgeCheck, ChevronLeft, ChevronRight, Edit, EyeIcon, MoreVertical, ShieldAlert, Trash2 } from 'lucide-react';
+import { BadgeCheck, ChevronLeft, ChevronRight, Edit, EyeIcon, MoreVertical, Settings, Trash2 } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
@@ -16,11 +17,6 @@ export default function DataTable({
         view: false,
         edit: true,
         delete: true,
-        verify: true,
-        provisional: true,
-        suspend: true,
-        expire: true,
-        publish: true,
         search_filter: true,
         status_filter: true,
         per_page_filter: true,
@@ -32,6 +28,8 @@ export default function DataTable({
 }) {
     const [deleteId, setDeleteId] = React.useState(null);
     const [statusModal, setStatusModal] = React.useState(false);
+    const [verificationModal, setVerificationModal] = React.useState(false);
+
     const [selectedRow, setSelectedRow] = React.useState(null);
     const [selectedStatus, setSelectedStatus] = React.useState('');
 
@@ -53,11 +51,7 @@ export default function DataTable({
             edit: actions.edit,
             delete: actions.delete,
             change_status: actions.change_status,
-            verify: actions.verify,
-            provisional: actions.provisional,
-            suspend: actions.suspend,
-            expire: actions.expire,
-            publish: actions.publish,
+            change_verification_status: actions.change_verification_status,
         };
     };
 
@@ -103,7 +97,7 @@ export default function DataTable({
                     />
                 )}
 
-                {globalActions.status_filter && (
+                {/* {globalActions.status_filter && (
                     <Select value={filters.status} onValueChange={(value) => handleFilterChange({ target: { name: 'status', value } })}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Status" />
@@ -114,7 +108,7 @@ export default function DataTable({
                             <SelectItem value="0">Inactive</SelectItem>
                         </SelectContent>
                     </Select>
-                )}
+                )} */}
 
                 {globalActions.per_page_filter && (
                     <Select value={Number(filters.perPage)} onValueChange={(value) => handleFilterChange({ target: { name: 'perPage', value } })}>
@@ -204,41 +198,22 @@ export default function DataTable({
                                                             setStatusModal(true);
                                                         }}
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4 text-red-600" />
+                                                        <Settings className="mr-2 h-4 w-4" />
                                                         Change Status
                                                     </DropdownMenuItem>
                                                 )}
 
-                                                {/* LIFECYCLE ACTIONS */}
-                                                {rowActions.verify && (
-                                                    <DropdownMenuItem onClick={() => router.post(`/admin/verify/provider/${row.id}`)}>
+                                                {/* CHANGE VERIFICATION STATUS */}
+                                                {rowActions.change_verification_status && (
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setSelectedRow(row);
+                                                            setSelectedStatus(row.verification_status);
+                                                            setVerificationModal(true);
+                                                        }}
+                                                    >
                                                         <BadgeCheck className="mr-2 h-4 w-4 text-green-600" />
-                                                        Verified
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {rowActions.provisional && (
-                                                    <DropdownMenuItem onClick={() => router.post(`/admin/provisional/provider/${row.id}`)}>
-                                                        <ShieldAlert className="h-4 w-4 text-yellow-600" />
-                                                        Provisional
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {rowActions.publish && (
-                                                    <DropdownMenuItem onClick={() => router.post(`/admin/publish/provider/${row.id}`)}>
-                                                        Publish
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {rowActions.suspend && (
-                                                    <DropdownMenuItem onClick={() => router.post(`/admin/suspend/provider/${row.id}`)}>
-                                                        Suspend
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {rowActions.expire && (
-                                                    <DropdownMenuItem onClick={() => router.post(`/admin/expire/provider/${row.id}`)}>
-                                                        Expire
+                                                        Change Verification Status
                                                     </DropdownMenuItem>
                                                 )}
                                             </DropdownMenuContent>
@@ -278,10 +253,11 @@ export default function DataTable({
                 message="Once deleted, you will not be able to recover this item."
             />
 
+            {/* Status Modal */}
             {statusModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-lg font-semibold">Change Provider Status</h2>
+                        <h2 className="mb-4 text-lg font-semibold">Change Status</h2>
 
                         <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                             <SelectTrigger>
@@ -289,11 +265,11 @@ export default function DataTable({
                             </SelectTrigger>
 
                             <SelectContent>
-                                <SelectItem value="draft">Draft</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="published">Published</SelectItem>
-                                <SelectItem value="suspended">Suspended</SelectItem>
-                                <SelectItem value="expired">Expired</SelectItem>
+                                <SelectItem value={STATUS.DRAFT}>Draft</SelectItem>
+                                <SelectItem value={STATUS.PENDING}>Pending</SelectItem>
+                                <SelectItem value={STATUS.PUBLISHED}>Published</SelectItem>
+                                <SelectItem value={STATUS.SUSPENDED}>Suspended</SelectItem>
+                                <SelectItem value={STATUS.EXPIRED}>Expired</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -328,6 +304,56 @@ export default function DataTable({
                                 }}
                             >
                                 Update Status
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Veirification Status Modal */}
+
+            {verificationModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6">
+                        <h2 className="mb-4 text-lg font-semibold">Change Verification Status</h2>
+
+                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Verification Status" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value={VERIFICATION_STATUS.UNVERIFIED}>Unverified</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.VERIFIED}>Verified</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.PROVISIONAL}>Provisional</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.REJECTED}>Rejected</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.REVOKED}>Revoked</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.EXPIRED}>Expired</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setVerificationModal(false)}>
+                                Cancel
+                            </Button>
+
+                            <Button
+                                onClick={() => {
+                                    router.post(
+                                        `/admin/change/status/provider/${selectedRow.id}`,
+                                        {
+                                            type: 'verification_status',
+                                            status: selectedStatus,
+                                        },
+                                        {
+                                            onSuccess: () => {
+                                                toast.success('Verification updated');
+                                                setVerificationModal(false);
+                                            },
+                                        },
+                                    );
+                                }}
+                            >
+                                Update
                             </Button>
                         </div>
                     </div>
