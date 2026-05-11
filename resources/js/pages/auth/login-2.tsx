@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle, Mail, Lock, Eye } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
@@ -9,8 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
-
-
 
 interface LoginForm {
     email: string;
@@ -38,27 +36,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-       <div className="relative h-[100vh] w-full bg-[url('/images/bahali-background.jpg')] bg-cover bg-center">
-    
-    {/* Overlay */}
-    
+        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
+            <Head title="Log in" />
 
-    {/* Form Container */}
-    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 md:-translate-x-3/4 flex justify-center">
-        <div className="bg-white/90 flex items-center justify-center rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
-        <form className="flex w-[100%] p-10 flex-col" onSubmit={submit}>
-                    
-            {/* <form className="flex flex-col gap-6" onSubmit={submit}> */}
+            <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="mb-1 block text-sm font-bold text-gray-700">Email address</Label>
-
-
-                    <div className="relative">
-                           <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-
+                        <Label htmlFor="email">Email address</Label>
                         <Input
-                        className="pl-[35px] focus-visible:ring-[#3b7890] outline-2 outline-gray-300"
                             id="email"
                             type="email"
                             required
@@ -69,19 +54,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             onChange={(e) => setData('email', e.target.value)}
                             placeholder="email@example.com"
                         />
-                        </div>
                         <InputError message={errors.email} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password" className="mb-1 block text-sm font-bold text-gray-700">Password</Label>
-
-                        <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <Eye className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-
+                        <div className="flex items-center">
+                            <Label htmlFor="password">Password</Label>
+                            {canResetPassword && (
+                                <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
+                                    Forgot password?
+                                </TextLink>
+                            )}
+                        </div>
                         <Input
-                            className="pl-[35px] focus-visible:ring-[#3b7890] outline-2 outline-gray-300"
                             id="password"
                             type="password"
                             required
@@ -91,41 +76,29 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="Password"
                         />
-                        </div>
                         <InputError message={errors.password} />
-
-                        <div className="flex items-center justify-end">
-                            {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto font-medium no-underline text-sm text-[#3b7890]" tabIndex={5}>
-                                    Forgot password?
-                                </TextLink>
-                            )}
-                        </div>
                     </div>
 
-                    {/* <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3">
                         <Checkbox id="remember" name="remember" tabIndex={3} />
                         <Label htmlFor="remember">Remember me</Label>
-                    </div> */}
+                    </div>
 
-                    <Button type="submit" className=" transition-all duration-300 ease-in-out hover:scale-105 mt-4 mb-6 w-full rounded-3xl bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
                 </div>
 
-                {/* <div className="text-muted-foreground text-center text-sm">
+                <div className="text-muted-foreground text-center text-sm">
                     Don't have an account?{' '}
                     <TextLink href={route('register')} tabIndex={5}>
                         Sign up
                     </TextLink>
-                </div> */}
+                </div>
             </form>
-            </div>
-            </div>
-            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
-        {/* </AuthLayout> */}
-        </div>
+            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+        </AuthLayout>
     );
 }
