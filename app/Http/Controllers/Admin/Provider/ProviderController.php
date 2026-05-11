@@ -107,7 +107,9 @@ class ProviderController extends Controller
     {
         $this->service->setVerified($provider);
 
-        return response()->json(['message' => 'Provider verified successfully']);
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider Verified');
     }
 
     public function provisional(Provider $provider)
@@ -147,11 +149,29 @@ class ProviderController extends Controller
     }
 
 
+    public function changeStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => ['required', 'string'],
+        ]);
+
+        $provider = Provider::findOrFail($id);
+
+        $provider->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()
+            ->route('providers.index')
+            ->with('success', 'Provider Status Updated');
+    }
+
+
 
     // GET /api/providers
     public function getProvidersForApi()
     {
-        $providers = Provider::where('verification_status', GlobalConstant::VERIFICATION_STATUS_APPROVED)->with('providerType')->get();
+        $providers = Provider::where('verification_status', GlobalConstant::VERIFICATION_STATUS_VERIFIED)->with('providerType')->get();
         return new ProviderCollection($providers);
     }
 }

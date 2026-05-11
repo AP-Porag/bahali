@@ -44,13 +44,14 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::resource('provider-type', ProviderTypeController::class);
     Route::resource('providers', ProviderController::class);
 
-    Route::post('verify/provider/{provider}', [ProviderController::class, 'verify']);
-    Route::post('provisional/provider/{provider}', [ProviderController::class, 'provisional']);
+    // Route::post('verify/provider/{provider}', [ProviderController::class, 'verify']);
+    // Route::post('provisional/provider/{provider}', [ProviderController::class, 'provisional']);
 
-    Route::post('suspend/provider/{provider}', [ProviderController::class, 'suspend']);
+    // Route::post('suspend/provider/{provider}', [ProviderController::class, 'suspend']);
 
-    Route::post('expire/provider/{provider}', [ProviderController::class, 'expire']);
-    Route::post('publish/provider/{provider}', [ProviderController::class, 'publish']);
+    // Route::post('expire/provider/{provider}', [ProviderController::class, 'expire']);
+    // Route::post('publish/provider/{provider}', [ProviderController::class, 'publish']);
+    Route::post('change/status/provider/{selectedRow}', [ProviderController::class, 'changeStatus']);
 });
 
 require __DIR__ . '/settings.php';

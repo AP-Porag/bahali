@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Edit, EyeIcon, MoreVertical, Trash2 } from 'lucide-react';
+import { BadgeCheck, ChevronLeft, ChevronRight, Edit, EyeIcon, MoreVertical, ShieldAlert, Trash2 } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
@@ -31,6 +31,9 @@ export default function DataTable({
     perPageOptions = [5, 10, 25, 50],
 }) {
     const [deleteId, setDeleteId] = React.useState(null);
+    const [statusModal, setStatusModal] = React.useState(false);
+    const [selectedRow, setSelectedRow] = React.useState(null);
+    const [selectedStatus, setSelectedStatus] = React.useState('');
 
     const globalActions = {
         search_filter: true,
@@ -49,6 +52,7 @@ export default function DataTable({
             view: actions.view,
             edit: actions.edit,
             delete: actions.delete,
+            change_status: actions.change_status,
             verify: actions.verify,
             provisional: actions.provisional,
             suspend: actions.suspend,
@@ -191,15 +195,31 @@ export default function DataTable({
                                                     </DropdownMenuItem>
                                                 )}
 
+                                                {/* CHANGE STATUS */}
+                                                {rowActions.change_status && (
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setSelectedRow(row);
+                                                            setSelectedStatus(row.status);
+                                                            setStatusModal(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4 text-red-600" />
+                                                        Change Status
+                                                    </DropdownMenuItem>
+                                                )}
+
                                                 {/* LIFECYCLE ACTIONS */}
                                                 {rowActions.verify && (
                                                     <DropdownMenuItem onClick={() => router.post(`/admin/verify/provider/${row.id}`)}>
-                                                        Verify
+                                                        <BadgeCheck className="mr-2 h-4 w-4 text-green-600" />
+                                                        Verified
                                                     </DropdownMenuItem>
                                                 )}
 
                                                 {rowActions.provisional && (
                                                     <DropdownMenuItem onClick={() => router.post(`/admin/provisional/provider/${row.id}`)}>
+                                                        <ShieldAlert className="h-4 w-4 text-yellow-600" />
                                                         Provisional
                                                     </DropdownMenuItem>
                                                 )}
@@ -257,6 +277,62 @@ export default function DataTable({
                 title="Are you sure you want to delete this item?"
                 message="Once deleted, you will not be able to recover this item."
             />
+
+            {statusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+                        <h2 className="mb-4 text-lg font-semibold">Change Provider Status</h2>
+
+                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Status" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="published">Published</SelectItem>
+                                <SelectItem value="suspended">Suspended</SelectItem>
+                                <SelectItem value="expired">Expired</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setStatusModal(false);
+                                    setSelectedRow(null);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+
+                            <Button
+                                onClick={() => {
+                                    router.post(
+                                        `/admin/change/status/provider/${selectedRow.id}`,
+                                        {
+                                            status: selectedStatus,
+                                        },
+                                        {
+                                            onSuccess: () => {
+                                                toast.success('Status updated successfully');
+                                                setStatusModal(false);
+                                            },
+                                            onError: () => {
+                                                toast.error('Failed to update status');
+                                            },
+                                        },
+                                    );
+                                }}
+                            >
+                                Update Status
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

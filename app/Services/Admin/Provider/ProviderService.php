@@ -142,6 +142,7 @@ class ProviderService
             'verification_status' => 'provisional',
             'is_public' => true,
         ]);
+        return $provider;
     }
 
     public function suspend(Provider $provider): Provider
