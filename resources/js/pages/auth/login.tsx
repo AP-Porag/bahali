@@ -38,13 +38,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-       <div className="relative h-[100vh] w-full bg-[url('/images/bahali-background.jpg')] bg-cover bg-center">
+       <div className="flex justify-center items-center h-[100vh] w-full bg-[url('/images/bahali-background.jpg')] bg-cover bg-center">
     
     {/* Overlay */}
     
 
     {/* Form Container */}
-    <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 md:-translate-x-3/4 flex justify-center">
+    <div className="sm:mr-[100px] flex justify-center">
         <div className="bg-white/90 flex items-center justify-center rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
         <form className="flex w-[100%] p-10 flex-col" onSubmit={submit}>
                     
@@ -94,13 +94,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         </div>
                         <InputError message={errors.password} />
 
-                        <div className="flex items-center justify-end">
+                        {/* <div className="flex items-center justify-end">
                             {canResetPassword && (
                                 <TextLink href={route('password.request')} className="ml-auto font-medium no-underline text-sm text-[#3b7890]" tabIndex={5}>
                                     Forgot password?
                                 </TextLink>
                             )}
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* <div className="flex items-center space-x-3">
@@ -127,5 +127,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
         {/* </AuthLayout> */}
         </div>
+
     );
 }
