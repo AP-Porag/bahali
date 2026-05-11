@@ -30,11 +30,11 @@ Route::get('/', function () {
 //->prefix('admin')->as('admin.')
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
-    // Route::get('/under-development', function (\Illuminate\Http\Request $request) {
-    //     return Inertia::render('shared/underDevelopment', [
-    //         'module' => $request->get('module'),
-    //     ]);
-    // })->name('under-development');
+    Route::get('/under-development', function (\Illuminate\Http\Request $request) {
+        return Inertia::render('shared/underDevelopment', [
+            'module' => $request->get('module'),
+        ]);
+    })->name('under-development');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
