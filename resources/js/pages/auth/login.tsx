@@ -120,7 +120,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div> */}
 
-                    <Button type="submit" className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 mt-4 md:mt-6 mb-6 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 mt-4 md:mt-6 mb-4 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
