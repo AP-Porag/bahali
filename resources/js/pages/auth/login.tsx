@@ -62,7 +62,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             {/* <form className="flex flex-col gap-6" onSubmit={submit}> */}
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="mb-1 block text-sm font-bold text-cyan-800">Email address</Label>
+                        <Label htmlFor="email" className="mb-1 block text-sm font-bold text-cyan-800 font-roboto">Email address</Label>
 
 
                     <div className="relative">
@@ -85,7 +85,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password" className="mb-1 block text-sm font-bold text-cyan-800">Password</Label>
+                        <Label htmlFor="password" className="mb-1 block text-sm font-bold text-cyan-800 font-roboto">Password</Label>
 
                         <div className="relative">
                         <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -120,7 +120,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div> */}
 
-                    <Button type="submit" className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 mt-4 md:mt-6 mb-4 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 mt-4 md:mt-6 mb-4 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
