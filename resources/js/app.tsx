@@ -25,10 +25,10 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <>
+                <div className="font-roboto">
                     <App {...props} />
                     <Toaster position="top-right" richColors />
-                </>
+                </div>
             </StrictMode>,
         );
     },

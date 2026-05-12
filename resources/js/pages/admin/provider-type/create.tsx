@@ -62,9 +62,9 @@ export default function CreateIndustry() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Industry" />
 
-            <div className="mx-auto mt-6 w-full max-w-7xl p-4">
+            <div className="mx-auto mt-6 w-full max-w-7xl p-4 font-roboto">
                 <div className="rounded-xl bg-white p-6 shadow">
-                    <h1 className="mb-6 text-xl font-bold">Create Provider Type</h1>
+                    <h1 className="mb-6 text-xl font-roboto font-bold">Create Provider Type</h1>
 
                     <form onSubmit={submit} className="space-y-4">
                         <div>

@@ -93,7 +93,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Eye className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 cursor-pointer" />
 
                         <Input
-                            className="pl-[35px] focus-visible:ring-[#3b7890] outline-2 outline-gray-300"
+                            className="pl-[35px] pr-[32px] focus-visible:ring-[#3b7890] outline-2 outline-gray-300"
                             id="password"
                             type="password"
                             required

@@ -63,7 +63,7 @@ export default function EditIndustry() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Industry" />
 
-            <div className="mx-auto mt-6 w-full max-w-7xl p-4">
+            <div className="mx-auto mt-6 w-full max-w-7xl p-4 font-roboto">
                 <div className="rounded-xl bg-white p-6 shadow">
                     <h1 className="mb-6 text-xl font-bold">Edit Industry</h1>
 

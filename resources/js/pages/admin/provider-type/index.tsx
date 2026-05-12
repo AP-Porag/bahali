@@ -51,7 +51,7 @@ export default function Index({ provider_types, meta, filters: initialFilters })
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="All Industries" />
 
-            <div className="p-4">
+            <div className="p-4 font-roboto">
                 <div className="my-4 flex items-center justify-between">
                     <h1 className="text-2xl font-bold">All Providers</h1>
 

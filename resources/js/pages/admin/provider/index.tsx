@@ -97,7 +97,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Clients" />
-            <div className="p-4">
+            <div className="p-4 font-roboto">
                 <div className="my-4 flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Providers</h1>
                     <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">

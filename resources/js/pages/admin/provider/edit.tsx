@@ -151,7 +151,7 @@ export default function Edit({ provider, provider_type }: any) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Provider" />
 
-            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4">
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4 font-roboto">
                 <div className="rounded-xl border p-5">
                     <form onSubmit={handleSubmit(saveProvider)}>
                         {/* ================= PROVIDER INFO ================= */}

@@ -24,7 +24,7 @@ export default function Show({ provider }: any) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Provider Details" />
 
-            <div className="grid grid-cols-1 gap-10 p-4 lg:grid-cols-2 lg:gap-4">
+            <div className="grid grid-cols-1 gap-10 p-4 lg:grid-cols-2 lg:gap-4 font-roboto">
                 {/* ================= CLIENT INFORMATION ================= */}
                 <Card className="rounded-xl">
                     <div className="flex justify-between">

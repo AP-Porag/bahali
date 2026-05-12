@@ -80,7 +80,11 @@
         border-color: var(--color-gray-200, currentColor);
     }
 }
-
+/* @layer base {
+    body {
+        @apply text-red-700;
+    }
+} */
 
 :root {
     --background: hsl(0, 0%, 100%);
