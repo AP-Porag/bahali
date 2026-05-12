@@ -51,7 +51,7 @@ export default function Show({ provider }: any) {
                         </CardContent>
                     </div>
 
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 -mt-10">
                         <div>
                             <p className="text-sm font-semibold">Name</p>
                             <p className="text-sm text-gray-600">{provider?.name}</p>

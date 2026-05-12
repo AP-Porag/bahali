@@ -45,19 +45,24 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     {/* Form Container */}
     <div className="flex justify-center w-[100%]">
-        <div className="bg-white/90 flex flex-col items-center justify-center w-[80%] sm:w-[68%] md:w-[55%] lg:w-[40%] rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
+        <div className="bg-white/90 flex flex-col items-center justify-center w-[75%] sm:w-[58%] md:w-[48%] lg:w-[32%] rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)]">
 
          <img 
           src="/images/bahali-logo.png" 
           alt="Bahali Logo" 
           className="w-38 sm:w-45 h-auto pt-10"
          />
-        <form className="flex w-[100%] p-10 flex-col" onSubmit={submit}>
+         <img 
+          src="/images/bahali-divider.png" 
+          alt="Bahali Logo" 
+          className="w-38 sm:w-45 h-auto"
+         />
+        <form className="flex w-[100%] px-7 pb-10 pt-5 sm:p-10 flex-col" onSubmit={submit}>
                     
             {/* <form className="flex flex-col gap-6" onSubmit={submit}> */}
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="mb-1 block text-sm font-bold text-gray-700">Email address</Label>
+                        <Label htmlFor="email" className="mb-1 block text-sm font-bold text-cyan-800">Email address</Label>
 
 
                     <div className="relative">
@@ -80,7 +85,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password" className="mb-1 block text-sm font-bold text-gray-700">Password</Label>
+                        <Label htmlFor="password" className="mb-1 block text-sm font-bold text-cyan-800">Password</Label>
 
                         <div className="relative">
                         <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -115,7 +120,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div> */}
 
-                    <Button type="submit" className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 mt-4 mb-6 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 mt-4 md:mt-6 mb-6 w-full rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
