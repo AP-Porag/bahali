@@ -57,7 +57,7 @@ export default function Index({ provider_types, meta, filters: initialFilters })
 
                     <Button
                         onClick={() => router.visit(route('provider-type.create'))}
-                        className="cursor-pointer bg-black text-white hover:bg-gray-800"
+                        className="cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Create Provider Type

@@ -100,7 +100,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
             <div className="p-4 font-roboto">
                 <div className="my-4 flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Providers</h1>
-                    <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
+                    <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]">
                         <Plus className="mr-2" /> Create Provider
                     </Button>
                 </div>

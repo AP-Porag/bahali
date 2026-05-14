@@ -98,7 +98,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         )}
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save</Button>
+                            <Button className="cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]" disabled={processing}>Save</Button>
 
                             <Transition
                                 show={recentlySuccessful}

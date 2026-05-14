@@ -81,7 +81,7 @@ export default function CreateIndustry() {
                             {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                         </div>
 
-                        <Button type="submit" className="w-full cursor-pointer bg-black text-white">
+                        <Button type="submit" className="w-full cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]">
                             Save Provider Type
                         </Button>
                     </form>

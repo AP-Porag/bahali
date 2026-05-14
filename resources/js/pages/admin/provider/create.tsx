@@ -117,7 +117,7 @@ export default function Create({ provider_type = [] }: any) {
                         <div className="mb-6 rounded-xl bg-white p-6 shadow dark:bg-gray-800">
                             <h2 className="mb-4 text-lg font-semibold">Provider Information</h2>
 
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2">
                                 {[
                                     ['name', 'Name'],
                                     ['email', 'Email'],
@@ -192,7 +192,7 @@ export default function Create({ provider_type = [] }: any) {
                                     render={({ field }) => (
                                         <div className="grid gap-2">
                                             <Label>Avatar</Label>
-
+                                            <div className="">
                                             {avatarPreview && <img src={avatarPreview} className="h-20 w-20 rounded-full border object-cover" />}
 
                                             <Input
@@ -216,6 +216,7 @@ export default function Create({ provider_type = [] }: any) {
                                                     }
                                                 }}
                                             />
+                                            </div>
                                         </div>
                                     )}
                                 />
@@ -224,7 +225,7 @@ export default function Create({ provider_type = [] }: any) {
 
                         {/* ================= SUBMIT ================= */}
                         <div className="flex justify-end">
-                            <Button type="submit" disabled={isSubmitting} className="cursor-pointer">
+                            <Button type="submit" disabled={isSubmitting} className="cursor-pointer font-roboto transition-all duration-300 ease-in-out hover:scale-105 rounded-[12px] bg-[#2b777f] hover:bg-[#24636a]">
                                 {isSubmitting ? (
                                     <>
                                         <RotateCw className="mr-2 h-4 w-4 animate-spin" />
