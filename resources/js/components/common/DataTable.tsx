@@ -162,7 +162,7 @@ export default function DataTable({
                                     {/* ACTIONS */}
                                     <td className="px-4 py-2 text-right">
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            <DropdownMenuTrigger asChild className="bg-[#2b777f] hover:bg-[#24636a]">
                                                 <Button size="action" className="cursor-pointer text-white">
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
