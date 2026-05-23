@@ -13,13 +13,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
+        $this->call([
+            RegionTypeSeeder::class,
+            CountrySeeder::class,
+            RegionSeeder::class,
+            ProviderProfessionCategorySeeder::class,
+            ProviderProfessionSeeder::class,
+            CredentialSeeder::class,
+            SupportAreaSeeder::class,
+            LanguageSeeder::class,
+            // DemoProviderSeeder::class, // Optional: for testing
+        ]);
+
+        // 4. Admin user (independent, can be last)
         User::factory()->create([
             'name' => 'Admin Main',
             'email' => 'admin@app.com',
-            'password' => '12345678',
-            'role' => 'admin'
+            'password' => bcrypt('12345678'),
+            'role' => 'admin',
         ]);
     }
 }

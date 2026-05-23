@@ -14,127 +14,63 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('providers', function (Blueprint $table) {
 
+        Schema::create('providers', function (Blueprint $table) {
             $table->id();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Basic Information
-            |--------------------------------------------------------------------------
-            */
+            // Basic identity
+            $table->string('display_name');
+            $table->string('organization_name')->nullable();
+            $table->string('slug')->unique();
 
-            $table->string('name');
-            // $table->string('slug')->unique();
+            // Bio
+            $table->longText('bio')->nullable();
 
-            $table->string('email')->unique();
+            // Contact
+            $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('website')->nullable();
 
-            $table->text('bio')->nullable();
+            // Geography
+            $table->foreignId('country_id')->nullable();
+            $table->foreignId('region_id')->nullable();
 
-            $table->string('avatar')->nullable();
+            $table->string('region_type')->nullable();
+            $table->string('city_or_community')->nullable();
 
-            $table->string('location')->nullable();
-            $table->string('region')->nullable();
+            // Service
+            $table->boolean('virtual_services_available')->default(false);
+            $table->boolean('in_person_services_available')->default(false);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Provider Type
-            |--------------------------------------------------------------------------
-            */
+            // Address privacy
+            $table->enum('address_visibility_preference', [
+                'none',
+                'city_region',
+                'service_area',
+                'full_address',
+            ])->default('city_region');
 
-            $table->foreignId('provider_type_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Service Information
-            |--------------------------------------------------------------------------
-            | MVP stage এ string acceptable
-            | Future এ pivot table করা যাবে
-            |--------------------------------------------------------------------------
-            */
-
-            $table->string('service')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Governance / Visibility
-            |--------------------------------------------------------------------------
-            */
-
-            $table->enum('status', [
-                GlobalConstant::STATUS_DRAFT,
-                GlobalConstant::STATUS_PENDING,
-                GlobalConstant::STATUS_PUBLISHED,
-                GlobalConstant::STATUS_SUSPENDED,
-                GlobalConstant::STATUS_EXPIRED,
-                GlobalConstant::STATUS_ARCHIVED,
-            ])->default(GlobalConstant::STATUS_DRAFT);
-
+            // Verification
             $table->enum('verification_status', [
-                GlobalConstant::VERIFICATION_STATUS_UNVERIFIED,
-                GlobalConstant::VERIFICATION_STATUS_VERIFIED,
-                GlobalConstant::VERIFICATION_STATUS_PROVISIONAL,
-                GlobalConstant::VERIFICATION_STATUS_REJECTED,
-                GlobalConstant::VERIFICATION_STATUS_REVOKED,
-                GlobalConstant::VERIFICATION_STATUS_EXPIRED,
-            ])->default(GlobalConstant::VERIFICATION_STATUS_UNVERIFIED);
+                'pending_review',
+                'verified_licensed',
+                'verified_organization',
+                'community_based',
+                'faith_based',
+                'not_verified',
+                'hidden',
+            ])->default('pending_review');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Public Visibility
-            |--------------------------------------------------------------------------
-            */
-
-            $table->boolean('is_public')->default(false);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Governance Dates
-            |--------------------------------------------------------------------------
-            */
-
-            $table->timestamp('verified_at')->nullable();
-
-            $table->timestamp('published_at')->nullable();
-
-            $table->timestamp('verification_expires_at')->nullable();
-
-            $table->timestamp('suspended_at')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Governance Notes
-            |--------------------------------------------------------------------------
-            */
-
-            $table->text('internal_notes')->nullable();
-
-            $table->text('suspension_reason')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Audit / Tracking
-            |--------------------------------------------------------------------------
-            */
-
-            $table->foreignId('approved_by')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Laravel Defaults
-            |--------------------------------------------------------------------------
-            */
+            // Lifecycle
+            $table->enum('status', [
+                'draft',
+                'pending',
+                'published',
+                'suspended',
+                'expired',
+            ])->default('draft');
 
             $table->timestamps();
-
-            $table->softDeletes();
         });
     }
 
