@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\ProviderRequest;
 use App\Http\Resources\ProviderCollection;
 use App\Models\Country;
+use App\Models\Credential;
 use App\Models\Provider;
+use App\Models\ProviderProfessionCategory;
 use App\Models\ProviderType;
+use App\Models\SupportArea;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Utils\GlobalConstant;
@@ -38,10 +41,18 @@ class ProviderController extends Controller
     {
         // $country = Country::with(['regionTypes.regions'])->get();
         $countries = Country::with('regions.regionType')->get();
+        $professionCategories = ProviderProfessionCategory::with('professions')
+            ->orderBy('id')
+            ->get();
+
+        $credentials = Credential::select('id', 'name')->get();
+        $supportArea = SupportArea::select('id', 'name')->get();
 
         return Inertia::render('admin/provider/create', [
             'provider_type' => ProviderType::select('id', 'name')->get(),
             'countries' => $countries,
+            'professionCategories' => $professionCategories,
+            'supoort_areas' => $supportArea,
         ]);
     }
 

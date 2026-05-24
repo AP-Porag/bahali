@@ -1,33 +1,28 @@
 import ProviderIntakeForm from "@/pages/shared/ProviderForm";
+import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
 
-type Region = {
-    id: number;
-    name: string;
-};
-
-type RegionType = {
-    id: number;
-    name: string;
-    regions: Region[];
-};
-
-type Country = {
-    id: number;
-    name: string;
-    region_types: RegionType[];
-};
 
 type CreateProviderPageProps = {
     countries: Country[];
+    professionCategories: ProfessionCategory[];
+    credentials: Credential[];
+    supoort_areas: SupportArea[];
 };
 
 export default function CreateProviderPage({
     countries,
+    professionCategories,
+    credentials,
+    supoort_areas
 }: CreateProviderPageProps) {
-
     return (
         <div>
-            <ProviderIntakeForm countries={countries} />
+            <ProviderIntakeForm
+                countries={countries}
+                professionCategories={professionCategories}
+                credentials={credentials}
+                support_areas={supoort_areas}
+            />
         </div>
     );
 }

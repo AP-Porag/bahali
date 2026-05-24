@@ -29,7 +29,7 @@ class ProviderProfession extends Model
 
     public function category()
     {
-        return $this->belongsTo(ProviderProfessionCategory::class, 'category_id');
+        return $this->belongsTo(ProviderProfessionCategory::class, 'provider_profession_category_id');
     }
 
     public function providers()

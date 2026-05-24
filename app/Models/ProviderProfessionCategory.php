@@ -26,7 +26,7 @@ class ProviderProfessionCategory extends Model
 
     public function professions()
     {
-        return $this->hasMany(ProviderProfession::class, 'category_id');
+        return $this->hasMany(ProviderProfession::class, 'provider_profession_category_id');
     }
 
     public function scopeActive($query)

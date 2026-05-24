@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
 
 type FormState = {
     providerName: string;
@@ -15,7 +16,7 @@ type FormState = {
 
     professions: string[];
     credentials: string[];
-    areasOfSupport: string[];
+    support_areas: string[];
 
     streetAddress1: string;
     streetAddress2: string;
@@ -23,101 +24,43 @@ type FormState = {
     latitude: string;
     longitude: string;
 
-
-
     verification_address: string;
-    billing_address: string
+    billing_address: string;
 
     addressVisibilityPreference: string;
     locationSensitivityFlag: boolean;
 };
 
-type RegionType = {
-    id: number;
-    name: string;
-    label: string; // Add label field if it exists in your data
-    // ... other fields
-};
-
-type Region = {
-    id: number;
-    name: string;
-    region_type: RegionType; // Note: region_type is an object, not just an ID
-    region_type_id: number;
-    country_id: number;
-    // ... other fields
-};
-
-type Country = {
-    id: number;
-    name: string;
-    code: string;
-    regions: Region[]; // Direct regions array instead of region_types array
-    is_caribbean: boolean;
-    is_diaspora: boolean;
-    // ... other fields
-};
-
 type ProviderIntakeFormProps = {
     countries: Country[];
+    professionCategories: ProfessionCategory[];
+    credentials: Credential[];
+    support_areas: SupportArea[];
 };
 
 const steps = [
     "Welcome",
     "Location",
     "Professional Role",
-    // "Service & Privacy",
 ];
 
-// =======================
-// SEED DATA (DB READY)
-// =======================
-
-const PROFESSIONS = [
-    "Psychologist",
-    "Clinical Psychologist",
-    "Psychiatrist",
-    "Pastoral Counselor",
-    "Community Health Worker",
-    "Life Coach",
-    "Peer Support Specialist",
-];
-
-const CREDENTIALS = ["PhD", "PsyD", "MD", "LCSW", "LMFT", "LPC"];
+// Credentials and Areas of Support remain as seed data
 
 const SUPPORTS = [
-    "Anxiety",
-    "Trauma / PTSD",
-    "Grief & Loss",
-    "Substance Use",
-    "Spiritual Care",
-    "Community Healing",
+    "Anxiety", "Depression", "Trauma / PTSD", "Grief & Loss",
+    "Substance Use", "Spiritual Care", "Community Healing",
+    "Parenting Support", "Youth & Adolescent", "Relationship Issues",
+    "Family Conflict", "Domestic Violence", "Disaster Recovery",
+    "Racial Trauma", "Immigration Stress", "Life Transitions",
+    "Chronic Illness", "Disability Support", "Elder Care",
+    "Perinatal Mental Health", "Postpartum Support"
 ];
-
-// =======================
-// COUNTRY TAXONOMY
-// =======================
-
-
-
-// const MAP: Record<string, { type: string; regions: string[] }> = {
-//     Jamaica: {
-//         type: "Parish",
-//         regions: ["Kingston", "St. Andrew", "St. James", "St. Elizabeth"],
-//     },
-//     USA: {
-//         type: "State",
-//         regions: ["New York", "Florida", "Texas", "California"],
-//     },
-//     Canada: {
-//         type: "Province",
-//         regions: ["Ontario", "Quebec", "Alberta"],
-//     },
-// };
-
 
 export default function ProviderIntakePremium({
     countries,
+    professionCategories,
+    credentials,
+    support_areas
 }: ProviderIntakeFormProps) {
     const [step, setStep] = useState(0);
 
@@ -136,7 +79,7 @@ export default function ProviderIntakePremium({
 
         professions: [],
         credentials: [],
-        areasOfSupport: [],
+        support_areas: [],
 
         streetAddress1: "",
         streetAddress2: "",
@@ -150,47 +93,17 @@ export default function ProviderIntakePremium({
         addressVisibilityPreference: "city_region_only",
         locationSensitivityFlag: false,
     });
-    console.log(countries)
-
-    const regionMap = useMemo(() => {
-        const map: Record<number, { type: string; regions: string[] }> = {};
-
-        countries?.forEach((country) => {
-            const grouped: Record<string, string[]> = {};
-
-            country.region_types?.forEach((rt) => {
-                const type = rt.name;
-
-                rt.regions?.forEach((r) => {
-                    if (!grouped[type]) grouped[type] = [];
-                    grouped[type].push(r.name);
-                });
-            });
-
-            const firstType = Object.keys(grouped)[0];
-
-            map[country.id] = {
-                type: firstType || "Region",
-                regions: grouped[firstType] || [],
-            };
-        });
-
-        return map;
-    }, [countries]);
 
     const selectedCountry = useMemo(() => {
         return countries.find((c) => String(c.id) === String(form.country));
     }, [form.country, countries]);
 
-
     const regionConfig = useMemo(() => {
         if (!selectedCountry || !selectedCountry.regions) return null;
 
-        // Group regions by their region_type
         const grouped: Record<string, string[]> = {};
 
         selectedCountry.regions.forEach((region) => {
-            // Access the nested region_type from each region
             const typeName = region.region_type?.name || "Region";
 
             if (!grouped[typeName]) {
@@ -199,7 +112,6 @@ export default function ProviderIntakePremium({
             grouped[typeName].push(region.name);
         });
 
-        // Get the first region type (or you can make it selectable if there are multiple types)
         const types = Object.keys(grouped);
         const selectedType = types.length > 0 ? types[0] : "Region";
 
@@ -208,20 +120,9 @@ export default function ProviderIntakePremium({
             regions: grouped[selectedType] || [],
         };
     }, [selectedCountry]);
+
     const update = (key: keyof FormState, value: any) => {
         setForm((prev) => ({ ...prev, [key]: value }));
-    };
-
-    const toggleMulti = (key: keyof FormState, value: string) => {
-        setForm((prev: any) => {
-            const exists = prev[key].includes(value);
-            return {
-                ...prev,
-                [key]: exists
-                    ? prev[key].filter((v: string) => v !== value)
-                    : [...prev[key], value],
-            };
-        });
     };
 
     const next = () =>
@@ -244,15 +145,12 @@ export default function ProviderIntakePremium({
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#120B2C] via-[#2A1458] to-[#0E7490] p-6">
-
             <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-10">
-
                 {/* HEADER */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-semibold text-[#1C0F3A]">
                         Provider Onboarding
                     </h1>
-
                     <p className="text-gray-500 mt-1">
                         Bahali Trust & Care Network
                     </p>
@@ -262,9 +160,7 @@ export default function ProviderIntakePremium({
                         {steps.map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-1.5 flex-1 rounded-full transition ${i <= step
-                                    ? "bg-[#2A1458]"
-                                    : "bg-gray-200"
+                                className={`h-1.5 flex-1 rounded-full transition ${i <= step ? "bg-[#2A1458]" : "bg-gray-200"
                                     }`}
                             />
                         ))}
@@ -272,70 +168,51 @@ export default function ProviderIntakePremium({
 
                     <p className="text-sm text-gray-500 mt-2">
                         Step {step + 1} of {steps.length} —{" "}
-                        <span className="font-medium">
-                            {steps[step]}
-                        </span>
+                        <span className="font-medium">{steps[step]}</span>
                     </p>
                 </div>
 
                 {/* FORM */}
                 <div className="space-y-6">
-
-                    {/* STEP 1 */}
+                    {/* STEP 1 - Welcome */}
                     {step === 0 && (
                         <div className="space-y-4">
                             <input
                                 className={inputClass}
                                 placeholder="Provider / Organization Name"
                                 value={form.providerName}
-                                onChange={(e) =>
-                                    update("providerName", e.target.value)
-                                }
+                                onChange={(e) => update("providerName", e.target.value)}
                             />
-
                             <input
                                 className={inputClass}
                                 placeholder="Email Address"
                                 value={form.email}
-                                onChange={(e) =>
-                                    update("email", e.target.value)
-                                }
+                                onChange={(e) => update("email", e.target.value)}
                             />
-
                             <input
                                 className={inputClass}
                                 placeholder="Phone Number"
                                 value={form.phone}
-                                onChange={(e) =>
-                                    update("phone", e.target.value)
-                                }
+                                onChange={(e) => update("phone", e.target.value)}
                             />
                         </div>
                     )}
 
-                    {/* STEP 2 - LOCATION (FULL BAHALI STRUCTURE) */}
+                    {/* STEP 2 - Location */}
                     {step === 1 && (
                         <div className="space-y-5">
-
-                            {/* COUNTRY */}
                             <div className="bg-gray-50 border rounded-xl p-4 space-y-4">
                                 <label className="text-sm font-medium">Country *</label>
                                 <select
                                     className={inputClass}
                                     value={form.country}
                                     onChange={(e) => {
-                                        const countryId = e.target.value;
-
-                                        const selected = countries.find(
-                                            (c) => String(c.id) === countryId
-                                        );
-
                                         update("country", String(e.target.value));
                                         update("region", "");
+                                        update("regionType", "");
                                     }}
                                 >
                                     <option value="">Select Country</option>
-
                                     {countries.map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name}
@@ -368,9 +245,8 @@ export default function ProviderIntakePremium({
                                             value={form.region}
                                             onChange={(e) => {
                                                 update("region", e.target.value);
-                                                // Find the selected region to get its region_type
                                                 const selectedRegion = selectedCountry?.regions?.find(
-                                                    r => r.name === e.target.value
+                                                    (r) => r.name === e.target.value
                                                 );
                                                 if (selectedRegion?.region_type?.name) {
                                                     update("regionType", selectedRegion.region_type.name);
@@ -392,7 +268,7 @@ export default function ProviderIntakePremium({
                                         No regions available for this country
                                     </div>
                                 ) : null}
-                                {/* CITY / COMMUNITY */}
+
                                 <div>
                                     <label className="text-sm font-medium">
                                         City / Town / Community (Public)
@@ -401,13 +277,10 @@ export default function ProviderIntakePremium({
                                         className={inputClass}
                                         placeholder="e.g. Kingston, Montego Bay, Brooklyn"
                                         value={form.cityTown}
-                                        onChange={(e) =>
-                                            update("cityTown", e.target.value)
-                                        }
+                                        onChange={(e) => update("cityTown", e.target.value)}
                                     />
                                 </div>
 
-                                {/* SERVICE AREA */}
                                 <div>
                                     <label className="text-sm font-medium">
                                         Service Area (Public)
@@ -416,13 +289,10 @@ export default function ProviderIntakePremium({
                                         className={inputClass}
                                         placeholder="e.g. St. James, Virtual Caribbean-wide"
                                         value={form.serviceArea}
-                                        onChange={(e) =>
-                                            update("serviceArea", e.target.value)
-                                        }
+                                        onChange={(e) => update("serviceArea", e.target.value)}
                                     />
                                 </div>
 
-                                {/* SERVICE FORMAT */}
                                 <div>
                                     <label className="text-sm font-medium">
                                         Service Format (Public)
@@ -430,126 +300,89 @@ export default function ProviderIntakePremium({
                                     <select
                                         className={inputClass}
                                         value={form.serviceFormat}
-                                        onChange={(e) =>
-                                            update("serviceFormat", e.target.value)
-                                        }
+                                        onChange={(e) => update("serviceFormat", e.target.value)}
                                     >
                                         <option value="">Select Format</option>
                                         <option value="virtual">Virtual Only</option>
                                         <option value="in_person">In-Person</option>
                                         <option value="hybrid">Hybrid</option>
-                                        <option value="mobile">
-                                            Mobile / Community-Based
-                                        </option>
+                                        <option value="mobile">Mobile / Community-Based</option>
                                     </select>
                                 </div>
                             </div>
 
-
-
-                            {/* STREET ADDRESS - PRIVATE SECTION */}
+                            {/* Rest of location fields... */}
                             {form.serviceFormat !== "virtual" && (
                                 <div className="bg-gray-50 border rounded-xl p-4 space-y-4">
-
                                     <p className="text-sm font-semibold text-gray-700">
                                         Private Address Information (Admin Only)
                                     </p>
-
                                     <input
                                         className={inputClass}
                                         placeholder="Street Address Line 1 (Private)"
                                         value={form.streetAddress1}
-                                        onChange={(e) =>
-                                            update("streetAddress1", e.target.value)
-                                        }
+                                        onChange={(e) => update("streetAddress1", e.target.value)}
                                     />
-
                                     <input
                                         className={inputClass}
                                         placeholder="Street Address Line 2 (Private)"
                                         value={form.streetAddress2}
-                                        onChange={(e) =>
-                                            update("streetAddress2", e.target.value)
-                                        }
+                                        onChange={(e) => update("streetAddress2", e.target.value)}
                                     />
-
                                     <input
                                         className={inputClass}
                                         placeholder="Postal Code (Private)"
                                         value={form.postalCode}
-                                        onChange={(e) =>
-                                            update("postalCode", e.target.value)
-                                        }
+                                        onChange={(e) => update("postalCode", e.target.value)}
                                     />
                                 </div>
                             )}
 
-                            {/* GEO DATA (PRIVATE / SYSTEM USE ONLY) */}
                             <div className="grid grid-cols-2 gap-4">
-
                                 <input
                                     className={inputClass}
                                     placeholder="Latitude (Admin/System)"
                                     value={form.latitude}
-                                    onChange={(e) =>
-                                        update("latitude", e.target.value)
-                                    }
+                                    onChange={(e) => update("latitude", e.target.value)}
                                 />
-
                                 <input
                                     className={inputClass}
                                     placeholder="Longitude (Admin/System)"
                                     value={form.longitude}
-                                    onChange={(e) =>
-                                        update("longitude", e.target.value)
-                                    }
+                                    onChange={(e) => update("longitude", e.target.value)}
                                 />
                             </div>
 
-                            {/* ADDRESS VISIBILITY CONTROL */}
                             <div>
                                 <label className="text-sm font-medium">
                                     Address Visibility Preference *
                                 </label>
-
                                 <select
                                     className={inputClass}
                                     value={form.addressVisibilityPreference}
                                     onChange={(e) =>
-                                        update(
-                                            "addressVisibilityPreference",
-                                            e.target.value
-                                        )
+                                        update("addressVisibilityPreference", e.target.value)
                                     }
                                 >
-                                    <option value="no_display">
-                                        Do not display address
-                                    </option>
-
+                                    <option value="no_display">Do not display address</option>
                                     <option value="city_region_only">
                                         Display city & region only (Default)
                                     </option>
-
                                     <option value="service_area">
                                         Display service area only
                                     </option>
-
                                     <option value="full_address">
                                         Display full address (Requires Admin Review)
                                     </option>
                                 </select>
                             </div>
 
-                            {/* LOCATION SENSITIVITY FLAG */}
                             <label className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
                                     checked={form.locationSensitivityFlag}
                                     onChange={(e) =>
-                                        update(
-                                            "locationSensitivityFlag",
-                                            e.target.checked
-                                        )
+                                        update("locationSensitivityFlag", e.target.checked)
                                     }
                                 />
                                 <span className="text-sm text-gray-700">
@@ -558,10 +391,7 @@ export default function ProviderIntakePremium({
                                 </span>
                             </label>
 
-
-                            {/* ADMIN-ONLY ADDITIONAL ADDRESS FIELDS */}
                             <div className="space-y-4 pt-2">
-
                                 <input
                                     className={inputClass}
                                     placeholder="Verification Address (Admin Only)"
@@ -570,7 +400,6 @@ export default function ProviderIntakePremium({
                                         update("verification_address", e.target.value)
                                     }
                                 />
-
                                 <input
                                     className={inputClass}
                                     placeholder="Billing Address (Admin Only)"
@@ -579,10 +408,8 @@ export default function ProviderIntakePremium({
                                         update("billing_address", e.target.value)
                                     }
                                 />
-
                             </div>
 
-                            {/* ADMIN FIELDS NOTE */}
                             <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-xs text-yellow-800">
                                 Admin-only fields (verification_address, billing_address)
                                 are stored securely in backend and never shown in UI.
@@ -590,22 +417,26 @@ export default function ProviderIntakePremium({
                         </div>
                     )}
 
-                    {/* STEP 3 */}
+                    {/* STEP 3 - Professional Role */}
+                    {/* STEP 3 - Professional Role */}
                     {step === 2 && (
                         <div className="space-y-6">
-
-                            {/* PROFESSIONS */}
-                            <MultiSelect
-                                label="Profession / Role"
-                                options={PROFESSIONS}
-                                value={form.professions}
-                                onChange={(val) => update("professions", val)}
-                            />
+                            {/* PROFESSIONS - GROUPED BY CATEGORY */}
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">
+                                    Provider Profession / Role *
+                                </label>
+                                <GroupedMultiSelect
+                                    categories={professionCategories || []}
+                                    value={form.professions}
+                                    onChange={(val) => update("professions", val)}
+                                />
+                            </div>
 
                             {/* CREDENTIALS */}
                             <MultiSelect
-                                label="Credentials"
-                                options={CREDENTIALS}
+                                label="Credentials / Licensure"
+                                options={credentials?.map((c) => c.name) || []}
                                 value={form.credentials}
                                 onChange={(val) => update("credentials", val)}
                             />
@@ -613,86 +444,12 @@ export default function ProviderIntakePremium({
                             {/* AREAS OF SUPPORT */}
                             <MultiSelect
                                 label="Areas of Support"
-                                options={SUPPORTS}
-                                value={form.areasOfSupport}
-                                onChange={(val) => update("areasOfSupport", val)}
+                                options={support_areas?.map((s) => s.name) || []}
+                                value={form.support_areas}
+                                onChange={(val) => update("support_areas", val)}
                             />
-
                         </div>
                     )}
-                    {/* STEP 4 */}
-                    {/* {step === 3 && (
-                        <div className="space-y-4">
-
-                            <select
-                                className={inputClass}
-                                value={form.serviceFormat}
-                                onChange={(e) =>
-                                    update(
-                                        "serviceFormat",
-                                        e.target.value
-                                    )
-                                }
-                            >
-                                <option value="virtual">
-                                    Virtual
-                                </option>
-                                <option value="in_person">
-                                    In-Person
-                                </option>
-                                <option value="hybrid">
-                                    Hybrid
-                                </option>
-                                <option value="mobile">
-                                    Mobile
-                                </option>
-                            </select>
-
-                            <select
-                                className={inputClass}
-                                value={
-                                    form.addressVisibilityPreference
-                                }
-                                onChange={(e) =>
-                                    update(
-                                        "addressVisibilityPreference",
-                                        e.target.value
-                                    )
-                                }
-                            >
-                                <option value="city_region_only">
-                                    City + Region Only
-                                </option>
-                                <option value="service_area">
-                                    Service Area
-                                </option>
-                                <option value="no_display">
-                                    No Address
-                                </option>
-                            </select>
-
-                            <label className="flex gap-2 items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={
-                                        form.locationSensitivityFlag
-                                    }
-                                    onChange={(e) =>
-                                        update(
-                                            "locationSensitivityFlag",
-                                            e.target.checked
-                                        )
-                                    }
-                                />
-                                Sensitive Location (privacy protected)
-                            </label>
-
-                            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl text-sm text-yellow-800">
-                                Street address is private by default.
-                            </div>
-                        </div>
-                    )} */}
-
                 </div>
 
                 {/* NAVIGATION */}
@@ -717,81 +474,345 @@ export default function ProviderIntakePremium({
             </div>
         </div>
     );
-    function MultiSelect({ label, options, value, onChange }) {
-        const [open, setOpen] = useState(false);
-        const [search, setSearch] = useState("");
+}
 
-        const toggleItem = (item) => {
-            if (value.includes(item)) {
-                onChange(value.filter((v) => v !== item));
-            } else {
-                onChange([...value, item]);
+// Grouped Multi-Select Component for Professions
+// Grouped Multi-Select Component for Professions
+function GroupedMultiSelect({ categories, value, onChange }: {
+    categories: ProfessionCategory[];
+    value: string[];
+    onChange: (val: string[]) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+                setSearch(""); // Reset search when closing
             }
         };
 
-        const filtered = options.filter((o) =>
-            o.toLowerCase().includes(search.toLowerCase())
-        );
+        if (open) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
 
-        return (
-            <div className="w-full">
-                <p className="font-medium mb-2">{label}</p>
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [open]);
 
-                {/* INPUT BOX */}
-                <div
-                    className="border rounded-xl p-2 min-h-[44px] flex flex-wrap gap-2 cursor-pointer"
-                    onClick={() => setOpen(!open)}
-                >
-                    {value.length === 0 && (
-                        <span className="text-gray-400 text-sm">
-                            Select {label}
-                        </span>
-                    )}
+    const toggleItem = (item: string) => {
+        if (value.includes(item)) {
+            onChange(value.filter((v) => v !== item));
+        } else {
+            onChange([...value, item]);
+        }
+    };
 
-                    {value.map((item) => (
-                        <span
-                            key={item}
-                            className="bg-[#2A1458] text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleItem(item);
-                            }}
-                        >
-                            {item} ✕
-                        </span>
-                    ))}
-                </div>
+    // Initialize all categories as expanded
+    React.useEffect(() => {
+        if (categories.length > 0) {
+            const expanded: Record<number, boolean> = {};
+            categories.forEach(cat => {
+                expanded[cat.id] = true;
+            });
+            setExpandedCategories(expanded);
+        }
+    }, [categories]);
 
-                {/* DROPDOWN */}
-                {open && (
-                    <div className="border rounded-xl mt-2 bg-white shadow-lg max-h-60 overflow-auto">
+    const toggleCategory = (categoryId: number) => {
+        setExpandedCategories(prev => ({
+            ...prev,
+            [categoryId]: !prev[categoryId]
+        }));
+    };
 
-                        {/* SEARCH */}
+    // Count selected professions in a category
+    const getSelectedCount = (category: ProfessionCategory) => {
+        return category.professions.filter(prof => value.includes(prof.name)).length;
+    };
+
+    // Filter categories and professions based on search
+    const filteredCategories = categories.map(category => ({
+        ...category,
+        professions: category.professions.filter(prof =>
+            prof.name.toLowerCase().includes(search.toLowerCase())
+        )
+    })).filter(category => category.professions.length > 0);
+
+    // Auto-expand categories with matching results when searching
+    React.useEffect(() => {
+        if (search && filteredCategories.length > 0) {
+            const expanded: Record<number, boolean> = {};
+            filteredCategories.forEach(cat => {
+                expanded[cat.id] = true;
+            });
+            setExpandedCategories(prev => ({ ...prev, ...expanded }));
+        }
+    }, [search]);
+
+    return (
+        <div className="w-full" ref={dropdownRef}>
+            {/* INPUT BOX */}
+            <div
+                className="border rounded-xl p-2 min-h-[44px] flex flex-wrap gap-2 cursor-pointer hover:border-[#2A1458] transition-colors"
+                onClick={() => setOpen(!open)}
+            >
+                {value.length === 0 && (
+                    <span className="text-gray-400 text-sm p-1">
+                        Select your profession(s)...
+                    </span>
+                )}
+
+                {value.map((item) => (
+                    <span
+                        key={item}
+                        className="bg-[#2A1458] text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[#1C0F3A] transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleItem(item);
+                        }}
+                    >
+                        {item} ✕
+                    </span>
+                ))}
+            </div>
+
+            {/* DROPDOWN */}
+            {open && (
+                <div className="border rounded-xl mt-2 bg-white shadow-lg max-h-96 overflow-auto">
+                    {/* SEARCH HEADER */}
+                    <div className="sticky top-0 bg-white p-3 border-b z-10">
                         <input
-                            className="w-full p-2 border-b outline-none text-sm"
-                            placeholder="Search..."
+                            className="w-full p-2 border rounded-lg outline-none text-sm focus:border-[#2A1458] focus:ring-1 focus:ring-[#2A1458]"
+                            placeholder="Search professions..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            // Prevent click outside from closing when clicking on search input
+                            onClick={(e) => e.stopPropagation()}
                         />
+                        {value.length > 0 && (
+                            <div className="mt-2 flex items-center justify-between">
+                                <span className="text-xs text-gray-500">
+                                    {value.length} profession(s) selected
+                                </span>
+                                <button
+                                    onClick={() => onChange([])}
+                                    className="text-xs text-red-500 hover:text-red-700"
+                                >
+                                    Clear all
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
-                        {/* OPTIONS */}
-                        {filtered.map((item) => {
+                    {/* GROUPED OPTIONS */}
+                    <div className="p-2">
+                        {filteredCategories.length === 0 ? (
+                            <div className="text-center text-gray-500 py-4">
+                                No professions found
+                            </div>
+                        ) : (
+                            filteredCategories.map((category) => (
+                                <div key={category.id} className="mb-2">
+                                    {/* Category Header - BOLD */}
+                                    <div
+                                        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+                                        onClick={() => toggleCategory(category.id)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="transform transition-transform text-xs">
+                                                {expandedCategories[category.id] ? '▼' : '▶'}
+                                            </span>
+                                            <span className="font-bold text-sm text-gray-800">
+                                                {category.label}
+                                            </span>
+                                        </div>
+                                        {getSelectedCount(category) > 0 && (
+                                            <span className="text-xs bg-[#2A1458] text-white px-2 py-0.5 rounded-full">
+                                                {getSelectedCount(category)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Professions under category */}
+                                    {expandedCategories[category.id] && (
+                                        <div className="ml-4 border-l-2 border-gray-100 pl-2">
+                                            {category.professions.map((profession) => {
+                                                const selected = value.includes(profession.name);
+                                                return (
+                                                    <div
+                                                        key={profession.id}
+                                                        onClick={() => toggleItem(profession.name)}
+                                                        className={`p-2 pl-4 text-sm cursor-pointer hover:bg-purple-50 rounded flex items-center justify-between transition-colors ${selected ? "bg-purple-50 font-medium text-[#2A1458]" : "text-gray-700"
+                                                            }`}
+                                                    >
+                                                        <span>{profession.name}</span>
+                                                        {selected && (
+                                                            <span className="text-[#2A1458]">
+                                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* FOOTER */}
+                    {value.length > 0 && (
+                        <div className="sticky bottom-0 bg-gray-50 border-t p-2 flex justify-end">
+                            <button
+                                onClick={() => setOpen(false)}
+                                className="px-4 py-1.5 bg-[#2A1458] text-white text-sm rounded-lg hover:bg-[#1C0F3A] transition-colors"
+                            >
+                                Done ({value.length})
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Standard Multi-Select Component
+// Standard Multi-Select Component
+function MultiSelect({ label, options, value, onChange }: {
+    label: string;
+    options: string[];
+    value: string[];
+    onChange: (val: string[]) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+                setSearch(""); // Reset search when closing
+            }
+        };
+
+        if (open) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [open]);
+
+    const toggleItem = (item: string) => {
+        if (value.includes(item)) {
+            onChange(value.filter((v) => v !== item));
+        } else {
+            onChange([...value, item]);
+        }
+    };
+
+    const filtered = options.filter((o) =>
+        o.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="w-full" ref={dropdownRef}>
+            <p className="font-medium mb-2">{label}</p>
+
+            <div
+                className="border rounded-xl p-2 min-h-[44px] flex flex-wrap gap-2 cursor-pointer hover:border-[#2A1458] transition-colors"
+                onClick={() => setOpen(!open)}
+            >
+                {value.length === 0 && (
+                    <span className="text-gray-400 text-sm p-1">
+                        Select {label}
+                    </span>
+                )}
+
+                {value.map((item) => (
+                    <span
+                        key={item}
+                        className="bg-[#2A1458] text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[#1C0F3A] transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleItem(item);
+                        }}
+                    >
+                        {item} ✕
+                    </span>
+                ))}
+            </div>
+
+            {open && (
+                <div className="border rounded-xl mt-2 bg-white shadow-lg max-h-60 overflow-auto">
+                    <input
+                        className="w-full p-2 border-b outline-none text-sm sticky top-0 bg-white"
+                        placeholder="Search..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {filtered.length === 0 ? (
+                        <div className="text-center text-gray-500 py-4">
+                            No options found
+                        </div>
+                    ) : (
+                        filtered.map((item) => {
                             const selected = value.includes(item);
-
                             return (
                                 <div
                                     key={item}
                                     onClick={() => toggleItem(item)}
-                                    className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${selected ? "bg-gray-100 font-medium" : ""
+                                    className={`p-2 text-sm cursor-pointer hover:bg-purple-50 flex items-center justify-between transition-colors ${selected ? "bg-purple-50 font-medium text-[#2A1458]" : "text-gray-700"
                                         }`}
                                 >
-                                    {item}
+                                    <span>{item}</span>
+                                    {selected && (
+                                        <span className="text-[#2A1458]">
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    )}
                                 </div>
                             );
-                        })}
-                    </div>
-                )}
-            </div>
-        );
-    }
+                        })
+                    )}
+
+                    {value.length > 0 && (
+                        <div className="sticky bottom-0 bg-gray-50 border-t p-2 flex justify-between">
+                            <button
+                                onClick={() => onChange([])}
+                                className="text-xs text-red-500 hover:text-red-700 px-2"
+                            >
+                                Clear all
+                            </button>
+                            <button
+                                onClick={() => setOpen(false)}
+                                className="px-4 py-1.5 bg-[#2A1458] text-white text-sm rounded-lg hover:bg-[#1C0F3A] transition-colors"
+                            >
+                                Done ({value.length})
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 }
+
