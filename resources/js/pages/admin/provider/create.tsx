@@ -1,5 +1,15 @@
 import ProviderIntakeForm from "@/pages/shared/ProviderForm";
 import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
+import AppLayout from '@/layouts/app-layout.js';
+import { Button } from '@/components/ui/button';
+import { Head, router, usePage } from '@inertiajs/react';
+
+const breadcrumbs = [
+    {
+        title: 'Create Provider',
+        href: '/providers/create',
+    },
+];
 
 
 type CreateProviderPageProps = {
@@ -17,12 +27,33 @@ export default function CreateProviderPage({
 }: CreateProviderPageProps) {
     return (
         <div>
-            <ProviderIntakeForm
-                countries={countries}
-                professionCategories={professionCategories}
-                credentials={credentials}
-                support_areas={supoort_areas}
-            />
+
+
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Clients" />
+                <div className="p-4">
+                    {/* <div className="my-4 flex items-center justify-between">
+                        <h1 className="text-2xl font-bold">Providers</h1>
+                        <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
+                            <Plus className="mr-2" /> Create Provider
+                        </Button>
+                    </div> */}
+                    <ProviderIntakeForm
+                        countries={countries}
+                        professionCategories={professionCategories}
+                        credentials={credentials}
+                        support_areas={supoort_areas}
+                    />
+                </div>
+            </AppLayout>
+
+
+
+
+
+
+
+
         </div>
     );
 }

@@ -52,6 +52,7 @@ class ProviderController extends Controller
             'provider_type' => ProviderType::select('id', 'name')->get(),
             'countries' => $countries,
             'professionCategories' => $professionCategories,
+            'credentials' => $credentials,
             'supoort_areas' => $supportArea,
         ]);
     }
@@ -59,11 +60,14 @@ class ProviderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ProviderRequest $request)
     {
-        $this->service->create($request);
-        return redirect()
-            ->route('providers.index')
+
+        $this->service->create(
+            $request->validatedForStorage()
+        );
+
+        return redirect()->route('providers.create')
             ->with('success', 'Provider created successfully.');
     }
 

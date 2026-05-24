@@ -12,202 +12,135 @@ class Provider extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'name',
-        'organization_name',
-        'slug',
-        'bio',
-        'verification_status',
-        'offers_in_person',
-        'offers_virtual',
-        'offers_hybrid',
-        'offers_home_based',
-        'offers_group_based',
-        'address',
-        'city',
-        'state',
-        'country',
+        // Basic Information
+        'provider_name',
+        'email',
+        'phone',
+
+        // Location Information
+        'country_id',
+        'region_type',
+        'region',
+        'city_town',
+        'service_area',
+
+        // Service Format
+        'service_format',
+
+        // Professional Information
+        'professions',
+        'credentials',
+        'support_areas',
+
+        // Private Address
+        'street_address1',
+        'street_address2',
         'postal_code',
         'latitude',
         'longitude',
-        'regions_served',
-        'email',
-        'phone',
-        'website',
-        'booking_link',
-        'fees_description',
-        'accepts_insurance',
-        'offers_sliding_scale',
-        'free_community_service',
-        'is_published',
-        'is_featured',
-        'verified_at',
-        'admin_notes',
+
+        // Admin Address
+        'verification_address',
+        'billing_address',
+
+        // Visibility Settings
+        'address_visibility_preference',
+        'location_sensitivity_flag',
+
+        // Status
+        'status',
+        'email_verified_at',
+        'approved_at',
+        'approved_by',
     ];
 
     protected $casts = [
-        'offers_in_person' => 'boolean',
-        'offers_virtual' => 'boolean',
-        'offers_hybrid' => 'boolean',
-        'offers_home_based' => 'boolean',
-        'offers_group_based' => 'boolean',
-        'accepts_insurance' => 'boolean',
-        'offers_sliding_scale' => 'boolean',
-        'free_community_service' => 'boolean',
-        'is_published' => 'boolean',
-        'is_featured' => 'boolean',
-        'verified_at' => 'datetime',
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
-    ];
+        // Cast JSON fields to arrays
+        'professions' => 'array',
+        'credentials' => 'array',
+        'support_areas' => 'array',
 
-    protected $dates = [
-        'verified_at',
-        'created_at',
-        'updated_at',
-        'deleted_at',
     ];
 
     // Relationships
-    public function user()
+    public function country()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Country::class);
     }
 
-    public function professions()
+    public function approvedBy()
     {
-        return $this->belongsToMany(ProviderProfession::class, 'provider_profession')
-            ->withPivot('is_primary', 'custom_profession', 'requires_admin_review')
-            ->withTimestamps();
-    }
-
-    public function credentials()
-    {
-        return $this->belongsToMany(Credential::class, 'provider_credential')
-            ->withPivot(
-                'license_number',
-                'issuing_authority',
-                'issue_date',
-                'expiry_date',
-                'is_verified',
-                'verified_at',
-                'verification_notes'
-            )
-            ->withTimestamps();
-    }
-
-    public function supportAreas()
-    {
-        return $this->belongsToMany(SupportArea::class, 'provider_support_area')
-            ->withPivot('is_primary')
-            ->withTimestamps();
-    }
-
-    public function languages()
-    {
-        return $this->belongsToMany(Language::class, 'provider_language')
-            ->withPivot('proficiency')
-            ->withTimestamps();
-    }
-
-    public function populations()
-    {
-        return $this->belongsToMany(Population::class, 'provider_population')
-            ->withTimestamps();
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     // Scopes
-    public function scopePublished($query)
+    public function scopePending($query)
     {
-        return $query->where('is_published', true);
+        return $query->where('status', 'pending');
     }
 
-    public function scopeVerified($query)
+    public function scopeApproved($query)
     {
-        return $query->whereNotNull('verified_at');
+        return $query->where('status', 'approved');
     }
 
-    public function scopeByProfession($query, $professionSlug)
+    public function scopeVirtual($query)
     {
-        return $query->whereHas('professions', function ($q) use ($professionSlug) {
-            $q->where('slug', $professionSlug);
-        });
+        return $query->where('service_format', 'virtual');
     }
 
-    public function scopeByCategory($query, $categorySlug)
+    public function scopeInPerson($query)
     {
-        return $query->whereHas('professions.category', function ($q) use ($categorySlug) {
-            $q->where('slug', $categorySlug);
-        });
-    }
-
-    public function scopeBySupportArea($query, $supportAreaSlug)
-    {
-        return $query->whereHas('supportAreas', function ($q) use ($supportAreaSlug) {
-            $q->where('slug', $supportAreaSlug);
-        });
+        return $query->where('service_format', 'in_person');
     }
 
     // Accessors & Mutators
-    public function getServiceFormatsAttribute()
+    public function getFullAddressAttribute(): string
     {
-        $formats = [];
-        if ($this->offers_in_person) $formats[] = 'in_person';
-        if ($this->offers_virtual) $formats[] = 'virtual';
-        if ($this->offers_hybrid) $formats[] = 'hybrid';
-        if ($this->offers_home_based) $formats[] = 'home_based';
-        if ($this->offers_group_based) $formats[] = 'group_based';
-        return $formats;
-    }
-
-    public function getIsLicensedProviderAttribute()
-    {
-        return in_array($this->verification_status, ['verified_licensed']);
-    }
-
-    public function getFullAddressAttribute()
-    {
-        return implode(', ', array_filter([
-            $this->address,
-            $this->city,
-            $this->state,
+        $parts = array_filter([
+            $this->street_address1,
+            $this->street_address2,
+            $this->city_town,
+            $this->region,
             $this->postal_code,
-            $this->country
-        ]));
+        ]);
+
+        return implode(', ', $parts);
+    }
+
+    public function getPublicAddressAttribute(): ?string
+    {
+        return match ($this->address_visibility_preference) {
+            'no_display' => null,
+            'city_region_only' => implode(', ', array_filter([$this->city_town, $this->region])),
+            'service_area' => $this->service_area,
+            'full_address' => $this->full_address,
+            default => null,
+        };
     }
 
     // Helper Methods
-    public function verify()
+    public function approve(?int $approvedBy = null): void
     {
-        $this->verified_at = now();
-        $this->verification_status = 'verified_licensed';
-        $this->save();
+        $this->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $approvedBy,
+        ]);
     }
 
-    public function publish()
+    public function reject(): void
     {
-        $this->is_published = true;
-        $this->save();
+        $this->update(['status' => 'rejected']);
     }
 
-    public function unpublish()
+    public function suspend(): void
     {
-        $this->is_published = false;
-        $this->save();
+        $this->update(['status' => 'suspended']);
     }
 
-    public function getPrimaryProfession()
+    public function isApproved(): bool
     {
-        return $this->professions()->wherePivot('is_primary', true)->first();
-    }
-
-    public function hasProfession($slug)
-    {
-        return $this->professions()->where('slug', $slug)->exists();
-    }
-
-    public function isClinicalProvider()
-    {
-        return $this->professions()->where('is_clinical', true)->exists();
+        return $this->status === 'approved';
     }
 }

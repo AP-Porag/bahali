@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
+import { useForm } from "@inertiajs/react";
 
 type FormState = {
-    providerName: string;
+    provider_name: string;
     email: string;
     phone: string;
 
@@ -44,6 +45,37 @@ const steps = [
     "Professional Role",
 ];
 
+const ADDRESS_SENSITIVITY_OPTIONS = [
+    {
+        label: "Home office or private residence",
+        value: "home_office_private_residence",
+    },
+    {
+        label: "Virtual-only provider",
+        value: "virtual_only_provider",
+    },
+    {
+        label: "Mobile/community-based provider",
+        value: "mobile_community_based_provider",
+    },
+    {
+        label: "Trauma-focused service location",
+        value: "trauma_focused_service_location",
+    },
+    {
+        label: "Domestic violence or sexual assault support location",
+        value: "dv_sa_support_location",
+    },
+    {
+        label: "Youth-serving confidential program",
+        value: "youth_confidential_program",
+    },
+    {
+        label: "Crisis, shelter, or safety-sensitive support site",
+        value: "crisis_shelter_safety_sensitive_site",
+    },
+];
+
 // Credentials and Areas of Support remain as seed data
 
 const SUPPORTS = [
@@ -64,8 +96,37 @@ export default function ProviderIntakePremium({
 }: ProviderIntakeFormProps) {
     const [step, setStep] = useState(0);
 
-    const [form, setForm] = useState<FormState>({
-        providerName: "",
+    // const [form, setForm] = useState<FormState>({
+    //     providerName: "",
+    //     email: "",
+    //     phone: "",
+
+    //     country: "",
+    //     regionType: "",
+    //     region: "",
+    //     cityTown: "",
+    //     serviceArea: "",
+
+    //     serviceFormat: "virtual",
+
+    //     professions: [],
+    //     credentials: [],
+    //     support_areas: [],
+
+    //     streetAddress1: "",
+    //     streetAddress2: "",
+    //     postalCode: "",
+    //     latitude: "",
+    //     longitude: "",
+
+    //     verification_address: "",
+    //     billing_address: "",
+
+    //     addressVisibilityPreference: "city_region_only",
+    //     locationSensitivityFlag: false,
+    // });
+    const { data, setData, post, processing, errors } = useForm({
+        provider_name: "",
         email: "",
         phone: "",
 
@@ -93,10 +154,9 @@ export default function ProviderIntakePremium({
         addressVisibilityPreference: "city_region_only",
         locationSensitivityFlag: false,
     });
-
     const selectedCountry = useMemo(() => {
-        return countries.find((c) => String(c.id) === String(form.country));
-    }, [form.country, countries]);
+        return countries.find((c) => String(c.id) === String(data.country));
+    }, [data.country, countries]);
 
     const regionConfig = useMemo(() => {
         if (!selectedCountry || !selectedCountry.regions) return null;
@@ -122,7 +182,7 @@ export default function ProviderIntakePremium({
     }, [selectedCountry]);
 
     const update = (key: keyof FormState, value: any) => {
-        setForm((prev) => ({ ...prev, [key]: value }));
+        setData(key as any, value);
     };
 
     const next = () =>
@@ -131,25 +191,104 @@ export default function ProviderIntakePremium({
     const back = () =>
         setStep((s) => Math.max(s - 1, 0));
 
+    const [localErrors, setLocalErrors] = useState<Record<string, string[]>>({});
+
+    // const validateStep = () => {
+    //     const newErrors: Record<string, string[]> = {};
+
+    //     if (step === 0) {
+    //         if (!data.provider_name) newErrors.provider_name = ["Provider name is required"];
+    //         if (!data.email) newErrors.email = ["Email is required"];
+    //         if (!data.phone) newErrors.phone = ["Phone is required"];
+    //     }
+
+    //     if (step === 1) {
+    //         if (!data.country) newErrors.country = ["Country is required"];
+    //         if (!data.region) newErrors.region = ["Region is required"];
+    //         if (!data.cityTown) newErrors.cityTown = ["City is required"];
+    //     }
+
+    //     if (step === 2) {
+    //         if (data.professions.length === 0) {
+    //             newErrors.professions = ["Select at least one profession"];
+    //         }
+    //     }
+
+    //     return Object.keys(newErrors).length === 0;
+    // };
+    const validateStep = () => {
+        const newErrors: Record<string, string[]> = {};
+
+        if (step === 0) {
+            if (!data.provider_name) {
+                newErrors.provider_name = ["Provider name is required"];
+            }
+
+            if (!data.email) {
+                newErrors.email = ["Email is required"];
+            }
+
+            if (!data.phone) {
+                newErrors.phone = ["Phone is required"];
+            }
+        }
+
+        if (step === 1) {
+            if (!data.country) {
+                newErrors.country = ["Country is required"];
+            }
+
+            if (!data.region) {
+                newErrors.region = ["Region is required"];
+            }
+
+            if (!data.cityTown) {
+                newErrors.cityTown = ["City is required"];
+            }
+        }
+
+        if (step === 2) {
+            if (data.professions.length === 0) {
+                newErrors.professions = ["Select at least one profession"];
+            }
+        }
+
+        setLocalErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
+    };
     const submit = () => {
+        const isValid = validateStep();
+
+        if (!isValid) return;
+
         if (step !== steps.length - 1) {
             next();
             return;
         }
 
-        console.log("FINAL PAYLOAD:", form);
-    };
+        post("/admin/providers", {
+            preserveScroll: true,
 
+            onSuccess: () => {
+                console.log("SUCCESS");
+            },
+
+            onError: (errs) => {
+                console.log(errs);
+            },
+        });
+    };
     const inputClass =
         "w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2A1458] transition";
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#120B2C] via-[#2A1458] to-[#0E7490] p-6">
-            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-10">
+        <div className="min-h-screen flex ">
+            <div className="w-full bg-white rounded-3xl shadow-2xl p-10">
                 {/* HEADER */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-semibold text-[#1C0F3A]">
-                        Provider Onboarding
+                        Provider Creation
                     </h1>
                     <p className="text-gray-500 mt-1">
                         Bahali Trust & Care Network
@@ -180,21 +319,54 @@ export default function ProviderIntakePremium({
                             <input
                                 className={inputClass}
                                 placeholder="Provider / Organization Name"
-                                value={form.providerName}
-                                onChange={(e) => update("providerName", e.target.value)}
+                                value={data.provider_name}
+                                onChange={(e) => update("provider_name", e.target.value)}
+
+
                             />
+                            <div>
+                                {localErrors.provider_name && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                        {localErrors.provider_name[0]}
+                                    </p>
+                                )}
+                            </div>
+
                             <input
                                 className={inputClass}
                                 placeholder="Email Address"
-                                value={form.email}
+                                value={data.email}
                                 onChange={(e) => update("email", e.target.value)}
                             />
+                            <div>
+                                {localErrors.email && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                        {localErrors.email[0]}
+                                    </p>
+                                )}
+                            </div>
+
                             <input
                                 className={inputClass}
                                 placeholder="Phone Number"
-                                value={form.phone}
+                                value={data.phone}
                                 onChange={(e) => update("phone", e.target.value)}
                             />
+                            <div>
+                                {localErrors.phone && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                        {localErrors.phone[0]}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                {errors.email && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                        {errors.email[0]}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -205,7 +377,7 @@ export default function ProviderIntakePremium({
                                 <label className="text-sm font-medium">Country *</label>
                                 <select
                                     className={inputClass}
-                                    value={form.country}
+                                    value={data.country}
                                     onChange={(e) => {
                                         update("country", String(e.target.value));
                                         update("region", "");
@@ -242,7 +414,7 @@ export default function ProviderIntakePremium({
                                         </label>
                                         <select
                                             className={inputClass}
-                                            value={form.region}
+                                            value={data.region}
                                             onChange={(e) => {
                                                 update("region", e.target.value);
                                                 const selectedRegion = selectedCountry?.regions?.find(
@@ -276,7 +448,7 @@ export default function ProviderIntakePremium({
                                     <input
                                         className={inputClass}
                                         placeholder="e.g. Kingston, Montego Bay, Brooklyn"
-                                        value={form.cityTown}
+                                        value={data.cityTown}
                                         onChange={(e) => update("cityTown", e.target.value)}
                                     />
                                 </div>
@@ -288,7 +460,7 @@ export default function ProviderIntakePremium({
                                     <input
                                         className={inputClass}
                                         placeholder="e.g. St. James, Virtual Caribbean-wide"
-                                        value={form.serviceArea}
+                                        value={data.serviceArea}
                                         onChange={(e) => update("serviceArea", e.target.value)}
                                     />
                                 </div>
@@ -299,20 +471,23 @@ export default function ProviderIntakePremium({
                                     </label>
                                     <select
                                         className={inputClass}
-                                        value={form.serviceFormat}
+                                        value={data.serviceFormat}
                                         onChange={(e) => update("serviceFormat", e.target.value)}
                                     >
                                         <option value="">Select Format</option>
-                                        <option value="virtual">Virtual Only</option>
-                                        <option value="in_person">In-Person</option>
-                                        <option value="hybrid">Hybrid</option>
-                                        <option value="mobile">Mobile / Community-Based</option>
+                                        <option value="home_office_private_residence">Home office or private residence</option>
+                                        <option value="virtual_only_provider">Virtual-only provider</option>
+                                        <option value="mobile_community_based_provider">Mobile/community-based provider</option>
+                                        <option value="trauma_focused_service_location">Trauma-focused service location</option>
+                                        <option value="dv_sa_support_location">Domestic violence or sexual assault support location</option>
+                                        <option value="youth_confidential_program">Youth-serving confidential program</option>
+                                        <option value="crisis_shelter_safety_sensitive_site">Crisis, shelter, or safety-sensitive support site</option>
                                     </select>
                                 </div>
                             </div>
 
                             {/* Rest of location fields... */}
-                            {form.serviceFormat !== "virtual" && (
+                            {data.serviceFormat !== "virtual_only_provider" && (
                                 <div className="bg-gray-50 border rounded-xl p-4 space-y-4">
                                     <p className="text-sm font-semibold text-gray-700">
                                         Private Address Information (Admin Only)
@@ -320,38 +495,38 @@ export default function ProviderIntakePremium({
                                     <input
                                         className={inputClass}
                                         placeholder="Street Address Line 1 (Private)"
-                                        value={form.streetAddress1}
+                                        value={data.streetAddress1}
                                         onChange={(e) => update("streetAddress1", e.target.value)}
                                     />
                                     <input
                                         className={inputClass}
                                         placeholder="Street Address Line 2 (Private)"
-                                        value={form.streetAddress2}
+                                        value={data.streetAddress2}
                                         onChange={(e) => update("streetAddress2", e.target.value)}
                                     />
                                     <input
                                         className={inputClass}
                                         placeholder="Postal Code (Private)"
-                                        value={form.postalCode}
+                                        value={data.postalCode}
                                         onChange={(e) => update("postalCode", e.target.value)}
                                     />
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* <div className="grid grid-cols-2 gap-4">
                                 <input
                                     className={inputClass}
                                     placeholder="Latitude (Admin/System)"
-                                    value={form.latitude}
+                                    value={data.latitude}
                                     onChange={(e) => update("latitude", e.target.value)}
                                 />
                                 <input
                                     className={inputClass}
                                     placeholder="Longitude (Admin/System)"
-                                    value={form.longitude}
+                                    value={data.longitude}
                                     onChange={(e) => update("longitude", e.target.value)}
                                 />
-                            </div>
+                            </div> */}
 
                             <div>
                                 <label className="text-sm font-medium">
@@ -359,7 +534,7 @@ export default function ProviderIntakePremium({
                                 </label>
                                 <select
                                     className={inputClass}
-                                    value={form.addressVisibilityPreference}
+                                    value={data.addressVisibilityPreference}
                                     onChange={(e) =>
                                         update("addressVisibilityPreference", e.target.value)
                                     }
@@ -380,7 +555,7 @@ export default function ProviderIntakePremium({
                             <label className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
-                                    checked={form.locationSensitivityFlag}
+                                    checked={data.locationSensitivityFlag}
                                     onChange={(e) =>
                                         update("locationSensitivityFlag", e.target.checked)
                                     }
@@ -395,7 +570,7 @@ export default function ProviderIntakePremium({
                                 <input
                                     className={inputClass}
                                     placeholder="Verification Address (Admin Only)"
-                                    value={form.verification_address}
+                                    value={data.verification_address}
                                     onChange={(e) =>
                                         update("verification_address", e.target.value)
                                     }
@@ -403,7 +578,7 @@ export default function ProviderIntakePremium({
                                 <input
                                     className={inputClass}
                                     placeholder="Billing Address (Admin Only)"
-                                    value={form.billing_address}
+                                    value={data.billing_address}
                                     onChange={(e) =>
                                         update("billing_address", e.target.value)
                                     }
@@ -428,7 +603,7 @@ export default function ProviderIntakePremium({
                                 </label>
                                 <GroupedMultiSelect
                                     categories={professionCategories || []}
-                                    value={form.professions}
+                                    value={data.professions}
                                     onChange={(val) => update("professions", val)}
                                 />
                             </div>
@@ -437,7 +612,7 @@ export default function ProviderIntakePremium({
                             <MultiSelect
                                 label="Credentials / Licensure"
                                 options={credentials?.map((c) => c.name) || []}
-                                value={form.credentials}
+                                value={data.credentials}
                                 onChange={(val) => update("credentials", val)}
                             />
 
@@ -445,7 +620,7 @@ export default function ProviderIntakePremium({
                             <MultiSelect
                                 label="Areas of Support"
                                 options={support_areas?.map((s) => s.name) || []}
-                                value={form.support_areas}
+                                value={data.support_areas}
                                 onChange={(val) => update("support_areas", val)}
                             />
                         </div>

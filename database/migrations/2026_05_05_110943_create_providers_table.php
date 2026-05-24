@@ -1,82 +1,83 @@
 <?php
+// database/migrations/2024_01_01_000000_create_providers_table.php
 
-use App\Enums\ProviderStatusEnum;
-use App\Enums\VerificationStatusEnum;
-use App\Utils\GlobalConstant;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-
         Schema::create('providers', function (Blueprint $table) {
             $table->id();
 
-            // Basic identity
-            $table->string('display_name');
-            $table->string('organization_name')->nullable();
-            $table->string('slug')->unique();
-
-            // Bio
-            $table->longText('bio')->nullable();
-
-            // Contact
-            $table->string('email')->nullable();
+            // Basic Information
+            $table->string('provider_name');
+            $table->string('email')->unique();
             $table->string('phone')->nullable();
-            $table->string('website')->nullable();
 
-            // Geography
-            $table->foreignId('country_id')->nullable();
-            $table->foreignId('region_id')->nullable();
-
+            // Location Information
+            $table->foreignId('country_id')->nullable()->constrained()->nullOnDelete();
             $table->string('region_type')->nullable();
-            $table->string('city_or_community')->nullable();
+            $table->string('region')->nullable();
+            $table->string('city_town')->nullable();
+            $table->string('service_area')->nullable();
 
-            // Service
-            $table->boolean('virtual_services_available')->default(false);
-            $table->boolean('in_person_services_available')->default(false);
+            // Service Format
+            $table->enum('service_format', ['home_office_private_residence', 'virtual_only_provider', 'mobile_community_based_provider', 'trauma_focused_service_location', 'dv_sa_support_location', 'youth_confidential_program', 'crisis_shelter_safety_sensitive_site'])->nullable();
 
-            // Address privacy
+            // Professional Information (JSON arrays)
+            $table->json('professions')->nullable();
+            $table->json('credentials')->nullable();
+            $table->json('support_areas')->nullable();
+
+            // Private Address Information
+            $table->string('street_address1')->nullable();
+            $table->string('street_address2')->nullable();
+            $table->string('postal_code')->nullable();
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+
+            // Admin Address Information
+            $table->string('verification_address')->nullable();
+            $table->string('billing_address')->nullable();
+
+            // Address Visibility Settings
             $table->enum('address_visibility_preference', [
-                'none',
-                'city_region',
+                'no_display',
+                'city_region_only',
                 'service_area',
-                'full_address',
-            ])->default('city_region');
+                'full_address'
+            ])->default('city_region_only');
+
+            $table->boolean('location_sensitivity_flag')->default(false);
+
+            // Application Status
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'rejected',
+                'suspended',
+                'inactive'
+            ])->default('pending');
 
             // Verification
-            $table->enum('verification_status', [
-                'pending_review',
-                'verified_licensed',
-                'verified_organization',
-                'community_based',
-                'faith_based',
-                'not_verified',
-                'hidden',
-            ])->default('pending_review');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
 
-            // Lifecycle
-            $table->enum('status', [
-                'draft',
-                'pending',
-                'published',
-                'suspended',
-                'expired',
-            ])->default('draft');
-
+            // Timestamps and Soft Deletes
             $table->timestamps();
+            $table->softDeletes();
+
+            // Indexes
+            $table->index('status');
+            $table->index('service_format');
+            $table->index('country_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('providers');

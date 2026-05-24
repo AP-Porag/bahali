@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { CalendarDays, LayoutGrid } from 'lucide-react';
+import { CalendarDays, LayoutGrid, Plus, StepBack, Type } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -13,21 +13,21 @@ const mainNavItems: NavItem[] = [
         href: '/admin/under-development',
         icon: LayoutGrid,
     },
-    {
-        title: 'Provider Type',
-        href: '/admin/provider-type',
-        icon: CalendarDays,
-    },
+    // {
+    //     title: 'Provider Type',
+    //     href: '/admin/provider-type',
+    //     icon: StepBack,
+    // },
     {
         title: 'Provider',
         href: '/admin/providers',
         icon: CalendarDays,
     },
-    {
-        title: 'Provider Create',
-        href: '/admin/providers/create',
-        icon: CalendarDays,
-    },
+    // {
+    //     title: 'Provider Create',
+    //     href: '/admin/providers/create',
+    //     icon: Plus,
+    // },
 
     // {
     //     title: 'Administration',

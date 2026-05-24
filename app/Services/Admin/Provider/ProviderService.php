@@ -41,32 +41,57 @@ class ProviderService
         ];
     }
 
-    public function create($data): Provider
+    public function create(array $data): Provider
     {
-        $avatarPath = null;
+        $provider = Provider::create([
+            'provider_name' => $data['provider_name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
 
-        if ($data->hasFile('avatar') && $data->file('avatar')->isValid()) {
-            $avatarPath = $data->file('avatar')->store('providers/avatars', 'public');
-        }
+            'country_id' => $data['country_id'],
+            'region_type' => $data['region_type'] ?? null,
+            'region' => $data['region'] ?? null,
+            'city_town' => $data['city_town'] ?? null,
+            'service_area' => $data['service_area'] ?? null,
 
-        return Provider::create([
-            'name'             => $data->name,
-            'email'            => $data->email,
-            'phone'            => $data->phone,
-            'provider_type_id' => $data->provider_type_id ?: null,
-            'region'           => $data->region,
-            'service'          => $data->service,
-            'bio'              => $data->bio,
-            'location'         => $data->location,
-            'is_public'        => $data->is_public ?? false,
-            'avatar'           => $avatarPath,
+            'professions' => $data['professions'],
+            'credentials' => $data['credentials'],
+            'support_areas' => $data['support_areas'],
 
-            // system defaults (important for lifecycle consistency)
-            'status'           => 'draft',
+            'service_format' => $data['service_format'],
+
+            'latitude' => $data['latitude'] ?? null,
+            'longitude' => $data['longitude'] ?? null,
+
+            'address_visibility_preference' => $data['address_visibility_preference'],
+            'location_sensitivity_flag' => $data['location_sensitivity_flag'] ?? false,
+
+            'street_address_1' => $data['street_address1'] ?? null,
+            'street_address_2' => $data['street_address2'] ?? null,
+            'postal_code' => $data['postal_code'] ?? null,
+
+            'verification_address' => $data['verification_address'] ?? null,
+            'billing_address' => $data['billing_address'] ?? null,
+
+            'status' => $data['status'] ?? 'draft',
             'verification_status' => 'unverified',
         ]);
-    }
 
+        // // pivots
+        // if (!empty($data['professions'])) {
+        //     $provider->professions()->sync($data['professions']);
+        // }
+
+        // if (!empty($data['credentials'])) {
+        //     $provider->credentials()->sync($data['credentials']);
+        // }
+
+        // if (!empty($data['support_areas'])) {
+        //     $provider->supportAreas()->sync($data['support_areas']);
+        // }
+
+        return $provider;
+    }
     public function update(Provider $provider, $data): Provider
     {
         $avatarPath = $provider->avatar;
