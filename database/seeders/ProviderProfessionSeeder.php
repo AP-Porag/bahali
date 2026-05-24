@@ -145,7 +145,7 @@ class ProviderProfessionSeeder extends Seeder
             if ($category) {
                 foreach ($professionList as $index => $profession) {
                     ProviderProfession::create([
-                        'category_id' => $category->id,
+                        'provider_profession_category_id' => $category->id,
                         'name' => $profession['name'],
                         'slug' => \Illuminate\Support\Str::slug($profession['name']),
                         'description' => $profession['name'] . ' providing support services',

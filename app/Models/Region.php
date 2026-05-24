@@ -28,9 +28,6 @@ class Region extends Model
         return $this->belongsTo(Country::class);
     }
 
-    /**
-     * Relationship: Region belongs to RegionType
-     */
     public function regionType()
     {
         return $this->belongsTo(RegionType::class);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Provider;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\ProviderRequest;
 use App\Http\Resources\ProviderCollection;
+use App\Models\Country;
 use App\Models\Provider;
 use App\Models\ProviderType;
 use Illuminate\Http\Request;
@@ -35,8 +36,12 @@ class ProviderController extends Controller
      */
     public function create()
     {
+        // $country = Country::with(['regionTypes.regions'])->get();
+        $countries = Country::with('regions.regionType')->get();
+
         return Inertia::render('admin/provider/create', [
             'provider_type' => ProviderType::select('id', 'name')->get(),
+            'countries' => $countries,
         ]);
     }
 

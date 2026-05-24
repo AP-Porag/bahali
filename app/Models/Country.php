@@ -24,4 +24,13 @@ class Country extends Model
         'is_diaspora' => 'boolean',
         'display_order' => 'integer',
     ];
+
+    // public function regionTypes()
+    // {
+    //     return $this->hasMany(RegionType::class);
+    // }
+    public function regions()
+    {
+        return $this->hasMany(Region::class);
+    }
 }

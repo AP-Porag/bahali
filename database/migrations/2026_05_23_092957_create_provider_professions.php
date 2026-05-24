@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('provider_professions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('provider_profession_categories')->cascadeOnDelete();
+            $table->foreignId('provider_profession_category_id')->constrained('provider_profession_categories')->cascadeOnDelete();
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();

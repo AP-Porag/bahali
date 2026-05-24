@@ -15,4 +15,9 @@ class RegionType extends Model
         'name',
         'label',
     ];
+
+    public function regions()
+    {
+        return $this->hasMany(Region::class);
+    }
 }
