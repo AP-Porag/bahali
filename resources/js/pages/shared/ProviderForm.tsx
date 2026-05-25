@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
 import { useForm } from "@inertiajs/react";
+import { z } from "zod";
 
 type FormState = {
     provider_name: string;
@@ -88,6 +89,59 @@ const SUPPORTS = [
     "Perinatal Mental Health", "Postpartum Support"
 ];
 
+const providerSchema = z.object({
+    provider_name: z.string().min(1, "Provider name is required").max(255),
+    email: z.string().email().max(255),
+    phone: z.string().min(1).max(20),
+
+    country: z.string().min(1, "Country is required"),
+    regionType: z.string().max(100).optional().or(z.literal("")),
+    region: z.string().min(1, "Region is required").max(255),
+    cityTown: z.string().min(1, "City/Town is required").max(255),
+    serviceArea: z.string().max(255).optional().or(z.literal("")),
+
+    serviceFormat: z.enum([
+        "virtual",
+        "home_office_private_residence",
+        "virtual_only_provider",
+        "mobile_community_based_provider",
+        "trauma_focused_service_location",
+        "dv_sa_support_location",
+        "youth_confidential_program",
+        "crisis_shelter_safety_sensitive_site",
+    ]),
+
+    professions: z.array(z.string()).min(1, "Select at least one profession"),
+    credentials: z.array(z.string()).optional(),
+    support_areas: z.array(z.string()).optional(),
+
+    streetAddress1: z.string().optional(),
+    streetAddress2: z.string().optional(),
+    postalCode: z.string().optional(),
+
+    latitude: z
+        .string()
+        .optional()
+        .refine((val) => !val || !isNaN(Number(val)), "Invalid latitude"),
+
+    longitude: z
+        .string()
+        .optional()
+        .refine((val) => !val || !isNaN(Number(val)), "Invalid longitude"),
+
+    verification_address: z.string().optional(),
+    billing_address: z.string().optional(),
+
+    addressVisibilityPreference: z.enum([
+        "no_display",
+        "city_region_only",
+        "service_area",
+        "full_address",
+    ]),
+
+    locationSensitivityFlag: z.boolean(),
+});
+
 export default function ProviderIntakePremium({
     countries,
     professionCategories,
@@ -95,36 +149,6 @@ export default function ProviderIntakePremium({
     support_areas
 }: ProviderIntakeFormProps) {
     const [step, setStep] = useState(0);
-
-    // const [form, setForm] = useState<FormState>({
-    //     providerName: "",
-    //     email: "",
-    //     phone: "",
-
-    //     country: "",
-    //     regionType: "",
-    //     region: "",
-    //     cityTown: "",
-    //     serviceArea: "",
-
-    //     serviceFormat: "virtual",
-
-    //     professions: [],
-    //     credentials: [],
-    //     support_areas: [],
-
-    //     streetAddress1: "",
-    //     streetAddress2: "",
-    //     postalCode: "",
-    //     latitude: "",
-    //     longitude: "",
-
-    //     verification_address: "",
-    //     billing_address: "",
-
-    //     addressVisibilityPreference: "city_region_only",
-    //     locationSensitivityFlag: false,
-    // });
     const { data, setData, post, processing, errors } = useForm({
         provider_name: "",
         email: "",
@@ -181,104 +205,123 @@ export default function ProviderIntakePremium({
         };
     }, [selectedCountry]);
 
-    const update = (key: keyof FormState, value: any) => {
-        setData(key as any, value);
-    };
-
     const next = () =>
         setStep((s) => Math.min(s + 1, steps.length - 1));
 
     const back = () =>
         setStep((s) => Math.max(s - 1, 0));
 
-    const [localErrors, setLocalErrors] = useState<Record<string, string[]>>({});
+    const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
 
-    // const validateStep = () => {
-    //     const newErrors: Record<string, string[]> = {};
 
-    //     if (step === 0) {
-    //         if (!data.provider_name) newErrors.provider_name = ["Provider name is required"];
-    //         if (!data.email) newErrors.email = ["Email is required"];
-    //         if (!data.phone) newErrors.phone = ["Phone is required"];
-    //     }
 
-    //     if (step === 1) {
-    //         if (!data.country) newErrors.country = ["Country is required"];
-    //         if (!data.region) newErrors.region = ["Region is required"];
-    //         if (!data.cityTown) newErrors.cityTown = ["City is required"];
-    //     }
 
-    //     if (step === 2) {
-    //         if (data.professions.length === 0) {
-    //             newErrors.professions = ["Select at least one profession"];
-    //         }
-    //     }
+    const errorMessage = (field: string) => {
+        const clientError = clientErrors[field];
+        const serverError = errors?.[field as keyof typeof errors];
 
-    //     return Object.keys(newErrors).length === 0;
-    // };
-    const validateStep = () => {
-        const newErrors: Record<string, string[]> = {};
+        const error = clientError || serverError;
 
-        if (step === 0) {
-            if (!data.provider_name) {
-                newErrors.provider_name = ["Provider name is required"];
-            }
+        if (!error) return null;
 
-            if (!data.email) {
-                newErrors.email = ["Email is required"];
-            }
+        const msg = Array.isArray(error) ? error[0] : error;
 
-            if (!data.phone) {
-                newErrors.phone = ["Phone is required"];
-            }
-        }
-
-        if (step === 1) {
-            if (!data.country) {
-                newErrors.country = ["Country is required"];
-            }
-
-            if (!data.region) {
-                newErrors.region = ["Region is required"];
-            }
-
-            if (!data.cityTown) {
-                newErrors.cityTown = ["City is required"];
-            }
-        }
-
-        if (step === 2) {
-            if (data.professions.length === 0) {
-                newErrors.professions = ["Select at least one profession"];
-            }
-        }
-
-        setLocalErrors(newErrors);
-
-        return Object.keys(newErrors).length === 0;
+        return (
+            <p className="text-red-500 text-sm mt-1">
+                {msg}
+            </p>
+        );
     };
+
     const submit = () => {
-        const isValid = validateStep();
+        // On the last step, validate all fields and submit
+        if (step === steps.length - 1) {
+            // Validate all fields before submission
+            const result = providerSchema.safeParse(data);
 
-        if (!isValid) return;
+            if (!result.success) {
+                const formatted: Record<string, string> = {};
 
-        if (step !== steps.length - 1) {
-            next();
+                result.error.issues.forEach((err) => {
+                    const path = err.path[0];
+                    if (path) formatted[String(path)] = err.message;
+                });
+
+                setClientErrors(formatted);
+
+                // Jump to first step with errors
+                const firstError = result.error.issues[0]?.path[0];
+
+                if (["provider_name", "email", "phone"].includes(String(firstError))) {
+                    setStep(0);
+                } else if (["country", "region", "cityTown", "serviceFormat", "addressVisibilityPreference"].includes(String(firstError))) {
+                    setStep(1);
+                } else {
+                    setStep(2);
+                }
+
+                return;
+            }
+
+            // Submit to server
+            post("/admin/providers", {
+                preserveScroll: true,
+                onSuccess: () => console.log("SUCCESS"),
+                onError: (errs) => {
+                    console.log("Server errors:", errs);
+                },
+            });
             return;
         }
 
-        post("/admin/providers", {
-            preserveScroll: true,
+        // For steps 0, 1, 2 - validate current step before proceeding
+        const stepFields = {
+            0: ['provider_name', 'email', 'phone'],
+            1: ['country', 'region', 'cityTown', 'serviceFormat', 'addressVisibilityPreference'],
+            2: ['professions']
+        };
 
-            onSuccess: () => {
-                console.log("SUCCESS");
-            },
+        // Get only the fields for current step
+        const currentStepFields = stepFields[step as keyof typeof stepFields];
 
-            onError: (errs) => {
-                console.log(errs);
-            },
-        });
+        // Create a partial schema for current step
+        const stepSchema = providerSchema.pick(
+            Object.fromEntries(currentStepFields.map(f => [f, true]))
+        );
+
+        const stepResult = stepSchema.safeParse(data);
+
+        if (!stepResult.success) {
+            const formatted: Record<string, string> = {};
+
+            stepResult.error.issues.forEach((err) => {
+                const path = err.path[0];
+                if (path) formatted[String(path)] = err.message;
+            });
+
+            setClientErrors(formatted);
+            return; // Don't proceed to next step
+        }
+
+        // Clear errors and go to next step
+        setClientErrors({});
+        next();
     };
+
+    // Update function to clear errors when typing
+    const update = (key: keyof FormState, value: any) => {
+        setData(key as any, value);
+        // Clear client error for this field
+        if (clientErrors[key as string]) {
+            setClientErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[key as string];
+                return newErrors;
+            });
+        }
+    };
+
+
     const inputClass =
         "w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2A1458] transition";
 
@@ -324,13 +367,7 @@ export default function ProviderIntakePremium({
 
 
                             />
-                            <div>
-                                {localErrors.provider_name && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {localErrors.provider_name[0]}
-                                    </p>
-                                )}
-                            </div>
+                            {errorMessage("provider_name")}
 
                             <input
                                 className={inputClass}
@@ -338,13 +375,8 @@ export default function ProviderIntakePremium({
                                 value={data.email}
                                 onChange={(e) => update("email", e.target.value)}
                             />
-                            <div>
-                                {localErrors.email && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {localErrors.email[0]}
-                                    </p>
-                                )}
-                            </div>
+
+                            {errorMessage("email")}
 
                             <input
                                 className={inputClass}
@@ -352,21 +384,7 @@ export default function ProviderIntakePremium({
                                 value={data.phone}
                                 onChange={(e) => update("phone", e.target.value)}
                             />
-                            <div>
-                                {localErrors.phone && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {localErrors.phone[0]}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                {errors.email && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {errors.email[0]}
-                                    </p>
-                                )}
-                            </div>
+                            {errorMessage("phone")}
                         </div>
                     )}
 
@@ -513,20 +531,6 @@ export default function ProviderIntakePremium({
                                 </div>
                             )}
 
-                            {/* <div className="grid grid-cols-2 gap-4">
-                                <input
-                                    className={inputClass}
-                                    placeholder="Latitude (Admin/System)"
-                                    value={data.latitude}
-                                    onChange={(e) => update("latitude", e.target.value)}
-                                />
-                                <input
-                                    className={inputClass}
-                                    placeholder="Longitude (Admin/System)"
-                                    value={data.longitude}
-                                    onChange={(e) => update("longitude", e.target.value)}
-                                />
-                            </div> */}
 
                             <div>
                                 <label className="text-sm font-medium">

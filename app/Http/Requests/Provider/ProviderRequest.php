@@ -19,19 +19,20 @@ class ProviderRequest extends FormRequest
             // Basic Information
             'provider_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:providers,email',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20', // Make phone required
 
             // Location Information
-            'country' => 'nullable|exists:countries,id',
+            'country' => 'required|exists:countries,id', // Change to required
             'regionType' => 'nullable|string|max:100',
-            'region' => 'nullable|string|max:255',
-            'cityTown' => 'nullable|string|max:255',
+            'region' => 'required|string|max:255', // Change to required
+            'cityTown' => 'required|string|max:255', // Change to required
             'serviceArea' => 'nullable|string|max:255',
 
             // Service Format
             'serviceFormat' => [
                 'required',
                 Rule::in([
+                    'virtual', // Add this! Your frontend sends "virtual"
                     'home_office_private_residence',
                     'virtual_only_provider',
                     'mobile_community_based_provider',
@@ -52,8 +53,8 @@ class ProviderRequest extends FormRequest
             'support_areas' => 'nullable|array',
             'support_areas.*' => 'string|max:255',
 
-            // Private Address (Required only for non-virtual services)
-            'streetAddress1' => 'required_if:serviceFormat,in_person,hybrid,mobile|nullable|string|max:255',
+            // Private Address
+            'streetAddress1' => 'nullable|string|max:255',
             'streetAddress2' => 'nullable|string|max:255',
             'postalCode' => 'nullable|string|max:20',
 
@@ -96,7 +97,7 @@ class ProviderRequest extends FormRequest
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
 
-            'country_id' => $validated['country'],
+            'country_id' => $validated['country'], // This expects 'country' field
             'region_type' => $validated['regionType'] ?? null,
             'region' => $validated['region'] ?? null,
             'city_town' => $validated['cityTown'] ?? null,
