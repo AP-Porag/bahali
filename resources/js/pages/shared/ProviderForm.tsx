@@ -409,6 +409,7 @@ export default function ProviderIntakePremium({
                                         </option>
                                     ))}
                                 </select>
+                                {errorMessage("country")}
 
                                 {/* REGION TYPE (READ-ONLY) */}
                                 {selectedCountry && (
@@ -457,7 +458,11 @@ export default function ProviderIntakePremium({
                                     <div className="text-sm text-gray-500 p-2">
                                         No regions available for this country
                                     </div>
-                                ) : null}
+                                ) : null
+
+                                }
+
+
 
                                 <div>
                                     <label className="text-sm font-medium">

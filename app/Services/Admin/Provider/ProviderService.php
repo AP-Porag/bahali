@@ -13,7 +13,7 @@ class ProviderService
         $search = $request->input('search', '');
         $status = $request->input('status', 'all');
         $perPage = $request->input('perPage', 5);
-        $query = Provider::with('providerType');
+        $query = Provider::query();
 
 
         if ($search) {
