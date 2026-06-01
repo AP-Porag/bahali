@@ -13,7 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
+import { VERIFICATION_STATUS } from '@/utils/constants';
 
 const breadcrumbs = [{ title: 'Edit Provider', href: '/providers/create' }];
 
