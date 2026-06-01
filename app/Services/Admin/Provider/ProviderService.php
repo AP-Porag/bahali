@@ -18,7 +18,7 @@ class ProviderService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+                $q->where('provider_name', 'like', "%{$search}%");
                 // ->orWhere('email', 'like', "%{$search}%")
                 // ->orWhere('phone', 'like', "%{$search}%")
                 // ->orWhere('company_name', 'like', "%{$search}%");
@@ -139,9 +139,7 @@ class ProviderService
     {
 
         return [
-            'provider' => $provider->load([
-                'providerType',
-            ]),
+            'provider' => $provider
         ];
     }
 

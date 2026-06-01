@@ -15,7 +15,7 @@ return new class extends Migration
 
             // Basic Information
             $table->string('provider_name');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('phone')->nullable();
 
             // Location Information

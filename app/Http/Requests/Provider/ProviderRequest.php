@@ -18,7 +18,7 @@ class ProviderRequest extends FormRequest
         return [
             // Basic Information
             'provider_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:providers,email',
+            'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20', // Make phone required
 
             // Location Information
