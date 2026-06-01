@@ -67,7 +67,7 @@ class ProviderController extends Controller
             $request->validatedForStorage()
         );
 
-        return redirect()->route('providers.create')
+        return redirect()->route('providers.index')
             ->with('success', 'Provider created successfully.');
     }
 
@@ -133,15 +133,9 @@ class ProviderController extends Controller
 
         $provider = Provider::findOrFail($id);
 
-        if ($request->type === 'verification_status') {
-            $provider->update([
-                'verification_status' => $request->status,
-            ]);
-        } else {
-            $provider->update([
-                'status' => $request->status,
-            ]);
-        }
+        $provider->update([
+            'status' => $request->status,
+        ]);
 
         return back()->with('success', 'Updated successfully');
     }
@@ -149,9 +143,9 @@ class ProviderController extends Controller
 
 
     // GET /api/providers
-    public function getProvidersForApi()
-    {
-        $providers = Provider::where('verification_status', GlobalConstant::VERIFICATION_STATUS_VERIFIED)->with('providerType')->get();
-        return new ProviderCollection($providers);
-    }
+    // public function getProvidersForApi()
+    // {
+    //     $providers = Provider::where('verification_status', GlobalConstant::VERIFICATION_STATUS_VERIFIED)->with('providerType')->get();
+    //     return new ProviderCollection($providers);
+    // }
 }

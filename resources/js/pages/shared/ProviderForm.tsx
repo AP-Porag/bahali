@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
 import { useForm } from "@inertiajs/react";
 import { z } from "zod";
+import { VERIFICATION_STATUS } from "@/utils/constants";
 
 type FormState = {
     provider_name: string;
@@ -600,7 +601,7 @@ export default function ProviderIntakePremium({
                         </div>
                     )}
 
-                    {/* STEP 3 - Professional Role */}
+
                     {/* STEP 3 - Professional Role */}
                     {step === 2 && (
                         <div className="space-y-6">
@@ -615,6 +616,7 @@ export default function ProviderIntakePremium({
                                     onChange={(val) => update("professions", val)}
                                 />
                             </div>
+                            {errorMessage("professions")}
 
                             {/* CREDENTIALS */}
                             <MultiSelect

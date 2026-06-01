@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { STATUS, VERIFICATION_STATUS } from '@/utils/constants';
+import { VERIFICATION_STATUS } from '@/utils/constants';
 import { router } from '@inertiajs/react';
 import { BadgeCheck, ChevronLeft, ChevronRight, Edit, EyeIcon, MoreVertical, Settings, Trash2 } from 'lucide-react';
 import React from 'react';
@@ -190,7 +190,7 @@ export default function DataTable({
                                                 )}
 
                                                 {/* CHANGE STATUS */}
-                                                {rowActions.change_status && (
+                                                {/* {rowActions.change_status && (
                                                     <DropdownMenuItem
                                                         onClick={() => {
                                                             setSelectedRow(row);
@@ -201,7 +201,7 @@ export default function DataTable({
                                                         <Settings className="mr-2 h-4 w-4" />
                                                         Change Status
                                                     </DropdownMenuItem>
-                                                )}
+                                                )} */}
 
                                                 {/* CHANGE VERIFICATION STATUS */}
                                                 {rowActions.change_verification_status && (
@@ -322,12 +322,11 @@ export default function DataTable({
                             </SelectTrigger>
 
                             <SelectContent>
-                                <SelectItem value={VERIFICATION_STATUS.UNVERIFIED}>Unverified</SelectItem>
-                                <SelectItem value={VERIFICATION_STATUS.VERIFIED}>Verified</SelectItem>
-                                <SelectItem value={VERIFICATION_STATUS.PROVISIONAL}>Provisional</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.PENDING}>Pending</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.APPROVED}>Approved</SelectItem>
                                 <SelectItem value={VERIFICATION_STATUS.REJECTED}>Rejected</SelectItem>
-                                <SelectItem value={VERIFICATION_STATUS.REVOKED}>Revoked</SelectItem>
-                                <SelectItem value={VERIFICATION_STATUS.EXPIRED}>Expired</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.SUSPENDED}>Suspended</SelectItem>
+                                <SelectItem value={VERIFICATION_STATUS.INACTIVE}>Inactive</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -341,12 +340,12 @@ export default function DataTable({
                                     router.post(
                                         `/admin/change/status/provider/${selectedRow.id}`,
                                         {
-                                            type: 'verification_status',
+                                            type: 'status',
                                             status: selectedStatus,
                                         },
                                         {
                                             onSuccess: () => {
-                                                toast.success('Verification updated');
+                                                toast.success('Verification Status updated');
                                                 setVerificationModal(false);
                                             },
                                         },

@@ -1,6 +1,7 @@
 <?php
 // database/migrations/2024_01_01_000000_create_providers_table.php
 
+use App\Utils\GlobalConstant;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -55,12 +56,12 @@ return new class extends Migration
 
             // Application Status
             $table->enum('status', [
-                'pending',
-                'approved',
-                'rejected',
-                'suspended',
-                'inactive'
-            ])->default('pending');
+                GlobalConstant::VERIFICATION_STATUS_PENDING,
+                GlobalConstant::VERIFICATION_STATUS_APPROVED,
+                GlobalConstant::VERIFICATION_STATUS_REJECTED,
+                GlobalConstant::VERIFICATION_STATUS_SUSPENDED,
+                GlobalConstant::VERIFICATION_STATUS_INACTIVE
+            ])->default(GlobalConstant::VERIFICATION_STATUS_PENDING);
 
             // Verification
             $table->timestamp('email_verified_at')->nullable();

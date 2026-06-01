@@ -1,29 +1,14 @@
-export const STATUS = {
-    DRAFT: 'draft',
-
+export const VERIFICATION_STATUS = {
     PENDING: 'pending',
 
-    PUBLISHED: 'published',
-
-    SUSPENDED: 'suspended',
-
-    EXPIRED: 'expired',
-
-    ARCHIVED: 'archived',
-};
-
-export const VERIFICATION_STATUS = {
-    UNVERIFIED: 'unverified',
-
-    VERIFIED: 'verified',
-
-    PROVISIONAL: 'provisional',
+    APPROVED: 'approved',
 
     REJECTED: 'rejected',
 
-    EXPIRED: 'expired',
+    SUSPENDED: 'suspended',
 
-    REVOKED: 'revoked',
+    INACTIVE: 'inactive',
+
 };
 
 export const FLASH = {

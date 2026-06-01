@@ -43,29 +43,6 @@ export default function Index({ providers, meta, filters: initialFilters }) {
 
     const columns = [
         { key: 'provider_name', label: 'Name' },
-        // {
-        //     key: 'type',
-        //     label: 'Type',
-        //     render: (row) => <span className="block w-30 truncate">{row.provider}</span>,
-        // },
-        // {
-        //     key: 'service',
-        //     label: 'Service',
-        //     render: (row) => <span className="block w-40">{row.service}</span>,
-        // },
-        // {
-        //     key: 'verification_status',
-        //     label: 'Verification Status',
-        //     render: (row) => (
-        //         <span
-        //             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getVerificationBadge(
-        //                 row.verification_status,
-        //             )}`}
-        //         >
-        //             {capitalize(row.verification_status)}
-        //         </span>
-        //     ),
-        // },
 
         {
             key: 'status',
@@ -76,22 +53,6 @@ export default function Index({ providers, meta, filters: initialFilters }) {
                 </span>
             ),
         },
-        // {
-        //     key: 'avatar',
-        //     label: 'Avatar',
-        //     render: (row) => (
-        //         <div className="h-10 w-10 overflow-hidden rounded-full border border-gray-200 shadow-sm">
-        //             <img
-        //                 src={row.avatar ? `/storage/${row.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}`}
-        //                 alt={row.name}
-        //                 className="h-full w-full object-cover"
-        //                 onError={(e) => {
-        //                     e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}`;
-        //                 }}
-        //             />
-        //         </div>
-        //     ),
-        // },
     ];
 
     return (
@@ -119,7 +80,7 @@ export default function Index({ providers, meta, filters: initialFilters }) {
                         view: true,
                         edit: false,
                         delete: true,
-                        change_status: true,
+                        change_status: false,
                         change_verification_status: true,
                         search_filter: true,
                         status_filter: true,
