@@ -66,8 +66,8 @@ class ProviderService
             'address_visibility_preference' => $data['address_visibility_preference'],
             'location_sensitivity_flag' => $data['location_sensitivity_flag'] ?? false,
 
-            'street_address_1' => $data['street_address1'] ?? null,
-            'street_address_2' => $data['street_address2'] ?? null,
+            'street_address1' => $data['street_address1'] ?? null,
+            'street_address2' => $data['street_address2'] ?? null,
             'postal_code' => $data['postal_code'] ?? null,
 
             'verification_address' => $data['verification_address'] ?? null,

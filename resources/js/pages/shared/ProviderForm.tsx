@@ -148,6 +148,7 @@ export default function ProviderIntakePremium({
     credentials,
     support_areas
 }: ProviderIntakeFormProps) {
+    console.log(professionCategories);
     const [step, setStep] = useState(0);
     const { data, setData, post, processing, errors } = useForm({
         provider_name: "",
@@ -660,8 +661,6 @@ export default function ProviderIntakePremium({
         </div>
     );
 }
-
-// Grouped Multi-Select Component for Professions
 // Grouped Multi-Select Component for Professions
 function GroupedMultiSelect({ categories, value, onChange }: {
     categories: ProfessionCategory[];
@@ -815,7 +814,7 @@ function GroupedMultiSelect({ categories, value, onChange }: {
                                                 {expandedCategories[category.id] ? '▼' : '▶'}
                                             </span>
                                             <span className="font-bold text-sm text-gray-800">
-                                                {category.label}
+                                                {category.name}
                                             </span>
                                         </div>
                                         {getSelectedCount(category) > 0 && (
