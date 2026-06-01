@@ -92,8 +92,7 @@ const SUPPORTS = [
 const providerSchema = z.object({
     provider_name: z.string().min(1, "Provider name is required").max(255),
     email: z.string().email().max(255),
-    phone: z.string().min(1).max(20),
-
+    phone: z.string().min(1, "Phone is required").max(20),
     country: z.string().min(1, "Country is required"),
     regionType: z.string().max(100).optional().or(z.literal("")),
     region: z.string().min(1, "Region is required").max(255),
