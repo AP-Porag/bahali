@@ -92,7 +92,11 @@ const SUPPORTS = [
 
 const providerSchema = z.object({
     provider_name: z.string().min(1, "Provider name is required").max(255),
-    email: z.string().email().max(255),
+    email: z
+        .string()
+        .min(1, "Email is required")  // Empty check first
+        .email("Please enter a valid email address")  // Format check second
+        .max(255, "Email must be less than 255 characters"),
     phone: z.string().min(1, "Phone is required").max(20),
     country: z.string().min(1, "Country is required"),
     regionType: z.string().max(100).optional().or(z.literal("")),
