@@ -2,12 +2,13 @@
 
 use App\Http\Controllers\Admin\Dashboard\DashboardController;
 use App\Http\Controllers\Admin\Provider\ProviderController;
-use App\Http\Controllers\Admin\ProviderType\ProviderTypeController;
+// use App\Http\Controllers\Provider\ProviderTypeController;
 use App\Http\Controllers\Admin\User\UserController;
-
+use App\Http\Controllers\Provider\ProviderDirectoryController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 Route::get('/execute-command', function () {
     //    return redirect()->route('login');
@@ -28,6 +29,11 @@ Route::get('/', function () {
     //    return Inertia::render('welcome');
 })->name('home');
 //->prefix('admin')->as('admin.')
+Route::get('/provider/directory/create', [ProviderDirectoryController::class, 'create'])
+    ->name('providers.create');
+
+Route::post('/provider/directory/store', [ProviderDirectoryController::class, 'store'])
+    ->name('providers.store');
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     Route::get('/under-development', function (\Illuminate\Http\Request $request) {
@@ -41,8 +47,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     // Route::resource('users', UserController::class);
 
-    Route::resource('provider-type', ProviderTypeController::class);
-    Route::resource('providers', ProviderController::class);
+
+
+    // Route::resource('provider-type', ProviderTypeController::class);
+    // Route::resource('providers', ProviderController::class);
     Route::post('change/status/provider/{selectedRow}', [ProviderController::class, 'changeStatus']);
 });
 

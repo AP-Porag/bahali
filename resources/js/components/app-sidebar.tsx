@@ -20,7 +20,7 @@ const mainNavItems: NavItem[] = [
     // },
     {
         title: 'Provider',
-        href: '/admin/providers',
+        href: '/provider/directory/create',
         icon: CalendarDays,
     },
     // {

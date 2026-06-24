@@ -12,54 +12,89 @@ class Provider extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        // Basic Information
-        'provider_name',
-        'email',
-        'phone',
+        'user_id',
 
-        // Location Information
-        'country_id',
-        'region_type',
-        'region',
-        'city_town',
-        'service_area',
-
-        // Service Format
-        'service_format',
-
-        // Professional Information
-        'professions',
+        // Basic
+        'provider_type',
+        'organization_name',
         'credentials',
-        'support_areas',
+        'professional_title',
+        'professional_title_other',
 
-        // Private Address
-        'street_address1',
-        'street_address2',
-        'postal_code',
-        'latitude',
-        'longitude',
+        // About
+        'short_bio',
+        'years_experience',
 
-        // Admin Address
-        'verification_address',
-        'billing_address',
+        // Licensure
+        'license_number',
+        'license_states',
+        'license_status',
+        'verification_document',
 
-        // Visibility Settings
-        'address_visibility_preference',
-        'location_sensitivity_flag',
+        // Support / populations
+        'areas_of_support',
+        'areas_of_support_other',
+        'populations_served',
 
-        // Status
-        'status',
-        'email_verified_at',
-        'approved_at',
-        'approved_by',
+        // Culture & language
+        'caribbean_identity',
+        'caribbean_experience',
+        'languages',
+        'languages_other',
+        'cultural_approach',
+
+        // Service
+        'service_formats',
+        'practice_settings',
+
+        // Location
+        'address',
+        'city',
+        'state_province',
+        'country',
+        'multiple_locations',
+        'hide_address',
+        'telehealth_regions',
+
+        // Payment
+        'payment_methods',
+        'insurance_plans',
+
+        // Contact
+        'phone',
+        'website',
+        'social_links',
+
+        // Media
+        'profile_photo',
+        'additional_photos',
+
+        // Accessibility
+        'accessibility',
+
+        // Consent
+        'consent_accurate',
+        'consent_notify',
+        'consent_no_endorsement',
+        'consent_public',
     ];
 
     protected $casts = [
-        // Cast JSON fields to arrays
-        'professions' => 'array',
-        'credentials' => 'array',
-        'support_areas' => 'array',
-
+        'license_states'      => 'array',
+        'areas_of_support'    => 'array',
+        'populations_served'  => 'array',
+        'languages'           => 'array',
+        'service_formats'     => 'array',
+        'practice_settings'   => 'array',
+        'telehealth_regions'  => 'array',
+        'payment_methods'     => 'array',
+        'accessibility'       => 'array',
+        'additional_photos'   => 'array',
+        'hide_address'            => 'boolean',
+        'consent_accurate'        => 'boolean',
+        'consent_notify'          => 'boolean',
+        'consent_no_endorsement'  => 'boolean',
+        'consent_public'          => 'boolean',
     ];
 
     // Relationships
