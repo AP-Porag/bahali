@@ -43,7 +43,7 @@ class ProviderDirectoryController extends Controller
             ->values()
             ->toArray();
 
-        return Inertia::render('admin/provider/create', [
+        return Inertia::render('web/create', [
             'countries' => $countries,
         ]);
     }

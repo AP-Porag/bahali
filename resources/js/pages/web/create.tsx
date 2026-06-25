@@ -3,7 +3,7 @@ import type { Country, ProfessionCategory, Credential, SupportArea } from "@/typ
 import AppLayout from '@/layouts/app-layout.js';
 import { Button } from '@/components/ui/button';
 import { Head, router, usePage } from '@inertiajs/react';
-import ProviderRegistration from "@/pages/shared/ProviderRegistration";
+import ProviderRegistration from "@/pages/web/ProviderRegistration";
 
 const breadcrumbs = [
     {
@@ -29,25 +29,22 @@ export default function CreateProviderPage({
     return (
         <div>
 
-
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Clients" />
-                <div className="p-4">
-                    {/* <div className="my-4 flex items-center justify-between">
+            <Head title="Clients" />
+            <div>
+                {/* <div className="my-4 flex items-center justify-between">
                         <h1 className="text-2xl font-bold">Providers</h1>
                         <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
                             <Plus className="mr-2" /> Create Provider
                         </Button>
                     </div> */}
-                    {/* <ProviderIntakeForm
+                {/* <ProviderIntakeForm
                         countries={countries}
                         professionCategories={professionCategories}
                         credentials={credentials}
                         support_areas={supoort_areas}
                     /> */}
-                    <ProviderRegistration countries={countries} />
-                </div>
-            </AppLayout>
+                <ProviderRegistration countries={countries} />
+            </div>
 
 
 

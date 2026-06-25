@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 
 /**
  * Bahali Provider Directory — Registration
@@ -24,6 +24,8 @@ import { Head, useForm } from '@inertiajs/react';
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
+
+const SIGNUP_ROUTE = '/provider/directory/create';
 
 type ProviderType =
     | 'individual'
@@ -1010,14 +1012,33 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             <Head title="Provider Directory Registration — Bahali" />
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
                 {/* Header */}
-                <header className="border-b border-[#E7E0D2] bg-[#0E4C4B]">
-                    <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">
-                            B
-                        </div>
-                        <div>
-                            <p className="font-serif text-lg leading-none text-white">Bahali</p>
-                            <p className="text-xs text-[#A9C9C7]">Provider Directory</p>
+                <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
+                    <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+                        <a href="https://bahali.org" className="flex items-center gap-2.5">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">
+                                B
+                            </span>
+                            <span className="leading-none">
+                                <span className="block font-serif text-lg text-[#16302F]">Bahali</span>
+                                <span className="block text-[11px] tracking-wide text-[#6B7A78]">
+                                    Provider Directory
+                                </span>
+                            </span>
+                        </a>
+
+                        <div className="flex items-center gap-3">
+                            <a
+                                href="/login"
+                                className="hidden text-sm font-medium text-[#3A4B49] transition hover:text-[#0E7C7B] sm:inline"
+                            >
+                                Provider login
+                            </a>
+                            {/* <Link
+                                href={SIGNUP_ROUTE}
+                                className="rounded-full bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69]"
+                            >
+                                Join the circle
+                            </Link> */}
                         </div>
                     </div>
                 </header>
@@ -1177,10 +1198,38 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             <p className="mt-4 text-center text-xs text-[#9AA6A4]">
                                 Fields marked <span className="text-[#C2543B]">*</span> are required.
                             </p>
+
+
                         </main>
                     </div>
                 </div>
             </div>
+            <footer className="bg-[#0a3a39] text-[#A9C9C7]">
+                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
+                    <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-sm font-bold text-[#0E4C4B]">
+                            B
+                        </span>
+                        <span className="text-sm text-white/90">
+                            Bahali — rooted in culture, centered on emotional wellness.
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-5 text-sm">
+                        <a href="https://bahali.org/about/" className="transition hover:text-white">
+                            About
+                        </a>
+                        <a href="https://bahali.org/contact/" className="transition hover:text-white">
+                            Contact
+                        </a>
+                        <a href="https://bahali.org/legal/" className="transition hover:text-white">
+                            Privacy
+                        </a>
+                    </div>
+                </div>
+                <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
+                    © {new Date().getFullYear()} Bahali. All rights reserved.
+                </div>
+            </footer>
         </>
     );
 }

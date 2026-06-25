@@ -26,21 +26,17 @@ class JoinController extends Controller
 
         // Languages families can filter by. If you store these in a table, count
         // that instead. For now this mirrors the 8 options in the registration form.
-        $languageCount = 8;
+        // $languageCount = 8;
 
         // Verified, publicly-listed providers. Adjust the scope to match your schema
         // (e.g. ->where('status', 'approved')). Falls back to 0 gracefully.
-        $providerCount = Provider::query()
-            ->when(
-                \Schema::hasColumn('providers', 'status'),
-                fn($q) => $q->where('status', 'approved')
-            )
-            ->count();
+        // $providerCount = Provider::query()
+        //     ->when(
+        //         \Schema::hasColumn('providers', 'status'),
+        //         fn($q) => $q->where('status', 'approved')
+        //     )
+        //     ->count();
 
-        return Inertia::render('provider/JoinTheCircle', [
-            'regionCount'   => $regionCount > 0 ? $regionCount : 28,
-            'languageCount' => $languageCount,
-            'providerCount' => $providerCount,
-        ]);
+        return Inertia::render('web/JoinTheCircle');
     }
 }
