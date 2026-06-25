@@ -897,7 +897,6 @@ export default function ProviderRegistration({ errors: serverErrors }: PageProps
 
         // Submit using the FormData
         form.post('/provider/directory/store', {
-            data: formData,
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -911,7 +910,7 @@ export default function ProviderRegistration({ errors: serverErrors }: PageProps
                 }
             },
         });
-    };
+    }
 
     // const handleSubmit = () => {
     //     const stepErrors = validateStep(step, d);
