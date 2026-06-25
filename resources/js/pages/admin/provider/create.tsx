@@ -45,7 +45,7 @@ export default function CreateProviderPage({
                         credentials={credentials}
                         support_areas={supoort_areas}
                     /> */}
-                    <ProviderRegistration />
+                    <ProviderRegistration countries={countries} />
                 </div>
             </AppLayout>
 

@@ -732,13 +732,27 @@ function CheckGrid({
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
+interface RegionData {
+    id: number;
+    name: string;
+    regionTypeName?: string;
+    regionTypeLabel?: string;
+}
 
+interface CountryData {
+    id: number;
+    name: string;
+    code: string;
+    regions: RegionData[];
+}
 interface PageProps {
     /** Server-side validation errors keyed by field name (Inertia shared). */
     errors?: Partial<Record<string, string>>;
+    countries: CountryData[];
 }
 
-export default function ProviderRegistration({ errors: serverErrors }: PageProps) {
+export default function ProviderRegistration({ errors: serverErrors, countries }: PageProps) {
+    console.log(countries)
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
@@ -1121,6 +1135,7 @@ export default function ProviderRegistration({ errors: serverErrors }: PageProps
                                         set={set}
                                         toggle={toggle}
                                         fieldError={fieldError}
+                                        countries={countries}
                                     />
                                 </div>
 
@@ -1175,14 +1190,18 @@ export default function ProviderRegistration({ errors: serverErrors }: PageProps
 /* ------------------------------------------------------------------ */
 
 function StepBody({
-    step, d, set, toggle, fieldError,
+    step, d, set, toggle, fieldError, countries
 }: {
     step: number;
     d: ProviderFormData;
     set: <K extends FieldName>(key: K, value: ProviderFormData[K]) => void;
     toggle: (key: FieldName, value: string) => void;
     fieldError: (key: FieldName) => string | undefined;
+    countries: CountryData[];
 }) {
+    const selectedCountry = countries.find(c => c.name === d.country);
+    const availableRegions = selectedCountry?.regions ?? [];
+    const regionTypeLabel = selectedCountry?.regions[0]?.regionTypeLabel || 'State / Province';
     switch (step) {
         /* ---------------- Step 1: Basic Information ------------------- */
         case 0:
@@ -1571,26 +1590,51 @@ function StepBody({
                             />
                         </FieldShell>
 
-                        <FieldShell label="State / Province" required error={fieldError('state_province')}>
+
+                        <FieldShell label="Country" required error={fieldError('country')}>
                             <SelectInput
-                                value={d.state_province}
-                                onChange={(v) => set('state_province', v)}
-                                options={US_STATES}
-                                error={!!fieldError('state_province')}
-                                placeholder="Select…"
+                                value={d.country}
+                                onChange={(v) => {
+                                    set('country', v);
+                                    set('state_province', '');
+                                }}
+                                options={countries.map(c => ({
+                                    value: c.name,
+                                    label: c.name
+                                }))}
+                                error={!!fieldError('country')}
+                                placeholder="Select country…"
                             />
                         </FieldShell>
                     </div>
-
-                    <FieldShell label="Country" required error={fieldError('country')}>
-                        <SelectInput
-                            value={d.country}
-                            onChange={(v) => set('country', v)}
-                            options={COUNTRIES}
-                            error={!!fieldError('country')}
-                            placeholder="Select country…"
-                        />
+                    <FieldShell
+                        label={regionTypeLabel}  // Dynamic label from database
+                        required
+                        error={fieldError('state_province')}
+                        hint={!d.country ? 'Please select a country first' : undefined}
+                    >
+                        {d.country && availableRegions.length > 0 ? (
+                            <SelectInput
+                                value={d.state_province}
+                                onChange={(v) => set('state_province', v)}
+                                options={availableRegions.map(r => ({
+                                    value: r.name,
+                                    label: r.name
+                                }))}
+                                error={!!fieldError('state_province')}
+                                placeholder={`Select ${regionTypeLabel.toLowerCase()}…`}
+                            />
+                        ) : d.country && availableRegions.length === 0 ? (
+                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                No regions available for this country
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                Select a country to see available regions
+                            </div>
+                        )}
                     </FieldShell>
+
 
                     <FieldShell
                         label="Do you provide services across multiple locations?"

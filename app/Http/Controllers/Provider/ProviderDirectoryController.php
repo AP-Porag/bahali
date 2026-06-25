@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\StoreProviderRequest;
+use App\Models\Country;
 use App\Models\Provider;
 use App\Models\User;
 use Illuminate\Http\File;
@@ -20,7 +21,31 @@ class ProviderDirectoryController extends Controller
      */
     public function create()
     {
-        return Inertia::render('admin/provider/create');
+        // Fetch countries with regions, organized for dependent dropdown
+        $countries = Country::with('regions.regionType')
+            ->orderBy('display_order')
+            ->get()
+            ->map(fn($country) => [
+                'id' => $country->id,
+                'name' => $country->name,
+                'code' => $country->code,
+                'regions' => $country->regions
+                    ->sortBy('display_order')
+                    ->map(fn($region) => [
+                        'id' => $region->id,
+                        'name' => $region->name,
+                        'regionTypeName' => $region->regionType?->name,
+                        'regionTypeLabel' => $region->regionType?->label,
+                    ])
+                    ->values()
+                    ->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
+        return Inertia::render('admin/provider/create', [
+            'countries' => $countries,
+        ]);
     }
 
     /**

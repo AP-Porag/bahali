@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Provider\ProviderController;
 // use App\Http\Controllers\Provider\ProviderTypeController;
 use App\Http\Controllers\Admin\User\UserController;
 use App\Http\Controllers\Provider\ProviderDirectoryController;
+use App\Http\Controllers\Web\JoinController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -28,6 +29,8 @@ Route::get('/', function () {
     return redirect()->route('login');
     //    return Inertia::render('welcome');
 })->name('home');
+
+Route::get('/join', [JoinController::class, 'index'])->name('providers.join');
 //->prefix('admin')->as('admin.')
 Route::get('/provider/directory/create', [ProviderDirectoryController::class, 'create'])
     ->name('providers.create');
