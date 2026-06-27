@@ -60,6 +60,11 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('/providers/verification/show/{id}', [ProviderDirectoryController::class, 'show'])
         ->name('providers.verification.show');
 
+    // Pending Provider Show (Single Provider Details)
+    Route::Post('/providers/verification/update/{id}', [ProviderDirectoryController::class, 'update'])
+        ->name('providers.verification.update');
+
+
 
 
     // Route::resource('provider-type', ProviderTypeController::class);

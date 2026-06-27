@@ -8,15 +8,17 @@ import { VERIFICATION_STATUS } from '@/utils/constants';
  * ------------------------------------------------------------------
  * A read-only, multi-step mirror of the provider registration flow.
  * The admin walks through every section the provider submitted (no
- * editable fields), then on the final "Verification Decision" step
- * chooses a new status and updates it.
+ * editable fields). Visited sections are checked off in the stepper.
+ * On the final "Verification Decision" step the admin picks an action
+ * with one of four buttons — Approve / Reject / Suspend / Inactive —
+ * each of which posts the new status directly.
  *
  * On update → POST to the verification route → controller redirects to
  * the providers index → a "Verification status changed" toast is shown.
  *
  * Expected routes:
- *   GET  admin/providers/{provider}/verification  → name: admin.providers.verification.show
- *   POST admin/providers/{provider}/verification  → name: admin.providers.verification.update
+ *   GET  admin/providers/{provider}/verification  → name: providers.verification.show
+ *   POST admin/providers/{provider}/verification  → name: providers.verification.update
  * ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
@@ -205,12 +207,36 @@ const STATUS_META: Record<string, { label: string; cls: string; dot: string }> =
     inactive: { label: 'Inactive', cls: 'bg-[#8A9795]/15 text-[#5B6B6E] ring-[#8A9795]/30', dot: 'bg-[#8A9795]' },
 };
 
-const STATUS_OPTIONS = [
-    { value: VERIFICATION_STATUS.PENDING, label: 'Pending' },
-    { value: VERIFICATION_STATUS.APPROVED, label: 'Approved' },
-    { value: VERIFICATION_STATUS.REJECTED, label: 'Rejected' },
-    { value: VERIFICATION_STATUS.SUSPENDED, label: 'Suspended' },
-    { value: VERIFICATION_STATUS.INACTIVE, label: 'Inactive' },
+/* The four decision actions (no "pending" — that's the incoming state). */
+const DECISION_ACTIONS: { value: string; label: string; cls: string; ring: string; icon: JSX.Element }[] = [
+    {
+        value: VERIFICATION_STATUS.APPROVED,
+        label: 'Approve',
+        cls: 'bg-[#0E7C7B] hover:bg-[#0c6a69]',
+        ring: 'focus:ring-[#0E7C7B]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />,
+    },
+    {
+        value: VERIFICATION_STATUS.REJECTED,
+        label: 'Reject',
+        cls: 'bg-[#C2543B] hover:bg-[#aa482f]',
+        ring: 'focus:ring-[#C2543B]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />,
+    },
+    {
+        value: VERIFICATION_STATUS.SUSPENDED,
+        label: 'Suspend',
+        cls: 'bg-[#B86B2B] hover:bg-[#a25c22]',
+        ring: 'focus:ring-[#B86B2B]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />,
+    },
+    {
+        value: VERIFICATION_STATUS.INACTIVE,
+        label: 'Inactive',
+        cls: 'bg-[#6E7B79] hover:bg-[#5d6968]',
+        ring: 'focus:ring-[#6E7B79]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />,
+    },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -259,16 +285,75 @@ function YesNoBadge({ value }: { value?: boolean }) {
     );
 }
 
-function FileView({ url, label, image }: { url?: string | null; label: string; image?: boolean }) {
+function FileView({ url, label, image, onView }: { url?: string | null; label: string; image?: boolean; onView?: (url: string) => void }) {
     if (!url) return <Muted>Not provided</Muted>;
     if (image) {
         return <img src={url} alt={label} className="h-28 w-28 rounded-xl border border-[#E7E0D2] object-cover" />;
     }
-    return (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2 text-sm font-medium text-[#0E6B6A] transition hover:border-[#0E7C7B]">
+    const inner = (
+        <>
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
             View document
-        </a>
+        </>
+    );
+    const cls = 'inline-flex items-center gap-2 rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2 text-sm font-medium text-[#0E6B6A] transition hover:border-[#0E7C7B]';
+    if (onView) {
+        return <button type="button" onClick={() => onView(url)} className={cls}>{inner}</button>;
+    }
+    return <a href={url} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Document viewer modal (download + zoom)                            */
+/* ------------------------------------------------------------------ */
+
+function DocumentModal({ url, onClose }: { url: string; onClose: () => void }) {
+    const [scale, setScale] = useState(1);
+    const isImage = /\.(png|jpe?g|webp|gif|bmp|svg)(\?|$)/i.test(url);
+    const zoomIn = () => setScale((s) => Math.min(3, +(s + 0.25).toFixed(2)));
+    const zoomOut = () => setScale((s) => Math.max(0.5, +(s - 0.25).toFixed(2)));
+    const reset = () => setScale(1);
+
+    const toolBtn = 'flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-40';
+
+    return (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-black/70 backdrop-blur-sm" onClick={onClose}>
+            {/* Toolbar */}
+            <div className="flex items-center justify-between gap-3 bg-[#0a3a39] px-4 py-3 text-white sm:px-6" onClick={(e) => e.stopPropagation()}>
+                <span className="font-serif text-base">Verification document</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button type="button" onClick={zoomOut} disabled={scale <= 0.5} aria-label="Zoom out" className={toolBtn}>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" /></svg>
+                    </button>
+                    <button type="button" onClick={reset} className="min-w-[3.5rem] rounded-lg bg-white/10 px-2 py-1.5 text-sm tabular-nums transition hover:bg-white/20" aria-label="Reset zoom">
+                        {Math.round(scale * 100)}%
+                    </button>
+                    <button type="button" onClick={zoomIn} disabled={scale >= 3} aria-label="Zoom in" className={toolBtn}>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
+                    </button>
+                    <a href={url} download target="_blank" rel="noopener noreferrer" aria-label="Download" className={toolBtn}>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    </a>
+                    <button type="button" onClick={onClose} aria-label="Close" className={`${toolBtn} ml-1`}>
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-auto p-4 sm:p-8" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="mx-auto w-fit origin-top transition-transform duration-150"
+                    style={{ transform: `scale(${scale})` }}
+                >
+                    {isImage ? (
+                        <img src={url} alt="Verification document" className="max-w-none rounded-lg bg-white shadow-2xl" />
+                    ) : (
+                        <iframe src={url} title="Verification document" className="h-[80vh] w-[min(900px,90vw)] rounded-lg bg-white shadow-2xl" />
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -280,7 +365,7 @@ function DL({ children }: { children: React.ReactNode }) {
 /*  Read-only step body                                                */
 /* ------------------------------------------------------------------ */
 
-function ReviewBody({ step, p }: { step: number; p: ProviderData }) {
+function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onViewDoc?: (url: string) => void }) {
     switch (step) {
         case 0:
             return (
@@ -309,7 +394,7 @@ function ReviewBody({ step, p }: { step: number; p: ProviderData }) {
                     <Row label="License number">{p.license_number}</Row>
                     <Row label="License status">{lbl(LICENSE_STATUS_LABELS, p.license_status)}</Row>
                     <Row label="State / Country of licensure"><Pills items={p.license_states} /></Row>
-                    <Row label="Verification document"><FileView url={p.verification_document} label="Verification document" /></Row>
+                    <Row label="Verification document"><FileView url={p.verification_document} label="Verification document" onView={onViewDoc} /></Row>
                 </DL>
             );
         case 3:
@@ -413,35 +498,44 @@ function ReviewBody({ step, p }: { step: number; p: ProviderData }) {
 export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider;
     const [step, setStep] = useState(0);
-    const [newStatus, setNewStatus] = useState<string>(p.verification_status);
+    const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
     const [note, setNote] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [activeAction, setActiveAction] = useState<string | null>(null);
+    const [docUrl, setDocUrl] = useState<string | null>(null);
+    const [confirmAction, setConfirmAction] = useState<{ value: string; label: string; cls: string; ring: string } | null>(null);
     const topRef = useRef<HTMLDivElement>(null);
 
     const current = STATUS_META[p.verification_status] ?? STATUS_META.pending;
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
 
     const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    const goTo = (i: number) => { setStep(Math.max(0, Math.min(i, TOTAL_STEPS - 1))); scrollTop(); };
+    const goTo = (i: number) => {
+        const next = Math.max(0, Math.min(i, TOTAL_STEPS - 1));
+        setVisited((v) => new Set(v).add(next));
+        setStep(next);
+        scrollTop();
+    };
 
-    const submit = () => {
+    const submit = (status: string) => {
+        if (processing) return;
         setProcessing(true);
+        setActiveAction(status);
         router.post(
             route('providers.verification.update', p.id),
-            { status: newStatus, note },
+            { status, note },
             {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Verification status changed'),
                 onError: () => {
                     setProcessing(false);
+                    setActiveAction(null);
                     toast.error('Could not update the verification status.');
                 },
                 onFinish: () => setProcessing(false),
             },
         );
     };
-
-    const statusChanged = newStatus !== p.verification_status;
 
     return (
         <>
@@ -484,7 +578,7 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                     </div>
 
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-                        {/* Stepper (all steps clickable in review) */}
+                        {/* Stepper (all steps clickable; visited steps checked off) */}
                         <aside className="lg:sticky lg:top-24 lg:self-start">
                             {/* Mobile progress + jump */}
                             <div className="mb-4 lg:hidden">
@@ -505,6 +599,7 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                     {STEPS.map((s, i) => {
                                         const isCurrent = i === step;
                                         const isDecision = i === DECISION_STEP;
+                                        const isDone = visited.has(i) && !isCurrent && !isDecision;
                                         return (
                                             <li key={s.key} className="relative mb-1 last:mb-0">
                                                 <button
@@ -513,13 +608,19 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                                     className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[#0E7C7B]/5 ${isCurrent ? 'bg-[#0E7C7B]/5' : ''}`}
                                                 >
                                                     <span
-                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition ${isCurrent
-                                                            ? 'border-[#0E7C7B] bg-white text-[#0E7C7B]'
-                                                            : isDecision
-                                                                ? 'border-[#C2543B]/40 bg-[#F7F3EC] text-[#C2543B]'
-                                                                : 'border-[#D8D0C0] bg-[#F7F3EC] text-[#8A9795]'}`}
+                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition ${isDone
+                                                            ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                                            : isCurrent
+                                                                ? 'border-[#0E7C7B] bg-white text-[#0E7C7B]'
+                                                                : isDecision
+                                                                    ? 'border-[#C2543B]/40 bg-[#F7F3EC] text-[#C2543B]'
+                                                                    : 'border-[#D8D0C0] bg-[#F7F3EC] text-[#8A9795]'}`}
                                                     >
-                                                        {isDecision ? (
+                                                        {isDone ? (
+                                                            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                                                                <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                                            </svg>
+                                                        ) : isDecision ? (
                                                             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75" /></svg>
                                                         ) : (i + 1)}
                                                     </span>
@@ -557,19 +658,6 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                         </div>
 
                                         <div>
-                                            <label className="mb-1.5 block text-sm font-medium text-[#26403F]">Set new status</label>
-                                            <select
-                                                value={newStatus}
-                                                onChange={(e) => setNewStatus(e.target.value)}
-                                                className="w-full appearance-none rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
-                                            >
-                                                {STATUS_OPTIONS.map((o) => (
-                                                    <option key={o.value} value={o.value}>{o.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        <div>
                                             <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
                                                 Review note <span className="font-normal text-[#9AA6A4]">(optional, internal)</span>
                                             </label>
@@ -582,16 +670,46 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                             />
                                         </div>
 
-                                        {statusChanged && (
-                                            <div className="flex items-center gap-2 rounded-lg bg-[#0E7C7B]/8 px-4 py-3 text-sm text-[#155E5D]">
-                                                <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
-                                                Status will change from <strong>{current.label}</strong> to <strong>{STATUS_META[newStatus]?.label ?? newStatus}</strong>.
+                                        {/* Four action buttons — each posts the status directly */}
+                                        <div>
+                                            <p className="mb-3 text-sm font-medium text-[#26403F]">Set verification status</p>
+                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                                {DECISION_ACTIONS.map((a) => {
+                                                    const isCurrentStatus = p.verification_status === a.value;
+                                                    const loading = processing && activeAction === a.value;
+                                                    return (
+                                                        <button
+                                                            key={a.value}
+                                                            type="button"
+                                                            onClick={() => setConfirmAction(a)}
+                                                            disabled={processing}
+                                                            className={`relative flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-4 disabled:opacity-60 ${a.cls} ${a.ring}`}
+                                                        >
+                                                            {loading ? (
+                                                                <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                                                                    <path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>{a.icon}</svg>
+                                                            )}
+                                                            {loading ? 'Updating…' : a.label}
+                                                            {isCurrentStatus && !loading && (
+                                                                <span className="absolute -top-2 right-1.5 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#5B6B6E] shadow-sm ring-1 ring-black/5">
+                                                                    Current
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                        )}
+                                            <p className="mt-3 text-xs text-[#9AA6A4]">
+                                                Choosing an action updates the provider’s status immediately and returns you to the providers list.
+                                            </p>
+                                        </div>
                                     </div>
                                 ) : (
                                     /* -------- Read-only data -------- */
-                                    <ReviewBody step={step} p={p} />
+                                    <ReviewBody step={step} p={p} onViewDoc={setDocUrl} />
                                 )}
 
                                 {/* Navigation */}
@@ -605,22 +723,13 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                         ← Back
                                     </button>
 
-                                    {step < DECISION_STEP ? (
+                                    {step < DECISION_STEP && (
                                         <button
                                             type="button"
                                             onClick={() => goTo(step + 1)}
                                             className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30"
                                         >
                                             Continue →
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={submit}
-                                            disabled={processing}
-                                            className="rounded-lg bg-[#C2543B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#aa482f] focus:outline-none focus:ring-4 focus:ring-[#C2543B]/30 disabled:opacity-60"
-                                        >
-                                            {processing ? 'Updating…' : 'Update verification status'}
                                         </button>
                                     )}
                                 </div>
@@ -635,6 +744,48 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                         </main>
                     </div>
                 </div>
+
+                {/* Confirm status-change modal */}
+                {confirmAction && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                        onClick={() => { if (!processing) setConfirmAction(null); }}
+                    >
+                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                            <h2 className="font-serif text-xl text-[#16302F]">Change verification status?</h2>
+                            <p className="mt-2 text-sm leading-relaxed text-[#5B6B6E]">
+                                Do you want to change this provider’s verification status to{' '}
+                                <strong className="text-[#26403F]">{STATUS_META[confirmAction.value]?.label ?? confirmAction.label}</strong>?
+                                {' '}This updates {p.organization_name} and returns you to the providers list.
+                            </p>
+
+                            <div className="mt-6 flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmAction(null)}
+                                    disabled={processing}
+                                    className="rounded-lg border border-[#DED7C9] bg-white px-5 py-2.5 text-sm font-semibold text-[#3A4B49] transition hover:bg-[#FBF8F2] disabled:opacity-60"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => submit(confirmAction.value)}
+                                    disabled={processing}
+                                    className={`inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-4 disabled:opacity-60 ${confirmAction.cls} ${confirmAction.ring}`}
+                                >
+                                    {processing && (
+                                        <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" /></svg>
+                                    )}
+                                    {processing ? 'Updating…' : 'Update'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Document viewer modal */}
+                {docUrl && <DocumentModal url={docUrl} onClose={() => setDocUrl(null)} />}
             </div>
         </>
     );

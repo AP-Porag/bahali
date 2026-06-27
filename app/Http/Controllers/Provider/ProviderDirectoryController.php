@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Inertia\Response;
+use Illuminate\Validation\Rule;
 
 class ProviderDirectoryController extends Controller
 {
@@ -285,31 +286,35 @@ class ProviderDirectoryController extends Controller
      * with a flash message. The page shows the success toast on
      * the Inertia visit's onSuccess.
      */
-    public function update(Request $request, Provider $provider): RedirectResponse
+    public function update(Request $request, $id): RedirectResponse
     {
+        // Provider খুঁজে বের করুন
+        $provider = Provider::findOrFail($id);
+
+        // ভ্যালিডেশন
         $validated = $request->validate([
             'status' => ['required', Rule::in(self::STATUSES)],
             'note'   => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $provider->verification_status = $validated['status'];
-        $provider->verification_note   = $validated['note'] ?? null;
-        $provider->reviewed_by         = $request->user()->id;
+        // শুধুমাত্র status আপডেট করুন
+        $provider->status = $validated['status'];
+        // $provider->verification_note   = $validated['note'] ?? null;
         $provider->reviewed_at         = now();
 
-        // Stamp / clear the public verification timestamp used by the badge.
-        $provider->license_verified_at = $validated['status'] === Provider::VERIFICATION_STATUS_APPROVED
-            ? now()
-            : null;
+        // License verified at update (শুধুমাত্র approved হলে)
+        // $provider->license_verified_at = $validated['status'] === 'approved'
+        //     ? now()
+        //     : null;
 
-        // Only approved providers are publicly visible.
-        $provider->is_public = $validated['status'] === Provider::VERIFICATION_STATUS_APPROVED;
+        // Only approved providers are publicly visible
+        // $provider->is_public = $validated['status'] === 'approved';
 
         $provider->save();
 
         return redirect()
-            ->route('admin.providers.index')
-            ->with('success', 'Verification status changed');
+            ->back()
+            ->with('success', 'Verification status updated successfully!');
     }
 
 

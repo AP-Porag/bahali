@@ -81,6 +81,7 @@ return new class extends Migration
             $table->boolean('consent_notify')->default(false);
             $table->boolean('consent_no_endorsement')->default(false);
             $table->boolean('consent_public')->default(false);
+            $table->timestamp('reviewed_at')->nullable();
 
             $table->timestamps();
         });
