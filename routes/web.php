@@ -27,6 +27,13 @@ Route::get('/', function () {
     return redirect()->route('login');
     //    return Inertia::render('welcome');
 })->name('home');
+
+//home pages
+Route::get('/home', function () {
+    return Inertia::render('web/home');
+})->name('web.home');
+
+
 //->prefix('admin')->as('admin.')
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
