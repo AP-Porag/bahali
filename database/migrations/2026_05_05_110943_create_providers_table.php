@@ -72,6 +72,10 @@ return new class extends Migration
             // Accessibility
             $table->json('accessibility');
 
+            // Status
+            $table->string('status')->default(GlobalConstant::VERIFICATION_STATUS_PENDING);
+
+
             // Consent
             $table->boolean('consent_accurate')->default(false);
             $table->boolean('consent_notify')->default(false);

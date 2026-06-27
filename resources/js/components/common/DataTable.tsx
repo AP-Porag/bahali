@@ -22,6 +22,7 @@ export default function DataTable({
         per_page_filter: true,
     },
     baseRoute,
+    viewRoute, // viewRoute প্রপস যোগ করুন
     filters,
     onFilterChange,
     perPageOptions = [5, 10, 25, 50],
@@ -33,6 +34,14 @@ export default function DataTable({
     const [selectedRow, setSelectedRow] = React.useState(null);
     const [selectedStatus, setSelectedStatus] = React.useState('');
 
+    // View রুট নির্ধারণের ফাংশন
+    const getViewRoute = (rowId) => {
+        if (viewRoute) {
+            return route(viewRoute, rowId);
+        }
+        return route(`${baseRoute}.show`, rowId);
+    };
+
     const globalActions = {
         search_filter: true,
         status_filter: true,
@@ -40,7 +49,7 @@ export default function DataTable({
         ...(typeof actions === 'object' ? actions : {}),
     };
 
-    // ✅ FIXED ACTION RESOLVER
+    // ACTION RESOLVER
     const resolveActions = (row) => {
         if (typeof actions === 'function') {
             return actions(row);
@@ -96,19 +105,6 @@ export default function DataTable({
                         className="px-3 py-2 md:w-1/3"
                     />
                 )}
-
-                {/* {globalActions.status_filter && (
-                    <Select value={filters.status} onValueChange={(value) => handleFilterChange({ target: { name: 'status', value } })}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="1">Active</SelectItem>
-                            <SelectItem value="0">Inactive</SelectItem>
-                        </SelectContent>
-                    </Select>
-                )} */}
 
                 {globalActions.per_page_filter && (
                     <Select value={Number(filters.perPage)} onValueChange={(value) => handleFilterChange({ target: { name: 'perPage', value } })}>
@@ -168,9 +164,9 @@ export default function DataTable({
                                             </DropdownMenuTrigger>
 
                                             <DropdownMenuContent align="end" className="bg-white text-black">
-                                                {/* VIEW */}
+                                                {/* VIEW - কাস্টম রুট ব্যবহার */}
                                                 {rowActions.view && (
-                                                    <DropdownMenuItem onClick={() => router.visit(route(`${baseRoute}.show`, row.id))}>
+                                                    <DropdownMenuItem onClick={() => router.visit(getViewRoute(row.id))}>
                                                         <EyeIcon className="mr-2 h-4 w-4" /> View
                                                     </DropdownMenuItem>
                                                 )}
@@ -189,28 +185,10 @@ export default function DataTable({
                                                     </DropdownMenuItem>
                                                 )}
 
-                                                {/* CHANGE STATUS */}
-                                                {/* {rowActions.change_status && (
-                                                    <DropdownMenuItem
-                                                        onClick={() => {
-                                                            setSelectedRow(row);
-                                                            setSelectedStatus(row.status);
-                                                            setStatusModal(true);
-                                                        }}
-                                                    >
-                                                        <Settings className="mr-2 h-4 w-4" />
-                                                        Change Status
-                                                    </DropdownMenuItem>
-                                                )} */}
-
                                                 {/* CHANGE VERIFICATION STATUS */}
                                                 {rowActions.change_verification_status && (
                                                     <DropdownMenuItem
-                                                        onClick={() => {
-                                                            setSelectedRow(row);
-                                                            setSelectedStatus(row.verification_status);
-                                                            setVerificationModal(true);
-                                                        }}
+                                                        onClick={() => router.visit(route('providers.verification.show', row.id))}
                                                     >
                                                         <BadgeCheck className="mr-2 h-4 w-4 text-green-600" />
                                                         Change Verification Status
@@ -253,64 +231,7 @@ export default function DataTable({
                 message="Once deleted, you will not be able to recover this item."
             />
 
-            {/* Status Modal */}
-            {statusModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-                        <h2 className="mb-4 text-lg font-semibold">Change Status</h2>
-
-                        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Status" />
-                            </SelectTrigger>
-
-                            <SelectContent>
-                                <SelectItem value={STATUS.DRAFT}>Draft</SelectItem>
-                                <SelectItem value={STATUS.PENDING}>Pending</SelectItem>
-                                <SelectItem value={STATUS.PUBLISHED}>Published</SelectItem>
-                                <SelectItem value={STATUS.SUSPENDED}>Suspended</SelectItem>
-                                <SelectItem value={STATUS.EXPIRED}>Expired</SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <div className="mt-6 flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setStatusModal(false);
-                                    setSelectedRow(null);
-                                }}
-                            >
-                                Cancel
-                            </Button>
-
-                            <Button
-                                onClick={() => {
-                                    router.post(
-                                        `/admin/change/status/provider/${selectedRow.id}`,
-                                        {
-                                            status: selectedStatus,
-                                        },
-                                        {
-                                            onSuccess: () => {
-                                                toast.success('Status updated successfully');
-                                                setStatusModal(false);
-                                            },
-                                            onError: () => {
-                                                toast.error('Failed to update status');
-                                            },
-                                        },
-                                    );
-                                }}
-                            >
-                                Update Status
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* Veirification Status Modal */}
-
+            {/* Verification Status Modal */}
             {verificationModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-xl bg-white p-6">

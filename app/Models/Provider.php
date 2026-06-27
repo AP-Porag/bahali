@@ -5,11 +5,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Provider extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -69,6 +70,9 @@ class Provider extends Model
         'profile_photo',
         'additional_photos',
 
+        // Status
+        'status',
+
         // Accessibility
         'accessibility',
 
@@ -95,12 +99,26 @@ class Provider extends Model
         'consent_notify'          => 'boolean',
         'consent_no_endorsement'  => 'boolean',
         'consent_public'          => 'boolean',
+        'is_public'              => 'boolean',
+        'reviewed_at'            => 'datetime',
+        'license_verified_at'    => 'datetime',
+
+
+
+
+
     ];
 
     // Relationships
     public function country()
     {
         return $this->belongsTo(Country::class);
+    }
+
+    // User রিলেশনশিপ
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function approvedBy()

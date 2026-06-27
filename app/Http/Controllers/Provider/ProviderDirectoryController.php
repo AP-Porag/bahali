@@ -7,15 +7,26 @@ use App\Http\Requests\Provider\StoreProviderRequest;
 use App\Models\Country;
 use App\Models\Provider;
 use App\Models\User;
+use App\Utils\GlobalConstant;
 use Illuminate\Http\File;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Inertia\Response;
 
 class ProviderDirectoryController extends Controller
 {
+    private const STATUSES = [
+        GlobalConstant::VERIFICATION_STATUS_PENDING,
+        GlobalConstant::VERIFICATION_STATUS_APPROVED,
+        GlobalConstant::VERIFICATION_STATUS_REJECTED,
+        GlobalConstant::VERIFICATION_STATUS_SUSPENDED,
+        GlobalConstant::VERIFICATION_STATUS_INACTIVE,
+    ];
     /**
      * Show the registration form.
      */
@@ -134,5 +145,248 @@ class ProviderDirectoryController extends Controller
         }
 
         return null;
+    }
+
+
+    public function pendingProvider(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 5);
+
+        // সরাসরি query() ব্যবহার করুন
+        $query = Provider::with('user');
+
+        // শুধুমাত্র pending status এর provider
+        $query->where('status', 'pending');
+
+        // সার্চ ফিল্টার
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('organization_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $providers = $query->latest()->paginate($perPage);
+
+        return Inertia::render('admin/provider/pending/index', [
+            'providers' => $providers->items(),
+            'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
+            'filters' => [
+                'search' => $search,
+                'status' => 'pending',
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+
+
+
+    public function show($id): Response
+    {
+
+        $provider = Provider::with('user')->findOrFail($id);
+        // Eager-load user relationship
+        // $provider->load('user');
+
+        return Inertia::render('admin/provider/Verification', [
+            'provider' => [
+                'id' => $provider->id,
+                'verification_status' => $provider->verification_status,
+
+                // Basic
+                'provider_type' => $provider->provider_type,
+                'organization_name' => $provider->organization_name,
+                'credentials' => $provider->credentials,
+                'professional_title' => $provider->professional_title,
+                'professional_title_other' => $provider->professional_title_other,
+
+                // About - user থেকে email নিন
+                'email' => $provider->user?->email ?? $provider->email,
+                'short_bio' => $provider->short_bio,
+                'years_experience' => $provider->years_experience,
+
+                // Licensure
+                'license_number' => $provider->license_number,
+                'license_states' => $provider->license_states,
+                'license_status' => $provider->license_status,
+                'verification_document' => $provider->verification_document
+                    ? Storage::url($provider->verification_document)
+                    : null,
+
+                // Areas
+                'areas_of_support' => $provider->areas_of_support,
+                'areas_of_support_other' => $provider->areas_of_support_other,
+
+                // Populations
+                'populations_served' => $provider->populations_served,
+
+                // Culture
+                'caribbean_identity' => $provider->caribbean_identity,
+                'caribbean_experience' => $provider->caribbean_experience,
+                'languages' => $provider->languages,
+                'languages_other' => $provider->languages_other,
+                'cultural_approach' => $provider->cultural_approach,
+
+                // Service
+                'service_formats' => $provider->service_formats,
+                'practice_settings' => $provider->practice_settings,
+
+                // Location
+                'address' => $provider->address,
+                'city' => $provider->city,
+                'state_province' => $provider->state_province,
+                'country' => $provider->country,
+                'multiple_locations' => $provider->multiple_locations,
+                'hide_address' => (bool) $provider->hide_address,
+                'telehealth_regions' => $provider->telehealth_regions,
+
+                // Payment
+                'payment_methods' => $provider->payment_methods,
+                'insurance_plans' => $provider->insurance_plans,
+
+                // Contact
+                'phone' => $provider->phone,
+                'website' => $provider->website,
+                'social_links' => $provider->social_links,
+
+                // Media
+                'profile_photo' => $provider->profile_photo
+                    ? Storage::url($provider->profile_photo)
+                    : null,
+                'additional_photos' => collect($provider->additional_photos ?? [])
+                    ->map(fn($path) => Storage::url($path))
+                    ->values()
+                    ->all(),
+
+                // Accessibility
+                'accessibility' => $provider->accessibility,
+
+                // Consent
+                'consent_accurate' => (bool) $provider->consent_accurate,
+                'consent_notify' => (bool) $provider->consent_notify,
+                'consent_no_endorsement' => (bool) $provider->consent_no_endorsement,
+                'consent_public' => (bool) $provider->consent_public,
+
+                // Review meta
+                'submitted_at' => $provider->created_at?->format('F j, Y'),
+                'verification_note' => $provider->verification_note,
+            ],
+            'indexRoute' => 'admin.providers.index',
+        ]);
+    }
+
+    /**
+     * Update the verification status, then redirect to the index
+     * with a flash message. The page shows the success toast on
+     * the Inertia visit's onSuccess.
+     */
+    public function update(Request $request, Provider $provider): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(self::STATUSES)],
+            'note'   => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $provider->verification_status = $validated['status'];
+        $provider->verification_note   = $validated['note'] ?? null;
+        $provider->reviewed_by         = $request->user()->id;
+        $provider->reviewed_at         = now();
+
+        // Stamp / clear the public verification timestamp used by the badge.
+        $provider->license_verified_at = $validated['status'] === Provider::VERIFICATION_STATUS_APPROVED
+            ? now()
+            : null;
+
+        // Only approved providers are publicly visible.
+        $provider->is_public = $validated['status'] === Provider::VERIFICATION_STATUS_APPROVED;
+
+        $provider->save();
+
+        return redirect()
+            ->route('admin.providers.index')
+            ->with('success', 'Verification status changed');
+    }
+
+
+    /**
+     * Display the specified pending provider.
+     */
+    // ProviderDirectoryController@show
+    // public function showPendingProvider(Provider $provider)
+    // {
+    //     // Only show approved, publicly-visible profiles (see review queue below)
+    //     abort_unless($provider->status === 'approved' && $provider->is_public, 404);
+
+    //     return Inertia::render('provider/Show', [
+    //         'provider' => [
+    //             'name'             => $provider->display_name,
+    //             'credentials'      => $provider->credentials,
+    //             'title'            => $provider->professional_title,
+    //             'pronouns'         => $provider->pronouns,
+    //             'photo'            => $provider->profile_photo ? Storage::url($provider->profile_photo) : null,
+    //             'verifiedByBahali' => (bool) $provider->license_verified_at,
+    //             'verifiedOn'       => $provider->license_verified_at?->format('F Y'),
+    //             'caribbeanInformed' => (bool) $provider->caribbean_informed,
+    //             'acceptingClients' => (bool) $provider->accepting_clients,
+    //             'tagline'          => $provider->tagline,
+    //             'bio'              => $provider->bio,
+    //             'location'         => [
+    //                 'city'    => $provider->city,
+    //                 'region'  => $provider->region?->name,
+    //                 'country' => $provider->country?->name,
+    //             ],
+    //             'servesRemotely'   => (bool) $provider->serves_remotely,
+    //             'regionsServed'    => $provider->regions_served,      // array cast
+    //             'languages'        => $provider->languages,           // array cast
+    //             'sessionFormats'   => $provider->session_formats,     // array cast
+    //             'areasOfSupport'   => $provider->areas_of_support,    // array cast
+    //             'populations'      => $provider->populations,         // array cast
+    //             'culturalApproach' => $provider->cultural_approach,
+    //             'yearsExperience'  => $provider->years_experience,
+    //             'feeRange'         => $provider->fee_range,
+    //             'slidingScale'     => (bool) $provider->sliding_scale,
+    //             'insurances'       => $provider->insurances,          // array cast
+    //             'accessibility'    => $provider->accessibility,       // array cast
+    //             'email'            => $provider->show_email ? $provider->contact_email : null,
+    //             'phone'            => $provider->show_phone ? $provider->contact_phone : null,
+    //             'website'          => $provider->website,
+    //         ],
+    //     ]);
+    // }
+
+    /**
+     * Approve a pending provider.
+     */
+    public function approveProvider(Request $request, $id)
+    {
+        $provider = Provider::where('status', 'pending')->findOrFail($id);
+
+        $provider->update([
+            'status' => 'approved', // অথবা 'active'
+            'approved_at' => now(), // যদি approved_at কলাম থাকে
+        ]);
+
+        return redirect()->back()->with('success', 'Provider approved successfully!');
+    }
+
+    /**
+     * Reject a pending provider.
+     */
+    public function rejectProvider(Request $request, $id)
+    {
+        $provider = Provider::where('status', 'pending')->findOrFail($id);
+
+        $provider->update([
+            'status' => 'rejected', // অথবা 'inactive'
+            'rejected_at' => now(), // যদি rejected_at কলাম থাকে
+            'rejection_reason' => $request->input('reason'), // যদি reason ফিল্ড থাকে
+        ]);
+
+        return redirect()->back()->with('success', 'Provider rejected successfully!');
     }
 }

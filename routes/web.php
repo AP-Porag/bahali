@@ -51,6 +51,16 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     // Route::resource('users', UserController::class);
 
 
+    // Pending Provider
+    Route::get('/pending/providers', [ProviderDirectoryController::class, 'pendingProvider'])
+        ->name('providers.pending');
+
+
+    // Pending Provider Show (Single Provider Details)
+    Route::get('/providers/verification/show/{id}', [ProviderDirectoryController::class, 'show'])
+        ->name('providers.verification.show');
+
+
 
     // Route::resource('provider-type', ProviderTypeController::class);
     // Route::resource('providers', ProviderController::class);
