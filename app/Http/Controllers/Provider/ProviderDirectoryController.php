@@ -215,7 +215,7 @@ class ProviderDirectoryController extends Controller
             'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
             'filters' => [
                 'search' => $search,
-                'status' => 'pending',
+                'status' => 'approved',
                 'perPage' => $perPage,
             ],
         ]);
@@ -251,7 +251,77 @@ class ProviderDirectoryController extends Controller
             'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
             'filters' => [
                 'search' => $search,
-                'status' => 'pending',
+                'status' => 'rejected',
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+    public function suspendedProvider(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 5);
+
+        // সরাসরি query() ব্যবহার করুন
+        $query = Provider::with('user');
+
+        // শুধুমাত্র Approved status এর provider
+        $query->where('status', GlobalConstant::VERIFICATION_STATUS_SUSPENDED);
+
+        // সার্চ ফিল্টার
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('organization_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $providers = $query->latest()->paginate($perPage);
+
+        return Inertia::render('admin/provider/suspended/index', [
+            'providers' => $providers->items(),
+            'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
+            'filters' => [
+                'search' => $search,
+                'status' => 'suspended',
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+    public function inactiveProvider(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 5);
+
+        // সরাসরি query() ব্যবহার করুন
+        $query = Provider::with('user');
+
+        // শুধুমাত্র Approved status এর provider
+        $query->where('status', GlobalConstant::VERIFICATION_STATUS_INACTIVE);
+
+        // সার্চ ফিল্টার
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('organization_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $providers = $query->latest()->paginate($perPage);
+
+        return Inertia::render('admin/provider/inactive/index', [
+            'providers' => $providers->items(),
+            'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
+            'filters' => [
+                'search' => $search,
+                'status' => 'inactive',
                 'perPage' => $perPage,
             ],
         ]);

@@ -497,6 +497,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
 
 export default function ProviderVerificationShow({ provider, indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider;
+    console.log(p.status);
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
     const [note, setNote] = useState('');
@@ -675,14 +676,17 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                             <p className="mb-3 text-sm font-medium text-[#26403F]">Set verification status</p>
                                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                                 {DECISION_ACTIONS.map((a) => {
-                                                    const isCurrentStatus = p.verification_status === a.value;
+                                                    const isCurrentStatus = p.status === a.value;
+
+                                                    if (isCurrentStatus) return null;
+
                                                     const loading = processing && activeAction === a.value;
                                                     return (
                                                         <button
                                                             key={a.value}
                                                             type="button"
                                                             onClick={() => setConfirmAction(a)}
-                                                            disabled={processing}
+                                                            disabled={processing || isCurrentStatus}
                                                             className={`relative flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-4 disabled:opacity-60 ${a.cls} ${a.ring}`}
                                                         >
                                                             {loading ? (

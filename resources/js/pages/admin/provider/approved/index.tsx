@@ -78,12 +78,12 @@ export default function Pending({ providers, meta, filters: initialFilters }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Approved Providers" />
             <div className="p-4">
-                <div className="my-4 flex items-center justify-between">
+                {/* <div className="my-4 flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Approved Providers</h1>
                     <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
                         <Plus className="mr-2" /> Create Provider
                     </Button>
-                </div>
+                </div> */}
                 <DataTable
                     data={providers}
                     columns={columns}

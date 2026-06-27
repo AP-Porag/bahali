@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack } from 'lucide-react';
+import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -21,32 +21,32 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Providers',
         href: '/provider/directory/create',
-        icon: CalendarDays,
+        icon: User,
         children: [
-            {
-                title: 'Pending Providers',
-                href: '/admin/pending/providers',
-                icon: FileStack,
-            },
             {
                 title: 'Approved Providers',
                 href: '/admin/approved/providers',
-                icon: FileStack,
+                icon: BadgeCheck,
+            },
+            {
+                title: 'Pending Providers',
+                href: '/admin/pending/providers',
+                icon: Clock3,
             },
             {
                 title: 'Rejected Providers',
                 href: '/admin/rejected/providers',
-                icon: FileStack,
+                icon: CircleX,
             },
             {
                 title: 'Suspended Providers',
                 href: '/admin/suspended/providers',
-                icon: FileStack,
+                icon: Ban,
             },
             {
                 title: 'Inactive Providers',
                 href: '/admin/inactive/providers',
-                icon: FileStack,
+                icon: ShieldAlert,
             },
             // {
             //     title: 'Add Provider',

@@ -67,8 +67,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('/suspended/providers', [ProviderDirectoryController::class, 'suspendedProvider'])
         ->name('providers.suspended');
 
-    Route::get('/inactive/providers', [ProviderDirectoryController::class, 'inactive'])
-        ->name('inactive.suspended');
+    Route::get('/inactive/providers', [ProviderDirectoryController::class, 'inactiveProvider'])
+        ->name('providers.inactive');
 
 
     // Pending Provider Show (Single Provider Details)
