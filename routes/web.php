@@ -55,6 +55,21 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('/pending/providers', [ProviderDirectoryController::class, 'pendingProvider'])
         ->name('providers.pending');
 
+    // Approved Provider
+    Route::get('/approved/providers', [ProviderDirectoryController::class, 'approvedProvider'])
+        ->name('providers.approved');
+
+    // Rejected Provider
+    Route::get('/rejected/providers', [ProviderDirectoryController::class, 'rejectedProvider'])
+        ->name('providers.rejected');
+
+    // Suspended Provider
+    Route::get('/suspended/providers', [ProviderDirectoryController::class, 'suspendedProvider'])
+        ->name('providers.suspended');
+
+    Route::get('/inactive/providers', [ProviderDirectoryController::class, 'inactive'])
+        ->name('inactive.suspended');
+
 
     // Pending Provider Show (Single Provider Details)
     Route::get('/providers/verification/show/{id}', [ProviderDirectoryController::class, 'show'])

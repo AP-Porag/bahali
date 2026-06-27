@@ -28,6 +28,26 @@ const mainNavItems: NavItem[] = [
                 href: '/admin/pending/providers',
                 icon: FileStack,
             },
+            {
+                title: 'Approved Providers',
+                href: '/admin/approved/providers',
+                icon: FileStack,
+            },
+            {
+                title: 'Rejected Providers',
+                href: '/admin/rejected/providers',
+                icon: FileStack,
+            },
+            {
+                title: 'Suspended Providers',
+                href: '/admin/suspended/providers',
+                icon: FileStack,
+            },
+            {
+                title: 'Inactive Providers',
+                href: '/admin/inactive/providers',
+                icon: FileStack,
+            },
             // {
             //     title: 'Add Provider',
             //     href: '/provider/directory/create',

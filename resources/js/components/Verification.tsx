@@ -495,7 +495,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute = 'admin.providers.index' }: PageProps) {
+export default function ProviderVerificationShow({ provider, indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider;
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
@@ -573,7 +573,7 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                         </div>
                         <span className={`inline-flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${current.cls}`}>
                             <span className={`h-2 w-2 rounded-full ${current.dot}`} />
-                            Current: {current.label}
+                            Current: {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
                         </span>
                     </div>
 
@@ -653,7 +653,7 @@ export default function ProviderVerificationShow({ provider = SAMPLE, indexRoute
                                             <p className="text-sm text-[#5B6B6E]">Current verification status</p>
                                             <span className={`mt-2 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${current.cls}`}>
                                                 <span className={`h-2 w-2 rounded-full ${current.dot}`} />
-                                                {current.label}
+                                                Current:  {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
                                             </span>
                                         </div>
 

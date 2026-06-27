@@ -186,6 +186,79 @@ class ProviderDirectoryController extends Controller
 
 
 
+    public function approvedProvider(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 5);
+
+        // সরাসরি query() ব্যবহার করুন
+        $query = Provider::with('user');
+
+        // শুধুমাত্র Approved status এর provider
+        $query->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED);
+
+        // সার্চ ফিল্টার
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('organization_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $providers = $query->latest()->paginate($perPage);
+
+        return Inertia::render('admin/provider/approved/index', [
+            'providers' => $providers->items(),
+            'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
+            'filters' => [
+                'search' => $search,
+                'status' => 'pending',
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+
+    public function rejectedProvider(Request $request)
+    {
+        $search = $request->input('search', '');
+        $perPage = $request->input('perPage', 5);
+
+        // সরাসরি query() ব্যবহার করুন
+        $query = Provider::with('user');
+
+        // শুধুমাত্র Approved status এর provider
+        $query->where('status', GlobalConstant::VERIFICATION_STATUS_REJECTED);
+
+        // সার্চ ফিল্টার
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('organization_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $providers = $query->latest()->paginate($perPage);
+
+        return Inertia::render('admin/provider/rejected/index', [
+            'providers' => $providers->items(),
+            'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
+            'filters' => [
+                'search' => $search,
+                'status' => 'pending',
+                'perPage' => $perPage,
+            ],
+        ]);
+    }
+
+
+
 
     public function show($id): Response
     {
@@ -194,7 +267,7 @@ class ProviderDirectoryController extends Controller
         // Eager-load user relationship
         // $provider->load('user');
 
-        return Inertia::render('admin/provider/Verification', [
+        return Inertia::render('admin/provider/pending/show-for-verification', [
             'provider' => [
                 'id' => $provider->id,
                 'verification_status' => $provider->verification_status,
@@ -255,6 +328,9 @@ class ProviderDirectoryController extends Controller
                 'website' => $provider->website,
                 'social_links' => $provider->social_links,
 
+                // Status
+                'status' => $provider->status,
+
                 // Media
                 'profile_photo' => $provider->profile_photo
                     ? Storage::url($provider->profile_photo)
@@ -313,7 +389,7 @@ class ProviderDirectoryController extends Controller
         $provider->save();
 
         return redirect()
-            ->back()
+            ->route('providers.pending') // providers.pending রুটে রিডাইরেক্ট
             ->with('success', 'Verification status updated successfully!');
     }
 
