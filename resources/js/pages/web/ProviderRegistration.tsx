@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 /**
  * Bahali Provider Directory — Registration
@@ -988,6 +988,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     if (submitted) {
         return (
             <>
+                <Header />
                 <Head title="Application Received — Bahali Provider Directory" />
                 <div className="min-h-screen bg-[#F7F3EC] px-4 py-16">
                     <div className="mx-auto max-w-xl rounded-2xl border border-[#E7E0D2] bg-white p-10 text-center shadow-sm">
@@ -1003,6 +1004,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         </p>
                     </div>
                 </div>
+                <Footer />
             </>
         );
     }

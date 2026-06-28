@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { PropsWithChildren } from "react";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Footer from "@/components/footer";
 
 /**
  * Bahali — Join the Circle (Provider Acquisition Landing Page)
@@ -208,6 +208,7 @@ interface PageProps {
 export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: PageProps) {
     return (
         <>
+            <Header />
             <Head title="Join the Circle — Become a Bahali Wellness Provider">
                 <meta
                     name="description"
@@ -215,38 +216,25 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                 />
             </Head>
 
+
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E] antialiased">
                 {/* ===================================================== */}
                 {/*  HERO — full-bleed photo                              */}
                 {/* ===================================================== */}
-                <section className="relative isolate min-h-[640px] overflow-hidden">
+                <section
+                    className="relative isolate overflow-hidden bg-cover bg-center bg-no-repeat"
+                    style={{
+                        backgroundImage: `url(${IMAGES.hero})`,
+                    }}
+                >
                     {/* Background photo */}
-                    <img src={IMAGES.hero} className="absolute inset-0 h-full w-full" />
+                    {/* <img src={IMAGES.hero} className="absolute inset-0 bg-cover bg-center bg-no-repeat" /> */}
                     {/* Left scrim for legibility */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#0c3a39] via-[#0c3a39]/50 to-transparent" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a2e2d]/70 via-transparent to-[#0a2e2d]/30" />
 
-                    {/* Nav over photo */}
-                    {/* <header className="relative z-10">
-                        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-                            <a href="https://bahali.org" className="flex items-center gap-2.5">
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">B</span>
-                                <span className="font-serif text-xl text-white">Bahali</span>
-                            </a>
-                            <div className="flex items-center gap-2 sm:gap-4">
-                                <a href="/login" className="hidden text-sm font-medium text-white/90 transition hover:text-white sm:inline">
-                                    Provider login
-                                </a>
-                                <Link
-                                    href={SIGNUP_ROUTE}
-                                    className="rounded-full border border-white/40 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-                                >
-                                    Join the circle
-                                </Link>
-                            </div>
-                        </div>
-                    </header> */}
-                    <Header />
+
+
 
                     {/* Hero copy */}
                     <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-16 sm:pt-24">
