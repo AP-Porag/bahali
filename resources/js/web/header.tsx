@@ -25,63 +25,178 @@ export default function Header() {
             <div className="mx-auto flex max-w-[1600px] justify-between px-3 min-[982px]:flex min-[982px]:justify-center min-[982px]:px-8 min-[982px]:pt-3 lg:flex lg:justify-between lg:px-6 lg:py-1">
                 {/* Logo */}
                 <div className="mb-2 min-[982px]:flex min-[982px]:items-start lg:flex lg:items-center">
-                    <div className="w-[230px] overflow-hidden rounded-md">
+                    <div className="w-[230px] -mt-1 overflow-hidden rounded-md">
                         {/* Replace with your logo */}
-                        <img src="/img/new-logo.png" alt="Logo" className="w-[160px] object-contain" />
+                        <a href="https://bahali.org/" target="_blank">
+                            <img src="/img/new-logo.png" alt="Logo" className="w-[160px] object-contain" />
+                        </a>
                     </div>
                 </div>
 
                 {/* Desktop Menu */}
                 <div className="mb-2 flex gap-8">
                     <nav className="hidden flex-wrap items-center gap-7 min-[982px]:flex">
-                        {navItems.map((item) => (
+                        {/* About */}
+                        <div className="relative" onMouseEnter={() => setActiveDropdown('About')} onMouseLeave={() => setActiveDropdown(null)}>
+                            <button className="font-open flex items-center gap-2 text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                                <a href="https://bahali.org/about/" target="_blank">
+                                    About
+                                </a>
+
+                                {activeDropdown === 'About' ? (
+                                    <X size={18} className="min-[982px]:block lg:hidden" />
+                                ) : (
+                                    <svg
+                                        className="h-5 w-5 min-[982px]:block lg:hidden"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                )}
+                            </button>
+
                             <div
-                                key={item}
-                                className="relative"
-                                onMouseEnter={() => setActiveDropdown(item)}
-                                onMouseLeave={() => setActiveDropdown(null)}
+                                className={`absolute top-full -left-6 z-50 origin-top transition-transform duration-300 ease-in-out ${
+                                    activeDropdown === 'About' ? 'scale-y-100' : 'scale-y-0'
+                                }`}
                             >
-                                <button className="flex items-center gap-2 text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
-                                    {item}
+                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                    <a
+                                        href="https://bahali.org/marsha-smith-bahali-founder/"
+                                        className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                    >
+                                        Founder
+                                    </a>
 
-                                    {dropdownMenus[item] &&
-                                        (activeDropdown === item ? (
-                                            <X size={18} className="min-[982px]:block lg:hidden" />
-                                        ) : (
-                                            <svg
-                                                className="h-5 w-5 min-[982px]:block lg:hidden"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        ))}
-                                </button>
-
-                                <div className="absolute top-full -left-6 z-50">
-                                    {dropdownMenus[item] && activeDropdown === item && (
-                                        <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
-                                            {dropdownMenus[item].map((menu) => (
-                                                <a
-                                                    key={menu}
-                                                    href="#"
-                                                    className="block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
-                                                >
-                                                    {menu}
-                                                </a>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <a
+                                        href="https://bahali.org/advisory-board/"
+                                        target="_blank"
+                                        className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                    >
+                                        Advisory Board
+                                    </a>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Programs */}
+                        <div className="relative" onMouseEnter={() => setActiveDropdown('Programs')} onMouseLeave={() => setActiveDropdown(null)}>
+                            <button className="font-open flex items-center gap-2 text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                                <a href="https://bahali.org/caribbean-wellness-programs/" target="_blank">
+                                    Programs
+                                </a>
+                                {activeDropdown === 'Programs' ? (
+                                    <X size={18} className="min-[982px]:block lg:hidden" />
+                                ) : (
+                                    <svg
+                                        className="h-5 w-5 min-[982px]:block lg:hidden"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                )}
+                            </button>
+
+                            <div
+                                className={`absolute top-full -left-6 z-50 origin-top transition-all duration-300 ease-in-out ${
+                                    activeDropdown === 'Programs' ? 'scale-y-100 opacity-100' : 'pointer-events-none scale-y-0 opacity-0'
+                                }`}
+                            >
+                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                    <a
+                                        href="https://bahali.org/disaster-recovery/"
+                                        target="_blank"
+                                        className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                    >
+                                        Disaster Recovery
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Resources */}
+                        <div className="relative" onMouseEnter={() => setActiveDropdown('Resources')} onMouseLeave={() => setActiveDropdown(null)}>
+                            <button className="font-open flex items-center gap-2 text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                                <a href="https://bahali.org/resources/" target="_blank">
+                                    Resources
+                                </a>
+
+                                {activeDropdown === 'Resources' ? (
+                                    <X size={18} className="min-[982px]:block lg:hidden" />
+                                ) : (
+                                    <svg
+                                        className="h-5 w-5 min-[982px]:block lg:hidden"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                )}
+                            </button>
+
+                            <div
+                                className={`absolute top-full -left-6 z-50 origin-top transition-all duration-300 ease-in-out ${
+                                    activeDropdown === 'Resources' ? 'scale-y-100 opacity-100' : 'pointer-events-none scale-y-0 opacity-0'
+                                }`}
+                            >
+                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                    <a
+                                        href="https://bahali.org/kids-corner/"
+                                        className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                    >
+                                        Kidz Corner
+                                    </a>
+
+                                    <a
+                                        href="https://bahali.org/bahali-resource-hub/"
+                                        className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                    >
+                                        Bahali Resources Hub
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bahali Press */}
+                        <a
+                            href="https://bahali.org/bahali-press/#coping"
+                            className="font-open text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                        >
+                            Bahali Press
+                        </a>
+
+                        {/* Contact */}
+                        <a
+                            href="https://bahali.org/contact/"
+                            target="_blank"
+                            className="font-open text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                        >
+                            Contact
+                        </a>
+
+                        {/* Get Involved */}
+                        <a
+                            href="https://bahali.org/get-involved/"
+                            target="_blank"
+                            className="font-open text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                        >
+                            Get Involved
+                        </a>
 
                         <div className="hidden min-[982px]:block">
-                            <button className="cursor-pointer rounded-full bg-[#d8886c] px-7 py-3.5 text-[20px] text-white transition hover:text-[#1e4d4a]">
-                                Give Now
-                            </button>
+                            <a href="https://bahali.org/donate/" target="_blank">
+                                <button className="font-open cursor-pointer rounded-full bg-[#d8886c] px-7 py-3.5 text-[20px] text-white transition hover:text-[#1e4d4a]">
+                                    Give Now
+                                </button>
+                            </a>
                         </div>
                     </nav>
 
@@ -100,85 +215,217 @@ export default function Header() {
                 </div>
             </div>
 
-
-
-
-
             {/* mobile nav */}
             <div className="min-[982px]:hidden">
                 {/* Overlay */}
                 <div
                     onClick={() => setOpen(false)}
                     className={`fixed inset-0 z-40 transition-all duration-500 ${
-                        open ? 'bg-black/30 opacity-100 backdrop-blur-md' : 'invisible opacity-0'
+                        open ? 'bg-[#acb5b4]/70 opacity-100 backdrop-blur-md' : 'invisible opacity-0'
                     }`}
                 >
-                    <div className="h-[90px] w-full border-b-1 border-black/5">
-                        {/* <div className="flex items-center gap-4 min-[982px]:hidden">
-                            <button onClick={() => setOpen(open)}>{<Menu size={34} className="text-[#1F5559]" />}</button>
-                        </div> */}
-                    </div>
+                    <div className="h-[90px] w-full bg-[#fafaf6]">{/* menu bar for mobile */}</div>
                 </div>
 
                 {/* Drawer */}
                 <aside
-                    className={`fixed top-0 right-0 z-50 h-full w-[40%] bg-white transition-transform duration-500 ease-out ${
+                    className={`fixed top-0 right-0 z-50 h-full w-[300px] bg-white shadow-[-20px_0_60px_rgba(0,0,0,0.14)] transition-transform duration-500 ease-out ${
                         open ? 'translate-x-0' : 'translate-x-full'
                     }`}
                 >
-                  
-
+                    {/* <div className="absolute top-2 -left-16">
+                        <Menu className="h-10 w-7"/>
+                    </div> */}
                     {/* Scroll Area */}
                     <div className="h-full overflow-y-auto px-8 pb-20">
-                          {/* Close */}
-                    <div className="flex justify-end mb-[80px] -mr-2">
-                        <button onClick={() => setOpen(false)} className="pt-[16px]">
-                            <X size={26} strokeWidth={1.5} />
-                        </button>
-                    </div>
+                        {/* Close */}
+                        <div className="-mr-2 mb-[80px] flex justify-end">
+                            <button onClick={() => setOpen(false)} className="pt-[16px]">
+                                <X size={26} strokeWidth={1.5} />
+                            </button>
+                        </div>
 
+                        <div>
+                            <button
+                                onClick={() => toggleMenu('About')}
+                                className="flex w-full items-center justify-between border-gray-100 pb-10 text-left text-[20px] hover:border hover:text-[#d8886c]"
+                            >
+                                <a href="https://bahali.org/about/" target="_blank">
+                                    About
+                                </a>
 
-                        {navItems.map((item, index) => {
-                            const hasDropdown = item === 'About' || item === 'Programs' || item === 'Resources';
-
-                            return (
-                                <div key={item} className="">
-                                    <button
-                                        onClick={() => hasDropdown && toggleMenu(item)}
-                                        className="flex w-full hover:text-[#d8886c] items-center justify-between pb-10 text-left text-[20px]"
+                                <div
+                                    className={`relative mr-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${
+                                        activeMenu === 'About' ? 'bg-gray-100' : 'bg-transparent'
+                                    }`}
+                                >
+                                    {/* Down Arrow */}
+                                    <svg
+                                        className={`absolute h-5 w-5 transition-all duration-300 ${
+                                            activeMenu === 'About' ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
                                     >
-                                        <span>{item}</span>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                                    </svg>
 
-
-                                        {hasDropdown &&
-                                            (activeMenu === item ? (
-                                                <div className="flex h-8 w-8 hover:text-[#d8886c] items-center justify-center rounded-full bg-gray-100">
-                                                    <X size={22} />
-                                                </div>
-                                            ) : (
-                                                <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
-                                                </svg>
-                                            ))}
-                                    </button>
-
-                                    {/* Dropdown */}
-
-                                    <div className={`overflow-hidden transition-all duration-300 -mt-3 ${activeMenu === item ? 'max-h-96' : 'max-h-0'}`}>
-                                        {hasDropdown &&
-                                            dropdownMenus[item].map((sub) => (
-                                                <a key={sub} href="#" className="block pb-4 pl-6 text-[18px]">
-                                                    {sub}
-                                                </a>
-                                            ))}
-                                    </div>
+                                    {/* X Icon */}
+                                    <X
+                                        size={20}
+                                        className={`absolute text-[#d8886c] transition-all duration-300 ${
+                                            activeMenu === 'About' ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'
+                                        }`}
+                                    />
                                 </div>
-                            );
-                        })}
+                            </button>
 
-                        <button className="text-[20px]">
-                           <span>Give Now</span>
-                        </button>
+                            <div className={`-mt-3 overflow-hidden transition-all duration-300 ${activeMenu === 'About' ? 'max-h-96' : 'max-h-0'}`}>
+                                <a href="https://bahali.org/marsha-smith-bahali-founder/" target="_blank" className="block pb-4 pl-6 text-[18px]">
+                                    Founder
+                                </a>
+
+                                <a href="https://bahali.org/advisory-board/" target="_blank" className="block pb-6 pl-6 text-[18px]">
+                                    Advisory Board
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Programs */}
+                        <div>
+                            <button
+                                onClick={() => toggleMenu('Programs')}
+                                className="flex w-full items-center justify-between pb-10 text-left text-[20px] hover:text-[#d8886c]"
+                            >
+                                <a href="https://bahali.org/caribbean-wellness-programs/#Programs" target="_blank">
+                                    Programs
+                                </a>
+
+                                <div
+                                    className={`relative mr-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${
+                                        activeMenu === 'Programs' ? 'bg-gray-100' : 'bg-transparent'
+                                    }`}
+                                >
+                                    {/* Down Arrow */}
+                                    <svg
+                                        className={`absolute h-5 w-5 transition-all duration-300 ${
+                                            activeMenu === 'Programs' ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                                    </svg>
+
+                                    {/* X Icon */}
+                                    <X
+                                        size={22}
+                                        className={`absolute text-[#d8886c] transition-all duration-300 ${
+                                            activeMenu === 'Programs' ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'
+                                        }`}
+                                    />
+                                </div>
+                            </button>
+
+                            <div
+                                className={`-mt-3 overflow-hidden transition-all duration-300 ${activeMenu === 'Programs' ? 'max-h-96' : 'max-h-0'}`}
+                            >
+                                <a href="https://bahali.org/disaster-recovery/" target="_blank" className="block pb-6 pl-6 text-[18px]">
+                                    Disaster Recovery
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Resources */}
+                        <div className="">
+                            <button
+                                onClick={() => toggleMenu('Resources')}
+                                className="flex w-full items-center justify-between pb-10 text-left text-[20px] hover:text-[#d8886c]"
+                            >
+                                <a href="https://bahali.org/resources/" target="_blank">
+                                    Resources
+                                </a>
+
+                                <div
+                                    className={`relative mr-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-300 ${
+                                        activeMenu === 'Resources' ? 'bg-gray-100' : 'bg-transparent'
+                                    }`}
+                                >
+                                    {/* Down Arrow */}
+                                    <svg
+                                        className={`absolute h-5 w-5 transition-all duration-300 ${
+                                            activeMenu === 'Resources' ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                                    </svg>
+
+                                    {/* X Icon */}
+                                    <X
+                                        size={22}
+                                        className={`absolute text-[#d8886c] transition-all duration-300 ${
+                                            activeMenu === 'Resources' ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'
+                                        }`}
+                                    />
+                                </div>
+                            </button>
+
+                            <div
+                                className={`-mt-3 overflow-hidden transition-all duration-300 ${activeMenu === 'Resources' ? 'max-h-96' : 'max-h-0'}`}
+                            >
+                                <a href="https://bahali.org/kids-corner/" target="_blank" className="block pb-4 pl-6 text-[18px]">
+                                    Kidz Corner
+                                </a>
+
+                                <a href="https://bahali.org/bahali-resource-hub/" target="_blank" className="block pb-7 pl-6 text-[18px]">
+                                    Bahali Resources Hub
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Bahali Press */}
+                        <div>
+                            <a
+                                href="https://bahali.org/bahali-press/#coping"
+                                className="flex w-full items-center justify-between pb-6 text-left text-[20px] hover:text-[#d8886c]"
+                            >
+                                <span>Bahali Press</span>
+                            </a>
+                        </div>
+
+                        {/* Contact */}
+                        <div>
+                            <a
+                                href="https://bahali.org/contact/"
+                                className="flex w-full items-center justify-between pb-6 text-left text-[20px] hover:text-[#d8886c]"
+                            >
+                                <span>Contact</span>
+                            </a>
+                        </div>
+
+                        {/* Get Involved */}
+                        <div>
+                            <a
+                                href="https://bahali.org/get-involved/"
+                                className="flex w-full items-center justify-between pb-6 text-left text-[20px] hover:text-[#d8886c]"
+                            >
+                                <span>Get Involved</span>
+                            </a>
+                        </div>
+
+                        <a href="https://bahali.org/donate/" target="_blank">
+                            <button className="font-open text-[20px] hover:text-[#d8886c]">
+                                <span>Give Now</span>
+                            </button>
+                        </a>
                     </div>
                 </aside>
             </div>
