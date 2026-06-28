@@ -1,5 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { PropsWithChildren } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 /**
  * Bahali — Join the Circle (Provider Acquisition Landing Page)
@@ -224,7 +227,7 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a2e2d]/70 via-transparent to-[#0a2e2d]/30" />
 
                     {/* Nav over photo */}
-                    <header className="relative z-10">
+                    {/* <header className="relative z-10">
                         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
                             <a href="https://bahali.org" className="flex items-center gap-2.5">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">B</span>
@@ -242,7 +245,8 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                                 </Link>
                             </div>
                         </div>
-                    </header>
+                    </header> */}
+                    <Header />
 
                     {/* Hero copy */}
                     <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-16 sm:pt-24">
@@ -505,7 +509,7 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                 {/* ===================================================== */}
                 {/*  FOOTER                                               */}
                 {/* ===================================================== */}
-                <footer className="bg-[#0a3a39] text-[#A9C9C7]">
+                {/* <footer className="bg-[#0a3a39] text-[#A9C9C7]">
                     <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
                         <div className="flex items-center gap-2.5">
                             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-sm font-bold text-[#0E4C4B]">B</span>
@@ -520,7 +524,8 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                     <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
                         © {new Date().getFullYear()} Bahali. All rights reserved.
                     </div>
-                </footer>
+                </footer> */}
+                <Footer />
             </div>
         </>
     );

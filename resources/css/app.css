@@ -8,6 +8,23 @@
 
 @theme {
     --font-sans:
+        "Inter",
+        ui-sans-serif,
+        system-ui,
+        sans-serif;
+
+    --font-inter:
+        "Inter",
+        sans-serif;
+
+    --font-open:
+        "Open Sans",
+        sans-serif;
+
+    --font-libre:
+        "Libre Baskerville",
+        serif;
+    --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);

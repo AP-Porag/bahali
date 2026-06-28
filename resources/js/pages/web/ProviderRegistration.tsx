@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 /**
  * Bahali Provider Directory — Registration
@@ -1012,7 +1014,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             <Head title="Provider Directory Registration — Bahali" />
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
                 {/* Header */}
-                <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
+                {/* <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
                     <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
                         <a href="https://bahali.org" className="flex items-center gap-2.5">
                             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">
@@ -1033,15 +1035,10 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             >
                                 Provider login
                             </a>
-                            {/* <Link
-                                href={SIGNUP_ROUTE}
-                                className="rounded-full bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69]"
-                            >
-                                Join the circle
-                            </Link> */}
                         </div>
                     </div>
-                </header>
+                </header> */}
+                <Header />
 
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     <div className="mb-8">
@@ -1204,7 +1201,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     </div>
                 </div>
             </div>
-            <footer className="bg-[#0a3a39] text-[#A9C9C7]">
+            {/* <footer className="bg-[#0a3a39] text-[#A9C9C7]">
                 <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
                     <div className="flex items-center gap-2.5">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-sm font-bold text-[#0E4C4B]">
@@ -1229,7 +1226,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
                     © {new Date().getFullYear()} Bahali. All rights reserved.
                 </div>
-            </footer>
+            </footer> */}
+            <Footer />
         </>
     );
 }

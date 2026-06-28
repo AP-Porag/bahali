@@ -544,7 +544,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
 
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
                 {/* Header */}
-                <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
+                {/* <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
                     <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
                         <div className="flex items-center gap-2.5">
                             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">B</span>
@@ -558,7 +558,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             Back to providers
                         </Link>
                     </div>
-                </header>
+                </header> */}
 
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     {/* Title + current status */}
