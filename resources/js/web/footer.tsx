@@ -11,7 +11,7 @@ export default function Footer() {
                 <div className="border-r border-white/10 pt-10">
                     {/* Logo */}
                     <div className="lg:w-[250px] mb-3 md:h-[60px] lg:h-[80px]">
-                     <a href="">
+                     <a href="https://bahali.org/" target="-blank">
                         <img src="/img/bahali-foot-logo.png" alt="" className="h-full w-full cursor-pointer object-contain -mt-6" />
                     </a>
                     </div>
@@ -22,34 +22,34 @@ export default function Footer() {
 
                     <ul className="space-y-5 md:pr-4 md:pl-12 md:text-[16px] lg:pr-10 lg:pl-22 lg:text-[18px]">
                         <li>
-                            <a href="https://bahali.org/about/" className="cursor-pointer font-open">
+                            <a href="https://bahali.org/about/" target="-blank" className="cursor-pointer font-open">
                                 About Bahali
                             </a>
                         </li>
                         <li>
-                            <a href="https://bahali.org/our-founder/" className="cursor-pointer font-open">
+                            <a href="https://bahali.org/our-founder/" target="-blank" className="cursor-pointer font-open">
                                 Our Caribbean Focus
                             </a>
                         </li>
                         <li>
-                            <a href="https://bahali.org/our-founder/" className="cursor-pointer font-open">
+                            <a href="https://bahali.org/our-founder/" target="-blank" className="cursor-pointer font-open">
                                 Founder
                             </a>
                         </li>
                     </ul>
 
                     <div className="mt-4 flex md:gap-3 md:pr-4 md:pl-12 lg:gap-5 lg:pr-12 lg:pl-20">
-                      <a href="https://web.facebook.com/BahaliCircle?_rdc=1&_rdr#">
+                      <a href="https://web.facebook.com/BahaliCircle?_rdc=1&_rdr#" target="-blank">
                         <Facebook size={26} className="cursor-pointer duration-300 hover:text-[#E49C7A]" />
                         </a>
                         
-                        <a href="https://www.instagram.com/BahaliCircle">
+                        <a href="https://www.instagram.com/BahaliCircle" target="-blank">
                         <Instagram size={26} className="cursor-pointer duration-300 hover:text-[#E49C7A]" />
                         </a>
-                        <a href="https://www.youtube.com/@BahaliCircle">
+                        <a href="https://www.youtube.com/@BahaliCircle" target="-blank">
                         <Youtube size={26} className="cursor-pointer duration-300 hover:text-[#E49C7A]" />
                         </a>
-                        <a href="https://www.youtube.com/@BahaliCircle">
+                        <a href="https://www.youtube.com/@BahaliCircle" target="-blank">
                         <Linkedin size={26} className="cursor-pointer duration-300 hover:text-[#E49C7A]" />
                         </a>
                     </div>
@@ -64,20 +64,20 @@ export default function Footer() {
                     <ul className="space-y-4 md:text-[14px] lg:text-[16px] font-open">
                       
                         <li className="cursor-pointer">
-                            <a href="https://bahali.org/disaster-recovery/">
+                            <a href="https://bahali.org/disaster-recovery/" target="-blank">
                             Disaster Recovery
                             </a></li>
                         
                         
                         <li className="cursor-pointer">
-                            <a href="https://bahali.org/programs/">Community Healing</a></li>
+                            <a href="https://bahali.org/programs/" target="-blank">Community Healing</a></li>
                         
                        
-                        <li className="cursor-pointer"> <a href="https://bahali.org/programs/">Workshops & Events</a></li>
+                        <li className="cursor-pointer"> <a href="https://bahali.org/programs/" target="-blank">Workshops & Events</a></li>
                         
                         
                         <li className="cursor-pointer">
-                            <a href="https://bahali.org/programs/">
+                            <a href="https://bahali.org/programs/" target="-blank">
                             Training & Education</a></li>
                     </ul>
                 </div>
@@ -91,19 +91,19 @@ export default function Footer() {
                     <ul className="space-y-4 md:text-[14px] lg:text-[16px] font-open">
                       
                         <li className="cursor-pointer">
-                            <a href="https://bahali.org/resources/">
+                            <a href="https://bahali.org/resources/" target="-blank">
                             Resources Library</a></li>
                        
                         
                         <li className="cursor-pointer">
-                            <a href="https://bahali.org/kids-corner/">
+                            <a href="https://bahali.org/kids-corner/" target="-blank">
                             Parenting Tools</a></li>
                         
                         
-                        <li className="cursor-pointer"><a href="https://bahali.org/kids-corner/">Children's Books</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/kids-corner/" target="-blank">Children's Books</a></li>
                         
                         
-                        <li className="cursor-pointer"><a href="https://bahali.org/kids-corner/">Kidz Corner</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/kids-corner/" target="-blank">Kidz Corner</a></li>
                         
                     </ul>
                 </div>
@@ -116,16 +116,16 @@ export default function Footer() {
 
                     <ul className="mb-10 space-y-4 md:text-[14px] font-open lg:text-[16px]">
                       
-                        <li className="cursor-pointer"><a href="https://bahali.org/join-the-circle/#">Join the Circle</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/join-the-circle/#" target="-blank">Join the Circle</a></li>
                         
                         
-                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/">Get Involved</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/" target="-blank">Get Involved</a></li>
                         
                         
-                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/">Volunteer</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/" target="-blank">Volunteer</a></li>
                         
                         
-                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/">Partner With Us</a></li>
+                        <li className="cursor-pointer"><a href="https://bahali.org/get-involved/" target="-blank">Partner With Us</a></li>
                         
                     </ul>
 
@@ -182,16 +182,16 @@ export default function Footer() {
             {/* Bottom Links */}
             <div className="border-t border-white/10">
                 <div className="mx-auto flex max-w-[1200px] flex-col justify-center gap-12 pt-2 pb-16 text-[14px] md:flex-row font-open">
-                    <a href="https://bahali.org/legal/#" className="cursor-pointer">
+                    <a href="https://bahali.org/legal/#" target="-blank" className="cursor-pointer">
                         Terms of Service
                     </a>
-                    <a href="https://bahali.org/legal/#" className="cursor-pointer">
+                    <a href="https://bahali.org/legal/#" target="-blank" className="cursor-pointer">
                         Privacy Policy
                     </a>
-                    <a href="https://bahali.org/legal/#" className="cursor-pointer">
+                    <a href="https://bahali.org/legal/#" target="-blank" className="cursor-pointer">
                         Donation Policy
                     </a>
-                    <a href="https://bahali.org/contact/" className="cursor-pointer">
+                    <a href="https://bahali.org/contact/" target="-blank" className="cursor-pointer">
                         Contact Us
                     </a>
                 </div>
@@ -211,7 +211,7 @@ export default function Footer() {
                 <div className="pt-10 flex flex-col items-center justify-center px-16 ">
                   {/* Logo Here */}
                             <div className=" h-[100px]">
-                              <a href="https://bahali.org/">
+                              <a href="https://bahali.org/" target="-blank">
                                 <img src="/img/bahali-foot-logo.png" alt="" className="h-full w-full object-contain cursor-pointer" />
                                 </a>
                             </div>
@@ -235,13 +235,13 @@ export default function Footer() {
                             <hr className="mb-8 border-white/10" />
         
                             <ul className="space-y-4 text-[14px] font-open">
-                              <a href="https://bahali.org/about/">
+                              <a href="https://bahali.org/about/" target="-blank">
                                 <li className="cursor-pointer">About Bahali</li>
                                 </a>
-                                <a href="https://bahali.org/our-founder/">
+                                <a href="https://bahali.org/our-founder/" target="-blank">
                                 <li className="cursor-pointer">Our Caribbean Focus</li>
                                 </a>
-                                <a href="https://bahali.org/our-founder/">
+                                <a href="https://bahali.org/our-founder/" target="-blank">
                                 <li className="cursor-pointer">Founder</li>
                                 </a>
                             </ul>
@@ -255,16 +255,16 @@ export default function Footer() {
                             <hr className="mb-8 border-white/10" />
         
                             <ul className="space-y-4 text-[14px] font-open">
-                              <a href="https://bahali.org/resources/">
+                              <a href="https://bahali.org/resources/" target="-blank">
                                 <li className="cursor-pointer">Resources Library</li>
                                 </a>
-                                <a href="https://bahali.org/kids-corner/">
+                                <a href="https://bahali.org/kids-corner/" target="-blank">
                                 <li className="cursor-pointer">Parenting Tools</li>
                                 </a>
-                                <a href="https://bahali.org/kids-corner/">
+                                <a href="https://bahali.org/kids-corner/" target="-blank">
                                 <li className="cursor-pointer">Children's Books</li>
                                 </a>
-                                <a href="https://bahali.org/kids-corner/">
+                                <a href="https://bahali.org/kids-corner/" target="-blank">
                                 <li className="cursor-pointer">Kidz Corner</li>
                                 </a>
                             </ul>
@@ -283,16 +283,16 @@ export default function Footer() {
                             <hr className="mb-8 border-white/10" />
         
                             <ul className="space-y-4 text-[14px] font-open">
-                              <a href="https://bahali.org/disaster-recovery/">
+                              <a href="https://bahali.org/disaster-recovery/" target="-blank">
                                 <li className="cursor-pointer">Disaster Recovery</li>
                                 </a>
-                                <a href="https://bahali.org/programs/">
+                                <a href="https://bahali.org/programs/" target="-blank">
                                 <li className="cursor-pointer">Community Healing</li>
                                 </a>
-                                <a href="https://bahali.org/programs/">
+                                <a href="https://bahali.org/programs/" target="-blank">
                                 <li className="cursor-pointer">Workshops & Events</li>
                                 </a>
-                                <a href="https://bahali.org/programs/">
+                                <a href="https://bahali.org/programs/" target="-blank">
                                 <li className="cursor-pointer">Training & Education</li>
                                 </a>
                             </ul>
@@ -305,21 +305,21 @@ export default function Footer() {
                             <hr className="mb-8 border-white/10"/>
         
                             <ul className="mb-10 space-y-4 text-[14px] font-open">
-                              <a href="https://bahali.org/join-the-circle/#">
+                              <a href="https://bahali.org/join-the-circle/#" target="-blank">
                                 <li className="cursor-pointer">Join the Circle</li>
                                 </a>
-                                <a href="https://bahali.org/get-involved/">
+                                <a href="https://bahali.org/get-involved/" target="-blank">
                                 <li className="cursor-pointer">Get Involved</li>
                                 </a>
-                                <a href="https://bahali.org/get-involved/">
+                                <a href="https://bahali.org/get-involved/" target="-blank">
                                 <li className="cursor-pointer">Volunteer</li>
                                 </a>
-                                <a href="https://bahali.org/get-involved/">
+                                <a href="https://bahali.org/get-involved/" target="-blank">
                                 <li className="cursor-pointer">Partner With Us</li>
                                 </a>
                             </ul>
                             {/* Donate */}
-                            <a href="https://bahali.org/donate/#give">
+                            <a href="https://bahali.org/donate/#give" target="-blank">
                             <button className="flex items-center gap-3 rounded-xl border-2 border-[#e99e84] px-5 py-3 text-[14px] font-bold transition cursor-pointer hover:bg-[#d7845e] duration-300 font-inter">
                                 <HeartHandshake size={20} />
                                 Donate
@@ -372,16 +372,16 @@ export default function Footer() {
         
                   {/* Social */}
                   <div className="flex items-center justify-center pb-10 pt-2 gap-5 pl-18 pr-10">
-                            <a href="https://www.facebook.com/BahaliCircle">
+                            <a href="https://www.facebook.com/BahaliCircle" target="-blank">
                                 <Facebook size={24} className="hover:text-[#E49C7A] duration-300 cursor-pointer"/>
                                 </a>
-                                <a href="https://www.instagram.com/BahaliCircle">
+                                <a href="https://www.instagram.com/BahaliCircle" target="-blank">
                                 <Instagram size={24} className="hover:text-[#E49C7A] duration-300 cursor-pointer"/>
                                 </a>
-                                <a href="https://m.youtube.com/@BahaliCircle">
+                                <a href="https://m.youtube.com/@BahaliCircle" target="-blank">
                                 <Youtube size={24} className="hover:text-[#E49C7A] duration-300 cursor-pointer"/>
                                 </a>
-                                <a href="https://www.youtube.com/@BahaliCircle">
+                                <a href="https://www.youtube.com/@BahaliCircle" target="-blank">
                                 <Linkedin size={24} className="hover:text-[#E49C7A] duration-300 cursor-pointer"/>
                                 </a>
                             </div>
@@ -400,17 +400,17 @@ export default function Footer() {
                   </div>
         
                   <div className="flex items-center justify-center font-open">
-                    <a href="https://bahali.org/legal/#" className="cursor-pointer">Privacy Policy</a>
+                    <a href="https://bahali.org/legal/#" target="-blank" className="cursor-pointer">Privacy Policy</a>
                   </div>
         
                   <div className="flex items-center justify-center font-open">
-                    <a href="https://bahali.org/legal/#" className="cursor-pointer">Donation Policy</a>
+                    <a href="https://bahali.org/legal/#" target="-blank" className="cursor-pointer">Donation Policy</a>
                   </div>
         
                 </div>
         
                 <div className="h-[70px] flex items-center justify-center font-open text-[14px]">
-                    <a href="https://bahali.org/contact/" className="cursor-pointer">Contact Us</a>
+                    <a href="https://bahali.org/contact/" target="-blank" className="cursor-pointer">Contact Us</a>
                 </div>
         
               </section>

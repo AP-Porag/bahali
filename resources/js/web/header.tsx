@@ -25,7 +25,7 @@ export default function Header() {
             <div className="mx-auto flex max-w-[1600px] justify-between px-3 min-[982px]:flex min-[982px]:justify-center min-[982px]:px-8 min-[982px]:pt-3 lg:flex lg:justify-between lg:px-6 lg:py-1">
                 {/* Logo */}
                 <div className="mb-2 min-[982px]:flex min-[982px]:items-start lg:flex lg:items-center">
-                    <div className="w-[230px] -mt-1 overflow-hidden rounded-md">
+                    <div className="w-[230px] overflow-hidden rounded-md">
                         {/* Replace with your logo */}
                         <a href="https://bahali.org/" target="_blank">
                             <img src="/img/new-logo.png" alt="Logo" className="w-[160px] object-contain" />
