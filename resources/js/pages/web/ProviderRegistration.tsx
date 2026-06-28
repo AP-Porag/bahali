@@ -1428,7 +1428,6 @@ function StepBody({
                             file={d.verification_document}
                             accept=".pdf,.jpg,.jpeg,.png"
                             onChange={(f) => {
-                                // যদি f এর ভেতর কোনো ভ্যালিড ফাইল অবজেক্ট না থাকে বা সেটি খালি অবজেক্ট {} হয়, তবে explicitely null সেট করুন
                                 const validFile = (f && f instanceof File) ? f : null;
                                 set('verification_document', validFile);
                             }}
@@ -1771,17 +1770,14 @@ function StepBody({
                             placeholder="https://yourpractice.com"
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Social media links"
-                        hint="Optional. One per line or comma-separated."
+                        hint="Optional. Add up to 5 links."
                         error={fieldError('social_links')}
                     >
-                        <TextArea
+                        <SocialLinksInput
                             value={d.social_links}
                             onChange={(v) => set('social_links', v)}
-                            rows={3}
-                            placeholder="https://instagram.com/…, https://facebook.com/…"
                         />
                     </FieldShell>
                 </>
@@ -2005,6 +2001,87 @@ function MultiFileInput({
                     ))}
                 </ul>
             )}
+        </div>
+    );
+}
+
+
+
+function SocialLinksInput({
+    value, onChange,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    const MAX = 5;
+
+    // Build the initial rows from the stored string (comma/newline separated).
+    const makeRows = () => {
+        const parts = value ? value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) : [];
+        const init = parts.length ? parts : [''];
+        return init.map((v, i) => ({ id: i + 1, value: v }));
+    };
+
+    const [rows, setRows] = useState<{ id: number; value: string }[]>(makeRows);
+    const nextId = useRef(rows.length + 1);
+
+    // Update local rows AND push a comma-separated string up to the form.
+    const sync = (next: { id: number; value: string }[]) => {
+        setRows(next);
+        onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', '));
+    };
+
+    const updateAt = (id: number, v: string) =>
+        sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
+
+    const addField = () => {
+        if (rows.length >= MAX) return;
+        sync([...rows, { id: nextId.current++, value: '' }]);
+    };
+
+    const removeAt = (id: number) => sync(rows.filter((r) => r.id !== id));
+
+    return (
+        <div className="space-y-2.5">
+            {rows.map((row, i) => {
+                const isFirst = i === 0;
+                const isLast = i === rows.length - 1;
+                return (
+                    <div key={row.id} className="flex items-center gap-2">
+                        <input
+                            type="url"
+                            value={row.value}
+                            onChange={(e) => updateAt(row.id, e.target.value)}
+                            placeholder="https://instagram.com/…"
+                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                        />
+
+                        {/* Plus — only on the last row, and only below the max */}
+                        {isLast && rows.length < MAX && (
+                            <button
+                                type="button"
+                                onClick={addField}
+                                aria-label="Add another link"
+                                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#0E7C7B]/40 bg-[#0E7C7B]/5 text-[#0E7C7B] transition hover:bg-[#0E7C7B]/10"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
+                            </button>
+                        )}
+
+                        {/* Cross — every row except the first */}
+                        {!isFirst && (
+                            <button
+                                type="button"
+                                onClick={() => removeAt(row.id)}
+                                aria-label="Remove this link"
+                                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#DED7C9] text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            </button>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }
