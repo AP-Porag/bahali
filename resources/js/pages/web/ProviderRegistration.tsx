@@ -1002,8 +1002,21 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             Your application has been received. Our team will review your details and
                             reach out about your listing in the Bahali Provider Directory.
                         </p>
-                    </div>
-                </div>
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+
+                            <a href="https://bahali.org"
+                                className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]"
+                            >
+                                Back to home
+                            </a>
+                            <a href="https://bahali.org/contact"
+                                className="inline-flex items-center justify-center rounded-lg border border-[#E7E0D2] px-5 py-2.5 text-sm font-medium text-[#1B2E2D] transition-colors hover:bg-[#F7F3EC]"
+                            >
+                                Contact
+                            </a>
+                        </div>
+                    </div >
+                </div >
                 <Footer />
             </>
         );
@@ -1186,7 +1199,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={form.processing}
-                                            className="rounded-lg bg-[#C2543B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#aa482f] focus:outline-none focus:ring-4 focus:ring-[#C2543B]/30 disabled:opacity-60"
+                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition bg-[#0d6c6b] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
                                         >
                                             {form.processing ? 'Submitting…' : 'Submit application'}
                                         </button>
@@ -2049,10 +2062,16 @@ function SocialLinksInput({
                 return (
                     <div key={row.id} className="flex items-center gap-2">
                         <input
+                            type="text"
+                            placeholder="Enter The Platform Name"
+                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                        />
+
+                        <input
                             type="url"
                             value={row.value}
                             onChange={(e) => updateAt(row.id, e.target.value)}
-                            placeholder="https://instagram.com/…"
+                            placeholder="https:/www.example.com"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
 

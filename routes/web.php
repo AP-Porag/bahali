@@ -25,11 +25,7 @@ Route::get('/execute-command', function () {
     ///opt/alt/php84/usr/bin/php artisan migrate:fresh --seed -vvv
 
 });
-Route::get('/', function () {
-    return redirect()->route('login');
-    //    return Inertia::render('welcome');
-})->name('home');
-
+Route::get('/', [JoinController::class, 'index'])->name('home');
 Route::get('/join', [JoinController::class, 'index'])->name('providers.join');
 //->prefix('admin')->as('admin.')
 Route::get('/provider/directory/create', [ProviderDirectoryController::class, 'create'])
