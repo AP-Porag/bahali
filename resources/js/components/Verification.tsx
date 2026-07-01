@@ -374,7 +374,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
                     <Row label="Name of provider / organization">{p.organization_name}</Row>
                     <Row label="Credentials / License">{p.credentials}</Row>
                     <Row label="Professional title">
-                        {p.professional_title === 'Other (specify)' ? p.professional_title_other : p.professional_title}
+                        <Pills items={p.professional_title} />
                     </Row>
                 </DL>
             );
