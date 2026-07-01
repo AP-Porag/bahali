@@ -31,6 +31,15 @@ Route::get('/join', [JoinController::class, 'index'])->name('providers.join');
 Route::get('/provider/directory/create', [ProviderDirectoryController::class, 'create'])
     ->name('providers.create');
 
+Route::post('/provider/directory/register-account', [ProviderDirectoryController::class, 'registerAccount'])
+    ->name('providers.register-account');
+
+Route::post('/provider/directory/verify-otp', [ProviderDirectoryController::class, 'verifyOtp'])
+    ->name('providers.verify-otp');
+
+Route::post('/provider/directory/resend-otp', [ProviderDirectoryController::class, 'resendOtp'])
+    ->name('providers.resend-otp');
+
 Route::post('/provider/directory/store', [ProviderDirectoryController::class, 'store'])
     ->name('providers.store');
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
