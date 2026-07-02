@@ -593,7 +593,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 <p className="mt-2 font-serif text-lg text-[#16302F]">{STEPS[step].title}</p>
                             </div>
 
-                            {/* Desktop vertical stepper */}
+
                             <nav className="hidden lg:block" aria-label="Sections">
                                 <ol className="relative">
                                     <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
