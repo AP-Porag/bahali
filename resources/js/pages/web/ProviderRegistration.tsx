@@ -2,11 +2,10 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-
 /**
  * Bahali Provider Directory — Registration
  * ------------------------------------------------------------------
- * A 13-step, validated provider intake form for https://bahali.org/
+ * A 14-step, validated provider intake form for https://bahali.org/
  *
  * Stack: Laravel 12 + Inertia.js + React + TypeScript + Tailwind CSS.
  *
@@ -15,70 +14,63 @@ import Footer from "@/components/footer";
  *  - Client-side validation runs when the user clicks "Continue".
  *  - The form will NOT advance to the next step until the current
  *    step passes validation.
+ *  - After the "About You" step, an account is created server-side
+ *    and a 6-digit OTP is emailed to the provider. The form will not
+ *    advance past the "Verify Email" step until the OTP is confirmed.
  *  - Final submit posts multipart/form-data (files included) to the
  *    backend route, which should validate again server-side.
  *
- * Backend route expected: POST /provider-directory  (name: providers.store)
- * Adjust the route string near `handleSubmit` if yours differs.
+ * Backend routes expected:
+ *   POST /provider/directory/register-account (name: providers.register-account)
+ *   POST /provider/directory/verify-otp        (name: providers.verify-otp)
+ *   POST /provider/directory/resend-otp        (name: providers.resend-otp)
+ *   POST /provider/directory/store              (name: providers.store)
  * ------------------------------------------------------------------
  */
-
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
 const SIGNUP_ROUTE = '/provider/directory/create';
-
 type ProviderType =
     | 'individual'
     | 'organization'
     | 'support_group'
     | 'faith_based'
     | 'community_program';
-
 type LicenseStatus = 'active' | 'provisional' | 'intern';
-
 type YesNo = 'yes' | 'no';
 type CaribbeanIdentity = 'yes' | 'no' | 'prefer_not';
-
 interface ProviderFormData {
     // Step 1 — Basic Information
     provider_type: ProviderType | '';
     organization_name: string;
     credentials: string;
-    professional_title: string;
+    professional_title: string[];
     professional_title_other: string;
-
     // Step 2 — About You & Account
     email: string;
     password: string;
     short_bio: string;
     years_experience: string;
-
     // Step 3 — Licensure & Verification
     license_number: string;
     license_states: string[];
     license_status: LicenseStatus | '';
     verification_document: File | null;
-
     // Step 4 — Areas of Support
     areas_of_support: string[];
     areas_of_support_other: string;
-
     // Step 5 — Populations Served
     populations_served: string[];
-
     // Step 6 — Cultural & Language Responsiveness
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
     languages: string[];
     languages_other: string;
     cultural_approach: string;
-
     // Step 7 — Service Information
     service_formats: string[];
     practice_settings: string[];
-
     // Step 8 — Location
     address: string;
     city: string;
@@ -87,37 +79,29 @@ interface ProviderFormData {
     multiple_locations: YesNo | '';
     hide_address: boolean;
     telehealth_regions: string[];
-
     // Step 9 — Insurance & Payment
     payment_methods: string[];
     insurance_plans: string;
-
     // Step 10 — Contact Information
     phone: string;
     website: string;
     social_links: string;
-
     // Step 11 — Profile Media
     profile_photo: File | null;
     additional_photos: File[];
-
     // Step 12 — Accessibility
     accessibility: string[];
-
     // Step 13 — Consent & Agreement
     consent_accurate: boolean;
     consent_notify: boolean;
     consent_no_endorsement: boolean;
     consent_public: boolean;
 }
-
 type FieldName = keyof ProviderFormData;
 type FormErrors = Partial<Record<FieldName, string>>;
-
 /* ------------------------------------------------------------------ */
 /*  Option data                                                        */
 /* ------------------------------------------------------------------ */
-
 const PROVIDER_TYPES: { value: ProviderType; label: string }[] = [
     { value: 'individual', label: 'Individual Provider' },
     { value: 'organization', label: 'Organization / Agency' },
@@ -125,7 +109,6 @@ const PROVIDER_TYPES: { value: ProviderType; label: string }[] = [
     { value: 'faith_based', label: 'Faith-Based Organization' },
     { value: 'community_program', label: 'Community Program' },
 ];
-
 const PROFESSIONAL_TITLES = [
     'Clinical Psychologist',
     'Neuropsychologist',
@@ -145,7 +128,6 @@ const PROFESSIONAL_TITLES = [
     'Pastoral Counselor',
     'Other (specify)',
 ];
-
 const YEARS_EXPERIENCE = [
     'Less than 2 years',
     '2–5 years',
@@ -154,13 +136,11 @@ const YEARS_EXPERIENCE = [
     '16–20 years',
     '20+ years',
 ];
-
 const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
     { value: 'provisional', label: 'Provisional' },
     { value: 'intern', label: 'Registered Intern / Trainee' },
 ];
-
 const AREAS_OF_SUPPORT = [
     'Anxiety and Stress',
     'Depression',
@@ -183,7 +163,6 @@ const AREAS_OF_SUPPORT = [
     'Life Transitions',
     'Other',
 ];
-
 const POPULATIONS_SERVED = [
     'Infants / Toddlers (0–5)',
     'Children (6–12)',
@@ -197,7 +176,6 @@ const POPULATIONS_SERVED = [
     'Veterans',
     'Individuals with Disabilities',
 ];
-
 const LANGUAGES = [
     'English',
     'Spanish',
@@ -208,7 +186,6 @@ const LANGUAGES = [
     'Dutch',
     'Other',
 ];
-
 const SERVICE_FORMATS = [
     'In-Person',
     'Virtual',
@@ -217,7 +194,6 @@ const SERVICE_FORMATS = [
     'Group-Based',
     'School-Based',
 ];
-
 const PRACTICE_SETTINGS = [
     'Private Practice',
     'Community Agency',
@@ -230,18 +206,19 @@ const PRACTICE_SETTINGS = [
     'Independent Contractor',
     'Other',
 ];
-
 const PAYMENT_METHODS = [
     'Self-Pay',
-    'Sliding Scale',
+    'Insurance Accepted',
     'Medicaid',
     'Medicare',
-    'Private Insurance',
     'Employee Assistance Programs (EAP)',
-    'Grant-Funded Services',
-    'Free Services',
+    'Sliding Scale',
+    'Government-Funded',
+    'Grant-Funded',
+    'Donation-Based',
+    'Pro Bono / Volunteer Services',
+    'No-Cost Services',
 ];
-
 const ACCESSIBILITY_OPTIONS = [
     'Wheelchair Accessible',
     'ADA Accessible',
@@ -252,7 +229,6 @@ const ACCESSIBILITY_OPTIONS = [
     'Public Transportation Accessible',
     'Other',
 ];
-
 // Regions used for "State/Country of Licensure" and "Telehealth Regions Served".
 const REGIONS = [
     'Anguilla',
@@ -287,7 +263,6 @@ const REGIONS = [
     'Canada',
     'Other',
 ];
-
 const COUNTRIES = [
     'United States',
     'Canada',
@@ -321,7 +296,6 @@ const COUNTRIES = [
     'Turks and Caicos Islands',
     'Other',
 ];
-
 const US_STATES = [
     'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
     'Connecticut', 'Delaware', 'District of Columbia', 'Florida', 'Georgia',
@@ -334,14 +308,13 @@ const US_STATES = [
     'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
     'Not Applicable / Outside the U.S.',
 ];
-
 /* ------------------------------------------------------------------ */
 /*  Step metadata                                                      */
 /* ------------------------------------------------------------------ */
-
 const STEPS = [
     { key: 'basic', title: 'Basic Information', subtitle: 'Who you are' },
     { key: 'about', title: 'About You', subtitle: 'Your approach' },
+    { key: 'verify', title: 'Verify Email', subtitle: 'Confirm it\'s you' },
     { key: 'license', title: 'Licensure & Verification', subtitle: 'Credentials' },
     { key: 'areas', title: 'Areas of Support', subtitle: 'What you help with' },
     { key: 'populations', title: 'Populations Served', subtitle: 'Who you serve' },
@@ -354,9 +327,7 @@ const STEPS = [
     { key: 'accessibility', title: 'Accessibility', subtitle: 'Accommodations' },
     { key: 'consent', title: 'Consent & Agreement', subtitle: 'Finish up' },
 ] as const;
-
 const TOTAL_STEPS = STEPS.length;
-
 // Maps a field to the step index it belongs to — used to jump to the
 // first step containing a server-side validation error after submit.
 const FIELD_STEP: Record<string, number> = {
@@ -364,44 +335,39 @@ const FIELD_STEP: Record<string, number> = {
     professional_title: 0, professional_title_other: 0,
     short_bio: 1, years_experience: 1,
     email: 1, password: 1,
-    license_number: 2, license_states: 2, license_status: 2, verification_document: 2,
-    areas_of_support: 3, areas_of_support_other: 3,
-    populations_served: 4,
-    caribbean_identity: 5, caribbean_experience: 5, languages: 5,
-    languages_other: 5, cultural_approach: 5,
-    service_formats: 6, practice_settings: 6,
-    address: 7, city: 7, state_province: 7, country: 7,
-    multiple_locations: 7, hide_address: 7, telehealth_regions: 7,
-    payment_methods: 8, insurance_plans: 8,
-    phone: 9, website: 9, social_links: 9,
-    profile_photo: 10, additional_photos: 10,
-    accessibility: 11,
-    consent_accurate: 12, consent_notify: 12,
-    consent_no_endorsement: 12, consent_public: 12,
+    license_number: 3, license_states: 3, license_status: 3, verification_document: 3,
+    areas_of_support: 4, areas_of_support_other: 4,
+    populations_served: 5,
+    caribbean_identity: 6, caribbean_experience: 6, languages: 6,
+    languages_other: 6, cultural_approach: 6,
+    service_formats: 7, practice_settings: 7,
+    address: 8, city: 8, state_province: 8, country: 8,
+    multiple_locations: 8, hide_address: 8, telehealth_regions: 8,
+    payment_methods: 9, insurance_plans: 9,
+    phone: 10, website: 10, social_links: 10,
+    profile_photo: 11, additional_photos: 11,
+    accessibility: 12,
+    consent_accurate: 13, consent_notify: 13,
+    consent_no_endorsement: 13, consent_public: 13,
 };
-
 /* ------------------------------------------------------------------ */
 /*  Validation helpers                                                 */
 /* ------------------------------------------------------------------ */
-
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 const isUrl = (s: string) => /^(https?:\/\/)[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
-
 function validateStep(step: number, d: ProviderFormData): FormErrors {
     const e: FormErrors = {};
-
     switch (step) {
         case 0:
             if (!d.provider_type) e.provider_type = 'Please select a provider type.';
             if (!d.organization_name.trim())
                 e.organization_name = 'Please enter your name or organization.';
-            if (!d.professional_title)
-                e.professional_title = 'Please choose a professional title.';
-            if (d.professional_title === 'Other (specify)' && !d.professional_title_other.trim())
+            if (d.professional_title.length === 0)
+                e.professional_title = 'Please select at least one professional title.';
+            if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
                 e.professional_title_other = 'Please specify your title.';
             break;
-
         case 1:
             if (!d.email.trim()) e.email = 'Email address is required.';
             else if (!isEmail(d.email)) e.email = 'Please enter a valid email address.';
@@ -418,27 +384,26 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
             else if (wordCount(d.short_bio) > 500)
                 e.short_bio = 'Please keep your bio to 500 words or fewer.';
             break;
-
         case 2:
+            // Verify Email step — validated via OTP flow, not client-side rules.
+            break;
+        case 3:
             if (!d.license_number.trim()) e.license_number = 'License number is required.';
             if (d.license_states.length === 0)
                 e.license_states = 'Select at least one state or country of licensure.';
             if (!d.license_status) e.license_status = 'Please select your license status.';
             break;
-
-        case 3:
+        case 4:
             if (d.areas_of_support.length === 0)
                 e.areas_of_support = 'Select at least one area of support.';
             if (d.areas_of_support.includes('Other') && !d.areas_of_support_other.trim())
                 e.areas_of_support_other = 'Please describe the other area of support.';
             break;
-
-        case 4:
+        case 5:
             if (d.populations_served.length === 0)
                 e.populations_served = 'Select at least one population you serve.';
             break;
-
-        case 5:
+        case 6:
             if (!d.caribbean_identity)
                 e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
             if (!d.caribbean_experience)
@@ -450,15 +415,13 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
             if (d.cultural_approach && wordCount(d.cultural_approach) > 250)
                 e.cultural_approach = 'Please keep this to 250 words or fewer.';
             break;
-
-        case 6:
+        case 7:
             if (d.service_formats.length === 0)
                 e.service_formats = 'Select at least one service format.';
             if (d.practice_settings.length === 0)
                 e.practice_settings = 'Select at least one practice setting.';
             break;
-
-        case 7:
+        case 8:
             if (!d.address.trim()) e.address = 'Address is required.';
             if (!d.city.trim()) e.city = 'City is required.';
             if (!d.state_province) e.state_province = 'State / Province is required.';
@@ -466,31 +429,26 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
             if (!d.multiple_locations)
                 e.multiple_locations = 'Please let us know if you serve multiple locations.';
             break;
-
-        case 8:
+        case 9:
             if (d.payment_methods.length === 0)
                 e.payment_methods = 'Select at least one accepted payment method.';
             break;
-
-        case 9:
+        case 10:
             if (!d.phone.trim()) e.phone = 'Phone number is required.';
             else if (d.phone.replace(/[^\d]/g, '').length < 7)
                 e.phone = 'Please enter a valid phone number.';
             if (d.website && !isUrl(d.website))
                 e.website = 'Enter a full URL, e.g. https://example.com';
             break;
-
-        case 10:
+        case 11:
             if (!d.profile_photo)
                 e.profile_photo = 'A professional photo or organization logo is required.';
             break;
-
-        case 11:
+        case 12:
             if (d.accessibility.length === 0)
                 e.accessibility = 'Select at least one option (choose "Other" if none apply).';
             break;
-
-        case 12:
+        case 13:
             if (!d.consent_accurate)
                 e.consent_accurate = 'Please confirm the information is accurate.';
             if (!d.consent_notify)
@@ -501,19 +459,15 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
                 e.consent_public = 'Please consent to public display of your listing.';
             break;
     }
-
     return e;
 }
-
 /* ------------------------------------------------------------------ */
 /*  Reusable field components                                          */
 /* ------------------------------------------------------------------ */
-
 const errClass = (hasError: boolean) =>
     hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
         : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25';
-
 function FieldShell({
     label,
     required,
@@ -546,7 +500,6 @@ function FieldShell({
         </div>
     );
 }
-
 function TextInput({
     value, onChange, error, placeholder, type = 'text',
 }: {
@@ -566,7 +519,6 @@ function TextInput({
         />
     );
 }
-
 function TextArea({
     value, onChange, error, placeholder, rows = 5,
 }: {
@@ -586,7 +538,6 @@ function TextArea({
         />
     );
 }
-
 function PasswordInput({
     value, onChange, error, placeholder,
 }: {
@@ -626,7 +577,6 @@ function PasswordInput({
         </div>
     );
 }
-
 function SelectInput({
     value, onChange, options, error, placeholder = 'Select…',
 }: {
@@ -654,7 +604,6 @@ function SelectInput({
         </select>
     );
 }
-
 function RadioRow({
     options, value, onChange, name,
 }: {
@@ -686,7 +635,6 @@ function RadioRow({
         </div>
     );
 }
-
 function CheckGrid({
     options, selected, onToggle, columns = 2,
 }: {
@@ -732,7 +680,6 @@ function CheckGrid({
         </div>
     );
 }
-
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
@@ -742,7 +689,6 @@ interface RegionData {
     regionTypeName?: string;
     regionTypeLabel?: string;
 }
-
 interface CountryData {
     id: number;
     name: string;
@@ -754,19 +700,25 @@ interface PageProps {
     errors?: Partial<Record<string, string>>;
     countries: CountryData[];
 }
-
 export default function ProviderRegistration({ errors: serverErrors, countries }: PageProps) {
     console.log(countries)
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
     const topRef = useRef<HTMLDivElement>(null);
-
+    // ---- OTP / account-creation state --------------------------------
+    const [otpCode, setOtpCode] = useState('');
+    const [accountCreated, setAccountCreated] = useState(false);
+    const [otpVerified, setOtpVerified] = useState(false);
+    const [creatingAccount, setCreatingAccount] = useState(false);
+    const [verifyingOtp, setVerifyingOtp] = useState(false);
+    const [resending, setResending] = useState(false);
+    const [otpError, setOtpError] = useState('');
     const form = useForm<ProviderFormData>({
         provider_type: '',
         organization_name: '',
         credentials: '',
-        professional_title: '',
+        professional_title: [],
         professional_title_other: '',
         short_bio: '',
         years_experience: '',
@@ -806,16 +758,12 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         consent_no_endorsement: false,
         consent_public: false,
     });
-
     const d = form.data;
-
     /* ---- field helpers --------------------------------------------- */
-
     const set = <K extends FieldName>(key: K, value: ProviderFormData[K]) => {
         form.setData(key, value);
         if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
     };
-
     const toggle = (key: FieldName, value: string) => {
         const arr = (d[key] as string[]) ?? [];
         const next = arr.includes(value)
@@ -823,36 +771,164 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             : [...arr, value];
         set(key, next as ProviderFormData[typeof key]);
     };
-
     const scrollTop = () =>
         topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* ---- OTP / account helpers --------------------------------------- */
+    const getCsrfToken = () =>
+        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+    const createAccountAndSendOtp = async (): Promise<boolean> => {
+        setCreatingAccount(true);
+        setOtpError('');
+        try {
+            console.log('[createAccountAndSendOtp] Starting account creation with email:', d.email);
+            const csrfToken = getCsrfToken();
+            console.log('[createAccountAndSendOtp] CSRF token:', csrfToken ? '✓ present' : '✗ missing');
 
+            const res = await fetch('/provider/directory/register-account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    organization_name: d.organization_name,
+                    email: d.email,
+                    password: d.password,
+                }),
+            });
+
+            console.log('[createAccountAndSendOtp] Response status:', res.status);
+            const json = await res.json();
+            console.log('[createAccountAndSendOtp] Response body:', json);
+
+            if (!res.ok) {
+                console.error('[createAccountAndSendOtp] Error response:', json);
+                const mapped: FormErrors = {};
+                if (json.errors?.email) {
+                    mapped.email = Array.isArray(json.errors.email) ? json.errors.email[0] : json.errors.email;
+                }
+                if (json.errors?.password) {
+                    mapped.password = Array.isArray(json.errors.password) ? json.errors.password[0] : json.errors.password;
+                }
+                if (json.errors?.organization_name) {
+                    mapped.organization_name = Array.isArray(json.errors.organization_name) ? json.errors.organization_name[0] : json.errors.organization_name;
+                }
+                if (json.message) {
+                    console.error('[createAccountAndSendOtp] Server message:', json.message);
+                }
+                setErrors(mapped);
+                return false;
+            }
+
+            console.log('[createAccountAndSendOtp] Account created, OTP sent');
+            setAccountCreated(true);
+            return true;
+        } catch (err) {
+            console.error('[createAccountAndSendOtp] Fetch error:', err);
+            setOtpError('Something went wrong creating your account. Please try again.');
+            return false;
+        } finally {
+            setCreatingAccount(false);
+        }
+    };
+    const verifyOtp = async () => {
+        console.log('[verifyOtp] Starting OTP verification with code:', otpCode);
+        setOtpError('');
+        setVerifyingOtp(true);
+        try {
+            const csrfToken = getCsrfToken();
+            const res = await fetch('/provider/directory/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ email: d.email, otp: otpCode }),
+            });
+            const json = await res.json();
+            console.log('[verifyOtp] Response status:', res.status, 'body:', json);
+
+            if (!res.ok) {
+                console.error('[verifyOtp] Verification failed:', json.message);
+                setOtpError(json.message || 'Invalid or expired code. Please try again.');
+                return;
+            }
+
+            console.log('[verifyOtp] OTP verified successfully, advancing to next step');
+            setOtpVerified(true);
+            setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+            scrollTop();
+        } catch (err) {
+            console.error('[verifyOtp] Fetch error:', err);
+            setOtpError('Something went wrong verifying your code. Please try again.');
+        } finally {
+            setVerifyingOtp(false);
+        }
+    };
+    const resendOtp = async () => {
+        setResending(true);
+        setOtpError('');
+        try {
+            const res = await fetch('/provider/directory/resend-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ email: d.email }),
+            });
+            if (!res.ok) {
+                const json = await res.json().catch(() => ({}));
+                setOtpError(json.message || 'Could not resend the code. Please try again.');
+            }
+        } catch {
+            setOtpError('Could not resend the code. Please try again.');
+        } finally {
+            setResending(false);
+        }
+    };
     /* ---- navigation ------------------------------------------------- */
-
-    const goNext = () => {
+    const goNext = async () => {
         const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
             return; // blocked — cannot advance
         }
         setErrors({});
-        setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+        // Right after "About You", create the account and trigger the OTP email
+        // before letting the user reach the Verify Email step.
+        if (STEPS[step].key === 'about' && !accountCreated) {
+            console.log('[goNext] About step — creating account...');
+            const ok = await createAccountAndSendOtp();
+            console.log('[goNext] Account creation result:', ok);
+            if (!ok) {
+                console.log('[goNext] Account creation failed, staying on this step');
+                return; // stay on this step, show returned field errors
+            }
+            console.log('[goNext] Account created successfully, advancing to verify step');
+        }
+        const nextStep = Math.min(step + 1, TOTAL_STEPS - 1);
+        console.log('[goNext] Advancing from step', step, 'to step', nextStep);
+        setStep(nextStep);
         scrollTop();
     };
-
     const goBack = () => {
         setErrors({});
         setStep((s) => Math.max(s - 1, 0));
         scrollTop();
     };
-
     const handleSubmit = () => {
         const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
             return;
         }
-
         // Final pass: re-validate every step
         for (let i = 0; i < TOTAL_STEPS; i++) {
             const e = validateStep(i, d);
@@ -863,25 +939,20 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 return;
             }
         }
-
         // Create a FormData object manually for file uploads
         const formData = new FormData();
-
         // Append all non-file fields
         Object.keys(d).forEach(key => {
             const value = d[key as keyof ProviderFormData];
             if (value === null || value === undefined) return;
-
             if (key === 'profile_photo' || key === 'verification_document') {
                 // Skip files here, we'll handle them separately
                 return;
             }
-
             if (key === 'additional_photos') {
                 // Skip, handle separately
                 return;
             }
-
             if (Array.isArray(value)) {
                 // For arrays, append each item
                 value.forEach(item => {
@@ -895,16 +966,13 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 formData.append(key, String(value));
             }
         });
-
         // Append file fields
         if (d.profile_photo instanceof File) {
             formData.append('profile_photo', d.profile_photo);
         }
-
         if (d.verification_document instanceof File) {
             formData.append('verification_document', d.verification_document);
         }
-
         if (Array.isArray(d.additional_photos)) {
             d.additional_photos.forEach((file, index) => {
                 if (file instanceof File) {
@@ -912,7 +980,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 }
             });
         }
-
         // Submit using the FormData
         form.post('/provider/directory/store', {
             forceFormData: true,
@@ -929,62 +996,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             },
         });
     }
-
-    // const handleSubmit = () => {
-    //     const stepErrors = validateStep(step, d);
-    //     if (Object.keys(stepErrors).length > 0) {
-    //         setErrors(stepErrors);
-    //         return;
-    //     }
-
-    //     // Final pass: re-validate every step so nothing slips through.
-    //     for (let i = 0; i < TOTAL_STEPS; i++) {
-    //         const e = validateStep(i, d);
-    //         if (Object.keys(e).length > 0) {
-    //             setErrors(e);
-    //             setStep(i);
-    //             scrollTop();
-    //             return;
-    //         }
-    //     }
-
-    //     // IMPORTANT: Ensure files are properly set before submission
-    //     // The files should already be set as File objects, but we need to make sure
-    //     // we're not accidentally losing them
-
-    //     // Use transform to ensure files are properly included
-    //     form.transform((data) => {
-    //         // Make sure files are preserved
-    //         return data;
-    //     });
-
-    //     // Set a flag to indicate we're submitting with files
-    //     form.post('/provider/directory/store', {
-    //         forceFormData: true, // This is critical for file uploads
-    //         preserveScroll: true,
-    //         preserveState: false, // Set to false to force a fresh state
-    //         onSuccess: () => {
-    //             setSubmitted(true);
-    //         },
-    //         onError: (serverErrs: Record<string, string>) => {
-    //             // Jump to the earliest step that has a server-side error.
-    //             const firstField = Object.keys(serverErrs)[0];
-    //             if (firstField && FIELD_STEP[firstField] !== undefined) {
-    //                 setStep(FIELD_STEP[firstField]);
-    //                 scrollTop();
-    //             }
-    //         },
-    //     });
-    // };
-
     // Merge client + server errors so a field shows whichever is present.
     const fieldError = (key: FieldName): string | undefined =>
         errors[key] || (serverErrors?.[key] ?? form.errors[key]);
-
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
-
     /* ---- success screen -------------------------------------------- */
-
     if (submitted) {
         return (
             <>
@@ -1003,7 +1019,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             reach out about your listing in the Bahali Provider Directory.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-
                             <a href="https://bahali.org"
                                 className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]"
                             >
@@ -1021,40 +1036,12 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             </>
         );
     }
-
     /* ---- render ----------------------------------------------------- */
-
     return (
         <>
             <Head title="Provider Directory Registration — Bahali" />
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
-                {/* Header */}
-                {/* <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-                        <a href="https://bahali.org" className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">
-                                B
-                            </span>
-                            <span className="leading-none">
-                                <span className="block font-serif text-lg text-[#16302F]">Bahali</span>
-                                <span className="block text-[11px] tracking-wide text-[#6B7A78]">
-                                    Provider Directory
-                                </span>
-                            </span>
-                        </a>
-
-                        <div className="flex items-center gap-3">
-                            <a
-                                href="/login"
-                                className="hidden text-sm font-medium text-[#3A4B49] transition hover:text-[#0E7C7B] sm:inline"
-                            >
-                                Provider login
-                            </a>
-                        </div>
-                    </div>
-                </header> */}
                 <Header />
-
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     <div className="mb-8">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0E7C7B]">
@@ -1068,7 +1055,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             Complete each step below — every section must be finished before you continue.
                         </p>
                     </div>
-
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
                         {/* Stepper */}
                         <aside className="lg:sticky lg:top-8 lg:self-start">
@@ -1090,7 +1076,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     {STEPS[step].title}
                                 </p>
                             </div>
-
                             {/* Desktop vertical stepper */}
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
@@ -1148,7 +1133,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                 </ol>
                             </nav>
                         </aside>
-
                         {/* Form card */}
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
@@ -1160,7 +1144,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                         {STEPS[step].title}
                                     </h2>
                                 </div>
-
                                 <div className="space-y-6">
                                     <StepBody
                                         step={step}
@@ -1169,30 +1152,36 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                         toggle={toggle}
                                         fieldError={fieldError}
                                         countries={countries}
+                                        otpCode={otpCode}
+                                        setOtpCode={setOtpCode}
+                                        otpError={otpError}
+                                        verifyingOtp={verifyingOtp}
+                                        resending={resending}
+                                        onVerifyOtp={verifyOtp}
+                                        onResendOtp={resendOtp}
                                     />
                                 </div>
-
                                 {/* Navigation */}
                                 <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
                                     <button
                                         type="button"
                                         onClick={goBack}
-                                        disabled={step === 0}
-                                        className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step === 0
+                                        disabled={step === 0 || STEPS[step].key === 'verify'}
+                                        className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step === 0 || STEPS[step].key === 'verify'
                                             ? 'cursor-not-allowed text-[#B7C0BE]'
                                             : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'
                                             }`}
                                     >
                                         ← Back
                                     </button>
-
-                                    {step < TOTAL_STEPS - 1 ? (
+                                    {STEPS[step].key === 'verify' ? null : step < TOTAL_STEPS - 1 ? (
                                         <button
                                             type="button"
                                             onClick={goNext}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30"
+                                            disabled={creatingAccount}
+                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
                                         >
-                                            Continue →
+                                            {creatingAccount ? 'Creating account…' : 'Continue →'}
                                         </button>
                                     ) : (
                                         <button
@@ -1206,53 +1195,23 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     )}
                                 </div>
                             </div>
-
                             <p className="mt-4 text-center text-xs text-[#9AA6A4]">
                                 Fields marked <span className="text-[#C2543B]">*</span> are required.
                             </p>
-
-
                         </main>
                     </div>
                 </div>
             </div>
-            {/* <footer className="bg-[#0a3a39] text-[#A9C9C7]">
-                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
-                    <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-sm font-bold text-[#0E4C4B]">
-                            B
-                        </span>
-                        <span className="text-sm text-white/90">
-                            Bahali — rooted in culture, centered on emotional wellness.
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-5 text-sm">
-                        <a href="https://bahali.org/about/" className="transition hover:text-white">
-                            About
-                        </a>
-                        <a href="https://bahali.org/contact/" className="transition hover:text-white">
-                            Contact
-                        </a>
-                        <a href="https://bahali.org/legal/" className="transition hover:text-white">
-                            Privacy
-                        </a>
-                    </div>
-                </div>
-                <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
-                    © {new Date().getFullYear()} Bahali. All rights reserved.
-                </div>
-            </footer> */}
             <Footer />
         </>
     );
 }
-
 /* ------------------------------------------------------------------ */
 /*  Step body — renders the active section                             */
 /* ------------------------------------------------------------------ */
-
 function StepBody({
-    step, d, set, toggle, fieldError, countries
+    step, d, set, toggle, fieldError, countries,
+    otpCode, setOtpCode, otpError, verifyingOtp, resending, onVerifyOtp, onResendOtp,
 }: {
     step: number;
     d: ProviderFormData;
@@ -1260,6 +1219,13 @@ function StepBody({
     toggle: (key: FieldName, value: string) => void;
     fieldError: (key: FieldName) => string | undefined;
     countries: CountryData[];
+    otpCode: string;
+    setOtpCode: (v: string) => void;
+    otpError: string;
+    verifyingOtp: boolean;
+    resending: boolean;
+    onVerifyOtp: () => void;
+    onResendOtp: () => void;
 }) {
     const selectedCountry = countries.find(c => c.name === d.country);
     const availableRegions = selectedCountry?.regions ?? [];
@@ -1277,7 +1243,6 @@ function StepBody({
                             options={PROVIDER_TYPES}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Name of provider / organization"
                         required
@@ -1290,7 +1255,6 @@ function StepBody({
                             placeholder="e.g. Dr. Marsha Smith, or Bahali Wellness Center"
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Credentials / License"
                         hint="Examples: PsyD, LCSW, LMHC, PMHNP-BC"
@@ -1302,22 +1266,20 @@ function StepBody({
                             placeholder="PsyD, LCSW…"
                         />
                     </FieldShell>
-
                     <FieldShell
-                        label="Professional title"
+                        label="Professional title(s)"
                         required
+                        hint="Select all that apply."
                         error={fieldError('professional_title')}
                     >
-                        <SelectInput
-                            value={d.professional_title}
-                            onChange={(v) => set('professional_title', v)}
+                        <CheckGrid
                             options={PROFESSIONAL_TITLES}
-                            error={!!fieldError('professional_title')}
-                            placeholder="Select your title…"
+                            selected={d.professional_title}
+                            onToggle={(v) => toggle('professional_title', v)}
+                            columns={2}
                         />
                     </FieldShell>
-
-                    {d.professional_title === 'Other (specify)' && (
+                    {d.professional_title.includes('Other (specify)') && (
                         <FieldShell
                             label="Please specify your title"
                             required
@@ -1333,7 +1295,6 @@ function StepBody({
                     )}
                 </>
             );
-
         /* ---------------- Step 2: About You -------------------------- */
         case 1:
             return (
@@ -1352,7 +1313,6 @@ function StepBody({
                             placeholder="you@example.com"
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Password"
                         required
@@ -1366,7 +1326,6 @@ function StepBody({
                             placeholder="Create a password"
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Short bio"
                         required
@@ -1384,7 +1343,6 @@ function StepBody({
                             {wordCount(d.short_bio)} / 500 words
                         </p>
                     </FieldShell>
-
                     <FieldShell label="Years of experience" error={fieldError('years_experience')}>
                         <SelectInput
                             value={d.years_experience}
@@ -1395,9 +1353,58 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 3: Licensure & Verification ----------- */
+        /* ---------------- Step 3: Verify Email (OTP) ------------------ */
         case 2:
+            return (
+                <div className="space-y-5 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0E7C7B]/10">
+                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0h3.75v3.75M3.98 8.223A10.477 10.477 0 0 1 12 4.5" />
+                        </svg>
+                    </div>
+                    <p className="text-[#3A4B49]">
+                        We sent a 6-digit verification code to <strong>{d.email}</strong>.
+                        Enter it below to continue.
+                    </p>
+                    <div className="mx-auto max-w-xs">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                            placeholder="000000"
+                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-3 text-center text-2xl tracking-[0.4em] text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                        />
+                        {otpError && (
+                            <p className="mt-1.5 flex items-center justify-center gap-1 text-sm text-[#C2543B]">
+                                <span aria-hidden>⚠</span>{otpError}
+                            </p>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onVerifyOtp}
+                        disabled={verifyingOtp || otpCode.length !== 6}
+                        className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] disabled:opacity-60"
+                    >
+                        {verifyingOtp ? 'Verifying…' : 'Verify & Continue'}
+                    </button>
+                    <p className="text-sm text-[#6B7A78]">
+                        Didn't get a code?{' '}
+                        <button
+                            type="button"
+                            onClick={onResendOtp}
+                            disabled={resending}
+                            className="font-medium text-[#0E7C7B] hover:underline disabled:opacity-60"
+                        >
+                            {resending ? 'Resending…' : 'Resend code'}
+                        </button>
+                    </p>
+                </div>
+            );
+        /* ---------------- Step 4: Licensure & Verification ----------- */
+        case 3:
             return (
                 <>
                     <FieldShell label="License number" required error={fieldError('license_number')}>
@@ -1408,7 +1415,6 @@ function StepBody({
                             placeholder="Your professional license number"
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="State / Country of licensure"
                         required
@@ -1422,7 +1428,6 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
-
                     <FieldShell label="License status" required error={fieldError('license_status')}>
                         <RadioRow
                             name="license_status"
@@ -1431,7 +1436,6 @@ function StepBody({
                             options={LICENSE_STATUSES}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Upload verification document"
                         hint="Optional — a license certificate or proof of credentials (PDF, JPG, PNG)."
@@ -1448,9 +1452,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 4: Areas of Support ------------------- */
-        case 3:
+        /* ---------------- Step 5: Areas of Support ------------------- */
+        case 4:
             return (
                 <>
                     <FieldShell
@@ -1466,7 +1469,6 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
-
                     {d.areas_of_support.includes('Other') && (
                         <FieldShell
                             label="Please describe the other area(s)"
@@ -1483,9 +1485,8 @@ function StepBody({
                     )}
                 </>
             );
-
-        /* ---------------- Step 5: Populations Served ----------------- */
-        case 4:
+        /* ---------------- Step 6: Populations Served ----------------- */
+        case 5:
             return (
                 <FieldShell
                     label="Populations served"
@@ -1501,9 +1502,8 @@ function StepBody({
                     />
                 </FieldShell>
             );
-
-        /* ---------------- Step 6: Cultural & Language ---------------- */
-        case 5:
+        /* ---------------- Step 7: Cultural & Language ---------------- */
+        case 6:
             return (
                 <>
                     <FieldShell
@@ -1522,7 +1522,6 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Do you have experience working with Caribbean individuals and families?"
                         required
@@ -1538,7 +1537,6 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Languages spoken"
                         required
@@ -1552,7 +1550,6 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
-
                     {d.languages.includes('Other') && (
                         <FieldShell
                             label="Please specify other language(s)"
@@ -1567,7 +1564,6 @@ function StepBody({
                             />
                         </FieldShell>
                     )}
-
                     <FieldShell
                         label="How do you incorporate culture into your work?"
                         hint="Optional. (Max 250 words)"
@@ -1586,9 +1582,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 7: Service Information ---------------- */
-        case 6:
+        /* ---------------- Step 8: Service Information ---------------- */
+        case 7:
             return (
                 <>
                     <FieldShell
@@ -1604,7 +1599,6 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Practice setting"
                         required
@@ -1620,9 +1614,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 8: Location --------------------------- */
-        case 7:
+        /* ---------------- Step 9: Location --------------------------- */
+        case 8:
             return (
                 <>
                     <FieldShell label="Address" required error={fieldError('address')}>
@@ -1633,14 +1626,12 @@ function StepBody({
                             placeholder="Street address"
                         />
                     </FieldShell>
-
                     <ConsentItem
                         checked={d.hide_address}
                         onChange={(v) => set('hide_address', v)}
                     >
                         Hide the address from public view
                     </ConsentItem>
-
                     <div className="grid gap-6 sm:grid-cols-2">
                         <FieldShell label="City" required error={fieldError('city')}>
                             <TextInput
@@ -1650,8 +1641,6 @@ function StepBody({
                                 placeholder="City"
                             />
                         </FieldShell>
-
-
                         <FieldShell label="Country" required error={fieldError('country')}>
                             <SelectInput
                                 value={d.country}
@@ -1695,8 +1684,6 @@ function StepBody({
                             </div>
                         )}
                     </FieldShell>
-
-
                     <FieldShell
                         label="Do you provide services across multiple locations?"
                         required
@@ -1712,7 +1699,6 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Telehealth regions served"
                         hint="Optional. Select every region where you can offer telehealth."
@@ -1727,9 +1713,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 9: Insurance & Payment ---------------- */
-        case 8:
+        /* ---------------- Step 10: Insurance & Payment ---------------- */
+        case 9:
             return (
                 <>
                     <FieldShell
@@ -1745,7 +1730,6 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Insurance plans accepted"
                         hint="Optional. List the specific plans you accept."
@@ -1760,9 +1744,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 10: Contact Information --------------- */
-        case 9:
+        /* ---------------- Step 11: Contact Information --------------- */
+        case 10:
             return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
@@ -1774,7 +1757,6 @@ function StepBody({
                             placeholder="+1 (555) 000-0000"
                         />
                     </FieldShell>
-
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
                         <TextInput
                             value={d.website}
@@ -1795,9 +1777,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 11: Profile Media -------------------- */
-        case 10:
+        /* ---------------- Step 12: Profile Media -------------------- */
+        case 11:
             return (
                 <>
                     <FieldShell
@@ -1816,7 +1797,6 @@ function StepBody({
                             }}
                         />
                     </FieldShell>
-
                     <FieldShell
                         label="Additional photos"
                         hint="Optional. Images of your space, team, or community work."
@@ -1830,9 +1810,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
-        /* ---------------- Step 12: Accessibility -------------------- */
-        case 11:
+        /* ---------------- Step 13: Accessibility -------------------- */
+        case 12:
             return (
                 <FieldShell
                     label="Accessibility"
@@ -1848,9 +1827,8 @@ function StepBody({
                     />
                 </FieldShell>
             );
-
-        /* ---------------- Step 13: Consent & Agreement -------------- */
-        case 12:
+        /* ---------------- Step 14: Consent & Agreement -------------- */
+        case 13:
             return (
                 <div className="space-y-4">
                     <p className="text-sm text-[#5B6B6E]">
@@ -1887,16 +1865,13 @@ function StepBody({
                     </ConsentItem>
                 </div>
             );
-
         default:
             return null;
     }
 }
-
 /* ------------------------------------------------------------------ */
 /*  File inputs & consent row                                          */
 /* ------------------------------------------------------------------ */
-
 function FileInput({
     file, onChange, accept, preview = false,
 }: {
@@ -1909,7 +1884,6 @@ function FileInput({
         () => (preview && file ? URL.createObjectURL(file) : null),
         [preview, file]
     );
-
     // Cleanup function for memory leak prevention
     useEffect(() => {
         return () => {
@@ -1918,7 +1892,6 @@ function FileInput({
             }
         };
     }, [previewUrl]);
-
     return (
         <div className="flex items-center gap-4">
             <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
@@ -1938,7 +1911,6 @@ function FileInput({
                     }}
                 />
             </label>
-
             {previewUrl && (
                 <img
                     src={previewUrl}
@@ -1946,7 +1918,6 @@ function FileInput({
                     className="h-14 w-14 rounded-lg border border-[#E7E0D2] object-cover"
                 />
             )}
-
             {file && (
                 <div className="flex items-center gap-2 text-sm text-[#5B6B6E]">
                     <span className="max-w-[180px] truncate">{file.name}</span>
@@ -1962,7 +1933,6 @@ function FileInput({
         </div>
     );
 }
-
 function MultiFileInput({
     files, onChange, accept,
 }: {
@@ -1971,7 +1941,6 @@ function MultiFileInput({
     accept?: string;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
-
     return (
         <div className="space-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
@@ -1994,7 +1963,6 @@ function MultiFileInput({
                     }}
                 />
             </label>
-
             {files.length > 0 && (
                 <ul className="space-y-1.5">
                     {files.map((f, i) => (
@@ -2017,9 +1985,6 @@ function MultiFileInput({
         </div>
     );
 }
-
-
-
 function SocialLinksInput({
     value, onChange,
 }: {
@@ -2027,33 +1992,26 @@ function SocialLinksInput({
     onChange: (v: string) => void;
 }) {
     const MAX = 5;
-
     // Build the initial rows from the stored string (comma/newline separated).
     const makeRows = () => {
         const parts = value ? value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) : [];
         const init = parts.length ? parts : [''];
         return init.map((v, i) => ({ id: i + 1, value: v }));
     };
-
     const [rows, setRows] = useState<{ id: number; value: string }[]>(makeRows);
     const nextId = useRef(rows.length + 1);
-
     // Update local rows AND push a comma-separated string up to the form.
     const sync = (next: { id: number; value: string }[]) => {
         setRows(next);
         onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', '));
     };
-
     const updateAt = (id: number, v: string) =>
         sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
-
     const addField = () => {
         if (rows.length >= MAX) return;
         sync([...rows, { id: nextId.current++, value: '' }]);
     };
-
     const removeAt = (id: number) => sync(rows.filter((r) => r.id !== id));
-
     return (
         <div className="space-y-2.5">
             {rows.map((row, i) => {
@@ -2066,15 +2024,13 @@ function SocialLinksInput({
                             placeholder="Enter The Platform Name"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
-
                         <input
                             type="url"
                             value={row.value}
                             onChange={(e) => updateAt(row.id, e.target.value)}
-                            placeholder="https:/www.example.com"
+                            placeholder="https://www.example.com"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
-
                         {/* Plus — only on the last row, and only below the max */}
                         {isLast && rows.length < MAX && (
                             <button
@@ -2086,7 +2042,6 @@ function SocialLinksInput({
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
                             </button>
                         )}
-
                         {/* Cross — every row except the first */}
                         {!isFirst && (
                             <button
@@ -2104,7 +2059,6 @@ function SocialLinksInput({
         </div>
     );
 }
-
 function ConsentItem({
     checked, onChange, error, children,
 }: {

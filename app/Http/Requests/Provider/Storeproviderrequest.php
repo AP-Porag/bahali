@@ -25,7 +25,8 @@ class StoreProviderRequest extends FormRequest
             ])],
             'organization_name' => ['required', 'string', 'max:255'],
             'credentials' => ['nullable', 'string', 'max:255'],
-            'professional_title' => ['required', 'string', 'max:255'],
+            'professional_title' => ['required', 'array', 'min:1'],
+            'professional_title.*' => ['string'],       // <-- CHANGED (was: required|string)
             'professional_title_other' => [
                 'nullable',
                 'string',
@@ -34,14 +35,14 @@ class StoreProviderRequest extends FormRequest
             ],
 
             // Step 2 — About You & Account
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-                'regex:/^\S+$/u',
-            ],
+            // 'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            // 'password' => [
+            //     'required',
+            //     'string',
+            //     'min:8',
+            //     'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+            //     'regex:/^\S+$/u',
+            // ],
             'short_bio' => ['required', 'string', 'max:5000'],
             'years_experience' => ['nullable', 'string', 'min:0', 'max:50'],
 

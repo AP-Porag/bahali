@@ -4,16 +4,20 @@ namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\StoreProviderRequest;
+use App\Mail\OtpVerificationMail;
 use App\Models\Country;
 use App\Models\Provider;
 use App\Models\User;
 use App\Utils\GlobalConstant;
+use Carbon\Carbon;
 use Illuminate\Http\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -28,6 +32,13 @@ class ProviderDirectoryController extends Controller
         GlobalConstant::VERIFICATION_STATUS_SUSPENDED,
         GlobalConstant::VERIFICATION_STATUS_INACTIVE,
     ];
+
+    /**
+     * Session key used to remember which (unverified) user is mid-registration
+     * between registerAccount() -> verifyOtp() -> store().
+     */
+    private const SESSION_PENDING_USER = 'pending_provider_registration_user_id';
+
     /**
      * Show the registration form.
      */
@@ -57,25 +68,225 @@ class ProviderDirectoryController extends Controller
 
         return Inertia::render('web/create', [
             'countries' => $countries,
+            'csrfToken' => csrf_token(),
         ]);
+    }
+
+    /**
+     * Step 2 -> Step 3 (frontend): create the (unverified) user account
+     * right after "About You" passes validation, and email a 6-digit OTP.
+     */
+    public function registerAccount(Request $request)
+    {
+        \Log::info('[registerAccount] Starting account registration', [
+            'email' => $request->input('email'),
+            'organization_name' => $request->input('organization_name'),
+        ]);
+
+        $validated = Validator::make($request->all(), [
+            'organization_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ])->validate();
+
+        try {
+            $user = User::create([
+                'name'     => $validated['organization_name'],
+                'email'    => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role'     => 'provider',
+            ]);
+
+            \Log::info('[registerAccount] User created successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+
+            $this->issueOtp($user);
+
+            \Log::info('[registerAccount] OTP issued, storing session', [
+                'user_id' => $user->id,
+            ]);
+
+            $request->session()->put(self::SESSION_PENDING_USER, $user->id);
+
+            \Log::info('[registerAccount] Session stored, returning success', [
+                'user_id' => $user->id,
+                'session_key' => self::SESSION_PENDING_USER,
+            ]);
+
+            return response()->json([
+                'message' => 'Verification code sent.',
+                'email' => $user->email,
+                'user_id' => $user->id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('[registerAccount] Error during account creation', [
+                'error' => $e->getMessage(),
+                'email' => $validated['email'] ?? null,
+            ]);
+
+            // Check if it's a unique constraint violation on email (shouldn't happen due to validator, but just in case)
+            if (str_contains($e->getMessage(), 'unique')) {
+                return response()->json([
+                    'message' => 'Email already registered.',
+                    'errors' => [
+                        'email' => ['This email is already registered.'],
+                    ],
+                ], 422);
+            }
+
+            return response()->json([
+                'message' => 'An error occurred while creating your account. Please try again.',
+                'errors' => [
+                    'general' => [$e->getMessage()],
+                ],
+            ], 500);
+        }
+    }
+
+    /**
+     * Confirms the 6-digit code and marks the user's email as verified.
+     */
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'otp' => ['required', 'string', 'size:6'],
+        ]);
+
+        \Log::info('[verifyOtp] Attempting to verify OTP', [
+            'email' => $request->email,
+            'otp' => $request->otp,
+        ]);
+
+        $userId = $request->session()->get(self::SESSION_PENDING_USER);
+        $user = $userId ? User::find($userId) : User::where('email', $request->email)->first();
+
+        if (!$user || $user->email !== $request->email) {
+            \Log::warning('[verifyOtp] User not found or email mismatch', [
+                'email' => $request->email,
+                'user_id' => $userId,
+            ]);
+            return response()->json(['message' => 'We could not find that registration.'], 422);
+        }
+
+        if (!$user->otp_code || !$user->otp_expires_at || Carbon::now()->greaterThan($user->otp_expires_at)) {
+            \Log::warning('[verifyOtp] OTP expired or missing', [
+                'user_id' => $user->id,
+                'has_otp' => !!$user->otp_code,
+                'otp_expires_at' => $user->otp_expires_at,
+            ]);
+            return response()->json(['message' => 'This code has expired. Please request a new one.'], 422);
+        }
+
+        if (!hash_equals($user->otp_code, $request->otp)) {
+            \Log::warning('[verifyOtp] OTP mismatch', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+            return response()->json(['message' => 'That code is incorrect.'], 422);
+        }
+
+        $user->update([
+            'email_verified_at' => now(),
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ]);
+
+        \Log::info('[verifyOtp] Email verified successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        return response()->json(['message' => 'Verified.']);
+    }
+
+    /**
+     * Issues a fresh OTP for the pending registration (used by "Resend code").
+     */
+    public function resendOtp(Request $request)
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        \Log::info('[resendOtp] Resend OTP requested', [
+            'email' => $request->email,
+        ]);
+
+        $userId = $request->session()->get(self::SESSION_PENDING_USER);
+        $user = $userId ? User::find($userId) : User::where('email', $request->email)->first();
+
+        if (!$user || $user->email !== $request->email) {
+            \Log::warning('[resendOtp] User not found', [
+                'email' => $request->email,
+            ]);
+            return response()->json(['message' => 'We could not find that registration.'], 422);
+        }
+
+        $this->issueOtp($user);
+
+        \Log::info('[resendOtp] New OTP issued', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
+
+        return response()->json(['message' => 'Verification code resent.']);
+    }
+
+    /**
+     * Shared helper — generates a 6-digit code, saves it with a 10-minute
+     * expiry, and emails it to the user.
+     */
+    private function issueOtp(User $user): void
+    {
+        $otp = (string) random_int(100000, 999999);
+
+        \Log::info('[issueOtp] Generating OTP', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'otp_code' => $otp,
+        ]);
+
+        $user->update([
+            'otp_code' => $otp,
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        try {
+            Mail::to($user->email)->send(new OtpVerificationMail($otp));
+            \Log::info('[issueOtp] OTP email sent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('[issueOtp] Failed to send OTP email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw — the OTP is still in the DB, user can try to verify or resend
+        }
     }
 
     /**
      * Validate, store files, persist, and redirect back with a flash.
      *
      * Uses storeUpload() helper to bypass getRealPath() issues on Windows.
+     *
+     * The user account is no longer created here — it was already created
+     * (and OTP-verified) in registerAccount()/verifyOtp(). We just look it
+     * up via the session and attach it to the new Provider record.
      */
     public function store(StoreProviderRequest $request)
     {
-        $data = $request->validated();
+        $userId = $request->session()->get(self::SESSION_PENDING_USER);
+        $user = $userId ? User::find($userId) : null;
 
-        // Create the login account first
-        $user = User::create([
-            'name'     => $data['organization_name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role'     => 'provider',
-        ]);
+        if (!$user || !$user->email_verified_at) {
+            return back()->withErrors(['email' => 'Please verify your email before submitting.']);
+        }
+
+        $data = $request->validated();
 
         $data['user_id'] = $user->id;
         unset($data['email'], $data['password']);
@@ -100,6 +311,8 @@ class ProviderDirectoryController extends Controller
         $data['additional_photos'] = $additional;
 
         Provider::create($data);
+
+        $request->session()->forget(self::SESSION_PENDING_USER);
 
         return redirect()
             ->route('providers.create')

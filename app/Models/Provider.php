@@ -85,6 +85,7 @@ class Provider extends Model
 
     protected $casts = [
         'license_states'      => 'array',
+        'professional_title' => 'array',
         'areas_of_support'    => 'array',
         'populations_served'  => 'array',
         'languages'           => 'array',
