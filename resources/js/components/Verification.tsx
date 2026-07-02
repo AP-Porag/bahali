@@ -288,7 +288,7 @@ function YesNoBadge({ value }: { value?: boolean }) {
 function FileView({ url, label, image, onView }: { url?: string | null; label: string; image?: boolean; onView?: (url: string) => void }) {
     if (!url) return <Muted>Not provided</Muted>;
     if (image) {
-        return <img src={url} alt={label} className="h-28 w-28 rounded-xl border border-[#E7E0D2] object-cover" />;
+        return <img src={url} alt={label} className="w-50 rounded-xl border border-[#E7E0D2] contain" />;
     }
     const inner = (
         <>
@@ -468,7 +468,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
                         {p.additional_photos && p.additional_photos.length > 0 ? (
                             <div className="flex flex-wrap gap-3">
                                 {p.additional_photos.map((u, i) => (
-                                    <img key={i} src={u} alt={`Photo ${i + 1}`} className="h-20 w-20 rounded-lg border border-[#E7E0D2] object-cover" />
+                                    <img key={i} src={u} alt={`Photo ${i + 1}`} className="w-50 rounded-lg border border-[#E7E0D2] contain" />
                                 ))}
                             </div>
                         ) : undefined}
@@ -596,7 +596,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             {/* Desktop vertical stepper */}
                             <nav className="hidden lg:block" aria-label="Sections">
                                 <ol className="relative">
-                                    <span className="absolute left-[15px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
+                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isCurrent = i === step;
                                         const isDecision = i === DECISION_STEP;

@@ -65,6 +65,7 @@ export default function Header() {
                                 <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
                                     <a
                                         href="https://bahali.org/marsha-smith-bahali-founder/"
+                                        target='_blank'
                                         className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
                                     >
                                         Founder
@@ -147,6 +148,7 @@ export default function Header() {
                                 <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
                                     <a
                                         href="https://bahali.org/kids-corner/"
+                                        target='_blank'
                                         className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
                                     >
                                         Kidz Corner
@@ -154,6 +156,7 @@ export default function Header() {
 
                                     <a
                                         href="https://bahali.org/bahali-resource-hub/"
+                                        target='_blank'
                                         className="font-open block px-8 py-3 text-[18px] font-semibold text-gray-700 hover:text-[#d8886c]"
                                     >
                                         Bahali Resources Hub
@@ -165,6 +168,7 @@ export default function Header() {
                         {/* Bahali Press */}
                         <a
                             href="https://bahali.org/bahali-press/#coping"
+                            target='_blank'
                             className="font-open text-[20px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
                         >
                             Bahali Press

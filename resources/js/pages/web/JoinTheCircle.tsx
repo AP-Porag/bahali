@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { PropsWithChildren } from "react";
 import Header from "@/components/Header";
-import Footer from "@/components/footer";
+import Footer from "@/components/Footer";
 
 /**
  * Bahali — Join the Circle (Provider Acquisition Landing Page)
@@ -174,14 +174,15 @@ function Eyebrow({ children, className = '' }: { children: React.ReactNode; clas
 
 function CoralButton({ children = 'Join the circle', large = false }: { children?: React.ReactNode; large?: boolean }) {
     return (
-        <Link
+        <a
             href={SIGNUP_ROUTE}
+            target="_blank"
             className={`group inline-flex items-center gap-2 rounded-full bg-[#C2543B] font-semibold text-white shadow-sm transition hover:bg-[#aa482f] focus:outline-none focus:ring-4 focus:ring-[#C2543B]/30 ${large ? 'px-8 py-4 text-base' : 'px-7 py-3.5 text-sm'
                 }`}
         >
             {children}
             <span className="transition-transform group-hover:translate-x-0.5" aria-hidden>→</span>
-        </Link>
+        </a>
     );
 }
 
@@ -472,12 +473,13 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                             <div className="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-[#0E4C4B] p-6 text-center">
                                 <p className="font-serif text-2xl text-white sm:text-3xl">Add your name to the circle</p>
                                 <p className="mt-2 text-sm text-[#A9C9C7]">Free for verified providers.</p>
-                                <Link
+                                <a
                                     href={SIGNUP_ROUTE}
+                                    target='_blank'
                                     className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#E8B84B] px-6 py-3 text-sm font-semibold text-[#0E4C4B] transition hover:bg-[#dca936]"
                                 >
                                     Join us →
-                                </Link>
+                                </a>
                             </div>
 
                             {/* remaining tiles */}
