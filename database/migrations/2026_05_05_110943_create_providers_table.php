@@ -75,6 +75,9 @@ return new class extends Migration
             // Status
             $table->string('status')->default(GlobalConstant::VERIFICATION_STATUS_PENDING);
 
+            // Note
+            $table->string('note')->nullable();
+
 
             // Consent
             $table->boolean('consent_accurate')->default(false);

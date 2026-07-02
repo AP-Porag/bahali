@@ -22,6 +22,8 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Inertia\Response;
 use Illuminate\Validation\Rule;
+use App\Mail\ProviderStatusUpdateMail;
+use Illuminate\Support\Facades\Log;
 
 class ProviderDirectoryController extends Controller
 {
@@ -647,6 +649,11 @@ class ProviderDirectoryController extends Controller
      */
     public function update(Request $request, $id): RedirectResponse
     {
+        \Log::info('[update] Starting provider status update', [
+            'provider_id' => $id,
+            'new_status' => $request->input('status'),
+        ]);
+
         // Provider খুঁজে বের করুন
         $provider = Provider::findOrFail($id);
 
@@ -656,23 +663,52 @@ class ProviderDirectoryController extends Controller
             'note'   => ['nullable', 'string', 'max:2000'],
         ]);
 
-        // শুধুমাত্র status আপডেট করুন
-        $provider->status = $validated['status'];
-        // $provider->verification_note   = $validated['note'] ?? null;
-        $provider->reviewed_at         = now();
+        // পুরানো স্ট্যাটাস সংরক্ষণ করুন
+        $oldStatus = $provider->status;
+        $newStatus = $validated['status'];
+        $note = $validated['note'] ?? null;
 
-        // License verified at update (শুধুমাত্র approved হলে)
-        // $provider->license_verified_at = $validated['status'] === 'approved'
-        //     ? now()
-        //     : null;
-
-        // Only approved providers are publicly visible
-        // $provider->is_public = $validated['status'] === 'approved';
+        // শুধুমাত্র status এবং note আপডেট করুন
+        $provider->status = $newStatus;
+        $provider->note = $note;
+        $provider->reviewed_at = now();
 
         $provider->save();
 
+        \Log::info('[update] Provider status updated', [
+            'provider_id' => $id,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'has_note' => !empty($note),
+        ]);
+
+        try {
+            // Provider এর user কে email পাঠান
+            if ($provider->user && $provider->user->email) {
+                Mail::to($provider->user->email)->send(
+                    new ProviderStatusUpdateMail($provider, $newStatus, $note)
+                );
+
+                \Log::info('[update] Status update email sent', [
+                    'provider_id' => $id,
+                    'email' => $provider->user->email,
+                    'status' => $newStatus,
+                ]);
+            } else {
+                \Log::warning('[update] No email found for provider', [
+                    'provider_id' => $id,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('[update] Failed to send status update email', [
+                'provider_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            // Mail failure को prevent করবেন না, update already done
+        }
+
         return redirect()
-            ->route('providers.pending') // providers.pending রুটে রিডাইরেক্ট
+            ->route('providers.pending')
             ->with('success', 'Verification status updated successfully!');
     }
 

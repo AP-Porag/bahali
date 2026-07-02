@@ -1080,7 +1080,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
                                     <span
-                                        className="absolute left-[15px] top-2 bottom-2 w-px bg-[#E2DACB]"
+                                        className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]"
                                         aria-hidden
                                     />
                                     {STEPS.map((s, i) => {
@@ -1749,11 +1749,17 @@ function StepBody({
             return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
-                        <TextInput
+                        {/* <TextInput
                             value={d.phone}
                             onChange={(v) => set('phone', v)}
                             error={!!fieldError('phone')}
                             type="tel"
+                            placeholder="+1 (555) 000-0000"
+                        /> */}
+                        <PhoneInput
+                            value={d.phone}
+                            onChange={(v) => set('phone', v)}
+                            error={!!fieldError('phone')}
                             placeholder="+1 (555) 000-0000"
                         />
                     </FieldShell>
@@ -1787,10 +1793,20 @@ function StepBody({
                         hint="A clear headshot or your logo. JPG or PNG."
                         error={fieldError('profile_photo')}
                     >
-                        <FileInput
+                        {/* <FileInput
                             file={d.profile_photo}
                             accept=".jpg,.jpeg,.png,.webp, .pdf"
                             preview
+                            onChange={(f) => {
+                                const validFile = (f && f instanceof File) ? f : null;
+                                set('profile_photo', validFile);
+                            }}
+                        /> */}
+                        <FileInput
+                            file={d.profile_photo}
+                            accept=".jpg,.jpeg,.png"
+                            preview
+                            allowedTypes={['jpg', 'jpeg', 'png']}
                             onChange={(f) => {
                                 const validFile = (f && f instanceof File) ? f : null;
                                 set('profile_photo', validFile);
@@ -1802,9 +1818,15 @@ function StepBody({
                         hint="Optional. Images of your space, team, or community work."
                         error={fieldError('additional_photos')}
                     >
-                        <MultiFileInput
+                        {/* <MultiFileInput
                             files={d.additional_photos}
                             accept=".jpg,.jpeg,.png,.webp, .pdf"
+                            onChange={(files) => set('additional_photos', files)}
+                        /> */}
+                        <MultiFileInput
+                            files={d.additional_photos}
+                            accept=".jpg,.jpeg,.png,.webp"
+                            allowedTypes={['jpg', 'jpeg', 'png', 'webp']}
                             onChange={(files) => set('additional_photos', files)}
                         />
                     </FieldShell>
@@ -1933,14 +1955,33 @@ function FileInput({
         </div>
     );
 }
+
 function MultiFileInput({
-    files, onChange, accept,
+    files, onChange, accept, allowedTypes = [],
 }: {
     files: File[];
     onChange: (files: File[]) => void;
     accept?: string;
+    allowedTypes?: string[];
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
+    const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+
+    const validateFile = (file: File): string | null => {
+        if (allowedTypes.length === 0) return null;
+
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        const isAllowed = allowedTypes.some(type =>
+            fileExtension === type.toLowerCase() ||
+            file.type.toLowerCase().includes(type.toLowerCase())
+        );
+
+        if (!isAllowed) {
+            return `${file.name}: Only ${allowedTypes.join(', ').toUpperCase()} allowed`;
+        }
+        return null;
+    };
+
     return (
         <div className="space-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
@@ -1956,13 +1997,39 @@ function MultiFileInput({
                     className="hidden"
                     onChange={(e) => {
                         const newFiles = e.target.files ? Array.from(e.target.files) : [];
-                        if (newFiles.length > 0) {
-                            onChange([...files, ...newFiles]);
-                            e.target.value = '';
+                        const errors: Record<string, string> = {};
+                        const validFiles: File[] = [];
+
+                        newFiles.forEach((file) => {
+                            const error = validateFile(file);
+                            if (error) {
+                                errors[file.name] = error;
+                            } else {
+                                validFiles.push(file);
+                            }
+                        });
+
+                        setFileErrors(errors);
+                        if (validFiles.length > 0) {
+                            onChange([...files, ...validFiles]);
                         }
+                        e.target.value = '';
                     }}
                 />
             </label>
+
+            {/* Show file validation errors */}
+            {Object.keys(fileErrors).length > 0 && (
+                <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
+                    {Object.values(fileErrors).map((error, idx) => (
+                        <p key={idx} className="flex items-center gap-1 text-sm text-[#C2543B] mb-1">
+                            <span aria-hidden>⚠</span>
+                            {error}
+                        </p>
+                    ))}
+                </div>
+            )}
+
             {files.length > 0 && (
                 <ul className="space-y-1.5">
                     {files.map((f, i) => (
@@ -2021,7 +2088,7 @@ function SocialLinksInput({
                     <div key={row.id} className="flex items-center gap-2">
                         <input
                             type="text"
-                            placeholder="Enter The Platform Name"
+                            placeholder="Enter Platform Name"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
                         <input
@@ -2059,6 +2126,31 @@ function SocialLinksInput({
         </div>
     );
 }
+
+function PhoneInput({
+    value, onChange, error, placeholder,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    placeholder?: string;
+}) {
+    return (
+        <input
+            type="tel"
+            value={value}
+            placeholder={placeholder}
+            onChange={(ev) => {
+                // Allow only numbers, spaces, dashes, plus, and parentheses
+                const cleaned = ev.target.value.replace(/[^0-9\s\-\+\(\)]/g, '');
+                onChange(cleaned);
+            }}
+            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`}
+        />
+    );
+}
+
+
 function ConsentItem({
     checked, onChange, error, children,
 }: {

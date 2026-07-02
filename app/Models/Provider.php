@@ -73,6 +73,9 @@ class Provider extends Model
         // Status
         'status',
 
+        // Note
+        'note',
+
         // Accessibility
         'accessibility',
 
