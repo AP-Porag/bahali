@@ -229,7 +229,7 @@ const ACCESSIBILITY_OPTIONS = [
     'Public Transportation Accessible',
     'Other',
 ];
-// Regions used for "State/Country of Licensure" and "Telehealth Regions Served".
+
 const REGIONS = [
     'Anguilla',
     'Antigua and Barbuda',
