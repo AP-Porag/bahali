@@ -596,7 +596,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             {/* Desktop vertical stepper */}
                             <nav className="hidden lg:block" aria-label="Sections">
                                 <ol className="relative">
-                                    <span className="absolute left-[15px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
+                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isCurrent = i === step;
                                         const isDecision = i === DECISION_STEP;
