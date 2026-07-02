@@ -2088,7 +2088,7 @@ function SocialLinksInput({
                     <div key={row.id} className="flex items-center gap-2">
                         <input
                             type="text"
-                            placeholder="Enter The Platform Name"
+                            placeholder="Enter Platform Name"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
                         <input
