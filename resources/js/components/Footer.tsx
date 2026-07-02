@@ -84,16 +84,16 @@ export default function Footer() {
                         <hr className="mb-8 border-white/10" />
 
                         <ul className="space-y-4 md:text-[14px] lg:text-[16px] font-open">
-                            <a href="https://bahali.org/resources/" className="block">
+                            <a href="https://bahali.org/resources/" className="block" target='_blank'>
                                 <li className="cursor-pointer">Resources Library</li>
                             </a>
-                            <a href="https://bahali.org/kids-corner/" className="block">
+                            <a href="https://bahali.org/kids-corner/" className="block" target='_blank'>
                                 <li className="cursor-pointer">Parenting Tools</li>
                             </a>
-                            <a href="https://bahali.org/kids-corner/" className="block">
+                            <a href="https://bahali.org/kids-corner/" className="block" target='_blank'>
                                 <li className="cursor-pointer">Children's Books</li>
                             </a>
-                            <a href="https://bahali.org/kids-corner/" className="block">
+                            <a href="https://bahali.org/kids-corner/" className="block" target='_blank'>
                                 <li className="cursor-pointer">Kidz Corner</li>
                             </a>
                         </ul>
