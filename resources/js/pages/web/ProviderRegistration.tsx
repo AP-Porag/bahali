@@ -208,13 +208,16 @@ const PRACTICE_SETTINGS = [
 ];
 const PAYMENT_METHODS = [
     'Self-Pay',
-    'Sliding Scale',
+    'Insurance Accepted',
     'Medicaid',
     'Medicare',
-    'Private Insurance',
     'Employee Assistance Programs (EAP)',
-    'Grant-Funded Services',
-    'Free Services',
+    'Sliding Scale',
+    'Government-Funded',
+    'Grant-Funded',
+    'Donation-Based',
+    'Pro Bono / Volunteer Services',
+    'No-Cost Services',
 ];
 const ACCESSIBILITY_OPTIONS = [
     'Wheelchair Accessible',
