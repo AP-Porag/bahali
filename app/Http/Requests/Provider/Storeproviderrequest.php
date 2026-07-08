@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Provider;
 
+use App\Support\AreasOfSupport;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class StoreProviderRequest extends FormRequest
             'organization_name' => ['required', 'string', 'max:255'],
             'credentials' => ['nullable', 'string', 'max:255'],
             'professional_title' => ['required', 'array', 'min:1'],
-            'professional_title.*' => ['string'],       // <-- CHANGED (was: required|string)
+            'professional_title.*' => ['string'],
             'professional_title_other' => [
                 'nullable',
                 'string',
@@ -35,22 +36,15 @@ class StoreProviderRequest extends FormRequest
             ],
 
             // Step 2 — About You & Account
-            // 'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            // 'password' => [
-            //     'required',
-            //     'string',
-            //     'min:8',
-            //     'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-            //     'regex:/^\S+$/u',
-            // ],
             'short_bio' => ['required', 'string', 'max:5000'],
             'years_experience' => ['nullable', 'string', 'min:0', 'max:50'],
 
             // Step 3 — Licensure & Verification
-            'license_number' => ['required', 'string', 'max:120'],
+            'license_number' => ['nullable', 'string', 'max:120'],
             'license_states' => ['required', 'array', 'min:1'],
             'license_states.*' => ['string'],
-            'license_status' => ['required', Rule::in(['active', 'provisional', 'intern'])],
+            // FIXED: frontend sends 'not_applicable' (underscore), not 'not applicable'
+            'license_status' => ['required', Rule::in(['active', 'provisional', 'not_applicable'])],
             'verification_document' => [
                 'nullable',
                 'file',
@@ -60,17 +54,10 @@ class StoreProviderRequest extends FormRequest
 
             // Step 4 — Areas of Support
             'areas_of_support' => ['required', 'array', 'min:1'],
-            'areas_of_support.*' => ['string'],
-            'areas_of_support_other' => [
-                'nullable',
-                'string',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    if (in_array('Other', $this->input('areas_of_support', [])) && empty($value)) {
-                        $fail('Please specify the "Other" area of support.');
-                    }
-                }
-            ],
+            // Each area must be a known value from the taxonomy.
+            'areas_of_support.*' => ['string', Rule::in(AreasOfSupport::flatten())],
+            // No "Other" option in the new taxonomy — keep the field harmless.
+            'areas_of_support_other' => ['nullable', 'string', 'max:255'],
 
             // Step 5 — Populations Served
             'populations_served' => ['required', 'array', 'min:1'],
@@ -127,11 +114,29 @@ class StoreProviderRequest extends FormRequest
         ];
     }
 
+    /**
+     * Selected areas tagged with their category, ready for storage.
+     * @return array<int, array{category: string, area: string}>
+     */
+    public function mappedAreasOfSupport(): array
+    {
+        return collect($this->input('areas_of_support', []))
+            ->unique()
+            ->map(fn(string $area) => [
+                'category' => AreasOfSupport::categoryFor($area),
+                'area' => $area,
+            ])
+            ->filter(fn(array $row) => $row['category'] !== null) // guard: skip unknowns
+            ->values()
+            ->all();
+    }
+
     public function messages(): array
     {
         return [
             'license_states.min' => 'Select at least one state or country of licensure.',
             'areas_of_support.min' => 'Select at least one area of support.',
+            'areas_of_support.*.in' => 'One of the selected support areas is not recognized.',
             'populations_served.min' => 'Select at least one population you serve.',
             'languages.min' => 'Select at least one language you speak.',
             'service_formats.min' => 'Select at least one service format.',
@@ -159,8 +164,8 @@ class StoreProviderRequest extends FormRequest
             'consent_public' => $this->boolean('consent_public'),
             'hide_address' => $this->boolean('hide_address'),
             'multiple_locations' => $this->boolean('multiple_locations') ? 'yes' : 'no',
-            'caribbean_identity' => $this->boolean('caribbean_identity') ? 'yes' : 'no',
             'caribbean_experience' => $this->boolean('caribbean_experience') ? 'yes' : 'no',
+            // NOTE: caribbean_identity is intentionally NOT coerced — see below.
         ]);
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Provider extends Model
 {
@@ -199,5 +200,10 @@ class Provider extends Model
     public function isApproved(): bool
     {
         return $this->status === 'approved';
+    }
+
+    public function supportAreas(): HasMany
+    {
+        return $this->hasMany(ProviderSupportArea::class);
     }
 }

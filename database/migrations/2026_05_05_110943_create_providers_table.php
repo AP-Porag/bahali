@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('provider_type');
             $table->string('organization_name');
             $table->string('credentials')->nullable();
-            $table->string('professional_title');
+            $table->json('professional_title');
             $table->string('professional_title_other')->nullable();
 
             // About
@@ -26,14 +26,12 @@ return new class extends Migration
             $table->string('years_experience')->nullable();
 
             // Licensure
-            $table->string('license_number');
+            $table->string('license_number')->nullable();
             $table->json('license_states');
             $table->string('license_status');
             $table->string('verification_document')->nullable();
 
-            // Support / populations
-            $table->json('areas_of_support');
-            $table->string('areas_of_support_other')->nullable();
+            // Populations (areas_of_support moved to provider_support_areas)
             $table->json('populations_served');
 
             // Culture & language
@@ -77,7 +75,6 @@ return new class extends Migration
 
             // Note
             $table->string('note')->nullable();
-
 
             // Consent
             $table->boolean('consent_accurate')->default(false);

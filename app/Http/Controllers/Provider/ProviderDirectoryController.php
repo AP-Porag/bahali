@@ -24,6 +24,7 @@ use Inertia\Response;
 use Illuminate\Validation\Rule;
 use App\Mail\ProviderStatusUpdateMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class ProviderDirectoryController extends Controller
 {
@@ -285,40 +286,84 @@ class ProviderDirectoryController extends Controller
         $user = $userId ? User::find($userId) : null;
 
         if (!$user || !$user->email_verified_at) {
-            return back()->withErrors(['email' => 'Please verify your email before submitting.']);
+            return back()->withErrors([
+                'email' => 'Please verify your email before submitting.'
+            ]);
         }
 
         $data = $request->validated();
 
         $data['user_id'] = $user->id;
+
         unset($data['email'], $data['password']);
 
-        // Handle file uploads without relying on getRealPath()
-        $data['verification_document'] = $this->storeUpload(
-            $request->file('verification_document'),
-            'providers/verification'
+        // Get support areas
+        $supportAreas = $request->mappedAreasOfSupport();
+
+        unset(
+            $data['areas_of_support'],
+            $data['areas_of_support_other']
         );
 
-        $data['profile_photo'] = $this->storeUpload(
-            $request->file('profile_photo'),
-            'providers/photos'
-        );
 
-        $additional = [];
-        foreach (Arr::wrap($request->file('additional_photos', [])) as $photo) {
-            if ($path = $this->storeUpload($photo, 'providers/photos')) {
-                $additional[] = $path;
+        // Upload verification document
+        if ($request->hasFile('verification_document')) {
+            $data['verification_document'] = $this->storeUpload(
+                $request->file('verification_document'),
+                'providers/verification'
+            );
+        }
+
+
+        // Upload profile photo
+        if ($request->hasFile('profile_photo')) {
+            $data['profile_photo'] = $this->storeUpload(
+                $request->file('profile_photo'),
+                'providers/photos'
+            );
+        }
+
+
+        // Upload additional photos
+        $additionalPhotos = [];
+
+        if ($request->hasFile('additional_photos')) {
+
+            foreach ($request->file('additional_photos') as $photo) {
+
+                $path = $this->storeUpload(
+                    $photo,
+                    'providers/photos'
+                );
+
+                if ($path) {
+                    $additionalPhotos[] = $path;
+                }
             }
         }
-        $data['additional_photos'] = $additional;
 
-        Provider::create($data);
+        $data['additional_photos'] = $additionalPhotos;
+
+
+        DB::transaction(function () use ($data, $supportAreas) {
+
+            $provider = Provider::create($data);
+
+            if (!empty($supportAreas)) {
+                $provider->supportAreas()->createMany($supportAreas);
+            }
+        });
+
 
         $request->session()->forget(self::SESSION_PENDING_USER);
 
+
         return redirect()
             ->route('providers.create')
-            ->with('success', 'Your application has been received.');
+            ->with(
+                'success',
+                'Your application has been received.'
+            );
     }
 
     /**
@@ -334,33 +379,24 @@ class ProviderDirectoryController extends Controller
      */
     private function storeUpload(?UploadedFile $file, string $dir): ?string
     {
-        if (!$file instanceof UploadedFile || !$file->isValid()) {
+        if (!$file || !$file->isValid()) {
             return null;
         }
 
-        $tempPath = $file->getPathname();
-        if (!$tempPath || !is_file($tempPath)) {
-            return null;
-        }
+        $publicPath = storage_path('app/public/' . $dir);
 
-        // Destination on the public disk
-        $publicPath = storage_path('app/public');
-        $destDir = $publicPath . DIRECTORY_SEPARATOR . $dir;
-
-        // Create destination directory if it doesn't exist
-        if (!is_dir($destDir)) {
-            @mkdir($destDir, 0755, true);
+        if (!is_dir($publicPath)) {
+            mkdir($publicPath, 0755, true);
         }
 
         $filename = $file->hashName();
-        $destPath = $destDir . DIRECTORY_SEPARATOR . $filename;
 
-        // move_uploaded_file() works directly with temp paths, no getRealPath() involved
-        if (move_uploaded_file($tempPath, $destPath)) {
-            return $dir . '/' . $filename;
-        }
+        $file->move(
+            $publicPath,
+            $filename
+        );
 
-        return null;
+        return $dir . '/' . $filename;
     }
 
 
@@ -547,10 +583,7 @@ class ProviderDirectoryController extends Controller
 
     public function show($id): Response
     {
-
-        $provider = Provider::with('user')->findOrFail($id);
-        // Eager-load user relationship
-        // $provider->load('user');
+        $provider = Provider::with(['user', 'supportAreas'])->findOrFail($id);
 
         return Inertia::render('admin/provider/pending/show-for-verification', [
             'provider' => [
@@ -577,9 +610,14 @@ class ProviderDirectoryController extends Controller
                     ? Storage::url($provider->verification_document)
                     : null,
 
-                // Areas
-                'areas_of_support' => $provider->areas_of_support,
-                'areas_of_support_other' => $provider->areas_of_support_other,
+                // Areas of support — grouped from the provider_support_areas pivot
+                'support_areas_grouped' => $provider->supportAreas
+                    ->groupBy('category')
+                    ->map(fn($rows, $category) => [
+                        'category' => $category,
+                        'areas' => $rows->pluck('area')->values(),
+                    ])
+                    ->values(),
 
                 // Populations
                 'populations_served' => $provider->populations_served,

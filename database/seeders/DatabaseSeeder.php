@@ -18,10 +18,7 @@ class DatabaseSeeder extends Seeder
             RegionTypeSeeder::class,
             CountrySeeder::class,
             RegionSeeder::class,
-            ProviderProfessionCategorySeeder::class,
-            ProviderProfessionSeeder::class,
             CredentialSeeder::class,
-            SupportAreaSeeder::class,
             LanguageSeeder::class,
             // DemoProviderSeeder::class, // Optional: for testing
         ]);

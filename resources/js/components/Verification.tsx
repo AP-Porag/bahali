@@ -25,15 +25,21 @@ import { VERIFICATION_STATUS } from '@/utils/constants';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
+interface SupportAreaGroup {
+    category: string;
+    areas: string[];
+}
+
 interface ProviderData {
     id: number;
     verification_status: string;
+    status?: string;
 
     // Basic
     provider_type?: string;
     organization_name?: string;
     credentials?: string;
-    professional_title?: string;
+    professional_title?: string[];
     professional_title_other?: string;
 
     // About
@@ -47,9 +53,8 @@ interface ProviderData {
     license_status?: string;
     verification_document?: string | null; // URL
 
-    // Areas
-    areas_of_support?: string[];
-    areas_of_support_other?: string;
+    // Areas — grouped from the provider_support_areas pivot
+    support_areas_grouped?: SupportAreaGroup[];
 
     // Populations
     populations_served?: string[];
@@ -116,7 +121,7 @@ const SAMPLE: ProviderData = {
     provider_type: 'individual',
     organization_name: 'Dr. Marsha Smith',
     credentials: 'PsyD, LMHC',
-    professional_title: 'Clinical Psychologist',
+    professional_title: ['Clinical Psychologist'],
     professional_title_other: '',
     email: 'marsha@example.com',
     short_bio:
@@ -126,8 +131,20 @@ const SAMPLE: ProviderData = {
     license_states: ['Jamaica', 'United States'],
     license_status: 'active',
     verification_document: '',
-    areas_of_support: ['Anxiety and Stress', 'Grief and Loss', 'Trauma and PTSD', 'Caregiver Stress'],
-    areas_of_support_other: '',
+    support_areas_grouped: [
+        {
+            category: 'Mental & Emotional Well-Being',
+            areas: ['Anxiety & Worry', 'Grief & Loss'],
+        },
+        {
+            category: 'Crisis, Trauma & Recovery',
+            areas: ['Support for Helping Professionals'],
+        },
+        {
+            category: 'Relationships & Family',
+            areas: ['Caregiver Support'],
+        },
+    ],
     populations_served: ['Adolescents (13–17)', 'Adults', 'Families', 'Couples'],
     caribbean_identity: 'yes',
     caribbean_experience: 'yes',
@@ -174,7 +191,7 @@ const PROVIDER_TYPE_LABELS: Record<string, string> = {
 const LICENSE_STATUS_LABELS: Record<string, string> = {
     active: 'Active',
     provisional: 'Provisional',
-    intern: 'Registered Intern / Trainee',
+    not_applicable: 'Not Applicable',
 };
 const YESNO_LABELS: Record<string, string> = { yes: 'Yes', no: 'No', prefer_not: 'Prefer not to say' };
 const lbl = (map: Record<string, string>, v?: string) => (v ? map[v] ?? v : undefined);
@@ -268,6 +285,29 @@ function Pills({ items }: { items?: string[] }) {
                 >
                     {it}
                 </span>
+            ))}
+        </div>
+    );
+}
+
+function GroupedPills({ groups }: { groups?: SupportAreaGroup[] }) {
+    if (!groups || groups.length === 0) return <Muted />;
+    return (
+        <div className="space-y-4">
+            {groups.map((g) => (
+                <div key={g.category}>
+                    <p className="mb-2 text-sm font-semibold text-[#16302F]">{g.category}</p>
+                    <div className="flex flex-wrap gap-2">
+                        {g.areas.map((area) => (
+                            <span
+                                key={area}
+                                className="rounded-full border border-[#0E7C7B]/20 bg-[#0E7C7B]/8 px-3 py-1 text-sm font-medium text-[#155E5D]"
+                            >
+                                {area}
+                            </span>
+                        ))}
+                    </div>
+                </div>
             ))}
         </div>
     );
@@ -391,7 +431,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
         case 2:
             return (
                 <DL>
-                    <Row label="License number">{p.license_number}</Row>
+                    <Row label="License number">{p.license_number || 'Not Applicable'}</Row>
                     <Row label="License status">{lbl(LICENSE_STATUS_LABELS, p.license_status)}</Row>
                     <Row label="State / Country of licensure"><Pills items={p.license_states} /></Row>
                     <Row label="Verification document"><FileView url={p.verification_document} label="Verification document" onView={onViewDoc} /></Row>
@@ -400,10 +440,9 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
         case 3:
             return (
                 <DL>
-                    <Row label="Areas of support"><Pills items={p.areas_of_support} /></Row>
-                    {p.areas_of_support?.includes('Other') && (
-                        <Row label="Other area(s)">{p.areas_of_support_other}</Row>
-                    )}
+                    <Row label="Areas of support">
+                        <GroupedPills groups={p.support_areas_grouped} />
+                    </Row>
                 </DL>
             );
         case 4:
@@ -497,7 +536,6 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
 
 export default function ProviderVerificationShow({ provider, indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider;
-    console.log(p.status);
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
     const [note, setNote] = useState('');
