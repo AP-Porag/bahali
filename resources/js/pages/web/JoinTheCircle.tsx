@@ -231,8 +231,8 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                     {/* Background photo */}
                     {/* <img src={IMAGES.hero} className="absolute inset-0 bg-cover bg-center bg-no-repeat" /> */}
                     {/* Left scrim for legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0c3a39] via-[#0c3a39]/50 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a2e2d]/70 via-transparent to-[#0a2e2d]/30" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#F2EAE1] via-[#F2EAE1]/4 to-transparent" />
+                    {/* <div className="absolute inset-0 bg-gradient-to-t from-[#F2EAE1]/70 via-transparent to-[#F2EAE1]/30" /> */}
 
 
 
@@ -241,21 +241,31 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
                     <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-16 sm:pt-24">
                         <Eyebrow className="text-[#E8B84B]">For Caribbean &amp; diaspora-serving providers</Eyebrow>
                         <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.07] text-white sm:text-5xl lg:text-[3.6rem]">
-                            Everything you need to be found by the families seeking you
+                            Help Caribbean<br /> Families Find the<br /> Care They Need
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85">
-                            Join the Bahali Provider Directory and get your profile in front of Caribbean
-                            individuals and families looking for culturally grounded care.
+                            Join a trusted network helping Caribbean<br />
+                            individuals and families find culturally <br />grounded emotional wellness support.<br />
+                            <span className='pt-3 block'>
+                                Grow your professional presence while <br />strengthening access to care across our <br />communities.
+                            </span>
                         </p>
                         <div className="mt-8">
-                            <CoralButton large>Join the circle</CoralButton>
+                            <CoralButton large>Create Your Provider Profile </CoralButton>
+                            <button
+                                type="button"
+                                className="rounded-2xl border border-[#356F79] bg-transparent px-7 py-3.5 text-base font-medium text-[#356F79] shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition hover:border-[#356F79] hover:shadow-[0_3px_12px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-1 active:translate-y-px ml-2"
+                            >
+                                Learn More
+                            </button>
                         </div>
+
                     </div>
 
                     {/* Corner caption like the reference */}
-                    <p className="absolute bottom-4 right-5 z-10 text-xs text-white/70">
+                    {/* <p className="absolute bottom-4 right-5 z-10 text-xs text-white/70">
                         Marsha’s focus: Community Healing
-                    </p>
+                    </p> */}
                 </section>
 
                 {/* ===================================================== */}
