@@ -450,8 +450,10 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
         case 5:
             return (
                 <DL>
-                    <Row label="Identifies as Caribbean / diaspora">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
-                    <Row label="Experience with Caribbean communities">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
+                    <Row label="Identifies as
+part of the Caribbean community?">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
+                    <Row label="experience working with
+Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
                     <Row label="Languages spoken"><Pills items={p.languages} /></Row>
                     {p.languages?.includes('Other') && <Row label="Other language(s)">{p.languages_other}</Row>}
                     <Row label="Cultural approach">
