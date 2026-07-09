@@ -187,6 +187,21 @@ export default function Footer() {
                         </a>
                     </div>
                 </div>
+                <div className="py-3 text-center text-sm">
+                    <span>
+                        Built with ❤️ by{" "}
+                        <a
+                            href="https://madbrain.dev"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Visit MadBrain website"
+                            className="hover:text-[#A9432E] transition-colors duration-200"
+                        >
+                            MadBrain
+                        </a>
+                        .
+                    </span>
+                </div>
             </footer>
 
 
@@ -414,7 +429,6 @@ export default function Footer() {
                     <div className="h-[70px] flex items-center justify-center font-open text-[14px]">
                         <a href="https://bahali.org/contact/" className="cursor-pointer">Contact Us</a>
                     </div>
-
                 </section>
 
             </footer >
