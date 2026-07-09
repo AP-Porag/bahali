@@ -197,7 +197,7 @@ const YESNO_LABELS: Record<string, string> = { yes: 'Yes', no: 'No', prefer_not:
 const lbl = (map: Record<string, string>, v?: string) => (v ? map[v] ?? v : undefined);
 
 const STEPS = [
-    { key: 'basic', title: 'Basic Information', subtitle: 'Who they are' },
+    { key: 'basic', title: 'Provider Information', subtitle: 'Who they are' },
     { key: 'about', title: 'About', subtitle: 'Their approach' },
     { key: 'license', title: 'Licensure & Verification', subtitle: 'Credentials' },
     { key: 'areas', title: 'Areas of Support', subtitle: 'What they help with' },
@@ -411,7 +411,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
             return (
                 <DL>
                     <Row label="Provider type">{lbl(PROVIDER_TYPE_LABELS, p.provider_type)}</Row>
-                    <Row label="Name of provider / organization">{p.organization_name}</Row>
+                    <Row label="Provider or Organization Name">{p.organization_name}</Row>
                     <Row label="Credentials / License">{p.credentials}</Row>
                     <Row label="Professional title">
                         <Pills items={p.professional_title} />
