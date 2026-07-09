@@ -238,7 +238,7 @@ export default function JoinTheCircle({ regionCount = 28, languageCount = 8 }: P
 
 
                     {/* Hero copy */}
-                    <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-10 sm:pt-10">
+                    <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-10 sm:pt-20">
                         <Eyebrow className="text-[#c49833] font-bold">For Caribbean &amp; diaspora-serving providers</Eyebrow>
                         <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.07] text-[#184340] sm:text-5xl lg:text-[3.6rem]">
                             Help Caribbean<br /> Families Find the<br /> Care They Need
