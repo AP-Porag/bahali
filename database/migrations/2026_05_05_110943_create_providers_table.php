@@ -53,6 +53,7 @@ return new class extends Migration
             $table->string('multiple_locations');
             $table->boolean('hide_address')->default(false);
             $table->json('telehealth_regions')->nullable();
+            $table->string('telehealth_regions_other')->nullable();
 
             // Payment
             $table->json('payment_methods');

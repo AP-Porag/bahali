@@ -58,6 +58,7 @@ class CountrySeeder extends Seeder
             ['name' => 'Spain', 'code' => 'ES', 'is_caribbean' => false, 'is_diaspora' => true, 'display_order' => 105],
             ['name' => 'Panama', 'code' => 'PA', 'is_caribbean' => false, 'is_diaspora' => true, 'display_order' => 106],
             ['name' => 'Costa Rica', 'code' => 'CR', 'is_caribbean' => false, 'is_diaspora' => true, 'display_order' => 107],
+            ['name' => 'Spanish Virgin Islands', 'code' => 'VI-ES', 'is_caribbean' => true, 'is_diaspora' => false, 'display_order' => 34],
         ];
 
         DB::table('countries')->insert($countries);

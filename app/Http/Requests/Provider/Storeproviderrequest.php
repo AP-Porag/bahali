@@ -94,7 +94,7 @@ class StoreProviderRequest extends FormRequest
 
             // Step 10 — Contact Information
             'phone' => ['required', 'string', 'max:40'],
-            'website' => ['nullable', 'url', 'max:255'],
+            'website' => ['nullable', 'string', 'max:255'],
             'social_links' => ['nullable', 'string', 'max:2000'],
 
             // Step 11 — Profile Media

@@ -53,6 +53,8 @@ class ProviderRequest extends FormRequest
             'support_areas' => 'nullable|array',
             'support_areas.*' => 'string|max:255',
 
+            'telehealth_regions_other' => ['nullable', 'string', 'max:500'],
+
             // Private Address
             'streetAddress1' => 'nullable|string|max:255',
             'streetAddress2' => 'nullable|string|max:255',

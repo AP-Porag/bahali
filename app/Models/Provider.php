@@ -57,6 +57,7 @@ class Provider extends Model
         'multiple_locations',
         'hide_address',
         'telehealth_regions',
+        'telehealth_regions_other',
 
         // Payment
         'payment_methods',

@@ -86,6 +86,7 @@ interface ProviderFormData {
     multiple_locations: YesNo | '';
     hide_address: boolean;
     telehealth_regions: string[];
+    telehealth_regions_other: string;
     // Step 9 — Insurance & Payment
     payment_methods: string[];
     insurance_plans: string;
@@ -496,7 +497,7 @@ const FIELD_STEP: Record<string, number> = {
     languages_other: 6, cultural_approach: 6,
     service_formats: 7, practice_settings: 7,
     address: 8, city: 8, state_province: 8, country: 8,
-    multiple_locations: 8, hide_address: 8, telehealth_regions: 8,
+    multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
     phone: 10, website: 10, social_links: 10,
     profile_photo: 11, additional_photos: 11,
@@ -510,7 +511,9 @@ const FIELD_STEP: Record<string, number> = {
 /* ------------------------------------------------------------------ */
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-const isUrl = (s: string) => /^(https?:\/\/)[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
+const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
+
+
 
 function validateStep(step: number, d: ProviderFormData): FormErrors {
     const e: FormErrors = {};
@@ -584,6 +587,8 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
             if (!d.country) e.country = 'Country is required.';
             if (!d.multiple_locations)
                 e.multiple_locations = 'Please let us know if you serve multiple locations.';
+            if (d.telehealth_regions.includes('Other') && !d.telehealth_regions_other.trim())
+                e.telehealth_regions_other = 'Please specify the other region(s) you serve.';
             break;
         case 9:
             if (d.payment_methods.length === 0)
@@ -594,7 +599,7 @@ function validateStep(step: number, d: ProviderFormData): FormErrors {
             else if (d.phone.replace(/[^\d]/g, '').length < 7)
                 e.phone = 'Please enter a valid phone number.';
             if (d.website && !isUrl(d.website))
-                e.website = 'Enter a full URL, e.g. https://example.com';
+                e.website = 'Enter a valid website';
             break;
         case 11:
             if (!d.profile_photo)
@@ -975,17 +980,24 @@ function AccordionCheckGroups({
     selected: string[];
     onToggle: (v: string) => void;
 }) {
-    const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
-        groups[0] ? { [groups[0].category]: true } : {}
+    // const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
+    //     groups[0] ? { [groups[0].category]: true } : {}
+    // );
+    const [openCat, setOpenCat] = useState<string>(
+        groups[0]?.category ?? ''
     );
 
-    const toggleCat = (cat: string) =>
-        setOpenCats((prev) => ({ ...prev, [cat]: !prev[cat] }));
+    // const toggleCat = (cat: string) =>
+    //     setOpenCats((prev) => ({ ...prev, [cat]: !prev[cat] }));
+    const toggleCat = (cat: string) => {
+        setOpenCat((prev) => (prev === cat ? '' : cat));
+    };
 
     return (
         <div className="space-y-2.5">
             {groups.map((g) => {
-                const isOpen = !!openCats[g.category];
+                // const isOpen = !!openCats[g.category];
+                const isOpen = openCat === g.category;
                 const count = g.items.filter((i) => selected.includes(i)).length;
                 return (
                     <div
@@ -1104,6 +1116,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         multiple_locations: '',
         hide_address: false,
         telehealth_regions: [],
+        telehealth_regions_other: '',
         payment_methods: [],
         insurance_plans: '',
         phone: '',
@@ -1718,7 +1731,7 @@ function StepBody({
                     </div>
                     <p className="text-[#3A4B49]">
                         We sent a 6-digit verification code to <strong>{d.email}</strong>.
-                        Enter it below to continue.
+                        Enter it below to continue. If you don't see it in your inbox, please check your spam or junk folder.
                     </p>
                     <div className="mx-auto max-w-xs">
                         <input
@@ -2072,6 +2085,21 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
+                    {d.telehealth_regions.includes('Other') && (
+                        <FieldShell
+                            label="Please specify other telehealth region(s)"
+                            required
+                            hint="Separate multiple regions with commas."
+                            error={fieldError('telehealth_regions_other')}
+                        >
+                            <TextInput
+                                value={d.telehealth_regions_other}
+                                onChange={(v) => set('telehealth_regions_other', v)}
+                                error={!!fieldError('telehealth_regions_other')}
+                                placeholder="e.g. Panama, Costa Rica, Sint Maarten"
+                            />
+                        </FieldShell>
+                    )}
                 </>
             );
         /* ---------------- Step 10: Insurance & Payment ---------------- */
@@ -2129,7 +2157,7 @@ function StepBody({
                             value={d.website}
                             onChange={(v) => set('website', v)}
                             error={!!fieldError('website')}
-                            placeholder="https://yourpractice.com"
+                            placeholder="yourpractice.com"
                         />
                     </FieldShell>
                     <FieldShell
