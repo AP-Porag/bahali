@@ -1,0 +1,133 @@
+<?php
+// database/seeders/UserSeeder.php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class UserSeeder extends Seeder
+{
+    /**
+     * Real users exported from the live bahali.org database.
+     * Passwords are the original bcrypt hashes — providers can log in
+     * with their existing credentials.
+     */
+    public function run(): void
+    {
+        $users = [
+            [
+                'id' => 1,
+                'name' => 'Admin Main',
+                'email' => 'admin@app.com',
+                'email_verified_at' => '2026-07-10 12:41:55',
+                'password' => '$2y$12$KAHHPqyQ9VNcmNQxPGVINe0RmGT8OAYM5DQtx6WFC6FEu4vp2Prsm',
+                'role' => 'admin',
+                'created_at' => '2026-07-10 12:41:55',
+                'updated_at' => '2026-07-10 12:41:55',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Dr. Smith',
+                'email' => 'captain.marsha@gmail.com',
+                'email_verified_at' => '2026-07-13 02:34:46',
+                'password' => '$2y$12$ETfRYHzcZLbAPN3cTJviR.3b1EXFOtj1hIHbxfVTrYO5WSGPcJb5i',
+                'role' => 'provider',
+                'created_at' => '2026-07-13 02:34:18',
+                'updated_at' => '2026-07-13 02:34:46',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Dr. Tyana Ruiz',
+                'email' => 'tyanaruiz@gmail.com',
+                'email_verified_at' => '2026-07-14 12:40:28',
+                'password' => '$2y$12$.Ul5mZkjXQwd6E5SmTl.nOPX.NXFBO.ue.qTnsQurLjrY4io8aiAi',
+                'role' => 'provider',
+                'created_at' => '2026-07-14 12:39:19',
+                'updated_at' => '2026-07-14 12:40:28',
+            ],
+            [
+                'id' => 4,
+                'name' => 'Trissina Smith',
+                'email' => 'triss0021@gmail.com',
+                'email_verified_at' => '2026-07-14 18:52:56',
+                'password' => '$2y$12$GyXjhICm/QHkMnDOnQagq.JIxLx9E/1KixIsZWXUceuOCSTW4JNu2',
+                'role' => 'provider',
+                'created_at' => '2026-07-14 18:51:23',
+                'updated_at' => '2026-07-14 18:52:56',
+            ],
+            [
+                'id' => 5,
+                'name' => 'Dr. Hannah Long',
+                'email' => 'hannahalisalong@gmail.com',
+                'email_verified_at' => '2026-07-15 01:09:09',
+                'password' => '$2y$12$4ZXixFlKWG.nwiFqRe41f.K9B3dhXtH.SLQ3RmFcAd/Cn5P6JttJe',
+                'role' => 'provider',
+                'created_at' => '2026-07-15 01:06:24',
+                'updated_at' => '2026-07-15 01:09:09',
+            ],
+            [
+                'id' => 6,
+                'name' => 'Kelsey Thomas',
+                'email' => 'knthomas105@gmail.com',
+                'email_verified_at' => '2026-07-16 00:24:37',
+                'password' => '$2y$12$PG7aA5U.iJjkFQ9PqrAiGOEVjkCPmY6s/8DbFVc72BWPKZWussVT.',
+                'role' => 'provider',
+                'created_at' => '2026-07-16 00:23:44',
+                'updated_at' => '2026-07-16 00:24:37',
+            ],
+            [
+                'id' => 7,
+                'name' => 'Harvest Tabernacle',
+                'email' => 'msmith@bahali.org',
+                'email_verified_at' => '2026-07-19 14:34:06',
+                'password' => '$2y$12$F7keNe1uIjiLJSvCS151LeXHtrA8sPquyRmhCqDBluFMmxiUssjoy',
+                'role' => 'provider',
+                'created_at' => '2026-07-19 14:33:39',
+                'updated_at' => '2026-07-19 14:34:06',
+            ],
+            [
+                'id' => 8,
+                'name' => 'EDEMI',
+                'email' => 'contact@bahali.org',
+                'email_verified_at' => '2026-07-19 14:47:23',
+                'password' => '$2y$12$VdChjNgcqq1lM.RA8hjHY.wTgm3XW7bkzSiIhYuIkvw/tzh9bc.um',
+                'role' => 'provider',
+                'created_at' => '2026-07-19 14:47:00',
+                'updated_at' => '2026-07-19 14:47:23',
+            ],
+            [
+                'id' => 9,
+                'name' => 'Youth For Kids',
+                'email' => 'restore@bahali.org',
+                'email_verified_at' => '2026-07-19 15:14:51',
+                'password' => '$2y$12$VtcqhG8eoOE8m9uf/Kgvmu0xWl3jrdu6j2gNN.46nu/N3GUB2ITPq',
+                'role' => 'provider',
+                'created_at' => '2026-07-19 15:14:27',
+                'updated_at' => '2026-07-19 15:14:51',
+            ],
+            [
+                'id' => 10,
+                'name' => 'We Stand With',
+                'email' => 'donate@bahali.org',
+                'email_verified_at' => '2026-07-20 00:03:10',
+                'password' => '$2y$12$p.BMWg.lHfTsFGro6FKItOk1r9qstuG8ZX8ahdjQV0uYXksIClvre',
+                'role' => 'provider',
+                'created_at' => '2026-07-20 00:02:43',
+                'updated_at' => '2026-07-20 00:03:10',
+            ],
+            [
+                'id' => 11,
+                'name' => 'YES Community Center',
+                'email' => 'info@bahali.org',
+                'email_verified_at' => '2026-07-20 00:14:19',
+                'password' => '$2y$12$mwvwAwXwYgfsoUArcSs1AOXncUwDK3/qmR.A7YrLuXfy6kGN5qW.W',
+                'role' => 'provider',
+                'created_at' => '2026-07-20 00:13:52',
+                'updated_at' => '2026-07-20 00:14:19',
+            ],
+        ];
+
+        DB::table('users')->insert($users);
+    }
+}
