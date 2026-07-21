@@ -78,6 +78,7 @@ interface ProviderData {
     multiple_locations?: string;
     hide_address?: boolean;
     telehealth_regions?: string[];
+    telehealth_regions_other?: string;
 
     // Payment
     payment_methods?: string[];
@@ -479,7 +480,20 @@ Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}
                     <Row label="State / Province / Region">{p.state_province}</Row>
                     <Row label="Country">{p.country}</Row>
                     <Row label="Serves multiple locations">{lbl(YESNO_LABELS, p.multiple_locations)}</Row>
-                    <Row label="Telehealth regions served"><Pills items={p.telehealth_regions} /></Row>
+                    <Row label="Telehealth regions served">
+                        <Pills
+                            items={[
+                                ...(p.telehealth_regions ?? []).filter((r) => r !== 'Other'),
+                                ...(p.telehealth_regions_other
+                                    ? p.telehealth_regions_other
+                                        .split(',')
+                                        .map((r) => r.trim())
+                                        .filter(Boolean)
+                                        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
+                                    : []),
+                            ]}
+                        />
+                    </Row>
                 </DL>
             );
         case 8:

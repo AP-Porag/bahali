@@ -53,7 +53,7 @@ return new class extends Migration
             $table->string('multiple_locations');
             $table->boolean('hide_address')->default(false);
             $table->json('telehealth_regions')->nullable();
-            $table->string('telehealth_regions_other')->nullable();
+            $table->text('telehealth_regions_other')->nullable();
 
             // Payment
             $table->json('payment_methods');
@@ -75,7 +75,7 @@ return new class extends Migration
             $table->string('status')->default(GlobalConstant::VERIFICATION_STATUS_PENDING);
 
             // Note
-            $table->string('note')->nullable();
+            $table->text('note')->nullable();
 
             // Consent
             $table->boolean('consent_accurate')->default(false);

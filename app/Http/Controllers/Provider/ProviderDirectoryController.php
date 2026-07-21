@@ -49,14 +49,14 @@ class ProviderDirectoryController extends Controller
     {
         // Fetch countries with regions, organized for dependent dropdown
         $countries = Country::with('regions.regionType')
-            ->orderBy('display_order')
+            ->orderBy('name')
             ->get()
             ->map(fn($country) => [
                 'id' => $country->id,
                 'name' => $country->name,
                 'code' => $country->code,
                 'regions' => $country->regions
-                    ->sortBy('display_order')
+                    ->sortBy('name')
                     ->map(fn($region) => [
                         'id' => $region->id,
                         'name' => $region->name,
@@ -641,6 +641,7 @@ class ProviderDirectoryController extends Controller
                 'multiple_locations' => $provider->multiple_locations,
                 'hide_address' => (bool) $provider->hide_address,
                 'telehealth_regions' => $provider->telehealth_regions,
+                'telehealth_regions_other' => $provider->telehealth_regions_other,
 
                 // Payment
                 'payment_methods' => $provider->payment_methods,
