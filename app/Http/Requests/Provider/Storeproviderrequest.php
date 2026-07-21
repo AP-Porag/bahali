@@ -86,6 +86,7 @@ class StoreProviderRequest extends FormRequest
             'hide_address' => ['boolean'],
             'telehealth_regions' => ['nullable', 'array'],
             'telehealth_regions.*' => ['string'],
+            'telehealth_regions_other' => 'nullable|string|max:500',
 
             // Step 9 — Insurance & Payment
             'payment_methods' => ['required', 'array', 'min:1'],
@@ -94,7 +95,7 @@ class StoreProviderRequest extends FormRequest
 
             // Step 10 — Contact Information
             'phone' => ['required', 'string', 'max:40'],
-            'website' => ['nullable', 'url', 'max:255'],
+            'website' => ['nullable', 'string', 'max:255'],
             'social_links' => ['nullable', 'string', 'max:2000'],
 
             // Step 11 — Profile Media

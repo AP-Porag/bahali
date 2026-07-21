@@ -59,6 +59,7 @@ class RegionSeeder extends Seeder
         $spainId = 39;
         $panamaId = 40;
         $costaRicaId = 41;
+        $spanishViId = 42;
 
         // Region Types ID Reference
         $districtVillageId = 1;           // District / Village
@@ -154,7 +155,7 @@ class RegionSeeder extends Seeder
         }
 
         // British Virgin Islands - Island / District (ID: 4)
-        $bviRegions = ['Tortola', 'Virgin Gorda', 'Anegada', 'Jost Van Dyke', 'Road Town'];
+        $bviRegions = ['Tortola', 'Virgin Gorda', 'Anegada', 'Jost Van Dyke'];
         foreach ($bviRegions as $index => $region) {
             $regions[] = $this->makeRegion($bviId, $islandDistrictId, $region, $index + 1);
         }
@@ -298,9 +299,15 @@ class RegionSeeder extends Seeder
         }
 
         // United States Virgin Islands - Island / District (ID: 4)
-        $usviRegions = ['Saint Croix', 'Saint Thomas', 'Saint John', 'Water Island'];
+        $usviRegions = ['Saint Croix', 'Saint Thomas', 'Saint John'];
         foreach ($usviRegions as $index => $region) {
             $regions[] = $this->makeRegion($usviId, $islandDistrictId, $region, $index + 1);
+        }
+
+        // Spanish Virgin Islands - Island / District (ID: 4)
+        $spanishViRegions = ['Vieques', 'Culebra'];
+        foreach ($spanishViRegions as $index => $region) {
+            $regions[] = $this->makeRegion($spanishViId, $islandDistrictId, $region, $index + 1);
         }
 
         // ==================== DIASPORA REGIONS ====================
