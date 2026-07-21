@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,22 +11,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
         $this->call([
             RegionTypeSeeder::class,
             CountrySeeder::class,
             RegionSeeder::class,
             CredentialSeeder::class,
             LanguageSeeder::class,
-            // DemoProviderSeeder::class, // Optional: for testing
-        ]);
 
-        // 4. Admin user (independent, can be last)
-        User::factory()->create([
-            'name' => 'Admin Main',
-            'email' => 'admin@app.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
+            // Real exported data (bahali.org)
+            UserSeeder::class,      // aage — admin + provider users (id soho)
+            ProviderSeeder::class,  // pore — user_id-e link kore
         ]);
     }
 }
