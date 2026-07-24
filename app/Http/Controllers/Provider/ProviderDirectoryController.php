@@ -280,91 +280,142 @@ class ProviderDirectoryController extends Controller
      * (and OTP-verified) in registerAccount()/verifyOtp(). We just look it
      * up via the session and attach it to the new Provider record.
      */
+
     public function store(StoreProviderRequest $request)
     {
         $userId = $request->session()->get(self::SESSION_PENDING_USER);
         $user = $userId ? User::find($userId) : null;
 
         if (!$user || !$user->email_verified_at) {
-            return back()->withErrors([
-                'email' => 'Please verify your email before submitting.'
-            ]);
+            return back()->withErrors(['email' => 'Please verify your email before submitting.']);
         }
 
         $data = $request->validated();
-
         $data['user_id'] = $user->id;
 
-        unset($data['email'], $data['password']);
+        // JSON fields – array as is
+        $data['license_states'] = $request->input('license_states', []);
+        $data['treatment_approaches'] = $request->input('treatment_approaches', []);
+        $data['specialized_training'] = $request->input('specialized_training', []);
+        $data['certifications'] = $request->input('certifications', []);
+        $data['accessibility'] = $request->input('accessibility', []);
+        // telehealth_regions also comes as array
 
-        // Get support areas
+        // Areas of support – mapped to category|area format
         $supportAreas = $request->mappedAreasOfSupport();
+        unset($data['areas_of_support'], $data['areas_of_support_other']);
 
-        unset(
-            $data['areas_of_support'],
-            $data['areas_of_support_other']
-        );
-
-
-        // Upload verification document
+        // File uploads...
         if ($request->hasFile('verification_document')) {
-            $data['verification_document'] = $this->storeUpload(
-                $request->file('verification_document'),
-                'providers/verification'
-            );
+            $data['verification_document'] = $this->storeUpload($request->file('verification_document'), 'providers/verification');
         }
-
-
-        // Upload profile photo
         if ($request->hasFile('profile_photo')) {
-            $data['profile_photo'] = $this->storeUpload(
-                $request->file('profile_photo'),
-                'providers/photos'
-            );
+            $data['profile_photo'] = $this->storeUpload($request->file('profile_photo'), 'providers/photos');
         }
-
-
-        // Upload additional photos
         $additionalPhotos = [];
-
         if ($request->hasFile('additional_photos')) {
-
             foreach ($request->file('additional_photos') as $photo) {
-
-                $path = $this->storeUpload(
-                    $photo,
-                    'providers/photos'
-                );
-
-                if ($path) {
-                    $additionalPhotos[] = $path;
-                }
+                $path = $this->storeUpload($photo, 'providers/photos');
+                if ($path) $additionalPhotos[] = $path;
             }
         }
-
         $data['additional_photos'] = $additionalPhotos;
 
-
         DB::transaction(function () use ($data, $supportAreas) {
-
             $provider = Provider::create($data);
-
             if (!empty($supportAreas)) {
                 $provider->supportAreas()->createMany($supportAreas);
             }
         });
 
-
         $request->session()->forget(self::SESSION_PENDING_USER);
-
-
-        return redirect()
-            ->route('providers.create')
-            ->with(
-                'success',
-                'Your application has been received.'
-            );
+        return redirect()->route('providers.create')->with('success', 'Your application has been received.');
     }
+    // public function store(StoreProviderRequest $request)
+    // {
+    //     $userId = $request->session()->get(self::SESSION_PENDING_USER);
+    //     $user = $userId ? User::find($userId) : null;
+
+    //     if (!$user || !$user->email_verified_at) {
+    //         return back()->withErrors([
+    //             'email' => 'Please verify your email before submitting.'
+    //         ]);
+    //     }
+
+    //     $data = $request->validated();
+
+    //     $data['user_id'] = $user->id;
+
+    //     unset($data['email'], $data['password']);
+
+    //     // Get support areas
+    //     $supportAreas = $request->mappedAreasOfSupport();
+
+    //     unset(
+    //         $data['areas_of_support'],
+    //         $data['areas_of_support_other']
+    //     );
+
+
+    //     // Upload verification document
+    //     if ($request->hasFile('verification_document')) {
+    //         $data['verification_document'] = $this->storeUpload(
+    //             $request->file('verification_document'),
+    //             'providers/verification'
+    //         );
+    //     }
+
+
+    //     // Upload profile photo
+    //     if ($request->hasFile('profile_photo')) {
+    //         $data['profile_photo'] = $this->storeUpload(
+    //             $request->file('profile_photo'),
+    //             'providers/photos'
+    //         );
+    //     }
+
+
+    //     // Upload additional photos
+    //     $additionalPhotos = [];
+
+    //     if ($request->hasFile('additional_photos')) {
+
+    //         foreach ($request->file('additional_photos') as $photo) {
+
+    //             $path = $this->storeUpload(
+    //                 $photo,
+    //                 'providers/photos'
+    //             );
+
+    //             if ($path) {
+    //                 $additionalPhotos[] = $path;
+    //             }
+    //         }
+    //     }
+
+    //     $data['additional_photos'] = $additionalPhotos;
+
+
+    //     DB::transaction(function () use ($data, $supportAreas) {
+
+    //         $provider = Provider::create($data);
+
+    //         if (!empty($supportAreas)) {
+    //             $provider->supportAreas()->createMany($supportAreas);
+    //         }
+    //     });
+
+
+    //     $request->session()->forget(self::SESSION_PENDING_USER);
+
+
+    //     return redirect()
+    //         ->route('providers.create')
+    //         ->with(
+    //             'success',
+    //             'Your application has been received.'
+    //         );
+    // }
 
     /**
      * Store an uploaded file without any path resolution issues.

@@ -69,7 +69,11 @@ return new class extends Migration
             $table->json('additional_photos')->nullable();
 
             // Accessibility
-            $table->json('accessibility');
+            $table->json('accessibility')->nullable();
+            // Treatment Approches
+            $table->json('treatment_approaches')->nullable();
+            $table->json('specialized_training')->nullable();
+            $table->json('certifications')->nullable();
 
             // Status
             $table->string('status')->default(GlobalConstant::VERIFICATION_STATUS_PENDING);

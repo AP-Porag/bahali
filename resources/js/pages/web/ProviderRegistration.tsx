@@ -1,40 +1,11 @@
-
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-/**
- * Bahali Provider Directory — Registration
- * ------------------------------------------------------------------
- * A 14-step, validated provider intake form for https://bahali.org/
- *
- * Stack: Laravel 12 + Inertia.js + React + TypeScript + Tailwind CSS.
- *
- * Behaviour:
- *  - Each section is its own step.
- *  - Client-side validation runs when the user clicks "Continue".
- *  - The form will NOT advance to the next step until the current
- *    step passes validation.
- *  - After the "About You" step, an account is created server-side
- *    and a 6-digit OTP is emailed to the provider. The form will not
- *    advance past the "Verify Email" step until the OTP is confirmed.
- *  - Final submit posts multipart/form-data (files included) to the
- *    backend route, which should validate again server-side.
- *
- * Backend routes expected:
- *   POST /provider/directory/register-account (name: providers.register-account)
- *   POST /provider/directory/verify-otp        (name: providers.verify-otp)
- *   POST /provider/directory/resend-otp        (name: providers.resend-otp)
- *   POST /provider/directory/store              (name: providers.store)
- * ------------------------------------------------------------------
- */
-
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-const SIGNUP_ROUTE = '/provider/directory/create';
-
 type ProviderType =
     | 'individual'
     | 'organization'
@@ -62,6 +33,7 @@ interface ProviderFormData {
     license_number: string;
     license_not_applicable: boolean;
     license_states: string[];
+    license_states_other: string;
     license_status: LicenseStatus | '';
     verification_document: File | null;
     // Step 4 — Areas of Support
@@ -69,16 +41,22 @@ interface ProviderFormData {
     areas_of_support_other: string;
     // Step 5 — Populations Served
     populations_served: string[];
-    // Step 6 — Cultural & Language Responsiveness
+    // Step 6 — Professional Expertise
+    treatment_approaches: string[];
+    treatment_approaches_other: string;
+    specialized_training: string[];
+    specialized_training_other: string;
+    certifications: string[];
+    // Step 7 — Cultural & Language Responsiveness
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
     languages: string[];
     languages_other: string;
     cultural_approach: string;
-    // Step 7 — Service Information
+    // Step 8 — Service Information
     service_formats: string[];
     practice_settings: string[];
-    // Step 8 — Location
+    // Step 9 — Location
     address: string;
     city: string;
     state_province: string;
@@ -86,20 +64,21 @@ interface ProviderFormData {
     multiple_locations: YesNo | '';
     hide_address: boolean;
     telehealth_regions: string[];
-    telehealth_regions_other: string;
-    // Step 9 — Insurance & Payment
+    telehealth_regions_other: string; // NEW for typing "Other"
+    // Step 10 — Insurance & Payment
     payment_methods: string[];
     insurance_plans: string;
-    // Step 10 — Contact Information
+    // Step 11 — Contact Information
     phone: string;
     website: string;
     social_links: string;
-    // Step 11 — Profile Media
+    // Step 12 — Profile Media
     profile_photo: File | null;
     additional_photos: File[];
-    // Step 12 — Accessibility
+    // Step 13 — Accessibility
     accessibility: string[];
-    // Step 13 — Consent & Agreement
+    accessibility_other: string;
+    // Step 14 — Consent & Agreement
     consent_accurate: boolean;
     consent_notify: boolean;
     consent_no_endorsement: boolean;
@@ -157,9 +136,6 @@ const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
 
 /**
  * Areas of Support — grouped taxonomy.
- * To add a new support area later, just append it to the relevant
- * category's `items` array (or add a whole new category object).
- * Nothing else in the form needs to change.
  */
 const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
     {
@@ -244,16 +220,18 @@ const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
         ],
     },
     {
-        category: 'Crisis, Trauma & Recovery',
+        category: 'Trauma, Crisis & Recovery',
         items: [
-            'Crisis Support',
-            'Disaster Recovery',
-            'Psychological First Aid',
+            'Trauma',
+            'PTSD',
+            'Childhood Trauma',
+            'Sexual Assault & Sexual Trauma',
+            'Domestic & Intimate Partner Violence',
+            'Military & Service-Related Trauma',
+            'Disaster & Displacement',
             'Community Violence',
-            'Suicide Prevention',
-            'Self-Harm Recovery',
-            'Support for First Responders',
-            'Support for Helping Professionals',
+            'Self-Harm',
+            'Suicidal Thoughts & Behaviors',
         ],
     },
     {
@@ -294,6 +272,7 @@ const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
         items: [
             'Caribbean & Diaspora Wellness',
             'Faith & Spiritual Support',
+            'Psychological First Aid',
             'Church & Ministry Support',
             'Immigration & Adjusting to a New Culture',
             'Cultural Identity & Belonging',
@@ -318,7 +297,50 @@ const POPULATIONS_SERVED = [
     'Faith Leaders & Clergy',
     'Helping Professionals',
     'Educators',
+    'First Responders',
+    'Healthcare Professionals',
     'Community Leaders',
+    'Support for First Responders',
+    'Support for Helping Professionals',
+];
+
+// Treatment Approaches
+const TREATMENT_APPROACHES = [
+    'Acceptance & Commitment Therapy (ACT)',
+    'Cognitive Behavioral Therapy (CBT)',
+    'Cognitive Processing Therapy (CPT)',
+    'Dialectical Behavior Therapy (DBT)',
+    'Eye Movement Desensitization & Reprocessing (EMDR)',
+    'Exposure & Response Prevention (ERP)',
+    'Family Systems Therapy',
+    'Gottman Method',
+    'Interpersonal Psychotherapy (IPT)',
+    'Mindfulness-Based Approaches',
+    'Motivational Interviewing (MI)',
+    'Person-Centered Therapy',
+    'Prolonged Exposure (PE)',
+    'Psychodynamic Therapy',
+    'Solution-Focused Brief Therapy (SFBT)',
+    'Trauma-Focused Cognitive Behavioral Therapy (TF-CBT)',
+    'Integrative / Eclectic Therapy',
+    'Other (specify)',
+];
+
+// Specialized Training
+const SPECIALIZED_TRAINING_OPTIONS = [
+    'Psychological First Aid (PFA)',
+    'Trauma & PTSD',
+    'Suicide Prevention & Intervention',
+    'Grief & Bereavement',
+    'Perinatal Mental Health',
+    'Substance Use & Recovery',
+    'Domestic & Intimate Partner Violence',
+    'Military & Veteran Mental Health',
+    'Dementia & Cognitive Care',
+    'Autism & Neurodiversity',
+    'ADHD',
+    'Couples & Family Therapy',
+    'Other Specialized Training',
 ];
 
 const LANGUAGES = [
@@ -368,6 +390,7 @@ const PAYMENT_METHODS = [
     'No-Cost Services',
 ];
 
+// Accessibility options — "Other" handled separately
 const ACCESSIBILITY_OPTIONS = [
     'Wheelchair Accessible',
     'ADA Accessible',
@@ -376,9 +399,9 @@ const ACCESSIBILITY_OPTIONS = [
     'Sensory-Friendly Environment',
     'Home Visits Available',
     'Public Transportation Accessible',
-    'Other',
 ];
 
+// Regions — "Other" handled separately for both license states and telehealth
 const REGIONS = [
     'Anguilla',
     'Antigua and Barbuda',
@@ -404,60 +427,15 @@ const REGIONS = [
     'Saint Kitts and Nevis',
     'Saint Lucia',
     'Saint Vincent and the Grenadines',
+    'Spanish Virgin Islands',
     'Suriname',
     'Trinidad and Tobago',
     'Turks and Caicos Islands',
     'United States',
+    'United States Virgin Islands',
     'United Kingdom',
     'Canada',
-    'Other',
-];
-
-const COUNTRIES = [
-    'United States',
-    'Canada',
-    'United Kingdom',
-    'Anguilla',
-    'Antigua and Barbuda',
-    'Aruba',
-    'Bahamas',
-    'Barbados',
-    'Belize',
-    'Bermuda',
-    'British Virgin Islands',
-    'Cayman Islands',
-    'Cuba',
-    'Curaçao',
-    'Dominica',
-    'Dominican Republic',
-    'Grenada',
-    'Guadeloupe',
-    'Guyana',
-    'Haiti',
-    'Jamaica',
-    'Martinique',
-    'Montserrat',
-    'Puerto Rico',
-    'Saint Kitts and Nevis',
-    'Saint Lucia',
-    'Saint Vincent and the Grenadines',
-    'Suriname',
-    'Trinidad and Tobago',
-    'Turks and Caicos Islands',
-    'Other',
-];
-
-const US_STATES = [
-    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
-    'Connecticut', 'Delaware', 'District of Columbia', 'Florida', 'Georgia',
-    'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
-    'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
-    'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
-    'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota',
-    'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
-    'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
-    'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
-    'Not Applicable / Outside the U.S.',
+    // 'Other' removed – handled separately
 ];
 
 /* ------------------------------------------------------------------ */
@@ -470,6 +448,7 @@ const STEPS = [
     { key: 'license', title: 'Licensure & Verification', subtitle: 'Credentials' },
     { key: 'areas', title: 'Areas of Support', subtitle: 'What you help with' },
     { key: 'populations', title: 'Populations Served', subtitle: 'Who you serve' },
+    { key: 'expertise', title: 'Professional Expertise', subtitle: 'Approaches & training' },
     { key: 'culture', title: 'Cultural & Language', subtitle: 'Responsiveness' },
     { key: 'service', title: 'Service Information', subtitle: 'How you work' },
     { key: 'location', title: 'Location', subtitle: 'Where you are' },
@@ -482,28 +461,31 @@ const STEPS = [
 
 const TOTAL_STEPS = STEPS.length;
 
-// Maps a field to the step index it belongs to — used to jump to the
-// first step containing a server-side validation error after submit.
+// Maps a field to the step index it belongs to
 const FIELD_STEP: Record<string, number> = {
     provider_type: 0, organization_name: 0, credentials: 0,
     professional_title: 0, professional_title_other: 0,
     short_bio: 1, years_experience: 1,
     email: 1, password: 1,
     license_number: 3, license_not_applicable: 3,
-    license_states: 3, license_status: 3, verification_document: 3,
+    license_states: 3, license_states_other: 3,
+    license_status: 3, verification_document: 3,
     areas_of_support: 4, areas_of_support_other: 4,
     populations_served: 5,
-    caribbean_identity: 6, caribbean_experience: 6, languages: 6,
-    languages_other: 6, cultural_approach: 6,
-    service_formats: 7, practice_settings: 7,
-    address: 8, city: 8, state_province: 8, country: 8,
-    multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
-    payment_methods: 9, insurance_plans: 9,
-    phone: 10, website: 10, social_links: 10,
-    profile_photo: 11, additional_photos: 11,
-    accessibility: 12,
-    consent_accurate: 13, consent_notify: 13,
-    consent_no_endorsement: 13, consent_public: 13,
+    treatment_approaches: 6, treatment_approaches_other: 6,
+    specialized_training: 6, specialized_training_other: 6,
+    certifications: 6,
+    caribbean_identity: 7, caribbean_experience: 7, languages: 7,
+    languages_other: 7, cultural_approach: 7,
+    service_formats: 8, practice_settings: 8,
+    address: 9, city: 9, state_province: 9, country: 9,
+    multiple_locations: 9, hide_address: 9, telehealth_regions: 9, telehealth_regions_other: 9,
+    payment_methods: 10, insurance_plans: 10,
+    phone: 11, website: 11, social_links: 11,
+    profile_photo: 12, additional_photos: 12,
+    accessibility: 13, accessibility_other: 13,
+    consent_accurate: 14, consent_notify: 14,
+    consent_no_endorsement: 14, consent_public: 14,
 };
 
 /* ------------------------------------------------------------------ */
@@ -512,116 +494,6 @@ const FIELD_STEP: Record<string, number> = {
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
-
-
-
-function validateStep(step: number, d: ProviderFormData): FormErrors {
-    const e: FormErrors = {};
-    switch (step) {
-        case 0:
-            if (!d.provider_type) e.provider_type = 'Please select a provider type.';
-            if (!d.organization_name.trim())
-                e.organization_name = 'Please enter your name or organization.';
-            if (d.professional_title.length === 0)
-                e.professional_title = 'Please select at least one professional title.';
-            if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
-                e.professional_title_other = 'Please specify your title.';
-            break;
-        case 1:
-            if (!d.email.trim()) e.email = 'Email address is required.';
-            else if (!isEmail(d.email)) e.email = 'Please enter a valid email address.';
-            if (!d.password) e.password = 'Please create a password.';
-            else if (/\s/.test(d.password))
-                e.password = 'Password cannot contain spaces.';
-            else if (d.password.length < 8)
-                e.password = 'Password must be at least 8 characters.';
-            else if (!/[a-z]/.test(d.password) || !/[A-Z]/.test(d.password))
-                e.password = 'Include at least one uppercase and one lowercase letter.';
-            else if (!/[0-9]/.test(d.password))
-                e.password = 'Include at least one number.';
-            if (!d.short_bio.trim()) e.short_bio = 'A short bio is required.';
-            else if (wordCount(d.short_bio) > 500)
-                e.short_bio = 'Please keep your bio to 500 words or fewer.';
-            break;
-        case 2:
-            // Verify Email step — validated via OTP flow, not client-side rules.
-            break;
-        case 3:
-            // License number is required UNLESS "Not applicable" is selected.
-            if (!d.license_not_applicable && !d.license_number.trim())
-                e.license_number = 'Enter your license number, or select "Not applicable".';
-            if (d.license_states.length === 0)
-                e.license_states = 'Select at least one state or country of licensure.';
-            if (!d.license_status) e.license_status = 'Please select your license status.';
-            break;
-        case 4:
-            if (d.areas_of_support.length === 0)
-                e.areas_of_support = 'Select at least one area of support.';
-            break;
-        case 5:
-            if (d.populations_served.length === 0)
-                e.populations_served = 'Select at least one population you serve.';
-            break;
-        case 6:
-            if (!d.caribbean_identity)
-                e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
-            if (!d.caribbean_experience)
-                e.caribbean_experience = 'Please let us know about your experience.';
-            if (d.languages.length === 0)
-                e.languages = 'Select at least one language you speak.';
-            if (d.languages.includes('Other') && !d.languages_other.trim())
-                e.languages_other = 'Please specify the other language(s).';
-            if (d.cultural_approach && wordCount(d.cultural_approach) > 250)
-                e.cultural_approach = 'Please keep this to 250 words or fewer.';
-            break;
-        case 7:
-            if (d.service_formats.length === 0)
-                e.service_formats = 'Select at least one service format.';
-            if (d.practice_settings.length === 0)
-                e.practice_settings = 'Select at least one practice setting.';
-            break;
-        case 8:
-            if (!d.address.trim()) e.address = 'Address is required.';
-            if (!d.city.trim()) e.city = 'City is required.';
-            if (!d.state_province) e.state_province = 'State / Province is required.';
-            if (!d.country) e.country = 'Country is required.';
-            if (!d.multiple_locations)
-                e.multiple_locations = 'Please let us know if you serve multiple locations.';
-            if (d.telehealth_regions.includes('Other') && !d.telehealth_regions_other.trim())
-                e.telehealth_regions_other = 'Please specify the other region(s) you serve.';
-            break;
-        case 9:
-            if (d.payment_methods.length === 0)
-                e.payment_methods = 'Select at least one accepted payment method.';
-            break;
-        case 10:
-            if (!d.phone.trim()) e.phone = 'Phone number is required.';
-            else if (d.phone.replace(/[^\d]/g, '').length < 7)
-                e.phone = 'Please enter a valid phone number.';
-            if (d.website && !isUrl(d.website))
-                e.website = 'Enter a valid website';
-            break;
-        case 11:
-            if (!d.profile_photo)
-                e.profile_photo = 'A professional photo or organization logo is required.';
-            break;
-        case 12:
-            if (d.accessibility.length === 0)
-                e.accessibility = 'Select at least one option (choose "Other" if none apply).';
-            break;
-        case 13:
-            if (!d.consent_accurate)
-                e.consent_accurate = 'Please confirm the information is accurate.';
-            if (!d.consent_notify)
-                e.consent_notify = 'Please agree to notify Bahali of changes.';
-            if (!d.consent_no_endorsement)
-                e.consent_no_endorsement = 'Please acknowledge this is not an endorsement.';
-            if (!d.consent_public)
-                e.consent_public = 'Please consent to public display of your listing.';
-            break;
-    }
-    return e;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Reusable field components                                          */
@@ -746,11 +618,6 @@ function PasswordInput({
     );
 }
 
-/**
- * SearchableSelect — shadcn/ui-style Combobox (Popover + Command pattern),
- * self-contained with no external deps, themed for Bahali.
- * Replaces every native <select> dropdown in the form.
- */
 function SearchableSelect({
     value, onChange, options, error, placeholder = 'Select…',
     searchPlaceholder = 'Search…', emptyText = 'No results found.',
@@ -781,7 +648,6 @@ function SearchableSelect({
 
     const selectedLabel = opts.find((o) => o.value === value)?.label ?? '';
 
-    // Close on outside click / Escape.
     useEffect(() => {
         if (!open) return;
         const onClick = (e: MouseEvent) => {
@@ -800,7 +666,6 @@ function SearchableSelect({
         };
     }, [open]);
 
-    // Focus the search box when opening; reset query when closing.
     useEffect(() => {
         if (open) {
             requestAnimationFrame(() => searchRef.current?.focus());
@@ -811,7 +676,6 @@ function SearchableSelect({
 
     return (
         <div ref={rootRef} className="relative">
-            {/* Trigger */}
             <button
                 type="button"
                 role="combobox"
@@ -831,10 +695,8 @@ function SearchableSelect({
                 </svg>
             </button>
 
-            {/* Popover */}
             {open && (
                 <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
-                    {/* Command input */}
                     <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
                         <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#9AA6A4]" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
@@ -848,7 +710,6 @@ function SearchableSelect({
                             className="w-full bg-transparent py-2.5 text-sm text-[#1F2A2E] placeholder-[#9AA6A4] outline-none"
                         />
                     </div>
-                    {/* Command list */}
                     <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
                         {filtered.length === 0 && (
                             <li className="px-3 py-6 text-center text-sm text-[#9AA6A4]">{emptyText}</li>
@@ -970,25 +831,25 @@ function CheckGrid({
 
 /**
  * AccordionCheckGroups — collapsible category groups for Areas of Support.
- * Each category is an accordion header; expanding it reveals its checkboxes.
- * New categories/items scale automatically from AREAS_OF_SUPPORT_GROUPS.
+ * Now also includes "Other" checkbox and text input per category.
  */
 function AccordionCheckGroups({
-    groups, selected, onToggle,
+    groups,
+    selected,
+    onToggle,
+    customData,
+    onCustomChange,
 }: {
     groups: { category: string; items: string[] }[];
     selected: string[];
     onToggle: (v: string) => void;
+    customData: Record<string, { checked: boolean; text: string }>;
+    onCustomChange: (category: string, field: 'checked' | 'text', value: boolean | string) => void;
 }) {
-    // const [openCats, setOpenCats] = useState<Record<string, boolean>>(() =>
-    //     groups[0] ? { [groups[0].category]: true } : {}
-    // );
     const [openCat, setOpenCat] = useState<string>(
         groups[0]?.category ?? ''
     );
 
-    // const toggleCat = (cat: string) =>
-    //     setOpenCats((prev) => ({ ...prev, [cat]: !prev[cat] }));
     const toggleCat = (cat: string) => {
         setOpenCat((prev) => (prev === cat ? '' : cat));
     };
@@ -996,16 +857,18 @@ function AccordionCheckGroups({
     return (
         <div className="space-y-2.5">
             {groups.map((g) => {
-                // const isOpen = !!openCats[g.category];
                 const isOpen = openCat === g.category;
                 const count = g.items.filter((i) => selected.includes(i)).length;
+                const custom = customData[g.category] || { checked: false, text: '' };
+                const customSelected = custom.checked && custom.text.trim() !== '';
+                const totalSelected = count + (customSelected ? 1 : 0);
+
                 return (
                     <div
                         key={g.category}
-                        className={`overflow-hidden rounded-xl border transition ${count > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'
+                        className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'
                             }`}
                     >
-                        {/* Accordion header */}
                         <button
                             type="button"
                             aria-expanded={isOpen}
@@ -1017,9 +880,9 @@ function AccordionCheckGroups({
                                 <span className="text-sm font-semibold text-[#16302F]">
                                     {g.category}
                                 </span>
-                                {count > 0 && (
+                                {totalSelected > 0 && (
                                     <span className="inline-flex items-center rounded-full bg-[#0E7C7B] px-2 py-0.5 text-xs font-semibold text-white">
-                                        {count} selected
+                                        {totalSelected} selected
                                     </span>
                                 )}
                             </span>
@@ -1031,7 +894,7 @@ function AccordionCheckGroups({
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
-                        {/* Accordion body */}
+
                         {isOpen && (
                             <div className="border-t border-[#EFEAE0] bg-white p-3.5">
                                 <CheckGrid
@@ -1040,11 +903,96 @@ function AccordionCheckGroups({
                                     onToggle={onToggle}
                                     columns={2}
                                 />
+
+                                {/* "Other" row - whole div clickable */}
+                                <div
+                                    className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
+                                    onClick={(e) => {
+                                        if (e.target instanceof HTMLInputElement) return;
+                                        onCustomChange(g.category, 'checked', !custom.checked);
+                                    }}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <span
+                                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${custom.checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
+                                                }`}
+                                            aria-hidden
+                                        >
+                                            {custom.checked && (
+                                                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                                    <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                                </svg>
+                                            )}
+                                        </span>
+                                        <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
+                                    </div>
+                                    {custom.checked && (
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <TextInput
+                                                value={custom.text}
+                                                onChange={(v) => onCustomChange(g.category, 'text', v)}
+                                                placeholder="Describe the other area of support…"
+                                                error={false}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+// Certifications input component
+function CertificationsInput({
+    values,
+    onChange,
+}: {
+    values: string[];
+    onChange: (list: string[]) => void;
+}) {
+    const add = () => onChange([...values, '']);
+    const update = (idx: number, val: string) => {
+        const newList = [...values];
+        newList[idx] = val;
+        onChange(newList);
+    };
+    const remove = (idx: number) => {
+        const newList = values.filter((_, i) => i !== idx);
+        onChange(newList);
+    };
+
+    return (
+        <div className="space-y-2">
+            {values.map((val, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                    <TextInput
+                        value={val}
+                        onChange={(v) => update(idx, v)}
+                        placeholder="e.g. PMH-C, CCTP, EMDR Certified Therapist"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => remove(idx)}
+                        className="text-sm text-[#C2543B] hover:underline"
+                    >
+                        Remove
+                    </button>
+                </div>
+            ))}
+            <button
+                type="button"
+                onClick={add}
+                className="inline-flex items-center gap-1 text-sm text-[#0E7C7B] hover:underline"
+            >
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                    <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} />
+                </svg>
+                Add credential
+            </button>
         </div>
     );
 }
@@ -1065,25 +1013,41 @@ interface CountryData {
     regions: RegionData[];
 }
 interface PageProps {
-    /** Server-side validation errors keyed by field name (Inertia shared). */
     errors?: Partial<Record<string, string>>;
     countries: CountryData[];
 }
 
 export default function ProviderRegistration({ errors: serverErrors, countries }: PageProps) {
-    console.log(countries)
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
     const topRef = useRef<HTMLDivElement>(null);
+
     // ---- OTP / account-creation state --------------------------------
     const [otpCode, setOtpCode] = useState('');
     const [accountCreated, setAccountCreated] = useState(false);
-    const [otpVerified, setOtpVerified] = useState(false);
     const [creatingAccount, setCreatingAccount] = useState(false);
     const [verifyingOtp, setVerifyingOtp] = useState(false);
     const [resending, setResending] = useState(false);
     const [otpError, setOtpError] = useState('');
+
+    // ---- Custom "Other" support areas per category -------------------
+    const [customSupportAreas, setCustomSupportAreas] = useState<Record<string, { checked: boolean; text: string }>>(() => {
+        const init: Record<string, { checked: boolean; text: string }> = {};
+        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
+            init[group.category] = { checked: false, text: '' };
+        });
+        return init;
+    });
+
+    const updateCustomSupportArea = (category: string, field: 'checked' | 'text', value: boolean | string) => {
+        setCustomSupportAreas(prev => ({
+            ...prev,
+            [category]: { ...prev[category], [field]: value }
+        }));
+    };
+
+    // ---- Form -------------------------------------------------------
     const form = useForm<ProviderFormData>({
         provider_type: '',
         organization_name: '',
@@ -1097,11 +1061,17 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         license_number: '',
         license_not_applicable: false,
         license_states: [],
+        license_states_other: '',
         license_status: '',
         verification_document: null,
         areas_of_support: [],
         areas_of_support_other: '',
         populations_served: [],
+        treatment_approaches: [],
+        treatment_approaches_other: '',
+        specialized_training: [],
+        specialized_training_other: '',
+        certifications: [],
         caribbean_identity: '',
         caribbean_experience: '',
         languages: [],
@@ -1125,12 +1095,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         profile_photo: null,
         additional_photos: [],
         accessibility: [],
+        accessibility_other: '',
         consent_accurate: false,
         consent_notify: false,
         consent_no_endorsement: false,
         consent_public: false,
     });
     const d = form.data;
+
     /* ---- field helpers --------------------------------------------- */
     const set = <K extends FieldName>(key: K, value: ProviderFormData[K]) => {
         form.setData(key, value);
@@ -1145,16 +1117,16 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     };
     const scrollTop = () =>
         topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
     /* ---- OTP / account helpers --------------------------------------- */
     const getCsrfToken = () =>
         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
     const createAccountAndSendOtp = async (): Promise<boolean> => {
         setCreatingAccount(true);
         setOtpError('');
         try {
-            console.log('[createAccountAndSendOtp] Starting account creation with email:', d.email);
             const csrfToken = getCsrfToken();
-            console.log('[createAccountAndSendOtp] CSRF token:', csrfToken ? '✓ present' : '✗ missing');
             const res = await fetch('/provider/directory/register-account', {
                 method: 'POST',
                 headers: {
@@ -1169,11 +1141,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     password: d.password,
                 }),
             });
-            console.log('[createAccountAndSendOtp] Response status:', res.status);
             const json = await res.json();
-            console.log('[createAccountAndSendOtp] Response body:', json);
             if (!res.ok) {
-                console.error('[createAccountAndSendOtp] Error response:', json);
                 const mapped: FormErrors = {};
                 if (json.errors?.email) {
                     mapped.email = Array.isArray(json.errors.email) ? json.errors.email[0] : json.errors.email;
@@ -1184,25 +1153,20 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (json.errors?.organization_name) {
                     mapped.organization_name = Array.isArray(json.errors.organization_name) ? json.errors.organization_name[0] : json.errors.organization_name;
                 }
-                if (json.message) {
-                    console.error('[createAccountAndSendOtp] Server message:', json.message);
-                }
                 setErrors(mapped);
                 return false;
             }
-            console.log('[createAccountAndSendOtp] Account created, OTP sent');
             setAccountCreated(true);
             return true;
-        } catch (err) {
-            console.error('[createAccountAndSendOtp] Fetch error:', err);
+        } catch {
             setOtpError('Something went wrong creating your account. Please try again.');
             return false;
         } finally {
             setCreatingAccount(false);
         }
     };
+
     const verifyOtp = async () => {
-        console.log('[verifyOtp] Starting OTP verification with code:', otpCode);
         setOtpError('');
         setVerifyingOtp(true);
         try {
@@ -1218,23 +1182,19 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 body: JSON.stringify({ email: d.email, otp: otpCode }),
             });
             const json = await res.json();
-            console.log('[verifyOtp] Response status:', res.status, 'body:', json);
             if (!res.ok) {
-                console.error('[verifyOtp] Verification failed:', json.message);
                 setOtpError(json.message || 'Invalid or expired code. Please try again.');
                 return;
             }
-            console.log('[verifyOtp] OTP verified successfully, advancing to next step');
-            setOtpVerified(true);
             setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
             scrollTop();
-        } catch (err) {
-            console.error('[verifyOtp] Fetch error:', err);
+        } catch {
             setOtpError('Something went wrong verifying your code. Please try again.');
         } finally {
             setVerifyingOtp(false);
         }
     };
+
     const resendOtp = async () => {
         setResending(true);
         setOtpError('');
@@ -1259,43 +1219,234 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             setResending(false);
         }
     };
+
+    /* ---- Validation ----------------------------------------------- */
+    const validateStep = (step: number, d: ProviderFormData): FormErrors => {
+        const e: FormErrors = {};
+        switch (step) {
+            case 0:
+                if (!d.provider_type) e.provider_type = 'Please select a provider type.';
+                if (!d.organization_name.trim())
+                    e.organization_name = 'Please enter your name or organization.';
+                if (d.professional_title.length === 0)
+                    e.professional_title = 'Please select at least one professional title.';
+                if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
+                    e.professional_title_other = 'Please specify your title.';
+                break;
+            case 1:
+                if (!d.email.trim()) e.email = 'Email address is required.';
+                else if (!isEmail(d.email)) e.email = 'Please enter a valid email address.';
+                if (!d.password) e.password = 'Please create a password.';
+                else if (/\s/.test(d.password)) e.password = 'Password cannot contain spaces.';
+                else if (d.password.length < 8) e.password = 'Password must be at least 8 characters.';
+                else if (!/[a-z]/.test(d.password) || !/[A-Z]/.test(d.password))
+                    e.password = 'Include at least one uppercase and one lowercase letter.';
+                else if (!/[0-9]/.test(d.password)) e.password = 'Include at least one number.';
+                if (!d.short_bio.trim()) e.short_bio = 'A short bio is required.';
+                else if (wordCount(d.short_bio) > 500) e.short_bio = 'Please keep your bio to 500 words or fewer.';
+                break;
+            case 2:
+                break;
+            case 3: {
+                if (!d.license_not_applicable && !d.license_number.trim())
+                    e.license_number = 'Enter your license number, or select "Not applicable".';
+                if (!d.license_status) e.license_status = 'Please select your license status.';
+
+                const hasOther = d.license_states.includes('__other__');
+                const hasSelection = d.license_states.length > 0 && !(d.license_states.length === 1 && hasOther);
+                if (!hasSelection && !(hasOther && d.license_states_other.trim())) {
+                    e.license_states = 'Select at least one state/country or specify "Other".';
+                }
+                if (hasOther && !d.license_states_other.trim()) {
+                    e.license_states_other = 'Please specify the other state or country.';
+                }
+                break;
+            }
+            case 4: {
+                const selectedCount = d.areas_of_support.length;
+                let customCount = 0;
+                const customErrors: string[] = [];
+                for (const cat of Object.keys(customSupportAreas)) {
+                    const custom = customSupportAreas[cat];
+                    if (custom.checked) {
+                        if (custom.text.trim() === '') {
+                            customErrors.push(`Please specify the custom area for "${cat}".`);
+                        } else {
+                            customCount++;
+                        }
+                    }
+                }
+                if (selectedCount === 0 && customCount === 0) {
+                    e.areas_of_support = 'Select at least one area of support or specify an "Other" area.';
+                }
+                if (customErrors.length > 0) {
+                    e.areas_of_support = customErrors[0];
+                }
+                break;
+            }
+            case 5:
+                if (d.populations_served.length === 0)
+                    e.populations_served = 'Select at least one population you serve.';
+                break;
+            case 6: {
+                if (d.treatment_approaches.includes('Other (specify)') && !d.treatment_approaches_other.trim()) {
+                    e.treatment_approaches_other = 'Please specify your other approach.';
+                }
+                if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim()) {
+                    e.specialized_training_other = 'Please specify your other training.';
+                }
+                break;
+            }
+            case 7:
+                if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
+                if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
+                if (d.languages.includes('Other') && !d.languages_other.trim())
+                    e.languages_other = 'Please specify the other language(s).';
+                if (d.cultural_approach && wordCount(d.cultural_approach) > 250)
+                    e.cultural_approach = 'Please keep this to 250 words or fewer.';
+                break;
+            case 8:
+                if (d.service_formats.length === 0) e.service_formats = 'Select at least one service format.';
+                if (d.practice_settings.length === 0) e.practice_settings = 'Select at least one practice setting.';
+                break;
+            case 9: {
+                if (!d.address.trim()) e.address = 'Address is required.';
+                if (!d.city.trim()) e.city = 'City is required.';
+                if (!d.state_province) e.state_province = 'State / Province is required.';
+                if (!d.country) e.country = 'Country is required.';
+                if (!d.multiple_locations) e.multiple_locations = 'Please let us know if you serve multiple locations.';
+
+                // Telehealth regions "Other" validation
+                const hasTelehealthOther = d.telehealth_regions.includes('__other__');
+                const hasTelehealthSelection = d.telehealth_regions.length > 0 && !(d.telehealth_regions.length === 1 && hasTelehealthOther);
+                if (!hasTelehealthSelection && !(hasTelehealthOther && d.telehealth_regions_other.trim())) {
+                    e.telehealth_regions = 'Select at least one telehealth region or specify "Other".';
+                }
+                if (hasTelehealthOther && !d.telehealth_regions_other.trim()) {
+                    e.telehealth_regions_other = 'Please specify the other telehealth region(s).';
+                }
+                break;
+            }
+            case 10:
+                if (d.payment_methods.length === 0) e.payment_methods = 'Select at least one accepted payment method.';
+                break;
+            case 11:
+                if (!d.phone.trim()) e.phone = 'Phone number is required.';
+                else if (d.phone.replace(/[^\d]/g, '').length < 7) e.phone = 'Please enter a valid phone number.';
+                if (d.website && !isUrl(d.website)) e.website = 'Enter a valid website';
+                break;
+            case 12:
+                if (!d.profile_photo) e.profile_photo = 'A professional photo or organization logo is required.';
+                break;
+            case 13: {
+                const hasOther = d.accessibility.includes('__other__');
+                const hasSelection = d.accessibility.length > 0 && !(d.accessibility.length === 1 && hasOther);
+                if (!hasSelection && !(hasOther && d.accessibility_other.trim())) {
+                    e.accessibility = 'Select at least one option, or specify an "Other" accommodation.';
+                }
+                if (hasOther && !d.accessibility_other.trim()) {
+                    e.accessibility_other = 'Please describe the other accommodation.';
+                }
+                break;
+            }
+            case 14:
+                if (!d.consent_accurate) e.consent_accurate = 'Please confirm the information is accurate.';
+                if (!d.consent_notify) e.consent_notify = 'Please agree to notify Bahali of changes.';
+                if (!d.consent_no_endorsement) e.consent_no_endorsement = 'Please acknowledge this is not an endorsement.';
+                if (!d.consent_public) e.consent_public = 'Please consent to public display of your listing.';
+                break;
+        }
+        return e;
+    };
+
     /* ---- navigation ------------------------------------------------- */
     const goNext = async () => {
         const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
-            return; // blocked — cannot advance
+            return;
         }
         setErrors({});
-        // Right after "About You", create the account and trigger the OTP email
-        // before letting the user reach the Verify Email step.
         if (STEPS[step].key === 'about' && !accountCreated) {
-            console.log('[goNext] About step — creating account...');
             const ok = await createAccountAndSendOtp();
-            console.log('[goNext] Account creation result:', ok);
-            if (!ok) {
-                console.log('[goNext] Account creation failed, staying on this step');
-                return; // stay on this step, show returned field errors
-            }
-            console.log('[goNext] Account created successfully, advancing to verify step');
+            if (!ok) return;
         }
         const nextStep = Math.min(step + 1, TOTAL_STEPS - 1);
-        console.log('[goNext] Advancing from step', step, 'to step', nextStep);
         setStep(nextStep);
         scrollTop();
     };
+
     const goBack = () => {
         setErrors({});
         setStep((s) => Math.max(s - 1, 0));
         scrollTop();
     };
+
     const handleSubmit = () => {
+        // Build final arrays for multi-select fields
+        const finalTreatmentApproaches = [...d.treatment_approaches];
+        if (d.treatment_approaches.includes('Other (specify)') && d.treatment_approaches_other.trim()) {
+            finalTreatmentApproaches.push(d.treatment_approaches_other.trim());
+        }
+
+        const finalSpecializedTraining = [...d.specialized_training];
+        if (d.specialized_training.includes('Other Specialized Training') && d.specialized_training_other.trim()) {
+            finalSpecializedTraining.push(d.specialized_training_other.trim());
+        }
+
+        const finalCertifications = d.certifications.filter(c => c.trim() !== '');
+
+        // Areas of Support: convert to "category|area" format
+        const areaToCategoryMap: Record<string, string> = {};
+        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
+            group.items.forEach(item => {
+                areaToCategoryMap[item] = group.category;
+            });
+        });
+
+        const finalAreasOfSupport: string[] = [];
+        // Predefined areas
+        d.areas_of_support.forEach(area => {
+            const category = areaToCategoryMap[area];
+            if (category) {
+                finalAreasOfSupport.push(`${category}|${area}`);
+            }
+        });
+        // Custom areas
+        for (const [category, custom] of Object.entries(customSupportAreas)) {
+            if (custom.checked && custom.text.trim() !== '') {
+                finalAreasOfSupport.push(`${category}|${custom.text.trim()}`);
+            }
+        }
+
+        // Accessibility
+        let finalAccessibility = [...d.accessibility];
+        if (d.accessibility.includes('__other__') && d.accessibility_other.trim()) {
+            finalAccessibility = finalAccessibility.filter(v => v !== '__other__');
+            finalAccessibility.push(d.accessibility_other.trim());
+        }
+
+        // License states
+        let finalLicenseStates = [...d.license_states];
+        if (d.license_states.includes('__other__') && d.license_states_other.trim()) {
+            finalLicenseStates = finalLicenseStates.filter(v => v !== '__other__');
+            finalLicenseStates.push(d.license_states_other.trim());
+        }
+
+        // Telehealth regions
+        let finalTelehealthRegions = [...d.telehealth_regions];
+        if (d.telehealth_regions.includes('__other__') && d.telehealth_regions_other.trim()) {
+            finalTelehealthRegions = finalTelehealthRegions.filter(v => v !== '__other__');
+            finalTelehealthRegions.push(d.telehealth_regions_other.trim());
+        }
+
+        // Validate all steps with updated data
         const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
             return;
         }
-        // Final pass: re-validate every step
         for (let i = 0; i < TOTAL_STEPS; i++) {
             const e = validateStep(i, d);
             if (Object.keys(e).length > 0) {
@@ -1305,22 +1456,18 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 return;
             }
         }
-        // Create a FormData object manually for file uploads
+
+        // Create FormData
         const formData = new FormData();
-        // Append all non-file fields
+
         Object.keys(d).forEach(key => {
             const value = d[key as keyof ProviderFormData];
             if (value === null || value === undefined) return;
-            if (key === 'profile_photo' || key === 'verification_document') {
-                // Skip files here, we'll handle them separately
-                return;
-            }
-            if (key === 'additional_photos') {
-                // Skip, handle separately
-                return;
-            }
+            if (key === 'profile_photo' || key === 'verification_document' || key === 'additional_photos') return;
+            if (key === 'areas_of_support') return;
+            if (key === 'treatment_approaches' || key === 'specialized_training' || key === 'certifications' || key === 'accessibility' || key === 'license_states' || key === 'telehealth_regions') return;
+
             if (Array.isArray(value)) {
-                // For arrays, append each item
                 value.forEach(item => {
                     if (item !== null && item !== undefined) {
                         formData.append(`${key}[]`, item);
@@ -1332,27 +1479,29 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 formData.append(key, String(value));
             }
         });
-        // Append file fields
-        if (d.profile_photo instanceof File) {
-            formData.append('profile_photo', d.profile_photo);
-        }
-        if (d.verification_document instanceof File) {
-            formData.append('verification_document', d.verification_document);
-        }
+
+        // Append final arrays
+        finalAreasOfSupport.forEach(item => formData.append('areas_of_support[]', item));
+        finalTreatmentApproaches.forEach(item => formData.append('treatment_approaches[]', item));
+        finalSpecializedTraining.forEach(item => formData.append('specialized_training[]', item));
+        finalCertifications.forEach(item => formData.append('certifications[]', item));
+        finalAccessibility.forEach(item => formData.append('accessibility[]', item));
+        finalLicenseStates.forEach(item => formData.append('license_states[]', item));
+        finalTelehealthRegions.forEach(item => formData.append('telehealth_regions[]', item));
+
+        // Append files
+        if (d.profile_photo instanceof File) formData.append('profile_photo', d.profile_photo);
+        if (d.verification_document instanceof File) formData.append('verification_document', d.verification_document);
         if (Array.isArray(d.additional_photos)) {
-            d.additional_photos.forEach((file, index) => {
-                if (file instanceof File) {
-                    formData.append(`additional_photos[]`, file);
-                }
+            d.additional_photos.forEach((file) => {
+                if (file instanceof File) formData.append('additional_photos[]', file);
             });
         }
-        // Submit using the FormData
+
         form.post('/provider/directory/store', {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => {
-                setSubmitted(true);
-            },
+            onSuccess: () => setSubmitted(true),
             onError: (serverErrs: Record<string, string>) => {
                 const firstField = Object.keys(serverErrs)[0];
                 if (firstField && FIELD_STEP[firstField] !== undefined) {
@@ -1361,11 +1510,13 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 }
             },
         });
-    }
-    // Merge client + server errors so a field shows whichever is present.
+    };
+
     const fieldError = (key: FieldName): string | undefined =>
         errors[key] || (serverErrors?.[key] ?? form.errors[key]);
+
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
+
     /* ---- success screen -------------------------------------------- */
     if (submitted) {
         return (
@@ -1396,12 +1547,13 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                 Contact
                             </a>
                         </div>
-                    </div >
-                </div >
+                    </div>
+                </div>
                 <Footer />
             </>
         );
     }
+
     /* ---- render ----------------------------------------------------- */
     return (
         <>
@@ -1424,7 +1576,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
                         {/* Stepper */}
                         <aside className="lg:sticky lg:top-8 lg:self-start">
-                            {/* Mobile progress */}
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
                                     <span className="font-medium text-[#16302F]">
@@ -1442,13 +1593,10 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     {STEPS[step].title}
                                 </p>
                             </div>
-                            {/* Desktop vertical stepper */}
+
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
-                                    <span
-                                        className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]"
-                                        aria-hidden
-                                    />
+                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isDone = i < step;
                                         const isCurrent = i === step;
@@ -1499,6 +1647,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                 </ol>
                             </nav>
                         </aside>
+
                         {/* Form card */}
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
@@ -1525,8 +1674,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                         resending={resending}
                                         onVerifyOtp={verifyOtp}
                                         onResendOtp={resendOtp}
+                                        customSupportAreas={customSupportAreas}
+                                        onCustomSupportChange={updateCustomSupportArea}
                                     />
                                 </div>
+
                                 {/* Navigation */}
                                 <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
                                     <button
@@ -1554,7 +1706,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={form.processing}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition bg-[#0d6c6b] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
+                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
                                         >
                                             {form.processing ? 'Submitting…' : 'Submit application'}
                                         </button>
@@ -1572,12 +1724,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         </>
     );
 }
+
 /* ------------------------------------------------------------------ */
 /*  Step body — renders the active section                             */
 /* ------------------------------------------------------------------ */
 function StepBody({
     step, d, set, toggle, fieldError, countries,
     otpCode, setOtpCode, otpError, verifyingOtp, resending, onVerifyOtp, onResendOtp,
+    customSupportAreas, onCustomSupportChange,
 }: {
     step: number;
     d: ProviderFormData;
@@ -1592,12 +1746,15 @@ function StepBody({
     resending: boolean;
     onVerifyOtp: () => void;
     onResendOtp: () => void;
+    customSupportAreas: Record<string, { checked: boolean; text: string }>;
+    onCustomSupportChange: (category: string, field: 'checked' | 'text', value: boolean | string) => void;
 }) {
     const selectedCountry = countries.find(c => c.name === d.country);
     const availableRegions = selectedCountry?.regions ?? [];
     const regionTypeLabel = selectedCountry?.regions[0]?.regionTypeLabel || 'State / Province';
+
     switch (step) {
-        /* ---------------- Step 1: Basic Information ------------------- */
+        /* ---------------- Step 0: Basic Information ------------------- */
         case 0:
             return (
                 <>
@@ -1661,7 +1818,8 @@ function StepBody({
                     )}
                 </>
             );
-        /* ---------------- Step 2: About You -------------------------- */
+
+        /* ---------------- Step 1: About You -------------------------- */
         case 1:
             return (
                 <>
@@ -1720,7 +1878,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        /* ---------------- Step 3: Verify Email (OTP) ------------------ */
+
+        /* ---------------- Step 2: Verify Email (OTP) ------------------ */
         case 2:
             return (
                 <div className="space-y-5 text-center">
@@ -1770,7 +1929,8 @@ function StepBody({
                     </p>
                 </div>
             );
-        /* ---------------- Step 4: Licensure & Verification ----------- */
+
+        /* ---------------- Step 3: Licensure & Verification ----------- */
         case 3:
             return (
                 <>
@@ -1797,6 +1957,7 @@ function StepBody({
                     >
                         Not applicable
                     </ConsentItem>
+
                     <FieldShell
                         label="State / Country of licensure"
                         required
@@ -1809,7 +1970,49 @@ function StepBody({
                             onToggle={(v) => toggle('license_states', v)}
                             columns={2}
                         />
+
+                        {/* Custom "Other" with text input - whole div clickable */}
+                        <div
+                            className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
+                            onClick={(e) => {
+                                if (e.target instanceof HTMLInputElement) return;
+                                const other = '__other__';
+                                const current = d.license_states;
+                                const next = current.includes(other)
+                                    ? current.filter(v => v !== other)
+                                    : [...current, other];
+                                set('license_states', next);
+                            }}
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span
+                                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.license_states.includes('__other__')
+                                        ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                        : 'border-[#C7BEAD] bg-white'
+                                        }`}
+                                    aria-hidden
+                                >
+                                    {d.license_states.includes('__other__') && (
+                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
+                            </div>
+                            {d.license_states.includes('__other__') && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <TextInput
+                                        value={d.license_states_other}
+                                        onChange={(v) => set('license_states_other', v)}
+                                        placeholder="Specify the state or country…"
+                                        error={!!fieldError('license_states_other')}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </FieldShell>
+
                     <FieldShell label="License status" required error={fieldError('license_status')}>
                         <RadioRow
                             name="license_status"
@@ -1834,19 +2037,22 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        /* ---------------- Step 5: Areas of Support ------------------- */
+
+        /* ---------------- Step 4: Areas of Support ------------------- */
         case 4:
             return (
                 <FieldShell
                     label="Areas of support"
                     required
-                    hint="Expand each category and select every area where you have experience and expertise. Your selections appear on your public profile and are used as searchable filters in the directory. There is no limit to the number of selections."
+                    hint="Expand each category and select every area where you have experience and expertise. Your selections appear on your public profile and are used as searchable filters in the directory. There is no limit to the number of selections. You may also specify additional areas using the 'Other' option under each category."
                     error={fieldError('areas_of_support')}
                 >
                     <AccordionCheckGroups
                         groups={AREAS_OF_SUPPORT_GROUPS}
                         selected={d.areas_of_support}
                         onToggle={(v) => toggle('areas_of_support', v)}
+                        customData={customSupportAreas}
+                        onCustomChange={onCustomSupportChange}
                     />
                     {d.areas_of_support.length > 0 && (
                         <p className="mt-3 text-sm font-medium text-[#0E7C7B]">
@@ -1855,7 +2061,8 @@ function StepBody({
                     )}
                 </FieldShell>
             );
-        /* ---------------- Step 6: Populations Served ----------------- */
+
+        /* ---------------- Step 5: Populations Served ----------------- */
         case 5:
             return (
                 <FieldShell
@@ -1872,8 +2079,72 @@ function StepBody({
                     />
                 </FieldShell>
             );
-        /* ---------------- Step 7: Cultural & Language ---------------- */
+
+        /* ---------------- Step 6: Professional Expertise ------------ */
         case 6:
+            return (
+                <>
+                    <FieldShell
+                        label="Treatment Approaches"
+                        hint="Which approaches do you use in your work? Select all that apply. (Optional)"
+                        error={fieldError('treatment_approaches')}
+                    >
+                        <CheckGrid
+                            options={TREATMENT_APPROACHES}
+                            selected={d.treatment_approaches}
+                            onToggle={(v) => toggle('treatment_approaches', v)}
+                            columns={2}
+                        />
+                        {d.treatment_approaches.includes('Other (specify)') && (
+                            <div className="mt-3">
+                                <TextInput
+                                    value={d.treatment_approaches_other}
+                                    onChange={(v) => set('treatment_approaches_other', v)}
+                                    placeholder="Describe your other approach…"
+                                    error={!!fieldError('treatment_approaches_other')}
+                                />
+                            </div>
+                        )}
+                    </FieldShell>
+
+                    <FieldShell
+                        label="Specialized Training"
+                        hint="Do you have specialized training or certification in any of the following areas? Select all that apply. (Optional)"
+                        error={fieldError('specialized_training')}
+                    >
+                        <CheckGrid
+                            options={SPECIALIZED_TRAINING_OPTIONS}
+                            selected={d.specialized_training}
+                            onToggle={(v) => toggle('specialized_training', v)}
+                            columns={2}
+                        />
+                        {d.specialized_training.includes('Other Specialized Training') && (
+                            <div className="mt-3">
+                                <TextInput
+                                    value={d.specialized_training_other}
+                                    onChange={(v) => set('specialized_training_other', v)}
+                                    placeholder="Describe your other training…"
+                                    error={!!fieldError('specialized_training_other')}
+                                />
+                            </div>
+                        )}
+                    </FieldShell>
+
+                    <FieldShell
+                        label="Certifications & Credentials (Optional)"
+                        hint="List any relevant certifications or formal credentials you would like displayed on your profile."
+                        error={fieldError('certifications')}
+                    >
+                        <CertificationsInput
+                            values={d.certifications}
+                            onChange={(list) => set('certifications', list)}
+                        />
+                    </FieldShell>
+                </>
+            );
+
+        /* ---------------- Step 7: Cultural & Language ---------------- */
+        case 7:
             return (
                 <>
                     <FieldShell
@@ -1954,8 +2225,9 @@ function StepBody({
                     </FieldShell>
                 </>
             );
+
         /* ---------------- Step 8: Service Information ---------------- */
-        case 7:
+        case 8:
             return (
                 <>
                     <FieldShell
@@ -1986,8 +2258,9 @@ function StepBody({
                     </FieldShell>
                 </>
             );
+
         /* ---------------- Step 9: Location --------------------------- */
-        case 8:
+        case 9:
             return (
                 <>
                     <FieldShell label="Address" required error={fieldError('address')}>
@@ -2031,7 +2304,7 @@ function StepBody({
                         </FieldShell>
                     </div>
                     <FieldShell
-                        label={regionTypeLabel}  // Dynamic label from database
+                        label={regionTypeLabel}
                         required
                         error={fieldError('state_province')}
                         hint={!d.country ? 'Please select a country first' : undefined}
@@ -2084,26 +2357,53 @@ function StepBody({
                             onToggle={(v) => toggle('telehealth_regions', v)}
                             columns={2}
                         />
-                    </FieldShell>
-                    {d.telehealth_regions.includes('Other') && (
-                        <FieldShell
-                            label="Please specify other telehealth region(s)"
-                            required
-                            hint="Separate multiple regions with commas."
-                            error={fieldError('telehealth_regions_other')}
+
+                        {/* Custom "Other" with text input - whole div clickable */}
+                        <div
+                            className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
+                            onClick={(e) => {
+                                if (e.target instanceof HTMLInputElement) return;
+                                const other = '__other__';
+                                const current = d.telehealth_regions;
+                                const next = current.includes(other)
+                                    ? current.filter(v => v !== other)
+                                    : [...current, other];
+                                set('telehealth_regions', next);
+                            }}
                         >
-                            <TextInput
-                                value={d.telehealth_regions_other}
-                                onChange={(v) => set('telehealth_regions_other', v)}
-                                error={!!fieldError('telehealth_regions_other')}
-                                placeholder="e.g. Panama, Costa Rica, Sint Maarten"
-                            />
-                        </FieldShell>
-                    )}
+                            <div className="flex items-center gap-2.5">
+                                <span
+                                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.telehealth_regions.includes('__other__')
+                                        ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                        : 'border-[#C7BEAD] bg-white'
+                                        }`}
+                                    aria-hidden
+                                >
+                                    {d.telehealth_regions.includes('__other__') && (
+                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
+                            </div>
+                            {d.telehealth_regions.includes('__other__') && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <TextInput
+                                        value={d.telehealth_regions_other}
+                                        onChange={(v) => set('telehealth_regions_other', v)}
+                                        placeholder="Specify the other telehealth region(s)…"
+                                        error={!!fieldError('telehealth_regions_other')}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </FieldShell>
                 </>
             );
+
         /* ---------------- Step 10: Insurance & Payment ---------------- */
-        case 9:
+        case 10:
             return (
                 <>
                     <FieldShell
@@ -2133,18 +2433,12 @@ function StepBody({
                     </FieldShell>
                 </>
             );
+
         /* ---------------- Step 11: Contact Information --------------- */
-        case 10:
+        case 11:
             return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
-                        {/* <TextInput
-                            value={d.phone}
-                            onChange={(v) => set('phone', v)}
-                            error={!!fieldError('phone')}
-                            type="tel"
-                            placeholder="+1 (555) 000-0000"
-                        /> */}
                         <PhoneInput
                             value={d.phone}
                             onChange={(v) => set('phone', v)}
@@ -2172,8 +2466,9 @@ function StepBody({
                     </FieldShell>
                 </>
             );
+
         /* ---------------- Step 12: Profile Media -------------------- */
-        case 11:
+        case 12:
             return (
                 <>
                     <FieldShell
@@ -2182,15 +2477,6 @@ function StepBody({
                         hint="A clear headshot or your logo. JPG or PNG."
                         error={fieldError('profile_photo')}
                     >
-                        {/* <FileInput
-                            file={d.profile_photo}
-                            accept=".jpg,.jpeg,.png,.webp, .pdf"
-                            preview
-                            onChange={(f) => {
-                                const validFile = (f && f instanceof File) ? f : null;
-                                set('profile_photo', validFile);
-                            }}
-                        /> */}
                         <FileInput
                             file={d.profile_photo}
                             accept=".jpg,.jpeg,.png"
@@ -2207,11 +2493,6 @@ function StepBody({
                         hint="Optional. Images of your space, team, or community work."
                         error={fieldError('additional_photos')}
                     >
-                        {/* <MultiFileInput
-                            files={d.additional_photos}
-                            accept=".jpg,.jpeg,.png,.webp, .pdf"
-                            onChange={(files) => set('additional_photos', files)}
-                        /> */}
                         <MultiFileInput
                             files={d.additional_photos}
                             accept=".jpg,.jpeg,.png,.webp"
@@ -2221,13 +2502,14 @@ function StepBody({
                     </FieldShell>
                 </>
             );
+
         /* ---------------- Step 13: Accessibility -------------------- */
-        case 12:
+        case 13:
             return (
                 <FieldShell
                     label="Accessibility"
                     required
-                    hint='Select all that apply. Choose "Other" if none apply.'
+                    hint='Select all that apply. If you need an option not listed, check "Other" and specify.'
                     error={fieldError('accessibility')}
                 >
                     <CheckGrid
@@ -2236,10 +2518,52 @@ function StepBody({
                         onToggle={(v) => toggle('accessibility', v)}
                         columns={2}
                     />
+
+                    {/* Custom "Other" with text input - whole div clickable */}
+                    <div
+                        className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
+                        onClick={(e) => {
+                            if (e.target instanceof HTMLInputElement) return;
+                            const other = '__other__';
+                            const current = d.accessibility;
+                            const next = current.includes(other)
+                                ? current.filter(v => v !== other)
+                                : [...current, other];
+                            set('accessibility', next);
+                        }}
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <span
+                                className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.accessibility.includes('__other__')
+                                    ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                    : 'border-[#C7BEAD] bg-white'
+                                    }`}
+                                aria-hidden
+                            >
+                                {d.accessibility.includes('__other__') && (
+                                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                        <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                    </svg>
+                                )}
+                            </span>
+                            <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
+                        </div>
+                        {d.accessibility.includes('__other__') && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                                <TextInput
+                                    value={d.accessibility_other}
+                                    onChange={(v) => set('accessibility_other', v)}
+                                    placeholder="Describe the accessibility feature or accommodation…"
+                                    error={!!fieldError('accessibility_other')}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </FieldShell>
             );
+
         /* ---------------- Step 14: Consent & Agreement -------------- */
-        case 13:
+        case 14:
             return (
                 <div className="space-y-4">
                     <p className="text-sm text-[#5B6B6E]">
@@ -2276,10 +2600,12 @@ function StepBody({
                     </ConsentItem>
                 </div>
             );
+
         default:
             return null;
     }
 }
+
 /* ------------------------------------------------------------------ */
 /*  File inputs & consent row                                          */
 /* ------------------------------------------------------------------ */
@@ -2297,7 +2623,6 @@ function FileInput({
         () => (preview && file ? URL.createObjectURL(file) : null),
         [preview, file]
     );
-    // Cleanup function for memory leak prevention
     useEffect(() => {
         return () => {
             if (previewUrl) {
@@ -2305,6 +2630,7 @@ function FileInput({
             }
         };
     }, [previewUrl]);
+
     const validateFile = (f: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = f.name.split('.').pop()?.toLowerCase();
@@ -2317,6 +2643,7 @@ function FileInput({
         }
         return null;
     };
+
     return (
         <div>
             <div className="flex items-center gap-4">
@@ -2331,7 +2658,6 @@ function FileInput({
                         className="hidden"
                         onChange={(e) => {
                             const selectedFile = e.target.files?.[0] ?? null;
-                            // Reset the input value to allow selecting the same file again
                             e.target.value = '';
                             if (selectedFile) {
                                 const err = validateFile(selectedFile);
@@ -2374,6 +2700,7 @@ function FileInput({
         </div>
     );
 }
+
 function MultiFileInput({
     files, onChange, accept, allowedTypes = [],
 }: {
@@ -2384,6 +2711,7 @@ function MultiFileInput({
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
+
     const validateFile = (file: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -2396,6 +2724,7 @@ function MultiFileInput({
         }
         return null;
     };
+
     return (
         <div className="space-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
@@ -2429,7 +2758,6 @@ function MultiFileInput({
                     }}
                 />
             </label>
-            {/* Show file validation errors */}
             {Object.keys(fileErrors).length > 0 && (
                 <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
                     {Object.values(fileErrors).map((error, idx) => (
@@ -2462,6 +2790,7 @@ function MultiFileInput({
         </div>
     );
 }
+
 function SocialLinksInput({
     value, onChange,
 }: {
@@ -2469,7 +2798,6 @@ function SocialLinksInput({
     onChange: (v: string) => void;
 }) {
     const MAX = 5;
-    // Build the initial rows from the stored string (comma/newline separated).
     const makeRows = () => {
         const parts = value ? value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) : [];
         const init = parts.length ? parts : [''];
@@ -2477,18 +2805,22 @@ function SocialLinksInput({
     };
     const [rows, setRows] = useState<{ id: number; value: string }[]>(makeRows);
     const nextId = useRef(rows.length + 1);
-    // Update local rows AND push a comma-separated string up to the form.
+
     const sync = (next: { id: number; value: string }[]) => {
         setRows(next);
         onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', '));
     };
+
     const updateAt = (id: number, v: string) =>
         sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
+
     const addField = () => {
         if (rows.length >= MAX) return;
         sync([...rows, { id: nextId.current++, value: '' }]);
     };
+
     const removeAt = (id: number) => sync(rows.filter((r) => r.id !== id));
+
     return (
         <div className="space-y-2.5">
             {rows.map((row, i) => {
@@ -2508,7 +2840,6 @@ function SocialLinksInput({
                             placeholder="https://www.example.com"
                             className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                         />
-                        {/* Plus — only on the last row, and only below the max */}
                         {isLast && rows.length < MAX && (
                             <button
                                 type="button"
@@ -2519,7 +2850,6 @@ function SocialLinksInput({
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
                             </button>
                         )}
-                        {/* Cross — every row except the first */}
                         {!isFirst && (
                             <button
                                 type="button"
@@ -2536,6 +2866,7 @@ function SocialLinksInput({
         </div>
     );
 }
+
 function PhoneInput({
     value, onChange, error, placeholder,
 }: {
@@ -2550,7 +2881,6 @@ function PhoneInput({
             value={value}
             placeholder={placeholder}
             onChange={(ev) => {
-                // Allow only numbers, spaces, dashes, plus, and parentheses
                 const cleaned = ev.target.value.replace(/[^0-9\s\-\+\(\)]/g, '');
                 onChange(cleaned);
             }}
@@ -2558,6 +2888,7 @@ function PhoneInput({
         />
     );
 }
+
 function ConsentItem({
     checked, onChange, error, children,
 }: {
