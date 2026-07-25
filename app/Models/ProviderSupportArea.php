@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProviderSupportArea extends Model
 {
-    protected $fillable = ['provider_id', 'category', 'area'];
+    protected $fillable = ['provider_id', 'category', 'area', 'area_other'];
 
     public function provider(): BelongsTo
     {

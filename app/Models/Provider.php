@@ -47,6 +47,7 @@ class Provider extends Model
         // Service
         'service_formats',
         'practice_settings',
+        'practice_settings_other',
 
         // Location
         'address',
@@ -83,9 +84,18 @@ class Provider extends Model
 
         // NEW: Professional Expertise
         'treatment_approaches',
+        'treatment_approaches_others',
         'specialized_training',
         'certifications',
         'accessibility',
+
+
+
+        'telehealth_regions_other',
+        'accessibility_other',
+        'treatment_approaches_other',
+        'specialized_training_other',
+        'license_states_other'
     ];
 
     protected $casts = [
@@ -110,6 +120,7 @@ class Provider extends Model
         'consent_public'       => 'boolean',
         'reviewed_at'          => 'datetime',
         'license_verified_at'  => 'datetime',
+
     ];
 
     // Relationships

@@ -12,7 +12,6 @@ type ProviderType =
     | 'support_group'
     | 'faith_based'
     | 'community_program';
-
 type LicenseStatus = 'active' | 'provisional' | 'not_applicable';
 type YesNo = 'yes' | 'no';
 type CaribbeanIdentity = 'yes' | 'no' | 'prefer_not';
@@ -64,7 +63,7 @@ interface ProviderFormData {
     multiple_locations: YesNo | '';
     hide_address: boolean;
     telehealth_regions: string[];
-    telehealth_regions_other: string; // NEW for typing "Other"
+    telehealth_regions_other: string;
     // Step 10 — Insurance & Payment
     payment_methods: string[];
     insurance_plans: string;
@@ -78,13 +77,14 @@ interface ProviderFormData {
     // Step 13 — Accessibility
     accessibility: string[];
     accessibility_other: string;
+
+    practice_settings_other: string;
     // Step 14 — Consent & Agreement
     consent_accurate: boolean;
     consent_notify: boolean;
     consent_no_endorsement: boolean;
     consent_public: boolean;
 }
-
 type FieldName = keyof ProviderFormData;
 type FormErrors = Partial<Record<FieldName, string>>;
 
@@ -98,7 +98,6 @@ const PROVIDER_TYPES: { value: ProviderType; label: string }[] = [
     { value: 'faith_based', label: 'Faith-Based Organization' },
     { value: 'community_program', label: 'Community Program' },
 ];
-
 const PROFESSIONAL_TITLES = [
     'Clinical Psychologist',
     'Neuropsychologist',
@@ -118,7 +117,6 @@ const PROFESSIONAL_TITLES = [
     'Pastoral Counselor',
     'Other (specify)',
 ];
-
 const YEARS_EXPERIENCE = [
     'Less than 2 years',
     '2–5 years',
@@ -127,13 +125,11 @@ const YEARS_EXPERIENCE = [
     '16–20 years',
     '20+ years',
 ];
-
 const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
     { value: 'provisional', label: 'Provisional' },
     { value: 'not_applicable', label: 'Not Applicable' },
 ];
-
 /**
  * Areas of Support — grouped taxonomy.
  */
@@ -281,7 +277,6 @@ const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
         ],
     },
 ];
-
 const POPULATIONS_SERVED = [
     'Infants & Toddlers (0–5)',
     'Children (6–12)',
@@ -303,7 +298,6 @@ const POPULATIONS_SERVED = [
     'Support for First Responders',
     'Support for Helping Professionals',
 ];
-
 // Treatment Approaches
 const TREATMENT_APPROACHES = [
     'Acceptance & Commitment Therapy (ACT)',
@@ -325,7 +319,6 @@ const TREATMENT_APPROACHES = [
     'Integrative / Eclectic Therapy',
     'Other (specify)',
 ];
-
 // Specialized Training
 const SPECIALIZED_TRAINING_OPTIONS = [
     'Psychological First Aid (PFA)',
@@ -342,7 +335,6 @@ const SPECIALIZED_TRAINING_OPTIONS = [
     'Couples & Family Therapy',
     'Other Specialized Training',
 ];
-
 const LANGUAGES = [
     'English',
     'Spanish',
@@ -353,7 +345,6 @@ const LANGUAGES = [
     'Dutch',
     'Other',
 ];
-
 const SERVICE_FORMATS = [
     'In-Person',
     'Virtual',
@@ -362,7 +353,6 @@ const SERVICE_FORMATS = [
     'Group-Based',
     'School-Based',
 ];
-
 const PRACTICE_SETTINGS = [
     'Private Practice',
     'Community Agency',
@@ -373,9 +363,7 @@ const PRACTICE_SETTINGS = [
     'Nonprofit Organization',
     'Government Agency',
     'Independent Contractor',
-    'Other',
 ];
-
 const PAYMENT_METHODS = [
     'Self-Pay',
     'Insurance Accepted',
@@ -389,7 +377,6 @@ const PAYMENT_METHODS = [
     'Pro Bono / Volunteer Services',
     'No-Cost Services',
 ];
-
 // Accessibility options — "Other" handled separately
 const ACCESSIBILITY_OPTIONS = [
     'Wheelchair Accessible',
@@ -400,7 +387,6 @@ const ACCESSIBILITY_OPTIONS = [
     'Home Visits Available',
     'Public Transportation Accessible',
 ];
-
 // Regions — "Other" handled separately for both license states and telehealth
 const REGIONS = [
     'Anguilla',
@@ -437,7 +423,6 @@ const REGIONS = [
     'Canada',
     // 'Other' removed – handled separately
 ];
-
 /* ------------------------------------------------------------------ */
 /*  Step metadata                                                      */
 /* ------------------------------------------------------------------ */
@@ -458,9 +443,7 @@ const STEPS = [
     { key: 'accessibility', title: 'Accessibility', subtitle: 'Accommodations' },
     { key: 'consent', title: 'Consent & Agreement', subtitle: 'Finish up' },
 ] as const;
-
 const TOTAL_STEPS = STEPS.length;
-
 // Maps a field to the step index it belongs to
 const FIELD_STEP: Record<string, number> = {
     provider_type: 0, organization_name: 0, credentials: 0,
@@ -478,6 +461,7 @@ const FIELD_STEP: Record<string, number> = {
     caribbean_identity: 7, caribbean_experience: 7, languages: 7,
     languages_other: 7, cultural_approach: 7,
     service_formats: 8, practice_settings: 8,
+    practice_settings_other: 8,
     address: 9, city: 9, state_province: 9, country: 9,
     multiple_locations: 9, hide_address: 9, telehealth_regions: 9, telehealth_regions_other: 9,
     payment_methods: 10, insurance_plans: 10,
@@ -487,14 +471,12 @@ const FIELD_STEP: Record<string, number> = {
     consent_accurate: 14, consent_notify: 14,
     consent_no_endorsement: 14, consent_public: 14,
 };
-
 /* ------------------------------------------------------------------ */
 /*  Validation helpers                                                 */
 /* ------------------------------------------------------------------ */
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
-
 /* ------------------------------------------------------------------ */
 /*  Reusable field components                                          */
 /* ------------------------------------------------------------------ */
@@ -502,7 +484,6 @@ const errClass = (hasError: boolean) =>
     hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
         : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25';
-
 function FieldShell({
     label,
     required,
@@ -535,7 +516,6 @@ function FieldShell({
         </div>
     );
 }
-
 function TextInput({
     value, onChange, error, placeholder, type = 'text', disabled = false,
 }: {
@@ -557,7 +537,6 @@ function TextInput({
         />
     );
 }
-
 function TextArea({
     value, onChange, error, placeholder, rows = 5,
 }: {
@@ -577,7 +556,6 @@ function TextArea({
         />
     );
 }
-
 function PasswordInput({
     value, onChange, error, placeholder,
 }: {
@@ -617,7 +595,6 @@ function PasswordInput({
         </div>
     );
 }
-
 function SearchableSelect({
     value, onChange, options, error, placeholder = 'Select…',
     searchPlaceholder = 'Search…', emptyText = 'No results found.',
@@ -634,20 +611,16 @@ function SearchableSelect({
     const [query, setQuery] = useState('');
     const rootRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
-
     const opts = useMemo(
         () => options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o)),
         [options]
     );
-
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return opts;
         return opts.filter((o) => o.label.toLowerCase().includes(q));
     }, [opts, query]);
-
     const selectedLabel = opts.find((o) => o.value === value)?.label ?? '';
-
     useEffect(() => {
         if (!open) return;
         const onClick = (e: MouseEvent) => {
@@ -665,7 +638,6 @@ function SearchableSelect({
             document.removeEventListener('keydown', onKey);
         };
     }, [open]);
-
     useEffect(() => {
         if (open) {
             requestAnimationFrame(() => searchRef.current?.focus());
@@ -673,7 +645,6 @@ function SearchableSelect({
             setQuery('');
         }
     }, [open]);
-
     return (
         <div ref={rootRef} className="relative">
             <button
@@ -694,7 +665,6 @@ function SearchableSelect({
                     <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                 </svg>
             </button>
-
             {open && (
                 <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
                     <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
@@ -750,7 +720,6 @@ function SearchableSelect({
         </div>
     );
 }
-
 function RadioRow({
     options, value, onChange, name,
 }: {
@@ -782,7 +751,6 @@ function RadioRow({
         </div>
     );
 }
-
 function CheckGrid({
     options, selected, onToggle, columns = 2,
 }: {
@@ -828,7 +796,56 @@ function CheckGrid({
         </div>
     );
 }
-
+/**
+ * OtherCheckboxField — "Other (specify)" checkbox + text input, styled to
+ * match a normal CheckGrid cell (white background, no dashed / sand box).
+ */
+function OtherCheckboxField({
+    checked, text, onToggle, onTextChange, placeholder, error,
+}: {
+    checked: boolean;
+    text: string;
+    onToggle: () => void;
+    onTextChange: (v: string) => void;
+    placeholder?: string;
+    error?: boolean;
+}) {
+    return (
+        <div className="mt-2.5 space-y-2.5">
+            <button
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={onToggle}
+                className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${checked
+                    ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]'
+                    : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'
+                    }`}
+            >
+                <span
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
+                        }`}
+                    aria-hidden
+                >
+                    {checked && (
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                        </svg>
+                    )}
+                </span>
+                <span className="leading-snug">Other (specify)</span>
+            </button>
+            {checked && (
+                <TextInput
+                    value={text}
+                    onChange={onTextChange}
+                    placeholder={placeholder}
+                    error={error}
+                />
+            )}
+        </div>
+    );
+}
 /**
  * AccordionCheckGroups — collapsible category groups for Areas of Support.
  * Now also includes "Other" checkbox and text input per category.
@@ -849,11 +866,9 @@ function AccordionCheckGroups({
     const [openCat, setOpenCat] = useState<string>(
         groups[0]?.category ?? ''
     );
-
     const toggleCat = (cat: string) => {
         setOpenCat((prev) => (prev === cat ? '' : cat));
     };
-
     return (
         <div className="space-y-2.5">
             {groups.map((g) => {
@@ -862,7 +877,6 @@ function AccordionCheckGroups({
                 const custom = customData[g.category] || { checked: false, text: '' };
                 const customSelected = custom.checked && custom.text.trim() !== '';
                 const totalSelected = count + (customSelected ? 1 : 0);
-
                 return (
                     <div
                         key={g.category}
@@ -894,7 +908,6 @@ function AccordionCheckGroups({
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
-
                         {isOpen && (
                             <div className="border-t border-[#EFEAE0] bg-white p-3.5">
                                 <CheckGrid
@@ -903,40 +916,14 @@ function AccordionCheckGroups({
                                     onToggle={onToggle}
                                     columns={2}
                                 />
-
-                                {/* "Other" row - whole div clickable */}
-                                <div
-                                    className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
-                                    onClick={(e) => {
-                                        if (e.target instanceof HTMLInputElement) return;
-                                        onCustomChange(g.category, 'checked', !custom.checked);
-                                    }}
-                                >
-                                    <div className="flex items-center gap-2.5">
-                                        <span
-                                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${custom.checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
-                                                }`}
-                                            aria-hidden
-                                        >
-                                            {custom.checked && (
-                                                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
-                                                    <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
-                                                </svg>
-                                            )}
-                                        </span>
-                                        <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
-                                    </div>
-                                    {custom.checked && (
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            <TextInput
-                                                value={custom.text}
-                                                onChange={(v) => onCustomChange(g.category, 'text', v)}
-                                                placeholder="Describe the other area of support…"
-                                                error={false}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                {/* "Other" — same design as the form, no background box */}
+                                <OtherCheckboxField
+                                    checked={custom.checked}
+                                    text={custom.text}
+                                    onToggle={() => onCustomChange(g.category, 'checked', !custom.checked)}
+                                    onTextChange={(v) => onCustomChange(g.category, 'text', v)}
+                                    placeholder="Describe the other area of support…"
+                                />
                             </div>
                         )}
                     </div>
@@ -945,7 +932,6 @@ function AccordionCheckGroups({
         </div>
     );
 }
-
 // Certifications input component
 function CertificationsInput({
     values,
@@ -964,7 +950,6 @@ function CertificationsInput({
         const newList = values.filter((_, i) => i !== idx);
         onChange(newList);
     };
-
     return (
         <div className="space-y-2">
             {values.map((val, idx) => (
@@ -996,7 +981,6 @@ function CertificationsInput({
         </div>
     );
 }
-
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
@@ -1016,13 +1000,11 @@ interface PageProps {
     errors?: Partial<Record<string, string>>;
     countries: CountryData[];
 }
-
 export default function ProviderRegistration({ errors: serverErrors, countries }: PageProps) {
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
     const topRef = useRef<HTMLDivElement>(null);
-
     // ---- OTP / account-creation state --------------------------------
     const [otpCode, setOtpCode] = useState('');
     const [accountCreated, setAccountCreated] = useState(false);
@@ -1030,7 +1012,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     const [verifyingOtp, setVerifyingOtp] = useState(false);
     const [resending, setResending] = useState(false);
     const [otpError, setOtpError] = useState('');
-
     // ---- Custom "Other" support areas per category -------------------
     const [customSupportAreas, setCustomSupportAreas] = useState<Record<string, { checked: boolean; text: string }>>(() => {
         const init: Record<string, { checked: boolean; text: string }> = {};
@@ -1039,14 +1020,12 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         });
         return init;
     });
-
     const updateCustomSupportArea = (category: string, field: 'checked' | 'text', value: boolean | string) => {
         setCustomSupportAreas(prev => ({
             ...prev,
             [category]: { ...prev[category], [field]: value }
         }));
     };
-
     // ---- Form -------------------------------------------------------
     const form = useForm<ProviderFormData>({
         provider_type: '',
@@ -1079,6 +1058,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         cultural_approach: '',
         service_formats: [],
         practice_settings: [],
+        practice_settings_other: '',
         address: '',
         city: '',
         state_province: '',
@@ -1102,7 +1082,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         consent_public: false,
     });
     const d = form.data;
-
     /* ---- field helpers --------------------------------------------- */
     const set = <K extends FieldName>(key: K, value: ProviderFormData[K]) => {
         form.setData(key, value);
@@ -1117,11 +1096,9 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     };
     const scrollTop = () =>
         topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
     /* ---- OTP / account helpers --------------------------------------- */
     const getCsrfToken = () =>
         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
     const createAccountAndSendOtp = async (): Promise<boolean> => {
         setCreatingAccount(true);
         setOtpError('');
@@ -1165,7 +1142,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             setCreatingAccount(false);
         }
     };
-
     const verifyOtp = async () => {
         setOtpError('');
         setVerifyingOtp(true);
@@ -1194,7 +1170,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             setVerifyingOtp(false);
         }
     };
-
     const resendOtp = async () => {
         setResending(true);
         setOtpError('');
@@ -1219,7 +1194,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             setResending(false);
         }
     };
-
     /* ---- Validation ----------------------------------------------- */
     const validateStep = (step: number, d: ProviderFormData): FormErrors => {
         const e: FormErrors = {};
@@ -1251,7 +1225,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (!d.license_not_applicable && !d.license_number.trim())
                     e.license_number = 'Enter your license number, or select "Not applicable".';
                 if (!d.license_status) e.license_status = 'Please select your license status.';
-
                 const hasOther = d.license_states.includes('__other__');
                 const hasSelection = d.license_states.length > 0 && !(d.license_states.length === 1 && hasOther);
                 if (!hasSelection && !(hasOther && d.license_states_other.trim())) {
@@ -1316,7 +1289,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (!d.state_province) e.state_province = 'State / Province is required.';
                 if (!d.country) e.country = 'Country is required.';
                 if (!d.multiple_locations) e.multiple_locations = 'Please let us know if you serve multiple locations.';
-
                 // Telehealth regions "Other" validation
                 const hasTelehealthOther = d.telehealth_regions.includes('__other__');
                 const hasTelehealthSelection = d.telehealth_regions.length > 0 && !(d.telehealth_regions.length === 1 && hasTelehealthOther);
@@ -1359,7 +1331,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         }
         return e;
     };
-
     /* ---- navigation ------------------------------------------------- */
     const goNext = async () => {
         const stepErrors = validateStep(step, d);
@@ -1376,28 +1347,36 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         setStep(nextStep);
         scrollTop();
     };
-
     const goBack = () => {
         setErrors({});
         setStep((s) => Math.max(s - 1, 0));
         scrollTop();
     };
-
     const handleSubmit = () => {
-        // Build final arrays for multi-select fields
-        const finalTreatmentApproaches = [...d.treatment_approaches];
+        // ---------- 1. ফাইনাল অ্যারে তৈরি ----------
+        // Treatment Approaches
+        const finalTreatmentApproaches = d.treatment_approaches.filter(v => v !== 'Other (specify)');
         if (d.treatment_approaches.includes('Other (specify)') && d.treatment_approaches_other.trim()) {
             finalTreatmentApproaches.push(d.treatment_approaches_other.trim());
         }
 
-        const finalSpecializedTraining = [...d.specialized_training];
+        // Specialized Training
+        const finalSpecializedTraining = d.specialized_training.filter(v => v !== 'Other Specialized Training');
         if (d.specialized_training.includes('Other Specialized Training') && d.specialized_training_other.trim()) {
             finalSpecializedTraining.push(d.specialized_training_other.trim());
         }
 
+        // Certifications
         const finalCertifications = d.certifications.filter(c => c.trim() !== '');
 
-        // Areas of Support: convert to "category|area" format
+        // Practice Settings
+        let finalPracticeSettings = [...d.practice_settings];
+        if (d.practice_settings.includes('__other__') && d.practice_settings_other.trim()) {
+            finalPracticeSettings = finalPracticeSettings.filter(v => v !== '__other__');
+            finalPracticeSettings.push(d.practice_settings_other.trim());
+        }
+
+        // Areas of Support
         const areaToCategoryMap: Record<string, string> = {};
         AREAS_OF_SUPPORT_GROUPS.forEach(group => {
             group.items.forEach(item => {
@@ -1406,19 +1385,34 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         });
 
         const finalAreasOfSupport: string[] = [];
-        // Predefined areas
+
+        // প্রি-ডিফাইন্ড এলাকা
         d.areas_of_support.forEach(area => {
             const category = areaToCategoryMap[area];
             if (category) {
                 finalAreasOfSupport.push(`${category}|${area}`);
             }
         });
-        // Custom areas
+
+        // কাস্টম "Other" এলাকা
         for (const [category, custom] of Object.entries(customSupportAreas)) {
             if (custom.checked && custom.text.trim() !== '') {
                 finalAreasOfSupport.push(`${category}|${custom.text.trim()}`);
             }
         }
+
+        // ফিল্টার – শুধু বৈধ ফরম্যাটের আইটেম রাখি
+        const validAreas = finalAreasOfSupport.filter(item => {
+            const parts = item.split('|');
+            return parts.length === 2 && parts[0].trim() && parts[1].trim();
+        });
+
+        // ---------- 2. ফর্ম ডেটা আপডেট (এটাই মূল ফিক্স) ----------
+        form.setData('areas_of_support', validAreas);
+        form.setData('treatment_approaches', finalTreatmentApproaches);
+        form.setData('specialized_training', finalSpecializedTraining);
+        form.setData('certifications', finalCertifications);
+        form.setData('practice_settings', finalPracticeSettings);
 
         // Accessibility
         let finalAccessibility = [...d.accessibility];
@@ -1426,6 +1420,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             finalAccessibility = finalAccessibility.filter(v => v !== '__other__');
             finalAccessibility.push(d.accessibility_other.trim());
         }
+        form.setData('accessibility', finalAccessibility);
 
         // License states
         let finalLicenseStates = [...d.license_states];
@@ -1433,6 +1428,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             finalLicenseStates = finalLicenseStates.filter(v => v !== '__other__');
             finalLicenseStates.push(d.license_states_other.trim());
         }
+        form.setData('license_states', finalLicenseStates);
 
         // Telehealth regions
         let finalTelehealthRegions = [...d.telehealth_regions];
@@ -1440,15 +1436,16 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             finalTelehealthRegions = finalTelehealthRegions.filter(v => v !== '__other__');
             finalTelehealthRegions.push(d.telehealth_regions_other.trim());
         }
+        form.setData('telehealth_regions', finalTelehealthRegions);
 
-        // Validate all steps with updated data
-        const stepErrors = validateStep(step, d);
+        // ---------- 3. ভ্যালিডেশন (এখন `form.data` ব্যবহার করুন) ----------
+        const stepErrors = validateStep(step, form.data); // form.data দিয়ে ভ্যালিডেট করুন
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
             return;
         }
         for (let i = 0; i < TOTAL_STEPS; i++) {
-            const e = validateStep(i, d);
+            const e = validateStep(i, form.data);
             if (Object.keys(e).length > 0) {
                 setErrors(e);
                 setStep(i);
@@ -1457,52 +1454,16 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             }
         }
 
-        // Create FormData
-        const formData = new FormData();
+        // ---------- 4. ডিবাগ (ঐচ্ছিক) ----------
+        console.log('📦 Final areas_of_support being sent:', form.data.areas_of_support);
 
-        Object.keys(d).forEach(key => {
-            const value = d[key as keyof ProviderFormData];
-            if (value === null || value === undefined) return;
-            if (key === 'profile_photo' || key === 'verification_document' || key === 'additional_photos') return;
-            if (key === 'areas_of_support') return;
-            if (key === 'treatment_approaches' || key === 'specialized_training' || key === 'certifications' || key === 'accessibility' || key === 'license_states' || key === 'telehealth_regions') return;
-
-            if (Array.isArray(value)) {
-                value.forEach(item => {
-                    if (item !== null && item !== undefined) {
-                        formData.append(`${key}[]`, item);
-                    }
-                });
-            } else if (typeof value === 'boolean') {
-                formData.append(key, value ? '1' : '0');
-            } else {
-                formData.append(key, String(value));
-            }
-        });
-
-        // Append final arrays
-        finalAreasOfSupport.forEach(item => formData.append('areas_of_support[]', item));
-        finalTreatmentApproaches.forEach(item => formData.append('treatment_approaches[]', item));
-        finalSpecializedTraining.forEach(item => formData.append('specialized_training[]', item));
-        finalCertifications.forEach(item => formData.append('certifications[]', item));
-        finalAccessibility.forEach(item => formData.append('accessibility[]', item));
-        finalLicenseStates.forEach(item => formData.append('license_states[]', item));
-        finalTelehealthRegions.forEach(item => formData.append('telehealth_regions[]', item));
-
-        // Append files
-        if (d.profile_photo instanceof File) formData.append('profile_photo', d.profile_photo);
-        if (d.verification_document instanceof File) formData.append('verification_document', d.verification_document);
-        if (Array.isArray(d.additional_photos)) {
-            d.additional_photos.forEach((file) => {
-                if (file instanceof File) formData.append('additional_photos[]', file);
-            });
-        }
-
+        // ---------- 5. সাবমিট ----------
         form.post('/provider/directory/store', {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => setSubmitted(true),
             onError: (serverErrs: Record<string, string>) => {
+                console.log('❌ Server errors:', serverErrs);
                 const firstField = Object.keys(serverErrs)[0];
                 if (firstField && FIELD_STEP[firstField] !== undefined) {
                     setStep(FIELD_STEP[firstField]);
@@ -1511,12 +1472,205 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             },
         });
     };
+    // const handleSubmit = () => {
+    //     // ---------- 1. ফাইনাল অ্যারে তৈরি করুন ----------
+    //     // Treatment Approaches
+    //     const finalTreatmentApproaches = d.treatment_approaches.filter(v => v !== 'Other (specify)');
+    //     if (d.treatment_approaches.includes('Other (specify)') && d.treatment_approaches_other.trim()) {
+    //         finalTreatmentApproaches.push(d.treatment_approaches_other.trim());
+    //     }
 
+    //     // Specialized Training
+    //     const finalSpecializedTraining = d.specialized_training.filter(v => v !== 'Other Specialized Training');
+    //     if (d.specialized_training.includes('Other Specialized Training') && d.specialized_training_other.trim()) {
+    //         finalSpecializedTraining.push(d.specialized_training_other.trim());
+    //     }
+
+    //     // Certifications
+    //     const finalCertifications = d.certifications.filter(c => c.trim() !== '');
+
+    //     // Practice Settings
+    //     let finalPracticeSettings = [...d.practice_settings];
+    //     if (d.practice_settings.includes('__other__') && d.practice_settings_other.trim()) {
+    //         finalPracticeSettings = finalPracticeSettings.filter(v => v !== '__other__');
+    //         finalPracticeSettings.push(d.practice_settings_other.trim());
+    //     }
+
+    //     // Areas of Support
+    //     const areaToCategoryMap: Record<string, string> = {};
+    //     AREAS_OF_SUPPORT_GROUPS.forEach(group => {
+    //         group.items.forEach(item => {
+    //             areaToCategoryMap[item] = group.category;
+    //         });
+    //     });
+
+    //     const finalAreasOfSupport: string[] = [];
+
+    //     // Predefined areas
+    //     d.areas_of_support.forEach(area => {
+    //         const category = areaToCategoryMap[area];
+    //         if (category) {
+    //             finalAreasOfSupport.push(`${category}|${area}`);
+    //         }
+    //     });
+
+    //     // Custom areas
+    //     console.log('🔍 customSupportAreas:', customSupportAreas); // ডিবাগ
+
+    //     for (const [category, custom] of Object.entries(customSupportAreas)) {
+    //         console.log(`🔍 Checking ${category}:`, custom); // ডিবাগ
+    //         if (custom.checked && custom.text.trim() !== '') {
+    //             finalAreasOfSupport.push(`${category}|${custom.text.trim()}`);
+    //             console.log(`✅ Added custom: ${category}|${custom.text.trim()}`); // ডিবাগ
+    //         }
+    //     }
+
+    //     // 🔥 শুধুমাত্র বৈদ্ধ আইটেম রাখুন (category|area)
+    //     const validAreas = finalAreasOfSupport.filter(item => {
+    //         const parts = item.split('|');
+    //         return parts.length === 2 && parts[0].trim() && parts[1].trim();
+    //     });
+
+    //     console.log('✅ validAreas:', validAreas);
+
+    //     // Accessibility
+    //     let finalAccessibility = [...d.accessibility];
+    //     if (d.accessibility.includes('__other__') && d.accessibility_other.trim()) {
+    //         finalAccessibility = finalAccessibility.filter(v => v !== '__other__');
+    //         finalAccessibility.push(d.accessibility_other.trim());
+    //     }
+
+    //     // License states
+    //     let finalLicenseStates = [...d.license_states];
+    //     if (d.license_states.includes('__other__') && d.license_states_other.trim()) {
+    //         finalLicenseStates = finalLicenseStates.filter(v => v !== '__other__');
+    //         finalLicenseStates.push(d.license_states_other.trim());
+    //     }
+
+    //     // Telehealth regions
+    //     let finalTelehealthRegions = [...d.telehealth_regions];
+    //     if (d.telehealth_regions.includes('__other__') && d.telehealth_regions_other.trim()) {
+    //         finalTelehealthRegions = finalTelehealthRegions.filter(v => v !== '__other__');
+    //         finalTelehealthRegions.push(d.telehealth_regions_other.trim());
+    //     }
+
+    //     // ---------- 2. ভ্যালিডেশন ----------
+    //     const stepErrors = validateStep(step, d);
+    //     if (Object.keys(stepErrors).length > 0) {
+    //         setErrors(stepErrors);
+    //         return;
+    //     }
+    //     for (let i = 0; i < TOTAL_STEPS; i++) {
+    //         const e = validateStep(i, d);
+    //         if (Object.keys(e).length > 0) {
+    //             setErrors(e);
+    //             setStep(i);
+    //             scrollTop();
+    //             return;
+    //         }
+    //     }
+
+    //     // ---------- 3. FormData তৈরি ----------
+    //     const formData = new FormData();
+
+    //     // সব ফিল্ড স্ক্যান করুন, কিন্তু অপ্রয়োজনীয় কী বাদ দিন
+    //     Object.keys(d).forEach(key => {
+    //         const value = d[key as keyof ProviderFormData];
+    //         if (value === null || value === undefined) return;
+
+    //         // ফাইল ফিল্ড – আলাদাভাবে হ্যান্ডেল করা হবে
+    //         if (key === 'profile_photo' || key === 'verification_document' || key === 'additional_photos') return;
+
+    //         // যে ফিল্ডগুলো আমরা ইতিমধ্যে অ্যারেতে মার্জ করেছি বা বিশেষভাবে হ্যান্ডেল করেছি
+    //         if (
+    //             key === 'areas_of_support' ||
+    //             key === 'areas_of_support_other' ||
+    //             key === 'treatment_approaches' ||
+    //             key === 'specialized_training' ||
+    //             key === 'certifications' ||
+    //             key === 'practice_settings' ||
+    //             key === 'accessibility' ||
+    //             key === 'license_states' ||
+    //             key === 'telehealth_regions'
+    //         ) {
+    //             return;
+    //         }
+
+    //         // `_other` ফিল্ডগুলোও বাদ (এগুলো কোনো টেবিল কলাম নয়)
+    //         if (
+    //             key === 'areas_of_support_other' ||           // ✅ নতুন যোগ
+    //             key === 'license_states_other' ||
+    //             key === 'telehealth_regions_other' ||
+    //             key === 'accessibility_other' ||
+    //             key === 'treatment_approaches_other' ||
+    //             key === 'specialized_training_other' ||
+    //             key === 'practice_settings_other'
+    //         ) {
+    //             return;
+    //         }
+
+    //         // বাকি ফিল্ডগুলো যোগ করুন
+    //         if (Array.isArray(value)) {
+    //             value.forEach(item => {
+    //                 if (item !== null && item !== undefined) {
+    //                     formData.append(`${key}[]`, item);
+    //                 }
+    //             });
+    //         } else if (typeof value === 'boolean') {
+    //             formData.append(key, value ? '1' : '0');
+    //         } else {
+    //             formData.append(key, String(value));
+    //         }
+    //     });
+
+    //     // ---------- 4. ফাইনাল অ্যারেগুলো যোগ করুন ----------
+    //     validAreas.forEach(item => formData.append('areas_of_support[]', item));
+    //     finalTreatmentApproaches.forEach(item => formData.append('treatment_approaches[]', item));
+    //     finalSpecializedTraining.forEach(item => formData.append('specialized_training[]', item));
+    //     finalCertifications.forEach(item => formData.append('certifications[]', item));
+    //     finalAccessibility.forEach(item => formData.append('accessibility[]', item));
+    //     finalLicenseStates.forEach(item => formData.append('license_states[]', item));
+    //     finalTelehealthRegions.forEach(item => formData.append('telehealth_regions[]', item));
+    //     finalPracticeSettings.forEach(item => formData.append('practice_settings[]', item));
+
+    //     // ---------- 5. ফাইল আপলোড ----------
+    //     if (d.profile_photo instanceof File) {
+    //         formData.append('profile_photo', d.profile_photo);
+    //     }
+    //     if (d.verification_document instanceof File) {
+    //         formData.append('verification_document', d.verification_document);
+    //     }
+    //     if (Array.isArray(d.additional_photos)) {
+    //         d.additional_photos.forEach(file => {
+    //             if (file instanceof File) {
+    //                 formData.append('additional_photos[]', file);
+    //             }
+    //         });
+    //     }
+
+    //     // ---------- 6. ডিবাগ (প্রয়োজনে কমেন্ট করে দিন) ----------
+    //     for (let pair of formData.entries()) {
+    //         console.log('📦 FormData:', pair[0], pair[1]);
+    //     }
+
+    //     // ---------- 7. সাবমিট ----------
+    //     form.post('/provider/directory/store', {
+    //         forceFormData: true,
+    //         preserveScroll: true,
+    //         onSuccess: () => setSubmitted(true),
+    //         onError: (serverErrs: Record<string, string>) => {
+    //             console.log('❌ Server errors:', serverErrs);
+    //             const firstField = Object.keys(serverErrs)[0];
+    //             if (firstField && FIELD_STEP[firstField] !== undefined) {
+    //                 setStep(FIELD_STEP[firstField]);
+    //                 scrollTop();
+    //             }
+    //         },
+    //     });
+    // };
     const fieldError = (key: FieldName): string | undefined =>
         errors[key] || (serverErrors?.[key] ?? form.errors[key]);
-
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
-
     /* ---- success screen -------------------------------------------- */
     if (submitted) {
         return (
@@ -1553,7 +1707,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             </>
         );
     }
-
     /* ---- render ----------------------------------------------------- */
     return (
         <>
@@ -1593,7 +1746,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     {STEPS[step].title}
                                 </p>
                             </div>
-
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
                                     <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
@@ -1647,7 +1799,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                 </ol>
                             </nav>
                         </aside>
-
                         {/* Form card */}
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
@@ -1678,7 +1829,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                         onCustomSupportChange={updateCustomSupportArea}
                                     />
                                 </div>
-
                                 {/* Navigation */}
                                 <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
                                     <button
@@ -1724,7 +1874,6 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         </>
     );
 }
-
 /* ------------------------------------------------------------------ */
 /*  Step body — renders the active section                             */
 /* ------------------------------------------------------------------ */
@@ -1752,6 +1901,11 @@ function StepBody({
     const selectedCountry = countries.find(c => c.name === d.country);
     const availableRegions = selectedCountry?.regions ?? [];
     const regionTypeLabel = selectedCountry?.regions[0]?.regionTypeLabel || 'State / Province';
+
+    // 🔥 FIX: added openCat state for the inline accordion in case 4
+    const [openCat, setOpenCat] = useState<string>(
+        AREAS_OF_SUPPORT_GROUPS[0]?.category ?? ''
+    );
 
     switch (step) {
         /* ---------------- Step 0: Basic Information ------------------- */
@@ -1818,7 +1972,6 @@ function StepBody({
                     )}
                 </>
             );
-
         /* ---------------- Step 1: About You -------------------------- */
         case 1:
             return (
@@ -1878,7 +2031,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 2: Verify Email (OTP) ------------------ */
         case 2:
             return (
@@ -1929,7 +2081,6 @@ function StepBody({
                     </p>
                 </div>
             );
-
         /* ---------------- Step 3: Licensure & Verification ----------- */
         case 3:
             return (
@@ -1957,7 +2108,6 @@ function StepBody({
                     >
                         Not applicable
                     </ConsentItem>
-
                     <FieldShell
                         label="State / Country of licensure"
                         required
@@ -1970,49 +2120,22 @@ function StepBody({
                             onToggle={(v) => toggle('license_states', v)}
                             columns={2}
                         />
-
-                        {/* Custom "Other" with text input - whole div clickable */}
-                        <div
-                            className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
-                            onClick={(e) => {
-                                if (e.target instanceof HTMLInputElement) return;
+                        {/* "Other" — same design as the form, no background box */}
+                        <OtherCheckboxField
+                            checked={d.license_states.includes('__other__')}
+                            text={d.license_states_other}
+                            onToggle={() => {
                                 const other = '__other__';
-                                const current = d.license_states;
-                                const next = current.includes(other)
-                                    ? current.filter(v => v !== other)
-                                    : [...current, other];
+                                const next = d.license_states.includes(other)
+                                    ? d.license_states.filter(v => v !== other)
+                                    : [...d.license_states, other];
                                 set('license_states', next);
                             }}
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <span
-                                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.license_states.includes('__other__')
-                                        ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
-                                        : 'border-[#C7BEAD] bg-white'
-                                        }`}
-                                    aria-hidden
-                                >
-                                    {d.license_states.includes('__other__') && (
-                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
-                                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
-                                        </svg>
-                                    )}
-                                </span>
-                                <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
-                            </div>
-                            {d.license_states.includes('__other__') && (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                    <TextInput
-                                        value={d.license_states_other}
-                                        onChange={(v) => set('license_states_other', v)}
-                                        placeholder="Specify the state or country…"
-                                        error={!!fieldError('license_states_other')}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                            onTextChange={(v) => set('license_states_other', v)}
+                            placeholder="Specify the state or country…"
+                            error={!!fieldError('license_states_other')}
+                        />
                     </FieldShell>
-
                     <FieldShell label="License status" required error={fieldError('license_status')}>
                         <RadioRow
                             name="license_status"
@@ -2037,7 +2160,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 4: Areas of Support ------------------- */
         case 4:
             return (
@@ -2047,13 +2169,104 @@ function StepBody({
                     hint="Expand each category and select every area where you have experience and expertise. Your selections appear on your public profile and are used as searchable filters in the directory. There is no limit to the number of selections. You may also specify additional areas using the 'Other' option under each category."
                     error={fieldError('areas_of_support')}
                 >
-                    <AccordionCheckGroups
-                        groups={AREAS_OF_SUPPORT_GROUPS}
-                        selected={d.areas_of_support}
-                        onToggle={(v) => toggle('areas_of_support', v)}
-                        customData={customSupportAreas}
-                        onCustomChange={onCustomSupportChange}
-                    />
+                    <div className="space-y-2.5">
+                        {AREAS_OF_SUPPORT_GROUPS.map((group) => {
+                            const category = group.category;
+                            const custom = customSupportAreas[category] || { checked: false, text: '' };
+                            const count = group.items.filter((i) => d.areas_of_support.includes(i)).length;
+                            const customSelected = custom.checked && custom.text.trim() !== '';
+                            const totalSelected = count + (customSelected ? 1 : 0);
+                            const isOpen = openCat === category;
+
+                            return (
+                                <div
+                                    key={category}
+                                    className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'
+                                        }`}
+                                >
+                                    {/* Accordion header */}
+                                    <button
+                                        type="button"
+                                        aria-expanded={isOpen}
+                                        onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
+                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#0E7C7B]/5' : 'bg-[#FBF8F2] hover:bg-[#0E7C7B]/5'
+                                            }`}
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            <span className="text-sm font-semibold text-[#16302F]">{category}</span>
+                                            {totalSelected > 0 && (
+                                                <span className="inline-flex items-center rounded-full bg-[#0E7C7B] px-2 py-0.5 text-xs font-semibold text-white">
+                                                    {totalSelected} selected
+                                                </span>
+                                            )}
+                                        </span>
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            className={`h-4 w-4 flex-shrink-0 text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''
+                                                }`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Accordion body */}
+                                    {isOpen && (
+                                        <div className="border-t border-[#EFEAE0] bg-white p-3.5">
+                                            <CheckGrid
+                                                options={group.items}
+                                                selected={d.areas_of_support}
+                                                onToggle={(v) => toggle('areas_of_support', v)}
+                                                columns={2}
+                                            />
+
+                                            {/* Other (specify) — inline OtherCheckboxField */}
+                                            <div className="mt-2.5 space-y-2.5">
+                                                <button
+                                                    type="button"
+                                                    role="checkbox"
+                                                    aria-checked={custom.checked}
+                                                    onClick={() =>
+                                                        onCustomSupportChange(category, 'checked', !custom.checked)
+                                                    }
+                                                    className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${custom.checked
+                                                        ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]'
+                                                        : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'
+                                                        }`}
+                                                >
+                                                    <span
+                                                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${custom.checked
+                                                            ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                                            : 'border-[#C7BEAD] bg-white'
+                                                            }`}
+                                                        aria-hidden
+                                                    >
+                                                        {custom.checked && (
+                                                            <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                                                <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                                            </svg>
+                                                        )}
+                                                    </span>
+                                                    <span className="leading-snug">Other (specify)</span>
+                                                </button>
+                                                {custom.checked && (
+                                                    <TextInput
+                                                        value={custom.text}
+                                                        onChange={(v) => onCustomSupportChange(category, 'text', v)}
+                                                        placeholder="Describe the other area of support…"
+                                                        error={!!fieldError('areas_of_support')} // optional error display
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
                     {d.areas_of_support.length > 0 && (
                         <p className="mt-3 text-sm font-medium text-[#0E7C7B]">
                             {d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected
@@ -2061,7 +2274,6 @@ function StepBody({
                     )}
                 </FieldShell>
             );
-
         /* ---------------- Step 5: Populations Served ----------------- */
         case 5:
             return (
@@ -2079,7 +2291,6 @@ function StepBody({
                     />
                 </FieldShell>
             );
-
         /* ---------------- Step 6: Professional Expertise ------------ */
         case 6:
             return (
@@ -2106,7 +2317,6 @@ function StepBody({
                             </div>
                         )}
                     </FieldShell>
-
                     <FieldShell
                         label="Specialized Training"
                         hint="Do you have specialized training or certification in any of the following areas? Select all that apply. (Optional)"
@@ -2129,7 +2339,6 @@ function StepBody({
                             </div>
                         )}
                     </FieldShell>
-
                     <FieldShell
                         label="Certifications & Credentials (Optional)"
                         hint="List any relevant certifications or formal credentials you would like displayed on your profile."
@@ -2142,7 +2351,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 7: Cultural & Language ---------------- */
         case 7:
             return (
@@ -2225,7 +2433,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 8: Service Information ---------------- */
         case 8:
             return (
@@ -2243,6 +2450,7 @@ function StepBody({
                             columns={2}
                         />
                     </FieldShell>
+
                     <FieldShell
                         label="Practice setting"
                         required
@@ -2255,10 +2463,24 @@ function StepBody({
                             onToggle={(v) => toggle('practice_settings', v)}
                             columns={2}
                         />
+                        {/* "Other" — same design as the form */}
+                        <OtherCheckboxField
+                            checked={d.practice_settings.includes('__other__')}
+                            text={d.practice_settings_other || ''}
+                            onToggle={() => {
+                                const other = '__other__';
+                                const next = d.practice_settings.includes(other)
+                                    ? d.practice_settings.filter(v => v !== other)
+                                    : [...d.practice_settings, other];
+                                set('practice_settings', next);
+                            }}
+                            onTextChange={(v) => set('practice_settings_other', v)}
+                            placeholder="Specify other practice setting…"
+                            error={!!fieldError('practice_settings_other')}
+                        />
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 9: Location --------------------------- */
         case 9:
             return (
@@ -2357,51 +2579,24 @@ function StepBody({
                             onToggle={(v) => toggle('telehealth_regions', v)}
                             columns={2}
                         />
-
-                        {/* Custom "Other" with text input - whole div clickable */}
-                        <div
-                            className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
-                            onClick={(e) => {
-                                if (e.target instanceof HTMLInputElement) return;
+                        {/* "Other" — same design as the form, no background box */}
+                        <OtherCheckboxField
+                            checked={d.telehealth_regions.includes('__other__')}
+                            text={d.telehealth_regions_other}
+                            onToggle={() => {
                                 const other = '__other__';
-                                const current = d.telehealth_regions;
-                                const next = current.includes(other)
-                                    ? current.filter(v => v !== other)
-                                    : [...current, other];
+                                const next = d.telehealth_regions.includes(other)
+                                    ? d.telehealth_regions.filter(v => v !== other)
+                                    : [...d.telehealth_regions, other];
                                 set('telehealth_regions', next);
                             }}
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <span
-                                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.telehealth_regions.includes('__other__')
-                                        ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
-                                        : 'border-[#C7BEAD] bg-white'
-                                        }`}
-                                    aria-hidden
-                                >
-                                    {d.telehealth_regions.includes('__other__') && (
-                                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
-                                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
-                                        </svg>
-                                    )}
-                                </span>
-                                <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
-                            </div>
-                            {d.telehealth_regions.includes('__other__') && (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                    <TextInput
-                                        value={d.telehealth_regions_other}
-                                        onChange={(v) => set('telehealth_regions_other', v)}
-                                        placeholder="Specify the other telehealth region(s)…"
-                                        error={!!fieldError('telehealth_regions_other')}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                            onTextChange={(v) => set('telehealth_regions_other', v)}
+                            placeholder="Specify the other telehealth region(s)…"
+                            error={!!fieldError('telehealth_regions_other')}
+                        />
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 10: Insurance & Payment ---------------- */
         case 10:
             return (
@@ -2433,7 +2628,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 11: Contact Information --------------- */
         case 11:
             return (
@@ -2466,7 +2660,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 12: Profile Media -------------------- */
         case 12:
             return (
@@ -2502,7 +2695,6 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-
         /* ---------------- Step 13: Accessibility -------------------- */
         case 13:
             return (
@@ -2518,50 +2710,23 @@ function StepBody({
                         onToggle={(v) => toggle('accessibility', v)}
                         columns={2}
                     />
-
-                    {/* Custom "Other" with text input - whole div clickable */}
-                    <div
-                        className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] p-3 cursor-pointer hover:bg-[#F1EDE3] transition"
-                        onClick={(e) => {
-                            if (e.target instanceof HTMLInputElement) return;
+                    {/* "Other" — same design as the form, no background box */}
+                    <OtherCheckboxField
+                        checked={d.accessibility.includes('__other__')}
+                        text={d.accessibility_other}
+                        onToggle={() => {
                             const other = '__other__';
-                            const current = d.accessibility;
-                            const next = current.includes(other)
-                                ? current.filter(v => v !== other)
-                                : [...current, other];
+                            const next = d.accessibility.includes(other)
+                                ? d.accessibility.filter(v => v !== other)
+                                : [...d.accessibility, other];
                             set('accessibility', next);
                         }}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <span
-                                className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${d.accessibility.includes('__other__')
-                                    ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
-                                    : 'border-[#C7BEAD] bg-white'
-                                    }`}
-                                aria-hidden
-                            >
-                                {d.accessibility.includes('__other__') && (
-                                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
-                                        <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
-                                    </svg>
-                                )}
-                            </span>
-                            <span className="text-sm font-medium text-[#26403F]">Other (specify)</span>
-                        </div>
-                        {d.accessibility.includes('__other__') && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                                <TextInput
-                                    value={d.accessibility_other}
-                                    onChange={(v) => set('accessibility_other', v)}
-                                    placeholder="Describe the accessibility feature or accommodation…"
-                                    error={!!fieldError('accessibility_other')}
-                                />
-                            </div>
-                        )}
-                    </div>
+                        onTextChange={(v) => set('accessibility_other', v)}
+                        placeholder="Describe the accessibility feature or accommodation…"
+                        error={!!fieldError('accessibility_other')}
+                    />
                 </FieldShell>
             );
-
         /* ---------------- Step 14: Consent & Agreement -------------- */
         case 14:
             return (
@@ -2600,12 +2765,10 @@ function StepBody({
                     </ConsentItem>
                 </div>
             );
-
         default:
             return null;
     }
 }
-
 /* ------------------------------------------------------------------ */
 /*  File inputs & consent row                                          */
 /* ------------------------------------------------------------------ */
@@ -2630,7 +2793,6 @@ function FileInput({
             }
         };
     }, [previewUrl]);
-
     const validateFile = (f: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = f.name.split('.').pop()?.toLowerCase();
@@ -2643,7 +2805,6 @@ function FileInput({
         }
         return null;
     };
-
     return (
         <div>
             <div className="flex items-center gap-4">
@@ -2700,7 +2861,6 @@ function FileInput({
         </div>
     );
 }
-
 function MultiFileInput({
     files, onChange, accept, allowedTypes = [],
 }: {
@@ -2711,7 +2871,6 @@ function MultiFileInput({
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
-
     const validateFile = (file: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -2724,7 +2883,6 @@ function MultiFileInput({
         }
         return null;
     };
-
     return (
         <div className="space-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
@@ -2790,7 +2948,6 @@ function MultiFileInput({
         </div>
     );
 }
-
 function SocialLinksInput({
     value, onChange,
 }: {
@@ -2805,22 +2962,17 @@ function SocialLinksInput({
     };
     const [rows, setRows] = useState<{ id: number; value: string }[]>(makeRows);
     const nextId = useRef(rows.length + 1);
-
     const sync = (next: { id: number; value: string }[]) => {
         setRows(next);
         onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', '));
     };
-
     const updateAt = (id: number, v: string) =>
         sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
-
     const addField = () => {
         if (rows.length >= MAX) return;
         sync([...rows, { id: nextId.current++, value: '' }]);
     };
-
     const removeAt = (id: number) => sync(rows.filter((r) => r.id !== id));
-
     return (
         <div className="space-y-2.5">
             {rows.map((row, i) => {
@@ -2866,7 +3018,6 @@ function SocialLinksInput({
         </div>
     );
 }
-
 function PhoneInput({
     value, onChange, error, placeholder,
 }: {
@@ -2888,7 +3039,6 @@ function PhoneInput({
         />
     );
 }
-
 function ConsentItem({
     checked, onChange, error, children,
 }: {

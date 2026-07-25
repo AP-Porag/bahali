@@ -292,31 +292,46 @@ class ProviderDirectoryController extends Controller
 
         $data = $request->validated();
         $data['user_id'] = $user->id;
+        unset($data['email'], $data['password']);
 
-        // JSON fields – array as is
-        $data['license_states'] = $request->input('license_states', []);
-        $data['treatment_approaches'] = $request->input('treatment_approaches', []);
-        $data['specialized_training'] = $request->input('specialized_training', []);
-        $data['certifications'] = $request->input('certifications', []);
-        $data['accessibility'] = $request->input('accessibility', []);
-        // telehealth_regions also comes as array
+        // JSON array columns
+        $data['license_states']        = $request->input('license_states', []);
+        $data['telehealth_regions']    = $request->input('telehealth_regions', []);
+        $data['accessibility']         = $request->input('accessibility', []);
+        $data['treatment_approaches']  = $request->input('treatment_approaches', []);
+        $data['specialized_training']  = $request->input('specialized_training', []);
+        $data['certifications']        = $request->input('certifications', []);
 
-        // Areas of support – mapped to category|area format
+        $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+
+        // Areas of Support → mappedAreasOfSupport() ব্যবহার করুন
         $supportAreas = $request->mappedAreasOfSupport();
-        unset($data['areas_of_support'], $data['areas_of_support_other']);
 
-        // File uploads...
+        unset(
+            $data['areas_of_support'],      // ✅ পিভট টেবিলে যায়
+            $data['areas_of_support_other'], // ✅ টেবিলে নেই
+            $data['accessibility_other']     // ✅ টেবিলে নেই (JSON অ্যারেতে মার্জ হয়েছে)
+        );
+        // File uploads
         if ($request->hasFile('verification_document')) {
-            $data['verification_document'] = $this->storeUpload($request->file('verification_document'), 'providers/verification');
+            $data['verification_document'] = $this->storeUpload(
+                $request->file('verification_document'),
+                'providers/verification'
+            );
         }
         if ($request->hasFile('profile_photo')) {
-            $data['profile_photo'] = $this->storeUpload($request->file('profile_photo'), 'providers/photos');
+            $data['profile_photo'] = $this->storeUpload(
+                $request->file('profile_photo'),
+                'providers/photos'
+            );
         }
         $additionalPhotos = [];
         if ($request->hasFile('additional_photos')) {
             foreach ($request->file('additional_photos') as $photo) {
                 $path = $this->storeUpload($photo, 'providers/photos');
-                if ($path) $additionalPhotos[] = $path;
+                if ($path) {
+                    $additionalPhotos[] = $path;
+                }
             }
         }
         $data['additional_photos'] = $additionalPhotos;
@@ -329,7 +344,10 @@ class ProviderDirectoryController extends Controller
         });
 
         $request->session()->forget(self::SESSION_PENDING_USER);
-        return redirect()->route('providers.create')->with('success', 'Your application has been received.');
+
+        return redirect()
+            ->route('providers.create')
+            ->with('success', 'Your application has been received.');
     }
     // public function store(StoreProviderRequest $request)
     // {
