@@ -37,6 +37,7 @@ class AreasOfSupport
             'Communication Challenges',
             'Caregiver Support',
             'Healing from Relationship Abuse',
+            'Sex Therapy'
         ],
         'Children, Teens & Families' => [
             'Child Behavioral Challenges',
