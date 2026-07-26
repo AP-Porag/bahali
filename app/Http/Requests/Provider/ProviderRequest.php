@@ -28,7 +28,6 @@ class ProviderRequest extends FormRequest
             'cityTown' => 'required|string|max:255', // Change to required
             'serviceArea' => 'nullable|string|max:255',
 
-            // Service Format
             'serviceFormat' => [
                 'required',
                 Rule::in([
@@ -54,6 +53,10 @@ class ProviderRequest extends FormRequest
             'support_areas.*' => 'string|max:255',
 
             'telehealth_regions_other' => ['nullable', 'string', 'max:500'],
+            'accessibility_other' => ['nullable', 'string', 'max:500'],
+            'treatment_approaches_other' => ['nullable', 'string', 'max:500'],
+            'specialized_training_other' => ['nullable', 'string', 'max:500'],
+            'license_states_other' => ['nullable', 'string', 'max:500'],
 
             // Private Address
             'streetAddress1' => 'nullable|string|max:255',

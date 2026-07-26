@@ -280,91 +280,173 @@ class ProviderDirectoryController extends Controller
      * (and OTP-verified) in registerAccount()/verifyOtp(). We just look it
      * up via the session and attach it to the new Provider record.
      */
+
     public function store(StoreProviderRequest $request)
     {
         $userId = $request->session()->get(self::SESSION_PENDING_USER);
         $user = $userId ? User::find($userId) : null;
 
         if (!$user || !$user->email_verified_at) {
-            return back()->withErrors([
-                'email' => 'Please verify your email before submitting.'
-            ]);
+            return back()->withErrors(['email' => 'Please verify your email before submitting.']);
         }
 
         $data = $request->validated();
-
         $data['user_id'] = $user->id;
-
         unset($data['email'], $data['password']);
 
-        // Get support areas
+        // JSON array columns — the custom "Other" text is already merged into
+        // each array on the frontend (form.transform), so store them as-is.
+        $data['license_states']        = $request->input('license_states', []);
+        $data['telehealth_regions']    = $request->input('telehealth_regions', []);
+        $data['accessibility']         = $request->input('accessibility', []);
+        $data['practice_settings']     = $request->input('practice_settings', []);
+        $data['treatment_approaches']  = $request->input('treatment_approaches', []);
+        $data['specialized_training']  = $request->input('specialized_training', []);
+        $data['certifications']        = $request->input('certifications', []);
+
+        $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+
+        // Areas of Support -> provider_support_areas table (one row per area).
         $supportAreas = $request->mappedAreasOfSupport();
 
+        // Remove keys that are NOT columns on `providers`. All the *_other
+        // values were merged into their JSON arrays above, so there are no
+        // *_other columns for them. Leaving any of these in $data would make
+        // Provider::create() throw "Unknown column" and roll back the whole
+        // transaction — which is exactly why the support-area rows weren't saved.
         unset(
             $data['areas_of_support'],
-            $data['areas_of_support_other']
+            $data['areas_of_support_other'],
+            $data['license_states_other'],
+            $data['telehealth_regions_other'],
+            $data['accessibility_other'],
+            $data['practice_settings_other'],
+            $data['treatment_approaches_other'],
+            $data['specialized_training_other'],
         );
 
-
-        // Upload verification document
+        // File uploads
         if ($request->hasFile('verification_document')) {
             $data['verification_document'] = $this->storeUpload(
                 $request->file('verification_document'),
                 'providers/verification'
             );
         }
-
-
-        // Upload profile photo
         if ($request->hasFile('profile_photo')) {
             $data['profile_photo'] = $this->storeUpload(
                 $request->file('profile_photo'),
                 'providers/photos'
             );
         }
-
-
-        // Upload additional photos
         $additionalPhotos = [];
-
         if ($request->hasFile('additional_photos')) {
-
             foreach ($request->file('additional_photos') as $photo) {
-
-                $path = $this->storeUpload(
-                    $photo,
-                    'providers/photos'
-                );
-
+                $path = $this->storeUpload($photo, 'providers/photos');
                 if ($path) {
                     $additionalPhotos[] = $path;
                 }
             }
         }
-
         $data['additional_photos'] = $additionalPhotos;
 
-
         DB::transaction(function () use ($data, $supportAreas) {
-
             $provider = Provider::create($data);
-
             if (!empty($supportAreas)) {
                 $provider->supportAreas()->createMany($supportAreas);
             }
         });
 
-
         $request->session()->forget(self::SESSION_PENDING_USER);
-
 
         return redirect()
             ->route('providers.create')
-            ->with(
-                'success',
-                'Your application has been received.'
-            );
+            ->with('success', 'Your application has been received.');
     }
+    // public function store(StoreProviderRequest $request)
+    // {
+    //     $userId = $request->session()->get(self::SESSION_PENDING_USER);
+    //     $user = $userId ? User::find($userId) : null;
+
+    //     if (!$user || !$user->email_verified_at) {
+    //         return back()->withErrors([
+    //             'email' => 'Please verify your email before submitting.'
+    //         ]);
+    //     }
+
+    //     $data = $request->validated();
+
+    //     $data['user_id'] = $user->id;
+
+    //     unset($data['email'], $data['password']);
+
+    //     // Get support areas
+    //     $supportAreas = $request->mappedAreasOfSupport();
+
+    //     unset(
+    //         $data['areas_of_support'],
+    //         $data['areas_of_support_other']
+    //     );
+
+
+    //     // Upload verification document
+    //     if ($request->hasFile('verification_document')) {
+    //         $data['verification_document'] = $this->storeUpload(
+    //             $request->file('verification_document'),
+    //             'providers/verification'
+    //         );
+    //     }
+
+
+    //     // Upload profile photo
+    //     if ($request->hasFile('profile_photo')) {
+    //         $data['profile_photo'] = $this->storeUpload(
+    //             $request->file('profile_photo'),
+    //             'providers/photos'
+    //         );
+    //     }
+
+
+    //     // Upload additional photos
+    //     $additionalPhotos = [];
+
+    //     if ($request->hasFile('additional_photos')) {
+
+    //         foreach ($request->file('additional_photos') as $photo) {
+
+    //             $path = $this->storeUpload(
+    //                 $photo,
+    //                 'providers/photos'
+    //             );
+
+    //             if ($path) {
+    //                 $additionalPhotos[] = $path;
+    //             }
+    //         }
+    //     }
+
+    //     $data['additional_photos'] = $additionalPhotos;
+
+
+    //     DB::transaction(function () use ($data, $supportAreas) {
+
+    //         $provider = Provider::create($data);
+
+    //         if (!empty($supportAreas)) {
+    //             $provider->supportAreas()->createMany($supportAreas);
+    //         }
+    //     });
+
+
+    //     $request->session()->forget(self::SESSION_PENDING_USER);
+
+
+    //     return redirect()
+    //         ->route('providers.create')
+    //         ->with(
+    //             'success',
+    //             'Your application has been received.'
+    //         );
+    // }
 
     /**
      * Store an uploaded file without any path resolution issues.
@@ -628,6 +710,11 @@ class ProviderDirectoryController extends Controller
                 'languages' => $provider->languages,
                 'languages_other' => $provider->languages_other,
                 'cultural_approach' => $provider->cultural_approach,
+
+
+                'treatment_approaches' => $provider->treatment_approaches,
+                'specialized_training' => $provider->specialized_training,
+                'certifications' => $provider->certifications,
 
                 // Service
                 'service_formats' => $provider->service_formats,

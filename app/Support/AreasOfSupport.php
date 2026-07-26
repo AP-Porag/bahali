@@ -74,15 +74,17 @@ class AreasOfSupport
             'Coping with Chronic Illness',
             'Grief & Loss in Later Life',
         ],
-        'Crisis, Trauma & Recovery' => [
-            'Crisis Support',
-            'Disaster Recovery',
-            'Psychological First Aid',
+        'Trauma, Crisis & Recovery' => [
+            'Trauma',
+            'PTSD',
+            'Childhood Trauma',
+            'Sexual Assault & Sexual Trauma',
+            'Domestic & Intimate Partner Violence',
+            'Military & Service-Related Trauma',
+            'Disaster & Displacement',
             'Community Violence',
-            'Suicide Prevention',
-            'Self-Harm Recovery',
-            'Support for First Responders',
-            'Support for Helping Professionals',
+            'Self-Harm',
+            'Suicidal Thoughts & Behaviors',
         ],
         'Health & Everyday Wellness' => [
             'Living with Chronic Illness',
@@ -111,6 +113,7 @@ class AreasOfSupport
         'Culture, Faith & Community' => [
             'Caribbean & Diaspora Wellness',
             'Faith & Spiritual Support',
+            'Psychological First Aid',
             'Church & Ministry Support',
             'Immigration & Adjusting to a New Culture',
             'Cultural Identity & Belonging',
@@ -145,5 +148,10 @@ class AreasOfSupport
     public static function categoryFor(string $area): ?string
     {
         return self::reverseMap()[$area] ?? null;
+    }
+    /** All category names — used to validate submitted "Other" categories. */
+    public static function categories(): array
+    {
+        return array_keys(self::GROUPS);
     }
 }

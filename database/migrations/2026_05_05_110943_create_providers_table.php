@@ -28,6 +28,7 @@ return new class extends Migration
             // Licensure
             $table->string('license_number')->nullable();
             $table->json('license_states');
+            $table->string('license_states_other')->nullable();
             $table->string('license_status');
             $table->string('verification_document')->nullable();
 
@@ -44,6 +45,8 @@ return new class extends Migration
             // Service
             $table->json('service_formats');
             $table->json('practice_settings');
+            $table->string('practice_settings_other')->nullable();
+
 
             // Location
             $table->string('address');
@@ -69,7 +72,14 @@ return new class extends Migration
             $table->json('additional_photos')->nullable();
 
             // Accessibility
-            $table->json('accessibility');
+            $table->json('accessibility')->nullable();
+            $table->string('accessibility_other')->nullable();
+            // Treatment Approches
+            $table->json('treatment_approaches')->nullable();
+            $table->string('treatment_approaches_other')->nullable();
+            $table->json('specialized_training')->nullable();
+            $table->string('specialized_training_other')->nullable();
+            $table->json('certifications')->nullable();
 
             // Status
             $table->string('status')->default(GlobalConstant::VERIFICATION_STATUS_PENDING);

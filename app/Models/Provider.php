@@ -5,7 +5,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-// use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -48,6 +47,7 @@ class Provider extends Model
         // Service
         'service_formats',
         'practice_settings',
+        'practice_settings_other',
 
         // Location
         'address',
@@ -74,62 +74,69 @@ class Provider extends Model
 
         // Status
         'status',
-
-        // Note
         'note',
-
-        // Accessibility
-        'accessibility',
 
         // Consent
         'consent_accurate',
         'consent_notify',
         'consent_no_endorsement',
         'consent_public',
+
+        // NEW: Professional Expertise
+        'treatment_approaches',
+        'treatment_approaches_others',
+        'specialized_training',
+        'certifications',
+        'accessibility',
+
+
+
+        'telehealth_regions_other',
+        'accessibility_other',
+        'treatment_approaches_other',
+        'specialized_training_other',
+        'license_states_other'
     ];
 
     protected $casts = [
-        'license_states'      => 'array',
-        'professional_title' => 'array',
-        'areas_of_support'    => 'array',
-        'populations_served'  => 'array',
-        'languages'           => 'array',
-        'service_formats'     => 'array',
-        'practice_settings'   => 'array',
-        'telehealth_regions'  => 'array',
-        'payment_methods'     => 'array',
-        'accessibility'       => 'array',
-        'additional_photos'   => 'array',
-        'hide_address'            => 'boolean',
-        'consent_accurate'        => 'boolean',
-        'consent_notify'          => 'boolean',
-        'consent_no_endorsement'  => 'boolean',
-        'consent_public'          => 'boolean',
-        'is_public'              => 'boolean',
-        'reviewed_at'            => 'datetime',
-        'license_verified_at'    => 'datetime',
-
-
-
-
+        'license_states'       => 'array',
+        'professional_title'   => 'array',
+        'areas_of_support'     => 'array',
+        'populations_served'   => 'array',
+        'languages'            => 'array',
+        'service_formats'      => 'array',
+        'practice_settings'    => 'array',
+        'telehealth_regions'   => 'array',
+        'payment_methods'      => 'array',
+        'accessibility'        => 'array',
+        'additional_photos'    => 'array',
+        'treatment_approaches' => 'array',
+        'specialized_training' => 'array',
+        'certifications'       => 'array',
+        'hide_address'         => 'boolean',
+        'consent_accurate'     => 'boolean',
+        'consent_notify'       => 'boolean',
+        'consent_no_endorsement' => 'boolean',
+        'consent_public'       => 'boolean',
+        'reviewed_at'          => 'datetime',
+        'license_verified_at'  => 'datetime',
 
     ];
 
     // Relationships
-    public function country()
+    public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
-    // User রিলেশনশিপ
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function approvedBy()
+    public function supportAreas(): HasMany
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->hasMany(ProviderSupportArea::class);
     }
 
     // Scopes
@@ -141,41 +148,6 @@ class Provider extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
-    }
-
-    public function scopeVirtual($query)
-    {
-        return $query->where('service_format', 'virtual');
-    }
-
-    public function scopeInPerson($query)
-    {
-        return $query->where('service_format', 'in_person');
-    }
-
-    // Accessors & Mutators
-    public function getFullAddressAttribute(): string
-    {
-        $parts = array_filter([
-            $this->street_address1,
-            $this->street_address2,
-            $this->city_town,
-            $this->region,
-            $this->postal_code,
-        ]);
-
-        return implode(', ', $parts);
-    }
-
-    public function getPublicAddressAttribute(): ?string
-    {
-        return match ($this->address_visibility_preference) {
-            'no_display' => null,
-            'city_region_only' => implode(', ', array_filter([$this->city_town, $this->region])),
-            'service_area' => $this->service_area,
-            'full_address' => $this->full_address,
-            default => null,
-        };
     }
 
     // Helper Methods
@@ -201,10 +173,5 @@ class Provider extends Model
     public function isApproved(): bool
     {
         return $this->status === 'approved';
-    }
-
-    public function supportAreas(): HasMany
-    {
-        return $this->hasMany(ProviderSupportArea::class);
     }
 }

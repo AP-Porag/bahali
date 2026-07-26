@@ -14,12 +14,17 @@ return new class extends Migration
                 ->constrained('providers')
                 ->cascadeOnDelete();
             $table->string('category');
-            $table->string('area');
+            $table->string('area')->nullable(); // null allowed
+            $table->string('area_other')->nullable();
             $table->timestamps();
 
-            $table->unique(['provider_id', 'area']);
-            $table->index('category'); // browse-by-category
-            $table->index('area');     // filter-by-area
+            // ইউনিক কনস্ট্রেইন্ট (সম্পূর্ণ তিনটি কলাম মিলিয়ে)
+            $table->unique(['provider_id', 'area', 'area_other']);
+
+            // ইনডেক্স (সার্চের জন্য)
+            $table->index('category');
+            $table->index('area');
+            $table->index('area_other');
         });
     }
 
