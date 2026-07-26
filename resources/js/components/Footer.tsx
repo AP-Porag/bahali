@@ -1,5 +1,5 @@
 import { Facebook, HeartHandshake, Instagram, Linkedin, Youtube } from 'lucide-react';
-
+import FooterCredit from './madbrain';
 export default function Footer() {
     return (
         <section>
@@ -188,19 +188,7 @@ export default function Footer() {
                     </div>
                 </div>
                 <div className="py-3 text-center text-sm">
-                    <span>
-                        Built with ❤️ by{" "}
-                        <a
-                            href="https://madbrain.dev"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Visit MadBrain website"
-                            className="hover:text-[#A9432E] transition-colors duration-200"
-                        >
-                            MadBrain
-                        </a>
-                        .
-                    </span>
+                    <FooterCredit text="Technology Partner" />
                 </div>
             </footer>
 
