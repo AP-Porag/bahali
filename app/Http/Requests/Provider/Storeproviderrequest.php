@@ -129,45 +129,45 @@ class StoreProviderRequest extends FormRequest
     /**
      * নমনীয় ভ্যালিডেশন: "category|area" ফরম্যাট যাচাই, খারাপ আইটেম স্কিপ করা
      */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $v) {
-            $items = $this->input('areas_of_support', []);
-            if (!is_array($items)) {
-                return;
-            }
+    // public function withValidator(Validator $validator): void
+    // {
+    //     $validator->after(function (Validator $v) {
+    //         $items = $this->input('areas_of_support', []);
+    //         if (!is_array($items)) {
+    //             return;
+    //         }
 
-            $knownCategories = array_keys(AreasOfSupport::GROUPS);
+    //         $knownCategories = array_keys(AreasOfSupport::GROUPS);
 
-            foreach ($items as $index => $item) {
-                $key = "areas_of_support.$index";
+    //         foreach ($items as $index => $item) {
+    //             $key = "areas_of_support.$index";
 
-                // ফরম্যাট ঠিক না থাকলে – স্কিপ (এরর দেবেন না)
-                if (!is_string($item) || !str_contains($item, '|')) {
-                    continue;
-                }
+    //             // ফরম্যাট ঠিক না থাকলে – স্কিপ (এরর দেবেন না)
+    //             if (!is_string($item) || !str_contains($item, '|')) {
+    //                 continue;
+    //             }
 
-                [$category, $area] = array_map('trim', explode('|', $item, 2));
+    //             [$category, $area] = array_map('trim', explode('|', $item, 2));
 
-                if (!in_array($category, $knownCategories, true)) {
-                    $v->errors()->add($key, 'This support-area category is not recognized.');
-                    continue;
-                }
+    //             if (!in_array($category, $knownCategories, true)) {
+    //                 $v->errors()->add($key, 'This support-area category is not recognized.');
+    //                 continue;
+    //             }
 
-                if ($area === '') {
-                    $v->errors()->add($key, 'Please describe the area of support.');
-                    continue;
-                }
+    //             if ($area === '') {
+    //                 $v->errors()->add($key, 'Please describe the area of support.');
+    //                 continue;
+    //             }
 
-                // প্রি-ডিফাইন্ড এলাকা চেক (যদি জানা থাকে)
-                $canonical = AreasOfSupport::categoryFor($area);
-                if ($canonical !== null && $canonical !== $category) {
-                    $v->errors()->add($key, 'This area does not belong to the selected category.');
-                }
-                // $canonical === null  →  custom "Other" text  →  allowed
-            }
-        });
-    }
+    //             // প্রি-ডিফাইন্ড এলাকা চেক (যদি জানা থাকে)
+    //             $canonical = AreasOfSupport::categoryFor($area);
+    //             if ($canonical !== null && $canonical !== $category) {
+    //                 $v->errors()->add($key, 'This area does not belong to the selected category.');
+    //             }
+    //             // $canonical === null  →  custom "Other" text  →  allowed
+    //         }
+    //     });
+    // }
 
     /**
      * areas_of_support অ্যারে থেকে পিভট টেবিলের ডেটা তৈরি করে

@@ -811,7 +811,7 @@ function OtherCheckboxField({
     error?: boolean;
 }) {
     return (
-        <div className="mt-2.5 space-y-2.5">
+        <div className="mt-2.5 space-y-2.5 ">
             <button
                 type="button"
                 role="checkbox"
@@ -1353,99 +1353,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         scrollTop();
     };
     const handleSubmit = () => {
-        // ---------- 1. ফাইনাল অ্যারে তৈরি ----------
-        // Treatment Approaches
-        const finalTreatmentApproaches = d.treatment_approaches.filter(v => v !== 'Other (specify)');
-        if (d.treatment_approaches.includes('Other (specify)') && d.treatment_approaches_other.trim()) {
-            finalTreatmentApproaches.push(d.treatment_approaches_other.trim());
-        }
-
-        // Specialized Training
-        const finalSpecializedTraining = d.specialized_training.filter(v => v !== 'Other Specialized Training');
-        if (d.specialized_training.includes('Other Specialized Training') && d.specialized_training_other.trim()) {
-            finalSpecializedTraining.push(d.specialized_training_other.trim());
-        }
-
-        // Certifications
-        const finalCertifications = d.certifications.filter(c => c.trim() !== '');
-
-        // Practice Settings
-        let finalPracticeSettings = [...d.practice_settings];
-        if (d.practice_settings.includes('__other__') && d.practice_settings_other.trim()) {
-            finalPracticeSettings = finalPracticeSettings.filter(v => v !== '__other__');
-            finalPracticeSettings.push(d.practice_settings_other.trim());
-        }
-
-        // Areas of Support
-        const areaToCategoryMap: Record<string, string> = {};
-        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
-            group.items.forEach(item => {
-                areaToCategoryMap[item] = group.category;
-            });
-        });
-
-        const finalAreasOfSupport: string[] = [];
-
-        // প্রি-ডিফাইন্ড এলাকা
-        d.areas_of_support.forEach(area => {
-            const category = areaToCategoryMap[area];
-            if (category) {
-                finalAreasOfSupport.push(`${category}|${area}`);
-            }
-        });
-
-        // কাস্টম "Other" এলাকা
-        for (const [category, custom] of Object.entries(customSupportAreas)) {
-            if (custom.checked && custom.text.trim() !== '') {
-                finalAreasOfSupport.push(`${category}|${custom.text.trim()}`);
-            }
-        }
-
-        // ফিল্টার – শুধু বৈধ ফরম্যাটের আইটেম রাখি
-        const validAreas = finalAreasOfSupport.filter(item => {
-            const parts = item.split('|');
-            return parts.length === 2 && parts[0].trim() && parts[1].trim();
-        });
-
-        // ---------- 2. ফর্ম ডেটা আপডেট (এটাই মূল ফিক্স) ----------
-        form.setData('areas_of_support', validAreas);
-        form.setData('treatment_approaches', finalTreatmentApproaches);
-        form.setData('specialized_training', finalSpecializedTraining);
-        form.setData('certifications', finalCertifications);
-        form.setData('practice_settings', finalPracticeSettings);
-
-        // Accessibility
-        let finalAccessibility = [...d.accessibility];
-        if (d.accessibility.includes('__other__') && d.accessibility_other.trim()) {
-            finalAccessibility = finalAccessibility.filter(v => v !== '__other__');
-            finalAccessibility.push(d.accessibility_other.trim());
-        }
-        form.setData('accessibility', finalAccessibility);
-
-        // License states
-        let finalLicenseStates = [...d.license_states];
-        if (d.license_states.includes('__other__') && d.license_states_other.trim()) {
-            finalLicenseStates = finalLicenseStates.filter(v => v !== '__other__');
-            finalLicenseStates.push(d.license_states_other.trim());
-        }
-        form.setData('license_states', finalLicenseStates);
-
-        // Telehealth regions
-        let finalTelehealthRegions = [...d.telehealth_regions];
-        if (d.telehealth_regions.includes('__other__') && d.telehealth_regions_other.trim()) {
-            finalTelehealthRegions = finalTelehealthRegions.filter(v => v !== '__other__');
-            finalTelehealthRegions.push(d.telehealth_regions_other.trim());
-        }
-        form.setData('telehealth_regions', finalTelehealthRegions);
-
-        // ---------- 3. ভ্যালিডেশন (এখন `form.data` ব্যবহার করুন) ----------
-        const stepErrors = validateStep(step, form.data); // form.data দিয়ে ভ্যালিডেট করুন
+        // 1) Validate every step on the RAW data (sentinels like __other__ still present).
+        const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) {
             setErrors(stepErrors);
             return;
         }
         for (let i = 0; i < TOTAL_STEPS; i++) {
-            const e = validateStep(i, form.data);
+            const e = validateStep(i, d);
             if (Object.keys(e).length > 0) {
                 setErrors(e);
                 setStep(i);
@@ -1454,16 +1369,58 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             }
         }
 
-        // ---------- 4. ডিবাগ (ঐচ্ছিক) ----------
-        console.log('📦 Final areas_of_support being sent:', form.data.areas_of_support);
+        // 2) area -> category map (for the "category|area" format).
+        const areaToCategoryMap: Record<string, string> = {};
+        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
+            group.items.forEach(item => {
+                areaToCategoryMap[item] = group.category;
+            });
+        });
 
-        // ---------- 5. সাবমিট ----------
+        // Drop the sentinel and merge the typed value into the array,
+        // so the custom "Other" text sits in the JSON array like a checkmark value.
+        const mergeOther = (arr: string[], sentinel: string, text: string): string[] => {
+            const out = arr.filter(v => v !== sentinel);
+            if (arr.includes(sentinel) && text && text.trim()) out.push(text.trim());
+            return out;
+        };
+
+        // 3) Transform the payload SYNCHRONOUSLY, right before it is sent.
+        form.transform((data) => {
+            // Areas of Support -> "category|area" (predefined + custom "Other").
+            const finalAreas: string[] = [];
+            data.areas_of_support.forEach((area) => {
+                const category = areaToCategoryMap[area];
+                if (category) finalAreas.push(`${category}|${area}`);
+            });
+            for (const [category, custom] of Object.entries(customSupportAreas)) {
+                if (custom.checked && custom.text.trim() !== '') {
+                    finalAreas.push(`${category}|${custom.text.trim()}`);
+                }
+            }
+            return {
+                ...data,
+                areas_of_support: finalAreas,
+                // 🔥 NEW — merge Other into the JSON array, like a checkmark value:
+                professional_title: mergeOther(data.professional_title, 'Other (specify)', data.professional_title_other),
+                languages: mergeOther(data.languages, 'Other', data.languages_other),
+                // (already merged below)
+                license_states: mergeOther(data.license_states, '__other__', data.license_states_other),
+                telehealth_regions: mergeOther(data.telehealth_regions, '__other__', data.telehealth_regions_other),
+                accessibility: mergeOther(data.accessibility, '__other__', data.accessibility_other),
+                practice_settings: mergeOther(data.practice_settings, '__other__', data.practice_settings_other),
+                treatment_approaches: mergeOther(data.treatment_approaches, 'Other (specify)', data.treatment_approaches_other),
+                specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
+                certifications: data.certifications.filter(c => c.trim() !== ''),
+            };
+        });
+
+        // 4) Submit. What form.transform() returns is exactly what gets sent.
         form.post('/provider/directory/store', {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => setSubmitted(true),
             onError: (serverErrs: Record<string, string>) => {
-                console.log('❌ Server errors:', serverErrs);
                 const firstField = Object.keys(serverErrs)[0];
                 if (firstField && FIELD_STEP[firstField] !== undefined) {
                     setStep(FIELD_STEP[firstField]);

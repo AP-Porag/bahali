@@ -294,24 +294,37 @@ class ProviderDirectoryController extends Controller
         $data['user_id'] = $user->id;
         unset($data['email'], $data['password']);
 
-        // JSON array columns
+        // JSON array columns — the custom "Other" text is already merged into
+        // each array on the frontend (form.transform), so store them as-is.
         $data['license_states']        = $request->input('license_states', []);
         $data['telehealth_regions']    = $request->input('telehealth_regions', []);
         $data['accessibility']         = $request->input('accessibility', []);
+        $data['practice_settings']     = $request->input('practice_settings', []);
         $data['treatment_approaches']  = $request->input('treatment_approaches', []);
         $data['specialized_training']  = $request->input('specialized_training', []);
         $data['certifications']        = $request->input('certifications', []);
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
 
-        // Areas of Support → mappedAreasOfSupport() ব্যবহার করুন
+        // Areas of Support -> provider_support_areas table (one row per area).
         $supportAreas = $request->mappedAreasOfSupport();
 
+        // Remove keys that are NOT columns on `providers`. All the *_other
+        // values were merged into their JSON arrays above, so there are no
+        // *_other columns for them. Leaving any of these in $data would make
+        // Provider::create() throw "Unknown column" and roll back the whole
+        // transaction — which is exactly why the support-area rows weren't saved.
         unset(
-            $data['areas_of_support'],      // ✅ পিভট টেবিলে যায়
-            $data['areas_of_support_other'], // ✅ টেবিলে নেই
-            $data['accessibility_other']     // ✅ টেবিলে নেই (JSON অ্যারেতে মার্জ হয়েছে)
+            $data['areas_of_support'],
+            $data['areas_of_support_other'],
+            $data['license_states_other'],
+            $data['telehealth_regions_other'],
+            $data['accessibility_other'],
+            $data['practice_settings_other'],
+            $data['treatment_approaches_other'],
+            $data['specialized_training_other'],
         );
+
         // File uploads
         if ($request->hasFile('verification_document')) {
             $data['verification_document'] = $this->storeUpload(
