@@ -2,7 +2,6 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { VERIFICATION_STATUS } from '@/utils/constants';
-
 /**
  * Bahali Provider Directory — Admin Verification Review
  * ------------------------------------------------------------------
@@ -20,56 +19,49 @@ import { VERIFICATION_STATUS } from '@/utils/constants';
  *   GET  admin/providers/{provider}/verification  → name: providers.verification.show
  *   POST admin/providers/{provider}/verification  → name: providers.verification.update
  * ------------------------------------------------------------------ */
-
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-
 interface SupportAreaGroup {
     category: string;
     areas: string[];
 }
-
 interface ProviderData {
     id: number;
     verification_status: string;
     status?: string;
-
     // Basic
     provider_type?: string;
     organization_name?: string;
     credentials?: string;
     professional_title?: string[];
     professional_title_other?: string;
-
     // About
     email?: string;
     short_bio?: string;
     years_experience?: string;
-
     // Licensure
     license_number?: string;
     license_states?: string[];
     license_status?: string;
     verification_document?: string | null; // URL
-
     // Areas — grouped from the provider_support_areas pivot
     support_areas_grouped?: SupportAreaGroup[];
-
     // Populations
     populations_served?: string[];
-
+    // Professional Expertise
+    treatment_approaches?: string[];
+    specialized_training?: string[];
+    certifications?: string[];
     // Culture
     caribbean_identity?: string;
     caribbean_experience?: string;
     languages?: string[];
     languages_other?: string;
     cultural_approach?: string;
-
     // Service
     service_formats?: string[];
     practice_settings?: string[];
-
     // Location
     address?: string;
     city?: string;
@@ -79,43 +71,34 @@ interface ProviderData {
     hide_address?: boolean;
     telehealth_regions?: string[];
     telehealth_regions_other?: string;
-
     // Payment
     payment_methods?: string[];
     insurance_plans?: string;
-
     // Contact
     phone?: string;
     website?: string;
     social_links?: string;
-
     // Media
     profile_photo?: string | null; // URL
     additional_photos?: string[]; // URLs
-
     // Accessibility
     accessibility?: string[];
-
     // Consent
     consent_accurate?: boolean;
     consent_notify?: boolean;
     consent_no_endorsement?: boolean;
     consent_public?: boolean;
-
     // Review meta (optional)
     submitted_at?: string;
     verification_note?: string;
 }
-
 interface PageProps {
     provider?: ProviderData;
     indexRoute?: string; // route name to return to (default admin.providers.index)
 }
-
 /* ------------------------------------------------------------------ */
 /*  Sample data (for standalone preview; real data comes from props)   */
 /* ------------------------------------------------------------------ */
-
 const SAMPLE: ProviderData = {
     id: 1,
     verification_status: 'pending',
@@ -138,15 +121,18 @@ const SAMPLE: ProviderData = {
             areas: ['Anxiety & Worry', 'Grief & Loss'],
         },
         {
-            category: 'Crisis, Trauma & Recovery',
-            areas: ['Support for Helping Professionals'],
+            category: 'Trauma, Crisis & Recovery',
+            areas: ['PTSD'],
         },
         {
             category: 'Relationships & Family',
             areas: ['Caregiver Support'],
         },
     ],
-    populations_served: ['Adolescents (13–17)', 'Adults', 'Families', 'Couples'],
+    populations_served: ['Adolescents (13–17)', 'Adults (26–64)', 'Families', 'Couples'],
+    treatment_approaches: ['Cognitive Behavioral Therapy (CBT)', 'Gottman Method'],
+    specialized_training: ['Grief & Bereavement', 'Trauma & PTSD'],
+    certifications: ['PMH-C', 'EMDR Certified Therapist'],
     caribbean_identity: 'yes',
     caribbean_experience: 'yes',
     languages: ['English', 'Jamaican Patois'],
@@ -162,7 +148,7 @@ const SAMPLE: ProviderData = {
     multiple_locations: 'yes',
     hide_address: false,
     telehealth_regions: ['Jamaica', 'Trinidad and Tobago', 'United States', 'United Kingdom'],
-    payment_methods: ['Self-Pay', 'Sliding Scale', 'Private Insurance'],
+    payment_methods: ['Self-Pay', 'Sliding Scale', 'Insurance Accepted'],
     insurance_plans: 'Aetna, Blue Cross Blue Shield, Cigna',
     phone: '+1 (876) 555-0142',
     website: 'https://example.com',
@@ -177,11 +163,9 @@ const SAMPLE: ProviderData = {
     submitted_at: 'June 24, 2026',
     verification_note: '',
 };
-
 /* ------------------------------------------------------------------ */
 /*  Label maps + steps                                                 */
 /* ------------------------------------------------------------------ */
-
 const PROVIDER_TYPE_LABELS: Record<string, string> = {
     individual: 'Individual Provider',
     organization: 'Organization / Agency',
@@ -196,13 +180,13 @@ const LICENSE_STATUS_LABELS: Record<string, string> = {
 };
 const YESNO_LABELS: Record<string, string> = { yes: 'Yes', no: 'No', prefer_not: 'Prefer not to say' };
 const lbl = (map: Record<string, string>, v?: string) => (v ? map[v] ?? v : undefined);
-
 const STEPS = [
     { key: 'basic', title: 'Provider Information', subtitle: 'Who they are' },
     { key: 'about', title: 'About', subtitle: 'Their approach' },
     { key: 'license', title: 'Licensure & Verification', subtitle: 'Credentials' },
     { key: 'areas', title: 'Areas of Support', subtitle: 'What they help with' },
     { key: 'populations', title: 'Populations Served', subtitle: 'Who they serve' },
+    { key: 'expertise', title: 'Professional Expertise', subtitle: 'Approaches & training' },
     { key: 'culture', title: 'Cultural & Language', subtitle: 'Responsiveness' },
     { key: 'service', title: 'Service Information', subtitle: 'How they work' },
     { key: 'location', title: 'Location', subtitle: 'Where they are' },
@@ -213,10 +197,8 @@ const STEPS = [
     { key: 'consent', title: 'Consent & Agreement', subtitle: 'What they agreed to' },
     { key: 'decision', title: 'Verification Decision', subtitle: 'Approve or update' },
 ] as const;
-
 const TOTAL_STEPS = STEPS.length;
 const DECISION_STEP = TOTAL_STEPS - 1;
-
 const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
     pending: { label: 'Pending', cls: 'bg-[#E8B84B]/18 text-[#9A6B12] ring-[#E8B84B]/40', dot: 'bg-[#E8B84B]' },
     approved: { label: 'Approved', cls: 'bg-[#0E7C7B]/12 text-[#0E6B6A] ring-[#0E7C7B]/25', dot: 'bg-[#0E7C7B]' },
@@ -224,7 +206,6 @@ const STATUS_META: Record<string, { label: string; cls: string; dot: string }> =
     suspended: { label: 'Suspended', cls: 'bg-[#B86B2B]/14 text-[#9A5418] ring-[#B86B2B]/30', dot: 'bg-[#B86B2B]' },
     inactive: { label: 'Inactive', cls: 'bg-[#8A9795]/15 text-[#5B6B6E] ring-[#8A9795]/30', dot: 'bg-[#8A9795]' },
 };
-
 /* The four decision actions (no "pending" — that's the incoming state). */
 const DECISION_ACTIONS: { value: string; label: string; cls: string; ring: string; icon: JSX.Element }[] = [
     {
@@ -256,15 +237,12 @@ const DECISION_ACTIONS: { value: string; label: string; cls: string; ring: strin
         icon: <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />,
     },
 ];
-
 /* ------------------------------------------------------------------ */
 /*  Read-only display primitives                                       */
 /* ------------------------------------------------------------------ */
-
 function Muted({ children = '—' }: { children?: React.ReactNode }) {
     return <span className="text-[#9AA6A4]">{children}</span>;
 }
-
 function Row({ label, children }: { label: string; children?: React.ReactNode }) {
     const empty = children === undefined || children === null || children === '';
     return (
@@ -274,7 +252,6 @@ function Row({ label, children }: { label: string; children?: React.ReactNode })
         </div>
     );
 }
-
 function Pills({ items }: { items?: string[] }) {
     if (!items || items.length === 0) return <Muted />;
     return (
@@ -290,7 +267,6 @@ function Pills({ items }: { items?: string[] }) {
         </div>
     );
 }
-
 function GroupedPills({ groups }: { groups?: SupportAreaGroup[] }) {
     if (!groups || groups.length === 0) return <Muted />;
     return (
@@ -313,7 +289,6 @@ function GroupedPills({ groups }: { groups?: SupportAreaGroup[] }) {
         </div>
     );
 }
-
 function YesNoBadge({ value }: { value?: boolean }) {
     if (value === undefined) return <Muted />;
     return value ? (
@@ -325,7 +300,6 @@ function YesNoBadge({ value }: { value?: boolean }) {
         <span className="inline-flex items-center rounded-full bg-[#C2543B]/12 px-3 py-1 text-sm font-semibold text-[#A8412B]">Not agreed</span>
     );
 }
-
 function FileView({ url, label, image, onView }: { url?: string | null; label: string; image?: boolean; onView?: (url: string) => void }) {
     if (!url) return <Muted>Not provided</Muted>;
     if (image) {
@@ -343,20 +317,16 @@ function FileView({ url, label, image, onView }: { url?: string | null; label: s
     }
     return <a href={url} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>;
 }
-
 /* ------------------------------------------------------------------ */
 /*  Document viewer modal (download + zoom)                            */
 /* ------------------------------------------------------------------ */
-
 function DocumentModal({ url, onClose }: { url: string; onClose: () => void }) {
     const [scale, setScale] = useState(1);
     const isImage = /\.(png|jpe?g|webp|gif|bmp|svg)(\?|$)/i.test(url);
     const zoomIn = () => setScale((s) => Math.min(3, +(s + 0.25).toFixed(2)));
     const zoomOut = () => setScale((s) => Math.max(0.5, +(s - 0.25).toFixed(2)));
     const reset = () => setScale(1);
-
     const toolBtn = 'flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-40';
-
     return (
         <div className="fixed inset-0 z-[60] flex flex-col bg-black/70 backdrop-blur-sm" onClick={onClose}>
             {/* Toolbar */}
@@ -380,7 +350,6 @@ function DocumentModal({ url, onClose }: { url: string; onClose: () => void }) {
                     </button>
                 </div>
             </div>
-
             {/* Body */}
             <div className="flex-1 overflow-auto p-4 sm:p-8" onClick={(e) => e.stopPropagation()}>
                 <div
@@ -397,15 +366,12 @@ function DocumentModal({ url, onClose }: { url: string; onClose: () => void }) {
         </div>
     );
 }
-
 function DL({ children }: { children: React.ReactNode }) {
     return <dl className="divide-y divide-[#F0EBE0]">{children}</dl>;
 }
-
 /* ------------------------------------------------------------------ */
 /*  Read-only step body                                                */
 /* ------------------------------------------------------------------ */
-
 function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onViewDoc?: (url: string) => void }) {
     switch (step) {
         case 0:
@@ -451,25 +417,30 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
         case 5:
             return (
                 <DL>
-                    <Row label="Identifies as
-part of the Caribbean community?">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
-                    <Row label="experience working with
-Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
+                    <Row label="Treatment approaches"><Pills items={p.treatment_approaches} /></Row>
+                    <Row label="Specialized training"><Pills items={p.specialized_training} /></Row>
+                    <Row label="Certifications & credentials"><Pills items={p.certifications} /></Row>
+                </DL>
+            );
+        case 6:
+            return (
+                <DL>
+                    <Row label="Identifies as part of the Caribbean community?">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
+                    <Row label="Experience working with Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
                     <Row label="Languages spoken"><Pills items={p.languages} /></Row>
-                    {p.languages?.includes('Other') && <Row label="Other language(s)">{p.languages_other}</Row>}
                     <Row label="Cultural approach">
                         {p.cultural_approach ? <p className="leading-relaxed text-[#3A4B49]">{p.cultural_approach}</p> : undefined}
                     </Row>
                 </DL>
             );
-        case 6:
+        case 7:
             return (
                 <DL>
                     <Row label="Service formats"><Pills items={p.service_formats} /></Row>
                     <Row label="Practice settings"><Pills items={p.practice_settings} /></Row>
                 </DL>
             );
-        case 7:
+        case 8:
             return (
                 <DL>
                     <Row label="Address">
@@ -480,30 +451,17 @@ Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}
                     <Row label="State / Province / Region">{p.state_province}</Row>
                     <Row label="Country">{p.country}</Row>
                     <Row label="Serves multiple locations">{lbl(YESNO_LABELS, p.multiple_locations)}</Row>
-                    <Row label="Telehealth regions served">
-                        <Pills
-                            items={[
-                                ...(p.telehealth_regions ?? []).filter((r) => r !== 'Other'),
-                                ...(p.telehealth_regions_other
-                                    ? p.telehealth_regions_other
-                                        .split(',')
-                                        .map((r) => r.trim())
-                                        .filter(Boolean)
-                                        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
-                                    : []),
-                            ]}
-                        />
-                    </Row>
+                    <Row label="Telehealth regions served"><Pills items={p.telehealth_regions} /></Row>
                 </DL>
             );
-        case 8:
+        case 9:
             return (
                 <DL>
                     <Row label="Accepted payment methods"><Pills items={p.payment_methods} /></Row>
                     <Row label="Insurance plans accepted">{p.insurance_plans}</Row>
                 </DL>
             );
-        case 9:
+        case 10:
             return (
                 <DL>
                     <Row label="Phone number">{p.phone}</Row>
@@ -515,7 +473,7 @@ Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}
                     </Row>
                 </DL>
             );
-        case 10:
+        case 11:
             return (
                 <DL>
                     <Row label="Professional photo / logo"><FileView url={p.profile_photo} label="Profile photo" image /></Row>
@@ -530,9 +488,9 @@ Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}
                     </Row>
                 </DL>
             );
-        case 11:
-            return <DL><Row label="Accessibility"><Pills items={p.accessibility} /></Row></DL>;
         case 12:
+            return <DL><Row label="Accessibility"><Pills items={p.accessibility} /></Row></DL>;
+        case 13:
             return (
                 <DL>
                     <Row label="Information is accurate"><YesNoBadge value={p.consent_accurate} /></Row>
@@ -545,13 +503,11 @@ Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}
             return null;
     }
 }
-
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
-
 export default function ProviderVerificationShow({ provider, indexRoute = 'admin.providers.index' }: PageProps) {
-    const p = provider;
+    const p = provider ?? SAMPLE;
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
     const [note, setNote] = useState('');
@@ -560,10 +516,8 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
     const [docUrl, setDocUrl] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ value: string; label: string; cls: string; ring: string } | null>(null);
     const topRef = useRef<HTMLDivElement>(null);
-
     const current = STATUS_META[p.verification_status] ?? STATUS_META.pending;
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
-
     const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     const goTo = (i: number) => {
         const next = Math.max(0, Math.min(i, TOTAL_STEPS - 1));
@@ -571,7 +525,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
         setStep(next);
         scrollTop();
     };
-
     const submit = (status: string) => {
         if (processing) return;
         setProcessing(true);
@@ -591,29 +544,10 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
             },
         );
     };
-
     return (
         <>
             <Head title={`Review — ${p.organization_name ?? 'Provider'} · Bahali Admin`} />
-
             <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
-                {/* Header */}
-                {/* <header className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-[#F7F3EC]/90 backdrop-blur">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-lg font-bold text-[#0E4C4B]">B</span>
-                            <span className="leading-none">
-                                <span className="block font-serif text-lg text-[#16302F]">Bahali</span>
-                                <span className="block text-[11px] tracking-wide text-[#6B7A78]">Provider Review</span>
-                            </span>
-                        </div>
-                        <Link href={`/${indexRoute.replace(/\./g, '/')}`} className="inline-flex items-center gap-2 text-sm font-medium text-[#3A4B49] transition hover:text-[#0E7C7B]">
-                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                            Back to providers
-                        </Link>
-                    </div>
-                </header> */}
-
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     {/* Title + current status */}
                     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -621,7 +555,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0E7C7B]">Reviewing application</p>
                             <h1 className="mt-2 font-serif text-3xl text-[#16302F] sm:text-4xl">{p.organization_name}</h1>
                             <p className="mt-1 text-[#5B6B6E]">
-                                {p.professional_title === 'Other (specify)' ? p.professional_title_other : p.professional_title}
+                                {p.professional_title && p.professional_title.length > 0 ? p.professional_title.join(', ') : null}
                                 {p.credentials && <span> · {p.credentials}</span>}
                                 {p.submitted_at && <span className="text-[#9AA6A4]"> · submitted {p.submitted_at}</span>}
                             </p>
@@ -631,7 +565,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             Current: {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
                         </span>
                     </div>
-
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
                         {/* Stepper (all steps clickable; visited steps checked off) */}
                         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -646,8 +579,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 </div>
                                 <p className="mt-2 font-serif text-lg text-[#16302F]">{STEPS[step].title}</p>
                             </div>
-
-
                             <nav className="hidden lg:block" aria-label="Sections">
                                 <ol className="relative">
                                     <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
@@ -690,7 +621,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 </ol>
                             </nav>
                         </aside>
-
                         {/* Content card */}
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
@@ -700,7 +630,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                     </p>
                                     <h2 className="mt-1 font-serif text-2xl text-[#16302F]">{STEPS[step].title}</h2>
                                 </div>
-
                                 {step === DECISION_STEP ? (
                                     /* -------- Decision -------- */
                                     <div className="space-y-6">
@@ -711,7 +640,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                                 Current:  {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
                                             </span>
                                         </div>
-
                                         <div>
                                             <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
                                                 Review note <span className="font-normal text-[#9AA6A4]">(optional, internal)</span>
@@ -724,16 +652,13 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                                 className="w-full resize-y rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                                             />
                                         </div>
-
                                         {/* Four action buttons — each posts the status directly */}
                                         <div>
                                             <p className="mb-3 text-sm font-medium text-[#26403F]">Set verification status</p>
                                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                                 {DECISION_ACTIONS.map((a) => {
                                                     const isCurrentStatus = p.status === a.value;
-
                                                     if (isCurrentStatus) return null;
-
                                                     const loading = processing && activeAction === a.value;
                                                     return (
                                                         <button
@@ -769,7 +694,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                     /* -------- Read-only data -------- */
                                     <ReviewBody step={step} p={p} onViewDoc={setDocUrl} />
                                 )}
-
                                 {/* Navigation */}
                                 <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
                                     <button
@@ -780,7 +704,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                     >
                                         ← Back
                                     </button>
-
                                     {step < DECISION_STEP && (
                                         <button
                                             type="button"
@@ -792,7 +715,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                     )}
                                 </div>
                             </div>
-
                             {step !== DECISION_STEP && (
                                 <p className="mt-4 text-center text-xs text-[#9AA6A4]">
                                     This is a read-only review.{' '}
@@ -802,7 +724,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                         </main>
                     </div>
                 </div>
-
                 {/* Confirm status-change modal */}
                 {confirmAction && (
                     <div
@@ -816,7 +737,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 <strong className="text-[#26403F]">{STATUS_META[confirmAction.value]?.label ?? confirmAction.label}</strong>?
                                 {' '}This updates {p.organization_name} and returns you to the providers list.
                             </p>
-
                             <div className="mt-6 flex justify-end gap-2">
                                 <button
                                     type="button"
@@ -841,7 +761,6 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                         </div>
                     </div>
                 )}
-
                 {/* Document viewer modal */}
                 {docUrl && <DocumentModal url={docUrl} onClose={() => setDocUrl(null)} />}
             </div>

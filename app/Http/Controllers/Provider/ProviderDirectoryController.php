@@ -711,6 +711,11 @@ class ProviderDirectoryController extends Controller
                 'languages_other' => $provider->languages_other,
                 'cultural_approach' => $provider->cultural_approach,
 
+
+                'treatment_approaches' => $provider->treatment_approaches,
+                'specialized_training' => $provider->specialized_training,
+                'certifications' => $provider->certifications,
+
                 // Service
                 'service_formats' => $provider->service_formats,
                 'practice_settings' => $provider->practice_settings,
