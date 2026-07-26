@@ -165,6 +165,7 @@ const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
             'Communication Challenges',
             'Caregiver Support',
             'Healing from Relationship Abuse',
+            'Sex Therapy'
         ],
     },
     {
