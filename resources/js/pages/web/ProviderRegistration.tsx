@@ -296,10 +296,6 @@ const POPULATIONS_SERVED = [
     'First Responders',
     'Healthcare Professionals',
     'Community Leaders',
-    'Support for First Responders',
-    'Support for Helping Professionals',
-    'First Responders',
-    'Healthcare Professionals',
 ];
 // Treatment Approaches
 const TREATMENT_APPROACHES = [
