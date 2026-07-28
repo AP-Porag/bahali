@@ -1682,8 +1682,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             Become a Bahali wellness provider
                         </h1>
                         <p className="mt-2 max-w-2xl text-[#5B6B6E]">
-                            Help Caribbean individuals and families find culturally grounded care.
-                            Complete each step below — every section must be finished before you continue.
+                            Your profile helps Caribbean individuals and families find care that understands their culture, experiences, and community. Complete each section below. Every step must be completed before you can continue.
                         </p>
                     </div>
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
