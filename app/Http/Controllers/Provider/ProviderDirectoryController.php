@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\StoreProviderRequest;
+use App\Http\Requests\Provider\UpdateProviderRequest;
 use App\Mail\OtpVerificationMail;
 use App\Models\Country;
 use App\Models\Provider;
@@ -25,6 +26,7 @@ use Illuminate\Validation\Rule;
 use App\Mail\ProviderStatusUpdateMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Services\Provider\ProviderService;
 
 class ProviderDirectoryController extends Controller
 {
@@ -41,6 +43,74 @@ class ProviderDirectoryController extends Controller
      * between registerAccount() -> verifyOtp() -> store().
      */
     private const SESSION_PENDING_USER = 'pending_provider_registration_user_id';
+
+
+
+    /**
+     * Public provider directory / listing page (Stage 4).
+     */
+    public function index(Request $request, ProviderService $providerService)
+    {
+        // Seed keeps the rotating order stable across "Load more" within one
+        // browse session, but rotates for the next visitor (Module 4).
+        $seed = (int) $request->input('seed', 0);
+        if ($seed <= 0) {
+            $seed = (int) $request->session()->get('directory_seed');
+            if (! $seed) {
+                $seed = random_int(1, 999999);
+                $request->session()->put('directory_seed', $seed);
+            }
+        }
+
+        $filters = [
+            'keyword'         => $request->input('keyword', ''),
+            'location'        => $request->input('location', ''),
+            'area_of_support' => $request->input('area_of_support', ''),
+            'population'      => $request->input('population', ''),
+            'service'         => $request->input('service', ''),
+            'language'        => $request->input('language', ''),
+            'session_format'  => $request->input('session_format', ''),
+            'payment'         => $request->input('payment', ''),
+            'perPage'         => (int) $request->input('perPage', 6),
+            'page'            => (int) $request->input('page', 1),
+            'seed'            => $seed,
+        ];
+
+        $result = $providerService->getPublicDirectory($filters);
+
+        return Inertia::render('web/directory/index', [
+            'providers'     => $result['providers'],
+            'pagination'    => $result['pagination'],
+            'filterOptions' => $providerService->getFilterOptions(),
+            'filters'       => Arr::only($filters, [
+                'keyword',
+                'location',
+                'area_of_support',
+                'population',
+                'service',
+                'language',
+                'session_format',
+                'payment',
+            ]),
+            'seed' => $result['seed'],
+        ]);
+    }
+
+    /**
+     * Public provider profile (approved only, public-safe fields).
+     */
+    public function publicShow(int $id, ProviderService $providerService)
+    {
+        $provider = $providerService->getPublicProfile($id);
+        abort_if($provider === null, 404);
+
+        return Inertia::render('web/directory/show', [
+            'provider' => $provider,
+        ]);
+    }
+
+
+
 
     /**
      * Show the registration form.
@@ -146,6 +216,37 @@ class ProviderDirectoryController extends Controller
                 ],
             ], 500);
         }
+    }
+
+
+
+    /**
+     * Module 1 — authenticated provider views/edits ONLY their own profile.
+     */
+    public function edit(Request $request, ProviderService $service): Response
+    {
+        $provider = $request->user()?->provider;
+        abort_if(! $provider, 404, 'No provider profile found for this account.');
+
+        return Inertia::render('provider/edit', array_merge(
+            $service->getEditData($provider),
+            ['countries' => $service->getCountriesForForm()]
+        ));
+    }
+
+    /**
+     * Module 2 — save edits and move the profile to Pending review.
+     */
+    public function updateProvider(UpdateProviderRequest $request, ProviderService $service): RedirectResponse
+    {
+        $provider = $request->user()?->provider;
+        abort_if(! $provider, 404, 'No provider profile found for this account.');
+
+        $service->updateOwnProfile($provider, $request);
+
+        return redirect()
+            ->route('provider.profile.edit')
+            ->with('success', 'Your changes have been submitted and are pending review.');
     }
 
     /**
