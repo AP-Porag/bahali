@@ -42,6 +42,13 @@ Route::post('/provider/directory/resend-otp', [ProviderDirectoryController::clas
 
 Route::post('/provider/directory/store', [ProviderDirectoryController::class, 'store'])
     ->name('providers.store');
+
+//Public provider directory
+Route::controller(ProviderDirectoryController::class)->group(function () {
+    Route::get('/directory', 'index')->name('directory.index');
+    Route::get('/directory/{id}', 'publicShow')->whereNumber('id')->name('directory.show');
+});
+
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     Route::get('/under-development', function (\Illuminate\Http\Request $request) {
