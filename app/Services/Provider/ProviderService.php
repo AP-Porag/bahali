@@ -8,6 +8,9 @@ use App\Utils\GlobalConstant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Country;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class ProviderService extends BaseService
 {
@@ -405,5 +408,184 @@ class ProviderService extends BaseService
     private function defaultSeed(): int
     {
         return (int) now()->format('Ymd');
+    }
+    public function getCountriesForForm(): array
+    {
+        return Country::with('regions.regionType')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($country) => [
+                'id' => $country->id,
+                'name' => $country->name,
+                'code' => $country->code,
+                'regions' => $country->regions
+                    ->sortBy('name')
+                    ->map(fn($region) => [
+                        'id' => $region->id,
+                        'name' => $region->name,
+                        'regionTypeName' => $region->regionType?->name,
+                        'regionTypeLabel' => $region->regionType?->label,
+                    ])
+                    ->values()
+                    ->toArray(),
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Everything the provider's own edit form needs, in a form-friendly shape.
+     * Custom "Other" values were merged into the arrays at save time; the React
+     * form splits them back out using its option lists.
+     */
+    public function getEditData(Provider $provider): array
+    {
+        $provider->loadMissing(['supportAreas', 'user']);
+
+        return [
+            'provider' => [
+                'provider_type'        => $provider->provider_type,
+                'organization_name'    => $provider->organization_name,
+                'credentials'          => $provider->credentials,
+                'professional_title'   => $this->toArray($provider->professional_title),
+                'short_bio'            => $provider->short_bio,
+                'years_experience'     => $provider->years_experience,
+                'license_number'       => $provider->license_number,
+                'license_not_applicable' => (bool) $provider->license_not_applicable,
+                'license_states'       => $this->toArray($provider->license_states),
+                'license_status'       => $provider->license_status,
+                'populations_served'   => $this->toArray($provider->populations_served),
+                'caribbean_identity'   => $provider->caribbean_identity,
+                'caribbean_experience' => $provider->caribbean_experience,
+                'languages'            => $this->toArray($provider->languages),
+                'cultural_approach'    => $provider->cultural_approach,
+                'treatment_approaches' => $this->toArray($provider->treatment_approaches),
+                'specialized_training' => $this->toArray($provider->specialized_training),
+                'certifications'       => $this->toArray($provider->certifications),
+                'service_formats'      => $this->toArray($provider->service_formats),
+                'practice_settings'    => $this->toArray($provider->practice_settings),
+                'address'              => $provider->address,
+                'city'                 => $provider->city,
+                'state_province'       => $provider->state_province,
+                'country'              => $provider->country,
+                'multiple_locations'   => $provider->multiple_locations,
+                'hide_address'         => (bool) $provider->hide_address,
+                'telehealth_regions'   => $this->toArray($provider->telehealth_regions),
+                'accessibility'        => $this->toArray($provider->accessibility),
+                'payment_methods'      => $this->toArray($provider->payment_methods),
+                'insurance_plans'      => is_array($provider->insurance_plans)
+                    ? implode(', ', $this->toArray($provider->insurance_plans))
+                    : $provider->insurance_plans,
+                'phone'                => $provider->phone,
+                'website'              => $provider->website,
+                'social_links'         => is_array($provider->social_links)
+                    ? implode(', ', $this->toArray($provider->social_links))
+                    : $provider->social_links,
+                'status'               => $provider->status,
+                'email'                => $provider->user?->email ?? $provider->email,
+            ],
+            'supportAreas' => $provider->supportAreas
+                ->map(fn($r) => ['category' => $r->category, 'area' => $r->area])
+                ->values(),
+            'existingProfilePhoto' => $provider->profile_photo
+                ? Storage::url($provider->profile_photo) : null,
+            'existingVerificationDoc' => $provider->verification_document
+                ? Storage::url($provider->verification_document) : null,
+            'existingAdditionalPhotos' => collect($this->toArray($provider->additional_photos))
+                ->map(fn($path) => ['path' => $path, 'url' => Storage::url($path)])
+                ->values(),
+        ];
+    }
+
+    /**
+     * Save a provider's own edits. Module 2: every edit pushes the profile back
+     * into Pending so an admin re-approves before it is public again.
+     * Files are only replaced when a new upload is provided.
+     */
+    public function updateOwnProfile(Provider $provider, $request): Provider
+    {
+        $data = $request->validated();
+
+        // Not editable from the profile edit screen.
+        unset($data['email'], $data['password']);
+
+        // Re-read JSON array columns straight from input (mirrors registration store()).
+        $data['license_states']       = $request->input('license_states', []);
+        $data['telehealth_regions']   = $request->input('telehealth_regions', []);
+        $data['accessibility']        = $request->input('accessibility', []);
+        $data['practice_settings']    = $request->input('practice_settings', []);
+        $data['treatment_approaches'] = $request->input('treatment_approaches', []);
+        $data['specialized_training'] = $request->input('specialized_training', []);
+        $data['certifications']       = $request->input('certifications', []);
+
+        // Module 2 — back to Pending on any edit.
+        $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+
+        $supportAreas = $request->mappedAreasOfSupport();
+
+        // Non-column / separately-handled keys.
+        unset(
+            $data['areas_of_support'],
+            $data['existing_additional_photos'],
+            $data['verification_document'],
+            $data['profile_photo'],
+            $data['additional_photos'],
+        );
+
+        // Files — replace only when a new one is uploaded; otherwise keep existing.
+        if ($request->hasFile('verification_document')) {
+            $data['verification_document'] = $this->storeUpload(
+                $request->file('verification_document'),
+                'providers/verification'
+            );
+        }
+        if ($request->hasFile('profile_photo')) {
+            $data['profile_photo'] = $this->storeUpload(
+                $request->file('profile_photo'),
+                'providers/photos'
+            );
+        }
+
+        // Additional photos = kept existing paths + any newly uploaded.
+        $kept = array_values($request->input('existing_additional_photos', []));
+        $newPhotos = [];
+        if ($request->hasFile('additional_photos')) {
+            foreach ($request->file('additional_photos') as $photo) {
+                $path = $this->storeUpload($photo, 'providers/photos');
+                if ($path) {
+                    $newPhotos[] = $path;
+                }
+            }
+        }
+        $data['additional_photos'] = array_values(array_merge($kept, $newPhotos));
+
+        DB::transaction(function () use ($provider, $data, $supportAreas) {
+            $provider->update($data);
+            $provider->supportAreas()->delete();
+            if (! empty($supportAreas)) {
+                $provider->supportAreas()->createMany($supportAreas);
+            }
+        });
+
+        Cache::forget('public_provider_filter_options');
+
+        return $provider->fresh(['supportAreas']);
+    }
+
+    /**
+     * Store an uploaded file safely (same approach as the registration controller).
+     */
+    private function storeUpload(?UploadedFile $file, string $dir): ?string
+    {
+        if (! $file || ! $file->isValid()) {
+            return null;
+        }
+        $publicPath = storage_path('app/public/' . $dir);
+        if (! is_dir($publicPath)) {
+            mkdir($publicPath, 0755, true);
+        }
+        $filename = $file->hashName();
+        $file->move($publicPath, $filename);
+        return $dir . '/' . $filename;
     }
 }

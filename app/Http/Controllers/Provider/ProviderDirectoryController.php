@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Provider;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\StoreProviderRequest;
+use App\Http\Requests\Provider\UpdateProviderRequest;
 use App\Mail\OtpVerificationMail;
 use App\Models\Country;
 use App\Models\Provider;
@@ -215,6 +216,37 @@ class ProviderDirectoryController extends Controller
                 ],
             ], 500);
         }
+    }
+
+
+
+    /**
+     * Module 1 — authenticated provider views/edits ONLY their own profile.
+     */
+    public function edit(Request $request, ProviderService $service): Response
+    {
+        $provider = $request->user()?->provider;
+        abort_if(! $provider, 404, 'No provider profile found for this account.');
+
+        return Inertia::render('web/directory/edit', array_merge(
+            $service->getEditData($provider),
+            ['countries' => $service->getCountriesForForm()]
+        ));
+    }
+
+    /**
+     * Module 2 — save edits and move the profile to Pending review.
+     */
+    public function updateProvider(UpdateProviderRequest $request, ProviderService $service): RedirectResponse
+    {
+        $provider = $request->user()?->provider;
+        abort_if(! $provider, 404, 'No provider profile found for this account.');
+
+        $service->updateOwnProfile($provider, $request);
+
+        return redirect()
+            ->route('provider.profile.edit')
+            ->with('success', 'Your changes have been submitted and are pending review.');
     }
 
     /**

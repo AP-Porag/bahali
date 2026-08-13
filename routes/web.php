@@ -49,6 +49,13 @@ Route::controller(ProviderDirectoryController::class)->group(function () {
     Route::get('/directory/{id}', 'publicShow')->whereNumber('id')->name('directory.show');
 });
 
+Route::middleware(['auth'])->prefix('provider')->group(function () {
+    Route::get('/profile/edit', [ProviderDirectoryController::class, 'edit'])->name('provider.profile.edit');
+    Route::post('/profile/update', [ProviderDirectoryController::class, 'updateProvider'])->name('provider.profile.update');
+});
+
+
+
 Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     Route::get('/under-development', function (\Illuminate\Http\Request $request) {
