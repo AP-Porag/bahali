@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm } from '@inertiajs/react';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/provider/ProviderMenu";
+import ProviderMenu from '@/components/provider/ProviderMenu';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -630,7 +630,7 @@ export default function ProviderProfileEdit({
     if (submitted) {
         return (
             <>
-                <Header />
+                <ProviderMenu />
                 <Head title="Changes Submitted — Bahali Provider Directory" />
                 <div className="min-h-screen bg-[#F7F3EC] px-4 py-16">
                     <div className="mx-auto max-w-xl rounded-2xl border border-[#E7E0D2] bg-white p-10 text-center shadow-sm">
@@ -748,7 +748,6 @@ export default function ProviderProfileEdit({
                     </div>
                 </div>
             </div>
-            <Footer />
         </>
     );
 }

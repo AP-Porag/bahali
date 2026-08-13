@@ -372,18 +372,6 @@ class ProviderService extends BaseService
         return count($parts) ? implode(', ', $parts) : null;
     }
 
-    private function resolveSessionFormat(array $formats): ?string
-    {
-        $formats  = array_map('strtolower', $formats);
-        $inPerson = in_array('in-person', $formats, true) || in_array('in person', $formats, true);
-        $tele     = in_array('virtual', $formats, true) || in_array('telehealth', $formats, true);
-
-        if ($inPerson && $tele) return 'Both';
-        if ($tele)              return 'Telehealth';
-        if ($inPerson)          return 'In Person';
-        return null;
-    }
-
     private function distinctFromJson($collection, string $column): array
     {
         return $collection
@@ -391,19 +379,7 @@ class ProviderService extends BaseService
             ->filter()->unique()->sort()->values()->all();
     }
 
-    private function toArray($value): array
-    {
-        if (is_array($value)) {
-            return array_values(array_filter($value, fn($v) => $v !== null && $v !== ''));
-        }
-        if (is_string($value) && $value !== '') {
-            $decoded = json_decode($value, true);
-            return is_array($decoded)
-                ? array_values(array_filter($decoded))
-                : [$value];
-        }
-        return [];
-    }
+
 
     private function defaultSeed(): int
     {
@@ -587,5 +563,163 @@ class ProviderService extends BaseService
         $filename = $file->hashName();
         $file->move($publicPath, $filename);
         return $dir . '/' . $filename;
+    }
+
+
+    public function getDashboardData(Provider $provider): array
+    {
+        $provider->loadMissing(['supportAreas', 'user']);
+
+        $status = $provider->status ?: GlobalConstant::VERIFICATION_STATUS_PENDING;
+        $isPublic = $status === GlobalConstant::VERIFICATION_STATUS_APPROVED;
+
+        $completeness = $this->profileCompleteness($provider);
+
+        return [
+            'provider' => [
+                'id'                   => $provider->id,
+                'organization_name'    => $provider->organization_name,
+                'professional_title'   => $this->toArray($provider->professional_title),
+                'credentials'          => $provider->credentials,
+                'short_bio'            => $provider->short_bio,
+                'years_experience'     => $provider->years_experience,
+                'email'                => $provider->user?->email ?? $provider->email,
+                'phone'                => $provider->phone,
+                'website'              => $provider->website,
+                'social_links'         => $provider->social_links,
+                'address'              => $provider->address,
+                'city'                 => $provider->city,
+                'state_province'       => $provider->state_province,
+                'country'              => $provider->country,
+                'hide_address'         => (bool) $provider->hide_address,
+                'multiple_locations'   => $provider->multiple_locations,
+                'service_formats'      => $this->toArray($provider->service_formats),
+                'practice_settings'    => $this->toArray($provider->practice_settings),
+                'areas_of_support'     => $provider->supportAreas
+                    ->map(fn($area) => $area->name ?? $area->area ?? (string) $area)
+                    ->values()
+                    ->toArray(),
+                'populations_served'   => $this->toArray($provider->populations_served),
+                'languages'            => $this->toArray($provider->languages),
+                'treatment_approaches' => $this->toArray($provider->treatment_approaches),
+                'specialized_training' => $this->toArray($provider->specialized_training),
+                'certifications'       => $this->toArray($provider->certifications),
+                'caribbean_identity'   => $provider->caribbean_identity,
+                'caribbean_experience' => $provider->caribbean_experience,
+                'cultural_approach'    => $provider->cultural_approach,
+                'payment_methods'      => $this->toArray($provider->payment_methods),
+                'insurance_plans'      => $provider->insurance_plans,
+                'accessibility'        => $this->toArray($provider->accessibility),
+                'profile_photo'        => $provider->profile_photo
+                    ? Storage::url($provider->profile_photo)
+                    : null,
+                'telehealth_regions'   => $this->toArray($provider->telehealth_regions),
+                'license_number'       => $provider->license_number,
+                'license_status'       => $provider->license_status,
+                'license_states'       => $this->toArray($provider->license_states),
+                'verification_document' => $provider->verification_document
+                    ? Storage::url($provider->verification_document)
+                    : null,
+                'submitted_at'         => $provider->created_at?->format('F j, Y'),
+                'reviewed_at'          => $provider->reviewed_at?->format('F j, Y'),
+                'review_note'          => $provider->note,
+                'status'               => $status,
+            ],
+            'status' => [
+                'value'       => $status,
+                'label'       => ucfirst($status),
+                'isPublic'    => $isPublic,
+                'description' => $this->statusDescription($status),
+            ],
+            'completeness' => $completeness,
+            'stats' => [
+                'supportAreas'  => $provider->supportAreas->count(),
+                'languages'     => count($this->toArray($provider->languages)),
+                'populations'   => count($this->toArray($provider->populations_served)),
+                'sessionFormat' => $this->resolveSessionFormat($this->toArray($provider->service_formats)),
+            ],
+            'links' => [
+                'editProfile'   => '/provider/profile/edit',
+                'publicProfile' => $isPublic ? "/directory/{$provider->id}" : null,
+                'directory'     => '/directory',
+            ],
+        ];
+    }
+    /**
+     * A short, human explanation shown under the status badge.
+     */
+    private function statusDescription(string $status): string
+    {
+        return match ($status) {
+            GlobalConstant::VERIFICATION_STATUS_APPROVED  => 'Your profile is approved and visible in the public directory.',
+            GlobalConstant::VERIFICATION_STATUS_PENDING   => 'Your profile is awaiting review. It will appear publicly once approved.',
+            GlobalConstant::VERIFICATION_STATUS_REJECTED  => 'Your profile needs changes before it can be published. Please review any notes and resubmit.',
+            GlobalConstant::VERIFICATION_STATUS_SUSPENDED => 'Your listing is temporarily suspended. Contact Bahali for details.',
+            GlobalConstant::VERIFICATION_STATUS_INACTIVE  => 'Your listing is inactive and not shown publicly.',
+            default => 'Your profile status is being processed.',
+        };
+    }
+
+    /**
+     * Simple weighted completeness score + the list of still-missing sections,
+     * so the provider knows what to finish.
+     */
+    private function profileCompleteness(Provider $provider): array
+    {
+        $checks = [
+            'Basic information'   => (bool) $provider->organization_name && count($this->toArray($provider->professional_title)) > 0,
+            'About & bio'         => (bool) trim((string) $provider->short_bio),
+            'Licensure'           => (bool) $provider->license_status,
+            'Areas of support'    => $provider->supportAreas->count() > 0,
+            'Populations served'  => count($this->toArray($provider->populations_served)) > 0,
+            'Languages'           => count($this->toArray($provider->languages)) > 0,
+            'Service information'  => count($this->toArray($provider->service_formats)) > 0,
+            'Location'            => (bool) $provider->city && (bool) $provider->country,
+            'Payment methods'     => count($this->toArray($provider->payment_methods)) > 0,
+            'Contact information' => (bool) $provider->phone,
+            'Profile photo'       => (bool) $provider->profile_photo,
+        ];
+
+        $done = count(array_filter($checks));
+        $total = count($checks);
+        $missing = array_keys(array_filter($checks, fn($ok) => ! $ok));
+
+        return [
+            'percent'  => $total ? (int) round(($done / $total) * 100) : 0,
+            'done'     => $done,
+            'total'    => $total,
+            'missing'  => array_values($missing),
+        ];
+    }
+    private function toArray($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return [];
+    }
+    private function resolveSessionFormat(array $formats): string
+    {
+        $formats = array_map('strtolower', $formats);
+
+        if (in_array('in-person', $formats) && in_array('virtual', $formats)) {
+            return 'In Person + Telehealth';
+        }
+
+        if (in_array('in-person', $formats)) {
+            return 'In Person';
+        }
+
+        if (in_array('virtual', $formats)) {
+            return 'Telehealth';
+        }
+
+        return 'Not specified';
     }
 }

@@ -228,7 +228,7 @@ class ProviderDirectoryController extends Controller
         $provider = $request->user()?->provider;
         abort_if(! $provider, 404, 'No provider profile found for this account.');
 
-        return Inertia::render('web/directory/edit', array_merge(
+        return Inertia::render('provider/edit', array_merge(
             $service->getEditData($provider),
             ['countries' => $service->getCountriesForForm()]
         ));

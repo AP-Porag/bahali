@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Dashboard\DashboardController;
 use App\Http\Controllers\Admin\Provider\ProviderController;
 // use App\Http\Controllers\Provider\ProviderTypeController;
 use App\Http\Controllers\Admin\User\UserController;
+use App\Http\Controllers\Provider\DashboardController as ProviderDashboardController;
 use App\Http\Controllers\Provider\ProviderDirectoryController;
 use App\Http\Controllers\Web\JoinController;
 use Illuminate\Support\Facades\Artisan;
@@ -52,6 +53,8 @@ Route::controller(ProviderDirectoryController::class)->group(function () {
 Route::middleware(['auth'])->prefix('provider')->group(function () {
     Route::get('/profile/edit', [ProviderDirectoryController::class, 'edit'])->name('provider.profile.edit');
     Route::post('/profile/update', [ProviderDirectoryController::class, 'updateProvider'])->name('provider.profile.update');
+
+    Route::get('/dashboard', [ProviderDashboardController::class, 'index'])->name('provider.dashboard');
 });
 
 
@@ -65,7 +68,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     })->name('under-development');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+        ->name('admin.dashboard');
 
     // Route::resource('users', UserController::class);
 
