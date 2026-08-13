@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Country;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use App\Models\Language;
 
 class ProviderService extends BaseService
 {
@@ -77,29 +78,40 @@ class ProviderService extends BaseService
     public function getFilterOptions(): array
     {
         return Cache::remember('public_provider_filter_options', now()->addMinutes(10), function () {
+            // 1. Location: সব Country model থেকে
+            $locations = Country::query()
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray();
+
+            // 2. Areas of Support: provider_support_areas টেবিল থেকে distinct area
+            $areas = DB::table('provider_support_areas')
+                ->select('area')
+                ->distinct()
+                ->orderBy('area')
+                ->pluck('area')
+                ->filter() // null/empty বাদ
+                ->toArray();
+
+            // 3. Languages: Language model থেকে
+            $languages = Language::query()
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray();
+
+            // 4. বাকিগুলো আগের মতো approved providers থেকে
             $providers = Provider::query()
                 ->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)
-                ->with('supportAreas:id,provider_id,area')
                 ->get([
                     'id',
-                    'country',
-                    'state_province',
-                    'city',
                     'populations_served',
                     'treatment_approaches',
-                    'languages',
-                    'service_formats',
                     'payment_methods',
                     'insurance_plans',
                 ]);
 
-            $locations = $providers
-                ->flatMap(fn($p) => array_filter([$p->country, $p->state_province]))
-                ->unique()->sort()->values()->all();
-
-            $areas = $providers
-                ->flatMap(fn($p) => $p->supportAreas->pluck('area'))
-                ->filter()->unique()->sort()->values()->all();
+            $populations = $this->distinctFromJson($providers, 'populations_served');
+            $services    = $this->distinctFromJson($providers, 'treatment_approaches');
 
             $payments = collect()
                 ->merge($this->distinctFromJson($providers, 'payment_methods'))
@@ -107,11 +119,11 @@ class ProviderService extends BaseService
                 ->filter()->unique()->sort()->values()->all();
 
             return [
-                'locations'      => $locations,
-                'areasOfSupport' => $areas,
-                'populations'    => $this->distinctFromJson($providers, 'populations_served'),
-                'services'       => $this->distinctFromJson($providers, 'treatment_approaches'),
-                'languages'      => $this->distinctFromJson($providers, 'languages'),
+                'locations'      => array_values(array_unique($locations)), // মাঝে মাঝে null/duplicate থাকতে পারে
+                'areasOfSupport' => array_values(array_unique($areas)),
+                'populations'    => $populations,
+                'services'       => $services,
+                'languages'      => array_values(array_unique($languages)),
                 'sessionFormats' => ['In Person', 'Telehealth', 'Both'],
                 'payments'       => $payments,
             ];
