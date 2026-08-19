@@ -43,11 +43,21 @@ export default function ProviderProfile({ provider }) {
                 <div className="rounded-2xl border border-[#ece3d3] bg-white p-6 shadow-sm">
                     <div className="flex flex-col items-start gap-5 sm:flex-row">
                         {p.photo ? (
-                            <img src={p.photo} alt={p.name} className="h-24 w-24 rounded-2xl object-cover" />
+                            <img
+                                src={p.photo}
+                                alt={p.name}
+                                className="h-24 w-24 rounded-2xl object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = "/images/dummy-profile.jpg";
+                                }}
+                            />
                         ) : (
-                            <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#0F5E58] text-2xl font-semibold text-white">
-                                {(p.name || 'B').split(' ').slice(0, 2).map((w) => w[0]).join('')}
-                            </div>
+                            <img
+                                src="/images/dummy-profile.jpg"
+                                alt={p.name}
+                                className="h-24 w-24 rounded-2xl object-cover"
+                            />
                         )}
                         <div>
                             <h1 className="text-3xl text-[#1f2b28]" style={SERIF}>{p.name}</h1>

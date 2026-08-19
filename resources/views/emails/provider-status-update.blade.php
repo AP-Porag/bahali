@@ -303,11 +303,15 @@
                 @endif
 
                 <!-- Action -->
-                @if ($status === 'approved')
-                    <a href="https://bahali.org" class="action-button text-white">View Your Profile</a>
-                @else
-                    <a href="https://bahali.org/contact" class="action-button  text-white">Get Help</a>
-                @endif
+                <div class="action-buttons">
+
+                    <a href="{{ url('/login') }}" class="action-button text-white">
+                        Login to Your Account
+                    </a>
+
+                    <a href="https://bahali.org/contact" class="action-button text-white">Get Help</a>
+
+                </div>
 
                 <div class="divider"></div>
 
