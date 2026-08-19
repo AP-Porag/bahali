@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import Header from "@/components/provider/ProviderMenu";
 import ProviderMenu from '@/components/provider/ProviderMenu';
+import Footer from '@/components/Footer';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -643,13 +644,13 @@ export default function ProviderProfileEdit({
                             listing continues to show your previously approved details until an admin approves the changes.
                         </p>
                         <div className="mt-8">
-                            <a href="/provider/profile/edit" className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]">
+                            <a href="/provider/dashboard" className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]">
                                 Back to my profile
                             </a>
                         </div>
                     </div>
                 </div>
-                <Footer />
+                {/* <Footer /> */}
             </>
         );
     }
