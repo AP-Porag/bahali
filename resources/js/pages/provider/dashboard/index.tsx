@@ -191,9 +191,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                         className="h-14 w-14 rounded-xl object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#0E7C7B] text-lg font-semibold text-white">
-                                        {initials(provider.organization_name)}
-                                    </div>
+                                    <img
+                                        src="/images/dummy-profile.jpg"
+                                        alt={provider.organization_name}
+                                        className="h-14 w-14 rounded-xl object-cover"
+                                    />
                                 )}
                                 <div>
                                     <h1 className="font-serif text-xl font-semibold text-[#16302F]">
@@ -263,7 +265,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                     </div>
 
                     {/* Completeness card */}
-                    <div className="mb-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
+                    {/* <div className="mb-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <h2 className="font-serif text-sm font-semibold text-[#16302F]">Profile completeness</h2>
                             <span className="text-sm font-medium text-[#0E7C7B]">{completeness.percent}%</span>
@@ -294,7 +296,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                 </Link>
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
                     {/* Detailed sections */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
