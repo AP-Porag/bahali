@@ -54,12 +54,12 @@ class ProviderDirectoryController extends Controller
         // Seed keeps the rotating order stable across "Load more" within one
         // browse session, but rotates for the next visitor (Module 4).
         $seed = (int) $request->input('seed', 0);
-        if ($seed <= 0) {
-            $seed = (int) $request->session()->get('directory_seed');
-            if (! $seed) {
-                $seed = random_int(1, 999999);
-                $request->session()->put('directory_seed', $seed);
-            }
+        $page = (int) $request->input('page', 1);
+
+        // Fresh browse ba filter change (page 1) => notun rotating order (reshuffle).
+        // Load more (page > 1) => same seed, jate page 2 er order page 1 er sathe consistent thake.
+        if ($page <= 1 || $seed <= 0) {
+            $seed = random_int(1, 999999);
         }
 
         $filters = [
@@ -71,14 +71,14 @@ class ProviderDirectoryController extends Controller
             'language'        => $request->input('language', ''),
             'session_format'  => $request->input('session_format', ''),
             'payment'         => $request->input('payment', ''),
-            'perPage'         => (int) $request->input('perPage', 6),
-            'page'            => (int) $request->input('page', 1),
-            'seed'            => $seed,
+            'perPage' => (int) $request->input('perPage', 6),
+            'page'    => $page,
+            'seed'    => $seed,
         ];
 
         $result = $providerService->getPublicDirectory($filters);
 
-        return Inertia::render('web/directory/index', [
+        return Inertia::render('web/provider/index', [
             'providers'     => $result['providers'],
             'pagination'    => $result['pagination'],
             'filterOptions' => $providerService->getFilterOptions(),
@@ -104,7 +104,7 @@ class ProviderDirectoryController extends Controller
         $provider = $providerService->getPublicProfile($id);
         abort_if($provider === null, 404);
 
-        return Inertia::render('web/directory/show', [
+        return Inertia::render('web/provider/show', [
             'provider' => $provider,
         ]);
     }

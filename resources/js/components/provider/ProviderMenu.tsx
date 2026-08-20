@@ -21,7 +21,7 @@ export default function ProviderMenu() {
     return (
         <nav className="sticky top-0 z-40 border-b border-[#E7E0D2] bg-white/90 backdrop-blur">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-                <Link href="/provider/dashboard" className="flex items-center gap-2">
+                <Link href="/join" className="flex items-center gap-2">
                     <img
                         src="/images/logo.png"
                         alt="Bahali"

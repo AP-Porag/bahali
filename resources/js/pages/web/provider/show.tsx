@@ -1,3 +1,5 @@
+import Footer from '@/components/Footer';
+import Header from '@/components/Header';
 import { Head, Link } from '@inertiajs/react';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
@@ -33,9 +35,11 @@ export default function ProviderProfile({ provider }) {
         <div className="min-h-screen bg-[#f7f2e8] text-[#23201a]">
             <Head title={`${p.name} — Bahali`} />
 
+
+            <Header />
             <header className="border-b border-[#ece3d3] bg-[#fbf7f0]">
                 <div className="mx-auto max-w-4xl px-5 py-4">
-                    <Link href="/directory" className="text-sm text-[#0F5E58]">← Back to directory</Link>
+                    <Link href="/provider" className="text-sm text-[#0F5E58]">← Back to directory</Link>
                 </div>
             </header>
 
@@ -137,6 +141,7 @@ export default function ProviderProfile({ provider }) {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }
