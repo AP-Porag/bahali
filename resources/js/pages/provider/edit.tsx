@@ -748,6 +748,7 @@ export default function ProviderProfileEdit({
                         </main>
                     </div>
                 </div>
+                <Footer />
             </div>
         </>
     );

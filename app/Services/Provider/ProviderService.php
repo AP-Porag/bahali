@@ -31,13 +31,14 @@ class ProviderService extends BaseService
      */
     public function getPublicDirectory(array $filters): array
     {
-        $perPage = (int) ($filters['perPage'] ?? 12);
+        $perPage = (int) ($filters['perPage'] ?? 6);
         $perPage = max(3, min($perPage, 48));
         $page    = max(1, (int) ($filters['page'] ?? 1));
         $keyword = trim((string) ($filters['keyword'] ?? ''));
         $seed    = (int) ($filters['seed'] ?? $this->defaultSeed());
 
         $query = $this->baseApprovedQuery();
+
 
         if ($keyword !== '') {
             $this->applyKeywordSearch($query, $keyword);
@@ -52,7 +53,9 @@ class ProviderService extends BaseService
             $this->applyRotatingOrder($query, $seed);
         }
 
+
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+
 
         $items = collect($paginator->items())
             ->map(fn(Provider $p) => $this->transformCard($p))
@@ -300,7 +303,10 @@ class ProviderService extends BaseService
      */
     private function applyRotatingOrder(Builder $query, int $seed): void
     {
-        $query->orderByRaw('RAND(?)', [$seed])->orderBy('id');
+        $query->orderByRaw(
+            'CRC32(CONCAT(id, ?))',
+            [$seed]
+        );
     }
 
     /** Module 4 (search state) — relevance: name > area > title > training > language > location. */
@@ -652,8 +658,8 @@ class ProviderService extends BaseService
             ],
             'links' => [
                 'editProfile'   => '/provider/profile/edit',
-                'publicProfile' => $isPublic ? "/directory/{$provider->id}" : null,
-                'directory'     => '/directory',
+                'publicProfile' => $isPublic ? "/provider/{$provider->id}" : null,
+                'directory'     => '/provider',
             ],
         ];
     }
