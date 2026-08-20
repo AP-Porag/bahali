@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
     Select,
     SelectContent,
@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/select';
 import ProviderMenu from '@/components/provider/ProviderMenu';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
-const PER_PAGE = 10;
+const PER_PAGE = 6; // Laravel Controller-এর default-এর সাথে মিল
 
 /* ------------------------- static filter options ------------------------- */
 /* These mirror the registration form's option lists exactly, minus "Other" */
@@ -200,7 +201,7 @@ function ProviderCard({ p }) {
                     {p.languages?.slice(0, 2).map((l) => <Chip key={l} tone="plain">{l}</Chip>)}
                 </div>
                 <Link
-                    href={`/directory/${p.id}`}
+                    href={`/provider/${p.id}`}
                     className="inline-flex items-center gap-1 text-sm font-semibold text-[#0E7C7B] transition group-hover:gap-2"
                 >
                     View profile
@@ -234,13 +235,18 @@ function CardSkeleton() {
 
 /* ------------------------------- page ------------------------------- */
 
-export default function Directory({ providers = [], pagination = {}, filterOptions = {}, filters = {}, seed = 0, app_url = '' }) {
+export default function Directory({ providers = [], pagination = {}, filterOptions = {}, filters = {}, seed: initialSeed = 0, app_url = '' }) {
     const [items, setItems] = useState(providers);
     const [meta, setMeta] = useState(pagination);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
-    const directoryUrl = `${app_url.replace(/\/$/, '')}/directory`;
+    const [seed, setSeed] = useState(initialSeed);
+    const directoryUrl = `${app_url.replace(/\/$/, '')}/provider`;
+
+    useEffect(() => {
+        setSeed(initialSeed);
+    }, [initialSeed]);
 
     const [f, setF] = useState({
         keyword: filters.keyword || '',
@@ -259,7 +265,7 @@ export default function Directory({ providers = [], pagination = {}, filterOptio
     const runQuery = (nextFilters, { append = false, page = 1 } = {}) => {
         append ? setLoadingMore(true) : setLoading(true);
         router.get(
-            '/directory',
+            '/provider',
             { ...nextFilters, seed, page, perPage: PER_PAGE },
             {
                 preserveState: true,
@@ -270,6 +276,7 @@ export default function Directory({ providers = [], pagination = {}, filterOptio
                     const fresh = pageObj.props.providers || [];
                     setItems((prev) => (append ? [...prev, ...fresh] : fresh));
                     setMeta(pageObj.props.pagination || {});
+                    setSeed(pageObj.props.seed || seed);
                 },
                 onFinish: () => { setLoading(false); setLoadingMore(false); },
             },
@@ -277,7 +284,6 @@ export default function Directory({ providers = [], pagination = {}, filterOptio
     };
 
     const setFilter = (key, val) => {
-        // Map "all" sentinel back to empty string for query
         const next = { ...filtersRef.current, [key]: val === 'all' ? '' : val };
         setF(next);
         runQuery(next, { append: false, page: 1 });
@@ -458,7 +464,9 @@ export default function Directory({ providers = [], pagination = {}, filterOptio
                         )}
                     </main>
                 </div>
+
             </div>
+            <Footer />
         </div>
     );
 }

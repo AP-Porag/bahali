@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import ProviderMenu from '@/components/provider/ProviderMenu'; // নতুন মেনু কম্পোনেন্ট
+import Footer from '@/components/Footer';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -425,6 +426,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         </SectionCard>
                     </div>
                 </main>
+                <Footer />
             </div>
         </>
     );

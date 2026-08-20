@@ -14,8 +14,8 @@ use Inertia\Inertia;
 
 Route::get('/execute-command', function () {
     //    return redirect()->route('login');
-    //    Artisan::call('storage:link');
-    Artisan::call('migrate:fresh --seed');
+    Artisan::call('storage:link');
+    // Artisan::call('migrate:fresh --seed');
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
     Artisan::call('route:clear');
@@ -46,8 +46,8 @@ Route::post('/provider/directory/store', [ProviderDirectoryController::class, 's
 
 //Public provider directory
 Route::controller(ProviderDirectoryController::class)->group(function () {
-    Route::get('/directory', 'index')->name('directory.index');
-    Route::get('/directory/{id}', 'publicShow')->whereNumber('id')->name('directory.show');
+    Route::get('/provider', 'index')->name('provider.index');
+    Route::get('/provider/{id}', 'publicShow')->whereNumber('id')->name('provider.show');
 });
 
 Route::middleware(['auth'])->prefix('provider')->group(function () {

@@ -30,7 +30,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
         setActiveMenu(activeMenu === menu ? null : menu);
     };
 
-    const directoryUrl = `${app_url.replace(/\/$/, '')}/directory`;
+    const directoryUrl = `${app_url.replace(/\/$/, '')}/provider`;
 
     const dashboardUrl =
         user?.role === 'admin'
@@ -298,7 +298,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
                 {/* Drawer */}
                 <aside
-                    className={`fixed top-0 right-0 z-50 h-full w-[300px] bg-white shadow-[-20px_0_60px_rgba(0,0,0,0.14)] transition-transform duration-500 ease-out ${open ? 'translate-x-0' : 'translate-x-full'
+                    className={`fixed top-0 right-0 z-50 h-full w-[300px] bg-white text-gray-900 shadow-[-20px_0_60px_rgba(0,0,0,0.14)] transition-transform duration-500 ease-out ${open ? 'translate-x-0' : 'translate-x-full'
                         }`}
                 >
                     <div className="h-full overflow-y-auto px-8 pb-20">
@@ -547,6 +547,14 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             </a>
                         </div>
 
+
+
+                        <a href="https://bahali.org/donate/" target="_blank">
+                            <button className="font-open text-[16px] hover:text-[#d8886c]">
+                                <span>Give Now</span>
+                            </button>
+                        </a>
+
                         {/* Login / Dashboard (Mobile) */}
                         <div className="mt-3">
                             {user ? (
@@ -559,18 +567,12 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             ) : (
                                 <a
                                     href={loginUrl}
-                                    className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                                    className="font-open text-[16px] font-medium text-gray-900 hover:text-[#e99e84]"
                                 >
                                     Login
                                 </a>
                             )}
                         </div>
-
-                        <a href="https://bahali.org/donate/" target="_blank">
-                            <button className="font-open text-[16px] hover:text-[#d8886c]">
-                                <span>Give Now</span>
-                            </button>
-                        </a>
 
 
                     </div>
