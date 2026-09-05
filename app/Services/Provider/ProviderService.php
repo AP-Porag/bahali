@@ -104,7 +104,13 @@ class ProviderService extends BaseService
             // Insurers = distinct insurance_plans entries (for the "which insurer?" dropdown).
             $insurers = $this->distinctFromJson($providers, 'insurance_plans');
 
-            $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->all();
+            // $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->all();
+            $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->map(function ($type) {
+                return [
+                    'value' => $type,
+                    'label' => ucwords(str_replace('_', ' ', $type)),
+                ];
+            })->all();
 
             $payments = collect()
                 ->merge($this->distinctFromJson($providers, 'payment_methods'))

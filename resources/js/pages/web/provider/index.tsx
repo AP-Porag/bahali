@@ -86,6 +86,31 @@ function Chip({ children, tone = 'teal' }) {
     );
 }
 
+// function LabeledSelect({ id, label, value, onChange, options = [], placeholder = 'All' }) {
+//     return (
+//         <div>
+//             <label htmlFor={id} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">
+//                 {label}
+//             </label>
+//             <Select value={value || 'all'} onValueChange={(v) => onChange(v === 'all' ? '' : v)}>
+//                 <SelectTrigger
+//                     id={id}
+//                     className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20 ${value ? 'border-[#0E7C7B]/40 text-[#1F2A2E]' : 'border-[#DED7C9] text-[#5B6B6E]'
+//                         }`}
+//                 >
+//                     <SelectValue placeholder={placeholder} />
+//                 </SelectTrigger>
+//                 <SelectContent>
+//                     <SelectItem value="all">{placeholder}</SelectItem>
+//                     {options.map((opt) => (
+//                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+//                     ))}
+//                 </SelectContent>
+//             </Select>
+//         </div>
+//     );
+// }
+
 function LabeledSelect({ id, label, value, onChange, options = [], placeholder = 'All' }) {
     return (
         <div>
@@ -102,9 +127,15 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">{placeholder}</SelectItem>
-                    {options.map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                    ))}
+                    {options.map((opt) => {
+                        const optionValue = typeof opt === 'string' ? opt : opt.value;
+                        const optionLabel = typeof opt === 'string' ? opt : opt.label;
+                        return (
+                            <SelectItem key={optionValue} value={optionValue}>
+                                {optionLabel}
+                            </SelectItem>
+                        );
+                    })}
                 </SelectContent>
             </Select>
         </div>
@@ -570,7 +601,7 @@ export default function Directory({
                                 <LabeledSelect id="r-fmt" label="How would you like to meet?" value={f.session_format} onChange={(v) => patch({ session_format: v })} options={filterOptions.sessionFormats || ['In Person', 'Telehealth', 'Both']} />
                                 <LabeledSelect id="r-lang" label="Language" value={f.language} onChange={(v) => patch({ language: v })} options={filterOptions.languages || []} />
                                 <LabeledSelect id="r-type" label="Provider type" value={f.provider_type} onChange={(v) => patch({ provider_type: v })} options={filterOptions.providerTypes || []} />
-                                <LabeledSelect id="r-svc" label="Services offered" value={f.service} onChange={(v) => patch({ service: v })} options={filterOptions.services || []} />
+                                {/* <LabeledSelect id="r-svc" label="Services offered" value={f.service} onChange={(v) => patch({ service: v })} options={filterOptions.services || []} /> */}
                                 <div>
                                     <label htmlFor="r-kw" className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Keyword</label>
                                     <input
