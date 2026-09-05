@@ -17,28 +17,32 @@ class ProviderService extends BaseService
 {
     public function __construct()
     {
-        // BaseService requires the model in its constructor.
         parent::__construct(new Provider());
     }
+
+    /* =====================================================================
+     |  Grouped payment mapping (client: Insurance / Self-pay / Sliding /
+     |  Free or low-cost) -> underlying payment_methods values.
+     * ===================================================================== */
+    private const PAYMENT_GROUPS = [
+        'insurance'      => ['Insurance Accepted', 'Medicaid', 'Medicare', 'Employee Assistance Programs (EAP)'],
+        'self_pay'       => ['Self-Pay'],
+        'sliding_scale'  => ['Sliding Scale'],
+        'free_low_cost'  => ['No-Cost Services', 'Pro Bono / Volunteer Services', 'Donation-Based', 'Government-Funded', 'Grant-Funded', 'Sliding Scale'],
+    ];
 
     /* =====================================================================
      |  PUBLIC API
      * ===================================================================== */
 
-    /**
-     * Module 3/4/5/6/10 — approved providers, keyword + filters, and
-     * relevance-aware ordering (or a fair rotating order by default).
-     */
     public function getPublicDirectory(array $filters): array
     {
-        $perPage = (int) ($filters['perPage'] ?? 6);
-        $perPage = max(3, min($perPage, 48));
+        $perPage = max(3, min((int) ($filters['perPage'] ?? 6), 48));
         $page    = max(1, (int) ($filters['page'] ?? 1));
         $keyword = trim((string) ($filters['keyword'] ?? ''));
         $seed    = (int) ($filters['seed'] ?? $this->defaultSeed());
 
         $query = $this->baseApprovedQuery();
-
 
         if ($keyword !== '') {
             $this->applyKeywordSearch($query, $keyword);
@@ -46,16 +50,14 @@ class ProviderService extends BaseService
 
         $this->applyFilters($query, $filters);
 
-        // Module 4: keyword -> relevance order; otherwise rotating/randomized.
+        // Relevance when keyword present; otherwise fair rotating order.
         if ($keyword !== '') {
             $this->applyRelevanceOrder($query, $keyword);
         } else {
             $this->applyRotatingOrder($query, $seed);
         }
 
-
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-
 
         $items = collect($paginator->items())
             ->map(fn(Provider $p) => $this->transformCard($p))
@@ -74,39 +76,22 @@ class ProviderService extends BaseService
         ];
     }
 
-    /**
-     * Module 6/7 — options for the public filter dropdowns, built ONLY from
-     * approved providers. Cached to stay cheap as the directory grows.
-     */
     public function getFilterOptions(): array
     {
         return Cache::remember('public_provider_filter_options', now()->addMinutes(10), function () {
-            // 1. Location: সব Country model থেকে
-            $locations = Country::query()
-                ->orderBy('name')
-                ->pluck('name')
-                ->toArray();
+            $locations = Country::query()->orderBy('name')->pluck('name')->toArray();
 
-            // 2. Areas of Support: provider_support_areas টেবিল থেকে distinct area
             $areas = DB::table('provider_support_areas')
-                ->select('area')
-                ->distinct()
-                ->orderBy('area')
-                ->pluck('area')
-                ->filter() // null/empty বাদ
-                ->toArray();
+                ->select('area')->distinct()->orderBy('area')
+                ->pluck('area')->filter()->toArray();
 
-            // 3. Languages: Language model থেকে
-            $languages = Language::query()
-                ->orderBy('name')
-                ->pluck('name')
-                ->toArray();
+            $languages = Language::query()->orderBy('name')->pluck('name')->toArray();
 
-            // 4. বাকিগুলো আগের মতো approved providers থেকে
             $providers = Provider::query()
                 ->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)
                 ->get([
                     'id',
+                    'provider_type',
                     'populations_served',
                     'treatment_approaches',
                     'payment_methods',
@@ -116,26 +101,36 @@ class ProviderService extends BaseService
             $populations = $this->distinctFromJson($providers, 'populations_served');
             $services    = $this->distinctFromJson($providers, 'treatment_approaches');
 
+            // Insurers = distinct insurance_plans entries (for the "which insurer?" dropdown).
+            $insurers = $this->distinctFromJson($providers, 'insurance_plans');
+
+            // $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->all();
+            $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->map(function ($type) {
+                return [
+                    'value' => $type,
+                    'label' => ucwords(str_replace('_', ' ', $type)),
+                ];
+            })->all();
+
             $payments = collect()
                 ->merge($this->distinctFromJson($providers, 'payment_methods'))
-                ->merge($this->distinctFromJson($providers, 'insurance_plans'))
+                ->merge($insurers)
                 ->filter()->unique()->sort()->values()->all();
 
             return [
-                'locations'      => array_values(array_unique($locations)), // মাঝে মাঝে null/duplicate থাকতে পারে
+                'locations'      => array_values(array_unique($locations)),
                 'areasOfSupport' => array_values(array_unique($areas)),
                 'populations'    => $populations,
                 'services'       => $services,
                 'languages'      => array_values(array_unique($languages)),
                 'sessionFormats' => ['In Person', 'Telehealth', 'Both'],
                 'payments'       => $payments,
+                'insurers'       => $insurers,
+                'providerTypes'  => $providerTypes,
             ];
         });
     }
 
-    /**
-     * Module 8/9 — a single approved provider, public-safe fields only.
-     */
     public function getPublicProfile(int $id): ?array
     {
         $p = Provider::query()
@@ -184,9 +179,6 @@ class ProviderService extends BaseService
                 'website' => $p->website,
                 'social'  => $this->toArray($p->social_links),
             ],
-            // Deliberately NOT exposed (Module 9): license_number,
-            // verification_document, verification_note, consent_*,
-            // user email, internal statuses, reviewed_at.
         ];
     }
 
@@ -198,12 +190,9 @@ class ProviderService extends BaseService
     {
         return Provider::query()
             ->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)
-            // Optional: honour the provider's public-display consent:
-            // ->where('consent_public', true)
             ->with(['supportAreas']);
     }
 
-    /** Module 5 — one keyword across name, specialties, location, languages, areas of support. */
     private function applyKeywordSearch(Builder $query, string $keyword): void
     {
         $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $keyword) . '%';
@@ -215,60 +204,102 @@ class ProviderService extends BaseService
                 ->orWhere('city', 'like', $like)
                 ->orWhere('state_province', 'like', $like)
                 ->orWhere('country', 'like', $like)
-                // JSON columns are stored as text — LIKE works for keyword search
                 ->orWhere('languages', 'like', $like)
                 ->orWhere('treatment_approaches', 'like', $like)
                 ->orWhere('specialized_training', 'like', $like)
                 ->orWhere('populations_served', 'like', $like)
                 ->orWhereHas('supportAreas', function (Builder $sa) use ($like) {
-                    $sa->where('area', 'like', $like)
-                        ->orWhere('category', 'like', $like);
+                    $sa->where('area', 'like', $like)->orWhere('category', 'like', $like);
                 });
         });
     }
 
-    /** Module 6 — the 7 primary public filters. */
     private function applyFilters(Builder $query, array $filters): void
     {
+        // 1) Location — provider must SERVE this place (office OR telehealth region),
+        //    and optionally virtual providers when the visitor opts in.
         if (! empty($filters['location'])) {
-            $loc = $filters['location'];
+            $this->applyLocationFilter(
+                $query,
+                (string) $filters['location'],
+                ! empty($filters['include_virtual'])
+            );
+        } elseif (! empty($filters['include_virtual'])) {
+            // No location, but visitor asked to see virtual providers.
             $query->where(fn(Builder $q) => $q
-                ->where('country', $loc)
-                ->orWhere('state_province', $loc)
-                ->orWhere('city', $loc));
+                ->whereJsonContains('service_formats', 'Virtual')
+                ->orWhereJsonContains('service_formats', 'Telehealth'));
         }
 
-        if (! empty($filters['area_of_support'])) {
-            $query->whereHas('supportAreas', fn(Builder $q) => $q->where('area', $filters['area_of_support']));
+        // 2) Areas of Support — multiple (any match).
+        $areas = $this->normaliseAreas($filters['areas'] ?? ($filters['area_of_support'] ?? []));
+        if (! empty($areas)) {
+            $query->whereHas('supportAreas', fn(Builder $q) => $q->whereIn('area', $areas));
         }
 
+        // 3) Grouped payment.
+        if (! empty($filters['payment'])) {
+            $this->applyPaymentGroupFilter(
+                $query,
+                (string) $filters['payment'],
+                (string) ($filters['insurer'] ?? '')
+            );
+        }
+
+        // 4) Refine filters.
         if (! empty($filters['population'])) {
             $query->whereJsonContains('populations_served', $filters['population']);
         }
-
-        // "Services Offered" -> treatment_approaches. Remap if your schema differs.
         if (! empty($filters['service'])) {
             $query->whereJsonContains('treatment_approaches', $filters['service']);
         }
-
         if (! empty($filters['language'])) {
             $query->whereJsonContains('languages', $filters['language']);
         }
-
+        if (! empty($filters['provider_type'])) {
+            $query->where('provider_type', $filters['provider_type']);
+        }
         if (! empty($filters['session_format'])) {
             $this->applySessionFormatFilter($query, $filters['session_format']);
         }
-
-        if (! empty($filters['payment'])) {
-            $payment = $filters['payment'];
-            $query->where(fn(Builder $q) => $q
-                ->whereJsonContains('payment_methods', $payment)
-                ->orWhereJsonContains('insurance_plans', $payment)
-                ->orWhere('insurance_plans', 'like', '%' . $payment . '%'));
-        }
     }
 
-    /** Session Format = In Person / Telehealth / Both, derived from service_formats. */
+    private function applyLocationFilter(Builder $query, string $loc, bool $includeVirtual): void
+    {
+        $query->where(function (Builder $q) use ($loc, $includeVirtual) {
+            $q->where('country', $loc)
+                ->orWhere('state_province', $loc)
+                ->orWhere('city', $loc)
+                ->orWhereJsonContains('telehealth_regions', $loc);
+
+            if ($includeVirtual) {
+                $q->orWhereJsonContains('service_formats', 'Virtual')
+                    ->orWhereJsonContains('service_formats', 'Telehealth');
+            }
+        });
+    }
+
+    private function applyPaymentGroupFilter(Builder $query, string $group, string $insurer = ''): void
+    {
+        if ($group === 'insurance') {
+            $query->where(function (Builder $q) use ($insurer) {
+                $q->whereJsonContains('payment_methods', 'Insurance Accepted')
+                    ->orWhere(fn(Builder $qq) => $qq->whereNotNull('insurance_plans')->where('insurance_plans', '!=', '')->where('insurance_plans', '!=', '[]'));
+                if ($insurer !== '') {
+                    $q->where('insurance_plans', 'like', '%' . str_replace(['%', '_'], ['\%', '\_'], $insurer) . '%');
+                }
+            });
+            return;
+        }
+
+        $values = self::PAYMENT_GROUPS[$group] ?? [$group];
+        $query->where(function (Builder $q) use ($values) {
+            foreach ($values as $v) {
+                $q->orWhereJsonContains('payment_methods', $v);
+            }
+        });
+    }
+
     private function applySessionFormatFilter(Builder $query, string $format): void
     {
         $format   = strtolower($format);
@@ -291,25 +322,11 @@ class ProviderService extends BaseService
         }
     }
 
-    /**
-     * Module 4 (default state) — rotating/randomized order.
-     * RAND(seed) gives a reproducible shuffle, so "Load more" stays
-     * consistent within one browse session while a new seed rotates who
-     * appears first for the next visitor. No provider is permanently pinned.
-     *
-     * Scale-up note: for very large tables, replace this with a precomputed
-     * "shuffle_order" column reshuffled by a scheduled job.
-     * (RAND(seed) is MySQL syntax — swap for your driver if not MySQL.)
-     */
     private function applyRotatingOrder(Builder $query, int $seed): void
     {
-        $query->orderByRaw(
-            'CRC32(CONCAT(id, ?))',
-            [$seed]
-        );
+        $query->orderByRaw('CRC32(CONCAT(id, ?))', [$seed]);
     }
 
-    /** Module 4 (search state) — relevance: name > area > title > training > language > location. */
     private function applyRelevanceOrder(Builder $query, string $keyword): void
     {
         $esc    = str_replace(['%', '_'], ['\%', '\_'], $keyword);
@@ -343,21 +360,61 @@ class ProviderService extends BaseService
 
     private function transformCard(Provider $p): array
     {
+        $formats  = $this->toArray($p->service_formats);
+        $payments = $this->toArray($p->payment_methods);
+
         return [
             'id'          => $p->id,
             'name'        => $p->organization_name,
             'credentials' => $p->credentials,
             'title'       => $this->displayTitle($p),
+            'providerType' => $p->provider_type,
             'photo'       => $p->profile_photo ? Storage::url($p->profile_photo) : null,
             'location'    => $this->displayLocation($p),
-            'languages'   => $this->toArray($p->languages),
-            'sessionFormat' => $this->resolveSessionFormat($this->toArray($p->service_formats)),
+
+            'sessionFormat' => $this->resolveSessionFormat($formats),
+            'formatKey'     => $this->formatKey($formats),
+
             'specialties' => $this->cardSpecialties($p),
-            'populations' => array_slice($this->toArray($p->populations_served), 0, 3),
+            'populations' => array_slice($this->toArray($p->populations_served), 0, 4),
+            'languages'   => array_slice($this->toArray($p->languages), 0, 3),
+
+            // Payment (client card spec)
+            'insurances'   => array_slice($this->toArray($p->insurance_plans), 0, 6),
+            'selfPay'      => in_array('Self-Pay', $payments, true),
+            'slidingScale' => in_array('Sliding Scale', $payments, true),
+            'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
+
+            // Fee: only if a column/attribute exists; otherwise omitted client-side.
+            'fee'          => $p->fee_range ?: null,
+
+            // "Accepting new clients": null when the column doesn't exist yet.
+            'acceptingNewClients' => is_null($p->accepting_new_clients) ? null : (bool) $p->accepting_new_clients,
+
+            // Verification indicator — approved profiles are Bahali-verified.
+            'verified'     => true,
+
             'caribbeanExperience' => (bool) $p->caribbean_experience,
-            // Module 13 placeholder — badge not wired yet:
-            'acceptingNewClients' => null,
         ];
+    }
+
+    private function formatKey(array $formats): ?string
+    {
+        $lc = array_map('strtolower', $formats);
+        $hasInPerson = (bool) array_intersect($lc, ['in-person', 'in person']);
+        $hasVirtual  = (bool) array_intersect($lc, ['virtual', 'telehealth']);
+        if ($hasInPerson && $hasVirtual) return 'both';
+        if ($hasInPerson) return 'in_person';
+        if ($hasVirtual) return 'virtual';
+        return null;
+    }
+
+    private function normaliseAreas($areas): array
+    {
+        if (is_string($areas)) {
+            $areas = $areas === '' ? [] : [$areas];
+        }
+        return array_values(array_filter((array) $areas, fn($a) => trim((string) $a) !== ''));
     }
 
     private function cardSpecialties(Provider $p): array
@@ -370,7 +427,7 @@ class ProviderService extends BaseService
             $areas = $this->toArray($p->treatment_approaches);
         }
 
-        return array_slice(array_values(array_unique($areas)), 0, 3);
+        return array_slice(array_values(array_unique($areas)), 0, 6);
     }
 
     private function displayTitle(Provider $p): ?string
@@ -380,7 +437,6 @@ class ProviderService extends BaseService
             $titles[] = $p->professional_title_other;
         }
         $titles = array_values(array_unique(array_filter($titles)));
-
         return count($titles) ? implode(', ', $titles) : $p->credentials;
     }
 
@@ -397,12 +453,13 @@ class ProviderService extends BaseService
             ->filter()->unique()->sort()->values()->all();
     }
 
-
-
     private function defaultSeed(): int
     {
         return (int) now()->format('Ymd');
     }
+
+    /* ---------- (edit / dashboard / profile — UNCHANGED below) ---------- */
+
     public function getCountriesForForm(): array
     {
         return Country::with('regions.regionType')
@@ -427,11 +484,6 @@ class ProviderService extends BaseService
             ->toArray();
     }
 
-    /**
-     * Everything the provider's own edit form needs, in a form-friendly shape.
-     * Custom "Other" values were merged into the arrays at save time; the React
-     * form splits them back out using its option lists.
-     */
     public function getEditData(Provider $provider): array
     {
         $provider->loadMissing(['supportAreas', 'user']);
@@ -491,19 +543,11 @@ class ProviderService extends BaseService
         ];
     }
 
-    /**
-     * Save a provider's own edits. Module 2: every edit pushes the profile back
-     * into Pending so an admin re-approves before it is public again.
-     * Files are only replaced when a new upload is provided.
-     */
     public function updateOwnProfile(Provider $provider, $request): Provider
     {
         $data = $request->validated();
-
-        // Not editable from the profile edit screen.
         unset($data['email'], $data['password']);
 
-        // Re-read JSON array columns straight from input (mirrors registration store()).
         $data['license_states']       = $request->input('license_states', []);
         $data['telehealth_regions']   = $request->input('telehealth_regions', []);
         $data['accessibility']        = $request->input('accessibility', []);
@@ -512,12 +556,10 @@ class ProviderService extends BaseService
         $data['specialized_training'] = $request->input('specialized_training', []);
         $data['certifications']       = $request->input('certifications', []);
 
-        // Module 2 — back to Pending on any edit.
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
 
         $supportAreas = $request->mappedAreasOfSupport();
 
-        // Non-column / separately-handled keys.
         unset(
             $data['areas_of_support'],
             $data['existing_additional_photos'],
@@ -526,7 +568,6 @@ class ProviderService extends BaseService
             $data['additional_photos'],
         );
 
-        // Files — replace only when a new one is uploaded; otherwise keep existing.
         if ($request->hasFile('verification_document')) {
             $data['verification_document'] = $this->storeUpload(
                 $request->file('verification_document'),
@@ -540,7 +581,6 @@ class ProviderService extends BaseService
             );
         }
 
-        // Additional photos = kept existing paths + any newly uploaded.
         $kept = array_values($request->input('existing_additional_photos', []));
         $newPhotos = [];
         if ($request->hasFile('additional_photos')) {
@@ -566,9 +606,6 @@ class ProviderService extends BaseService
         return $provider->fresh(['supportAreas']);
     }
 
-    /**
-     * Store an uploaded file safely (same approach as the registration controller).
-     */
     private function storeUpload(?UploadedFile $file, string $dir): ?string
     {
         if (! $file || ! $file->isValid()) {
@@ -583,14 +620,12 @@ class ProviderService extends BaseService
         return $dir . '/' . $filename;
     }
 
-
     public function getDashboardData(Provider $provider): array
     {
         $provider->loadMissing(['supportAreas', 'user']);
 
         $status = $provider->status ?: GlobalConstant::VERIFICATION_STATUS_PENDING;
         $isPublic = $status === GlobalConstant::VERIFICATION_STATUS_APPROVED;
-
         $completeness = $this->profileCompleteness($provider);
 
         return [
@@ -663,9 +698,7 @@ class ProviderService extends BaseService
             ],
         ];
     }
-    /**
-     * A short, human explanation shown under the status badge.
-     */
+
     private function statusDescription(string $status): string
     {
         return match ($status) {
@@ -678,10 +711,6 @@ class ProviderService extends BaseService
         };
     }
 
-    /**
-     * Simple weighted completeness score + the list of still-missing sections,
-     * so the provider knows what to finish.
-     */
     private function profileCompleteness(Provider $provider): array
     {
         $checks = [
@@ -709,35 +738,31 @@ class ProviderService extends BaseService
             'missing'  => array_values($missing),
         ];
     }
+
     private function toArray($value): array
     {
         if (is_array($value)) {
             return $value;
         }
-
         if (is_string($value)) {
             $decoded = json_decode($value, true);
             return is_array($decoded) ? $decoded : [];
         }
-
         return [];
     }
+
     private function resolveSessionFormat(array $formats): string
     {
         $formats = array_map('strtolower', $formats);
-
         if (in_array('in-person', $formats) && in_array('virtual', $formats)) {
             return 'In Person + Telehealth';
         }
-
         if (in_array('in-person', $formats)) {
             return 'In Person';
         }
-
         if (in_array('virtual', $formats)) {
             return 'Telehealth';
         }
-
         return 'Not specified';
     }
 }
