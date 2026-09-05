@@ -47,33 +47,41 @@ class ProviderDirectoryController extends Controller
 
 
     /**
-     * Public provider directory / listing page (Stage 4).
+     * Public provider directory / listing page (Stage 4, needs-first).
      */
     public function index(Request $request, ProviderService $providerService)
     {
-        // Seed keeps the rotating order stable across "Load more" within one
-        // browse session, but rotates for the next visitor (Module 4).
         $seed = (int) $request->input('seed', 0);
         $page = (int) $request->input('page', 1);
 
-        // Fresh browse ba filter change (page 1) => notun rotating order (reshuffle).
-        // Load more (page > 1) => same seed, jate page 2 er order page 1 er sathe consistent thake.
+        // Fresh browse / filter change (page 1) => notun rotating order.
+        // Load more (page > 1) => same seed, order consistent thake.
         if ($page <= 1 || $seed <= 0) {
             $seed = random_int(1, 999999);
         }
 
+        // Areas can arrive as an array (areas[]) or a single legacy value.
+        $areas = $request->input('areas', []);
+        if (is_string($areas)) {
+            $areas = $areas === '' ? [] : [$areas];
+        }
+        $areas = array_values(array_filter((array) $areas, fn($a) => trim((string) $a) !== ''));
+
         $filters = [
-            'keyword'         => $request->input('keyword', ''),
-            'location'        => $request->input('location', ''),
-            'area_of_support' => $request->input('area_of_support', ''),
-            'population'      => $request->input('population', ''),
-            'service'         => $request->input('service', ''),
-            'language'        => $request->input('language', ''),
-            'session_format'  => $request->input('session_format', ''),
-            'payment'         => $request->input('payment', ''),
-            'perPage' => (int) $request->input('perPage', 6),
-            'page'    => $page,
-            'seed'    => $seed,
+            'keyword'         => (string) $request->input('keyword', ''),
+            'location'        => (string) $request->input('location', ''),
+            'include_virtual' => $request->boolean('include_virtual'),
+            'areas'           => $areas,
+            'payment'         => (string) $request->input('payment', ''),
+            'insurer'         => (string) $request->input('insurer', ''),
+            'population'      => (string) $request->input('population', ''),
+            'service'         => (string) $request->input('service', ''),
+            'language'        => (string) $request->input('language', ''),
+            'provider_type'   => (string) $request->input('provider_type', ''),
+            'session_format'  => (string) $request->input('session_format', ''),
+            'perPage'         => (int) $request->input('perPage', 6),
+            'page'            => $page,
+            'seed'            => $seed,
         ];
 
         $result = $providerService->getPublicDirectory($filters);
@@ -85,20 +93,19 @@ class ProviderDirectoryController extends Controller
             'filters'       => Arr::only($filters, [
                 'keyword',
                 'location',
-                'area_of_support',
+                'include_virtual',
+                'areas',
+                'payment',
+                'insurer',
                 'population',
                 'service',
                 'language',
+                'provider_type',
                 'session_format',
-                'payment',
             ]),
             'seed' => $result['seed'],
         ]);
     }
-
-    /**
-     * Public provider profile (approved only, public-safe fields).
-     */
     public function publicShow(int $id, ProviderService $providerService)
     {
         $provider = $providerService->getPublicProfile($id);
