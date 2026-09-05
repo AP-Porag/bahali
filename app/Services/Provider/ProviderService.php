@@ -102,7 +102,9 @@ class ProviderService extends BaseService
             $services    = $this->distinctFromJson($providers, 'treatment_approaches');
 
             // Insurers = distinct insurance_plans entries (for the "which insurer?" dropdown).
-            $insurers = $this->distinctFromJson($providers, 'insurance_plans');
+            $insurers = $providers
+                ->flatMap(fn($p) => $this->toList($p->insurance_plans))
+                ->filter()->unique()->sort()->values()->all();
 
             // $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->all();
             $providerTypes = $providers->pluck('provider_type')->filter()->unique()->sort()->values()->map(function ($type) {
@@ -253,8 +255,13 @@ class ProviderService extends BaseService
         if (! empty($filters['service'])) {
             $query->whereJsonContains('treatment_approaches', $filters['service']);
         }
-        if (! empty($filters['language'])) {
-            $query->whereJsonContains('languages', $filters['language']);
+        $languages = $this->normaliseAreas($filters['language'] ?? []);
+        if (! empty($languages)) {
+            $query->where(function (Builder $q) use ($languages) {
+                foreach ($languages as $lang) {
+                    $q->orWhereJsonContains('languages', $lang); // OR — any selected language
+                }
+            });
         }
         if (! empty($filters['provider_type'])) {
             $query->where('provider_type', $filters['provider_type']);
@@ -380,7 +387,8 @@ class ProviderService extends BaseService
             'languages'   => array_slice($this->toArray($p->languages), 0, 3),
 
             // Payment (client card spec)
-            'insurances'   => array_slice($this->toArray($p->insurance_plans), 0, 6),
+            // Payment (client card spec)
+            'insurances'   => array_slice($this->toList($p->insurance_plans), 0, 6),
             'selfPay'      => in_array('Self-Pay', $payments, true),
             'slidingScale' => in_array('Sliding Scale', $payments, true),
             'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
@@ -764,5 +772,23 @@ class ProviderService extends BaseService
             return 'Telehealth';
         }
         return 'Not specified';
+    }
+    /**
+     * Split comma-separated string OR pass through an array (insurance_plans, etc.).
+     */
+    private function toList($value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(array_map('trim', $value), fn($v) => $v !== ''));
+        }
+        if (is_string($value) && trim($value) !== '') {
+            // Try JSON array first; fall back to comma-separated.
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map('trim', $decoded), fn($v) => $v !== ''));
+            }
+            return array_values(array_filter(array_map('trim', explode(',', $value)), fn($v) => $v !== ''));
+        }
+        return [];
     }
 }

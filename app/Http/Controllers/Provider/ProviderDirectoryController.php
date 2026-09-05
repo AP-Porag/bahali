@@ -67,6 +67,13 @@ class ProviderDirectoryController extends Controller
         }
         $areas = array_values(array_filter((array) $areas, fn($a) => trim((string) $a) !== ''));
 
+        // Language — multi-select (array) or single legacy value.
+        $language = $request->input('language', []);
+        if (is_string($language)) {
+            $language = $language === '' ? [] : [$language];
+        }
+        $language = array_values(array_filter((array) $language, fn($l) => trim((string) $l) !== ''));
+
         $filters = [
             'keyword'         => (string) $request->input('keyword', ''),
             'location'        => (string) $request->input('location', ''),
@@ -76,7 +83,7 @@ class ProviderDirectoryController extends Controller
             'insurer'         => (string) $request->input('insurer', ''),
             'population'      => (string) $request->input('population', ''),
             'service'         => (string) $request->input('service', ''),
-            'language'        => (string) $request->input('language', ''),
+            'language'        => $language,
             'provider_type'   => (string) $request->input('provider_type', ''),
             'session_format'  => (string) $request->input('session_format', ''),
             'perPage'         => (int) $request->input('perPage', 6),
