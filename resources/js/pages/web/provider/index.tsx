@@ -37,7 +37,7 @@ const PAYMENT_OPTIONS = [
     { key: 'insurance', label: 'Insurance' },
     { key: 'self_pay', label: 'Self-pay' },
     { key: 'sliding_scale', label: 'Sliding scale' },
-    { key: 'free_low_cost', label: 'Free or low-cost' },
+    { key: 'free_low_cost', label: 'Free or low-cost services' },
 ];
 const PAYMENT_LABEL = Object.fromEntries(PAYMENT_OPTIONS.map((o) => [o.key, o.label]));
 
@@ -86,31 +86,6 @@ function Chip({ children, tone = 'teal' }) {
     );
 }
 
-// function LabeledSelect({ id, label, value, onChange, options = [], placeholder = 'All' }) {
-//     return (
-//         <div>
-//             <label htmlFor={id} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">
-//                 {label}
-//             </label>
-//             <Select value={value || 'all'} onValueChange={(v) => onChange(v === 'all' ? '' : v)}>
-//                 <SelectTrigger
-//                     id={id}
-//                     className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20 ${value ? 'border-[#0E7C7B]/40 text-[#1F2A2E]' : 'border-[#DED7C9] text-[#5B6B6E]'
-//                         }`}
-//                 >
-//                     <SelectValue placeholder={placeholder} />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                     <SelectItem value="all">{placeholder}</SelectItem>
-//                     {options.map((opt) => (
-//                         <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-//                     ))}
-//                 </SelectContent>
-//             </Select>
-//         </div>
-//     );
-// }
-
 function LabeledSelect({ id, label, value, onChange, options = [], placeholder = 'All' }) {
     return (
         <div>
@@ -142,8 +117,73 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
     );
 }
 
+/** Multi-select dropdown (checkbox list). Used for Language. */
+function MultiSelect({ id, label, values = [], onChange, options = [], placeholder = 'All' }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const onDoc = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onDoc);
+        return () => document.removeEventListener('mousedown', onDoc);
+    }, []);
+
+    const toggle = (opt) => {
+        const set = new Set(values);
+        set.has(opt) ? set.delete(opt) : set.add(opt);
+        onChange(Array.from(set));
+    };
+
+    const summary = values.length === 0
+        ? placeholder
+        : values.length === 1
+            ? values[0]
+            : `${values.length} selected`;
+
+    return (
+        <div ref={ref} className="relative">
+            <label htmlFor={id} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">
+                {label}
+            </label>
+            <button
+                id={id}
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                className={`flex w-full items-center justify-between rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20 ${values.length ? 'border-[#0E7C7B]/40 text-[#1F2A2E]' : 'border-[#DED7C9] text-[#5B6B6E]'
+                    }`}
+            >
+                <span className="truncate">{summary}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            {open && (
+                <div role="listbox" aria-multiselectable="true" className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-[#DED7C9] bg-white p-1 shadow-lg">
+                    {options.length === 0 && <p className="px-3 py-2 text-sm text-[#8A9795]">No options</p>}
+                    {options.map((opt) => {
+                        const checked = values.includes(opt);
+                        return (
+                            <label key={opt} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-[#3A4B49] hover:bg-[#0E7C7B]/5">
+                                <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggle(opt)}
+                                    className="h-4 w-4 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]"
+                                />
+                                {opt}
+                            </label>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
+
 /* ---------------------------------------------------------------------- */
-/*  Provider card (redesigned per client card spec)                       */
+/*  Provider card (demo-matched layout)                                    */
 /* ---------------------------------------------------------------------- */
 
 function ProviderCard({ p, selectedAreas = [] }) {
@@ -158,13 +198,14 @@ function ProviderCard({ p, selectedAreas = [] }) {
         return [...matched, ...rest].slice(0, 3);
     }, [p.specialties, selectedAreas]);
 
-    const formatLabel = { in_person: 'In person', virtual: 'Virtual', both: 'In person & virtual' }[p.formatKey]
+    const formatLabel = { in_person: 'In Person', virtual: 'Virtual', both: 'Virtual & In Person' }[p.formatKey]
         || (p.sessionFormat && p.sessionFormat !== 'Not specified' ? p.sessionFormat : null);
 
-    const insurers = p.insurances || [];
+    const insurers = p.insurances || []; // <-- database (insurance_plans → transformCard)
     const shownInsurers = insurers.slice(0, 2);
     const extraInsurers = Math.max(0, insurers.length - shownInsurers.length);
 
+    const populations = (p.populations || []).slice(0, 3);
     const showPhoto = p.photo && !imgError;
 
     return (
@@ -190,91 +231,95 @@ function ProviderCard({ p, selectedAreas = [] }) {
                 )}
 
                 <div className="min-w-0 flex-1">
+                    {/* name (+ credentials) */}
                     <h3 className="truncate text-[19px] leading-tight text-[#16302F]" style={SERIF}>
                         {p.name}{p.credentials ? <span className="text-[15px] font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}
                     </h3>
-                    {p.title && <p className="mt-0.5 line-clamp-2 text-sm text-[#5B6B6E]">{p.title}</p>}
 
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#6B7A78]">
-                        {p.location && (
-                            <span className="inline-flex items-center gap-1">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                                    <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" /><circle cx="12" cy="11" r="2" />
+                    {/* title • credentials verified */}
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-[#5B6B6E]">
+                        {p.title && <span className="line-clamp-1">{p.title}</span>}
+                        {p.title && p.verified && <span className="text-[#C9CFCE]">•</span>}
+                        {p.verified && (
+                            <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#0E6B6A]">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+                                    <path d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
-                                {p.location}
+                                Credentials verified
                             </span>
                         )}
-                        {formatLabel && <span>{formatLabel}</span>}
-                    </div>
+                    </p>
+
+                    {/* location • format */}
+                    {(p.location || formatLabel) && (
+                        <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#6B7A78]">
+                            {p.location && (
+                                <span className="inline-flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                        <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" /><circle cx="12" cy="11" r="2" />
+                                    </svg>
+                                    {p.location}
+                                </span>
+                            )}
+                            {p.location && formatLabel && <span className="text-[#C9CFCE]">•</span>}
+                            {formatLabel && <span>{formatLabel}</span>}
+                        </p>
+                    )}
                 </div>
             </div>
 
-            {/* Can help with */}
-            {specialties.length > 0 && (
-                <div className="mt-4">
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A9795]">Can help with</p>
-                    <div className="flex flex-wrap gap-1.5">
-                        {specialties.map((s) => (
-                            <Chip key={s} tone={selectedAreas.includes(s) ? 'teal' : 'plain'}>{s}</Chip>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Works with + languages */}
-            {(p.populations?.length > 0 || p.languages?.length > 0) && (
-                <div className="mt-3 space-y-1.5 text-xs text-[#5B6B6E]">
-                    {p.populations?.length > 0 && (
-                        <p><span className="font-semibold text-[#3A4B49]">Works with:</span> {p.populations.slice(0, 3).join(' · ')}</p>
+            {/* Can help with · Works with · Languages (demo-style inline text) */}
+            {(specialties.length > 0 || populations.length > 0 || p.languages?.length > 0) && (
+                <div className="mt-4 space-y-1.5 text-sm text-[#33302a]">
+                    {specialties.length > 0 && (
+                        <p>
+                            <span className="font-semibold text-[#3A4B49]">Can help with:</span>{' '}
+                            {specialties.join('  •  ')}
+                        </p>
+                    )}
+                    {populations.length > 0 && (
+                        <p className="text-[#5B6B6E]">
+                            <span className="font-semibold text-[#3A4B49]">Works with:</span>{' '}
+                            {populations.join('  •  ')}
+                        </p>
                     )}
                     {p.languages?.length > 0 && (
-                        <p><span className="font-semibold text-[#3A4B49]">Languages:</span> {p.languages.join(', ')}</p>
+                        <p className="text-[#5B6B6E]">
+                            <span className="font-semibold text-[#3A4B49]">Languages:</span>{' '}
+                            {p.languages.join(', ')}
+                        </p>
                     )}
                 </div>
             )}
 
-            {/* Cost / payment */}
-            <div className="mt-4 space-y-2 border-t border-[#EFEAE0] pt-4">
-                {p.fee && (
-                    <p className="text-sm font-semibold text-[#16302F]">{p.fee}</p>
+            {/* Cost · Insurance · Sliding scale · Availability */}
+            <div className="mt-4 space-y-1 border-t border-[#EFEAE0] pt-4 text-sm">
+                {/* STATIC fee */}
+                <p className="font-semibold text-[#16302F]">Therapy from $150/session</p>
+
+                {/* DYNAMIC insurance — from insurance_plans */}
+                {shownInsurers.length > 0 && (
+                    <p className="text-[#5B6B6E]">
+                        <span className="font-semibold text-[#3A4B49]">Insurance:</span>{' '}
+                        {shownInsurers.join('  •  ')}{extraInsurers > 0 ? `  •  +${extraInsurers}` : ''}
+                    </p>
                 )}
-                <div className="flex flex-wrap items-center gap-1.5">
-                    {shownInsurers.length > 0 && (
-                        <span className="text-xs text-[#5B6B6E]">
-                            <span className="font-semibold text-[#3A4B49]">Insurance:</span> {shownInsurers.join(' · ')}{extraInsurers > 0 ? ` +${extraInsurers}` : ''}
-                        </span>
-                    )}
-                    {p.slidingScale && <Chip tone="amber">Sliding scale</Chip>}
-                    {p.freeLowCost && <Chip tone="amber">Free / low-cost</Chip>}
-                    {!p.fee && !shownInsurers.length && !p.slidingScale && !p.freeLowCost && p.selfPay && (
-                        <Chip tone="plain">Self-pay</Chip>
-                    )}
-                </div>
+
+                {/* DYNAMIC sliding scale — from payment_methods */}
+                {p.slidingScale && <p className="text-[#0E6B6A]">Sliding scale available</p>}
+
+                {/* STATIC availability */}
+                <p className="flex flex-wrap items-center gap-x-2 font-medium text-[#0E6B6A]">
+                    <span className="inline-flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#0E7C7B]" /> Accepting new clients
+                    </span>
+                    <span className="text-[#C9CFCE]">•</span>
+                    <span className="text-[#8A9795]">Confirmed recently</span>
+                </p>
             </div>
 
-            {/* status row */}
-            <div className="mt-4 flex items-center justify-between border-t border-[#EFEAE0] pt-4">
-                <div className="flex flex-wrap items-center gap-2">
-                    {p.acceptingNewClients === true && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0E6B6A]">
-                            <span className="h-2 w-2 rounded-full bg-[#0E7C7B]" /> Accepting new clients
-                        </span>
-                    )}
-                    {p.acceptingNewClients === false && (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-[#8A9795]">
-                            <span className="h-2 w-2 rounded-full bg-[#C9CFCE]" /> Not accepting new clients
-                        </span>
-                    )}
-                    {p.verified && (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-[#0E6B6A]">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                                <path d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            Credentials verified
-                        </span>
-                    )}
-                </div>
-
+            {/* view profile */}
+            <div className="mt-4 flex items-center justify-end border-t border-[#EFEAE0] pt-4">
                 <Link
                     href={`/provider/${p.id}`}
                     className="inline-flex items-center gap-1 rounded-lg px-1 text-sm font-semibold text-[#0E7C7B] transition group-hover:gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
@@ -342,7 +387,9 @@ export default function Directory({
         // refine
         population: filters.population || '',
         session_format: filters.session_format || '',
-        language: filters.language || '',
+        language: Array.isArray(filters.language)
+            ? filters.language
+            : (filters.language ? [filters.language] : []),
         provider_type: filters.provider_type || '',
         service: filters.service || '',
         // free keyword (refine / browse)
@@ -397,7 +444,7 @@ export default function Directory({
     const clearAll = () => {
         const empty = {
             location: '', include_virtual: false, areas: [], payment: '', insurer: '',
-            population: '', session_format: '', language: '', provider_type: '', service: '', keyword: '',
+            population: '', session_format: '', language: [], provider_type: '', service: '', keyword: '',
         };
         setF(empty);
         runQuery(empty, { append: false, page: 1 });
@@ -419,7 +466,8 @@ export default function Directory({
         f.areas.forEach((a) => chips.push({ key: `area:${a}`, label: a, clear: () => toggleArea(a) }));
         if (f.payment) chips.push({ key: 'payment', label: PAYMENT_LABEL[f.payment], clear: () => patch({ payment: '', insurer: '' }) });
         if (f.insurer) chips.push({ key: 'insurer', label: f.insurer, clear: () => patch({ insurer: '' }) });
-        (['population', 'session_format', 'language', 'provider_type', 'service']).forEach((k) => {
+        f.language.forEach((l) => chips.push({ key: `lang:${l}`, label: l, clear: () => patch({ language: f.language.filter((x) => x !== l) }) }));
+        (['population', 'session_format', 'provider_type', 'service']).forEach((k) => {
             if (f[k]) chips.push({ key: k, label: f[k], clear: () => patch({ [k]: '' }) });
         });
         if (f.keyword) chips.push({ key: 'keyword', label: `“${f.keyword}”`, clear: () => onKeyword('') });
@@ -550,6 +598,19 @@ export default function Directory({
                                         </button>
                                     );
                                 })}
+                                {/* Show all options — clears any payment selection (any payment method) */}
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={f.payment === ''}
+                                    onClick={() => patch({ payment: '', insurer: '' })}
+                                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 ${f.payment === ''
+                                        ? 'border-[#C2543B] bg-[#F6E6DF] text-[#C2543B]'
+                                        : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#C2543B]/40'
+                                        }`}
+                                >
+                                    Show all options
+                                </button>
                             </div>
 
                             {f.payment === 'insurance' && (filterOptions.insurers?.length || 0) > 0 && (
@@ -565,6 +626,7 @@ export default function Directory({
                                 </div>
                             )}
                         </div>
+
 
                         {/* 3.4 Primary action */}
                         <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -599,7 +661,7 @@ export default function Directory({
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 <LabeledSelect id="r-pop" label="Who is the support for?" value={f.population} onChange={(v) => patch({ population: v })} options={filterOptions.populations || []} />
                                 <LabeledSelect id="r-fmt" label="How would you like to meet?" value={f.session_format} onChange={(v) => patch({ session_format: v })} options={filterOptions.sessionFormats || ['In Person', 'Telehealth', 'Both']} />
-                                <LabeledSelect id="r-lang" label="Language" value={f.language} onChange={(v) => patch({ language: v })} options={filterOptions.languages || []} />
+                                <MultiSelect id="r-lang" label="Language" values={f.language} onChange={(v) => patch({ language: v })} options={filterOptions.languages || []} />
                                 <LabeledSelect id="r-type" label="Provider type" value={f.provider_type} onChange={(v) => patch({ provider_type: v })} options={filterOptions.providerTypes || []} />
                                 {/* <LabeledSelect id="r-svc" label="Services offered" value={f.service} onChange={(v) => patch({ service: v })} options={filterOptions.services || []} /> */}
                                 <div>
