@@ -94,12 +94,37 @@ return new class extends Migration
             $table->boolean('consent_public')->default(false);
             $table->timestamp('reviewed_at')->nullable();
 
+            // Availability (guide §5) — provider selects only Yes/No.
+            // "unknown" is system-generated once availability_confirmed_at is
+            // older than 60 days (handled in the service + scheduled job).
+            $table->boolean('accepting_new_clients')->nullable();
+            $table->timestamp('availability_confirmed_at')->nullable();
+
+            // Fee / fee range on card + profile (guide §4.2 / §7.1).
+            $table->string('fee_range')->nullable();
+
+            // Contact hand-off methods (guide §8.1) — Bahali is NOT the intermediary.
+            $table->string('booking_url')->nullable();
+            $table->string('contact_email')->nullable();
+
             $table->timestamps();
         });
     }
 
+    // public function down(): void
+    // {
+    //     Schema::dropIfExists('providers');
+    // }
     public function down(): void
     {
-        Schema::dropIfExists('providers');
+        Schema::table('providers', function (Blueprint $table) {
+            $table->dropColumn([
+                'accepting_new_clients',
+                'availability_confirmed_at',
+                'fee_range',
+                'booking_url',
+                'contact_email',
+            ]);
+        });
     }
 };

@@ -54,20 +54,18 @@ class ProviderDirectoryController extends Controller
         $seed = (int) $request->input('seed', 0);
         $page = (int) $request->input('page', 1);
 
-        // Fresh browse / filter change (page 1) => notun rotating order.
-        // Load more (page > 1) => same seed, order consistent thake.
         if ($page <= 1 || $seed <= 0) {
             $seed = random_int(1, 999999);
         }
 
-        // Areas can arrive as an array (areas[]) or a single legacy value.
+        // Areas — array (areas[]) or single legacy value.
         $areas = $request->input('areas', []);
         if (is_string($areas)) {
             $areas = $areas === '' ? [] : [$areas];
         }
         $areas = array_values(array_filter((array) $areas, fn($a) => trim((string) $a) !== ''));
 
-        // Language — multi-select (array) or single legacy value.
+        // Language — multi-select.
         $language = $request->input('language', []);
         if (is_string($language)) {
             $language = $language === '' ? [] : [$language];
@@ -77,6 +75,7 @@ class ProviderDirectoryController extends Controller
         $filters = [
             'keyword'         => (string) $request->input('keyword', ''),
             'location'        => (string) $request->input('location', ''),
+            'region'          => (string) $request->input('region', ''),   // secondary geography (parish/state)
             'include_virtual' => $request->boolean('include_virtual'),
             'areas'           => $areas,
             'payment'         => (string) $request->input('payment', ''),
@@ -86,6 +85,7 @@ class ProviderDirectoryController extends Controller
             'language'        => $language,
             'provider_type'   => (string) $request->input('provider_type', ''),
             'session_format'  => (string) $request->input('session_format', ''),
+            'accepting'       => $request->boolean('accepting'), // guide §5.4
             'perPage'         => (int) $request->input('perPage', 6),
             'page'            => $page,
             'seed'            => $seed,
@@ -97,9 +97,11 @@ class ProviderDirectoryController extends Controller
             'providers'     => $result['providers'],
             'pagination'    => $result['pagination'],
             'filterOptions' => $providerService->getFilterOptions(),
+            'countries'     => $providerService->getCountriesForForm(), // location cascade (guide §2.1)
             'filters'       => Arr::only($filters, [
                 'keyword',
                 'location',
+                'region',
                 'include_virtual',
                 'areas',
                 'payment',
@@ -109,6 +111,7 @@ class ProviderDirectoryController extends Controller
                 'language',
                 'provider_type',
                 'session_format',
+                'accepting',
             ]),
             'seed' => $result['seed'],
         ]);
@@ -261,6 +264,28 @@ class ProviderDirectoryController extends Controller
         return redirect()
             ->route('provider.profile.edit')
             ->with('success', 'Your changes have been submitted and are pending review.');
+    }
+    /**
+     * Provider sets/reconfirms whether they are accepting new clients (guide §5.2).
+     * Only Yes/No — "unknown" is system-generated after 60 days of no reconfirmation.
+     * Reconfirming stamps availability_confirmed_at = now(), resetting the 60-day window.
+     * This does NOT push the profile to Pending — it's a standalone availability signal.
+     */
+    public function updateAvailability(Request $request): RedirectResponse
+    {
+        $provider = $request->user()?->provider;
+        abort_if(! $provider, 404, 'No provider profile found for this account.');
+
+        $validated = $request->validate([
+            'accepting_new_clients' => ['required', 'boolean'],
+        ]);
+
+        $provider->update([
+            'accepting_new_clients'     => $validated['accepting_new_clients'],
+            'availability_confirmed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Your availability has been updated.');
     }
 
     /**

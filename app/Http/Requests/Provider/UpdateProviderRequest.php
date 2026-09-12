@@ -63,6 +63,8 @@ class UpdateProviderRequest extends FormRequest
             'existing_additional_photos'   => ['nullable', 'array'],
             'existing_additional_photos.*' => ['string'],
 
+            'accepting_new_clients' => ['nullable', 'boolean'],
+
             // Array columns are re-read via input() in the service, but must have
             // rules so they survive validation:
             'license_states'       => ['nullable', 'array'],

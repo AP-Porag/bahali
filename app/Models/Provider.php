@@ -95,7 +95,14 @@ class Provider extends Model
         'accessibility_other',
         'treatment_approaches_other',
         'specialized_training_other',
-        'license_states_other'
+        'license_states_other',
+
+        // Availability + contact hand-off + fee (Stage 4 UX guide)
+        'accepting_new_clients',
+        'availability_confirmed_at',
+        'fee_range',
+        'booking_url',
+        'contact_email',
     ];
 
     protected $casts = [
@@ -120,6 +127,9 @@ class Provider extends Model
         'consent_public'       => 'boolean',
         'reviewed_at'          => 'datetime',
         'license_verified_at'  => 'datetime',
+
+        'accepting_new_clients'     => 'boolean',
+        'availability_confirmed_at' => 'datetime',
 
     ];
 

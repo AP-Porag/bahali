@@ -45,14 +45,6 @@ export default function CreateProviderPage({
                     /> */}
                 <ProviderRegistration countries={countries} />
             </div>
-
-
-
-
-
-
-
-
         </div>
     );
 }

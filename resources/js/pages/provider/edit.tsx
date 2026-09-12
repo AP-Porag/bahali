@@ -60,6 +60,7 @@ interface ProviderFormData {
     additional_photos: File[];
     accessibility: string[];
     accessibility_other: string;
+    accepting_new_clients: boolean | null;
 }
 type FieldName = keyof ProviderFormData;
 type FormErrors = Partial<Record<FieldName, string>>;
@@ -129,7 +130,9 @@ const STEPS = [
     { key: 'contact', title: 'Contact Information', subtitle: 'Reach you' },
     { key: 'media', title: 'Profile Media', subtitle: 'Photos & logo' },
     { key: 'accessibility', title: 'Accessibility', subtitle: 'Accommodations' },
+    { key: 'availability', title: 'Availability', subtitle: 'Accepting new clients?' },
 ] as const;
+
 const TOTAL_STEPS = STEPS.length;
 
 const FIELD_STEP: Record<string, number> = {
@@ -146,6 +149,7 @@ const FIELD_STEP: Record<string, number> = {
     phone: 10, website: 10, social_links: 10,
     profile_photo: 11, additional_photos: 11,
     accessibility: 12, accessibility_other: 12,
+    accepting_new_clients: 13,
 };
 
 /* ------------------------------------------------------------------ */
@@ -448,6 +452,8 @@ export default function ProviderProfileEdit({
             additional_photos: [],
             accessibility: acc.values,
             accessibility_other: acc.otherText,
+            accepting_new_clients:
+                typeof p.accepting_new_clients === 'boolean' ? (p.accepting_new_clients as boolean) : null,
         };
         return { data, customAreas };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -555,6 +561,11 @@ export default function ProviderProfileEdit({
                 if (hasOther && !d.accessibility_other.trim()) e.accessibility_other = 'Please describe the other accommodation.';
                 break;
             }
+            case 13:
+                if (d.accepting_new_clients !== true && d.accepting_new_clients !== false) {
+                    e.accepting_new_clients = 'Please let visitors know if you are accepting new clients.';
+                }
+                break;
         }
         return e;
     };
@@ -610,6 +621,7 @@ export default function ProviderProfileEdit({
                 specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
                 certifications: data.certifications.filter(c => c.trim() !== ''),
                 existing_additional_photos: keptPaths,
+                accepting_new_clients: data.accepting_new_clients ? 1 : 0,
             } as unknown as ProviderFormData;
         });
 
@@ -1047,6 +1059,24 @@ function StepBody({
                     <OtherCheckboxField checked={d.accessibility.includes('__other__')} text={d.accessibility_other}
                         onToggle={() => { const o = '__other__'; set('accessibility', d.accessibility.includes(o) ? d.accessibility.filter(v => v !== o) : [...d.accessibility, o]); }}
                         onTextChange={(v) => set('accessibility_other', v)} placeholder="Describe the accessibility feature or accommodation…" error={!!fieldError('accessibility_other')} />
+                </FieldShell>
+            );
+        case 13:
+            return (
+                <FieldShell
+                    label="Are you currently accepting new clients?"
+                    required
+                    hint="This shows on your public listing. We'll ask you to reconfirm every 60 days so it stays accurate — if it isn't reconfirmed, your listing will show “Contact to confirm availability” instead."
+                    error={fieldError('accepting_new_clients')}
+                >
+                    <RadioRow
+                        value={d.accepting_new_clients === true ? 'yes' : d.accepting_new_clients === false ? 'no' : ''}
+                        onChange={(v) => set('accepting_new_clients', v === 'yes')}
+                        options={[
+                            { value: 'yes', label: 'Yes, I am accepting new clients' },
+                            { value: 'no', label: 'No, I am not currently accepting new clients' },
+                        ]}
+                    />
                 </FieldShell>
             );
         default:

@@ -31,6 +31,9 @@ class ProviderService extends BaseService
         'free_low_cost'  => ['No-Cost Services', 'Pro Bono / Volunteer Services', 'Donation-Based', 'Government-Funded', 'Grant-Funded', 'Sliding Scale'],
     ];
 
+    /** Availability freshness window (guide §5.3). */
+    private const AVAILABILITY_FRESH_DAYS = 60;
+
     /* =====================================================================
      |  PUBLIC API
      * ===================================================================== */
@@ -178,9 +181,15 @@ class ProviderService extends BaseService
             ],
             'contact' => [
                 'phone'   => $p->phone,
+                'email'   => $p->contact_email,
                 'website' => $p->website,
+                'booking' => $p->booking_url,
                 'social'  => $this->toArray($p->social_links),
             ],
+            'fee'             => $p->fee_range ?: null,
+            'availability'    => $this->availabilityState($p),
+            'acceptingNewClients' => $this->availabilityState($p) === 'accepting'
+                ? true : ($this->availabilityState($p) === 'not_accepting' ? false : null),
         ];
     }
 
@@ -219,15 +228,16 @@ class ProviderService extends BaseService
     private function applyFilters(Builder $query, array $filters): void
     {
         // 1) Location — provider must SERVE this place (office OR telehealth region),
-        //    and optionally virtual providers when the visitor opts in.
+        //    optionally virtual when the visitor opts in. Secondary geography (parish/
+        //    state) narrows further when supplied.
         if (! empty($filters['location'])) {
             $this->applyLocationFilter(
                 $query,
                 (string) $filters['location'],
+                (string) ($filters['region'] ?? ''),
                 ! empty($filters['include_virtual'])
             );
         } elseif (! empty($filters['include_virtual'])) {
-            // No location, but visitor asked to see virtual providers.
             $query->where(fn(Builder $q) => $q
                 ->whereJsonContains('service_formats', 'Virtual')
                 ->orWhereJsonContains('service_formats', 'Telehealth'));
@@ -259,7 +269,7 @@ class ProviderService extends BaseService
         if (! empty($languages)) {
             $query->where(function (Builder $q) use ($languages) {
                 foreach ($languages as $lang) {
-                    $q->orWhereJsonContains('languages', $lang); // OR — any selected language
+                    $q->orWhereJsonContains('languages', $lang);
                 }
             });
         }
@@ -269,9 +279,17 @@ class ProviderService extends BaseService
         if (! empty($filters['session_format'])) {
             $this->applySessionFormatFilter($query, $filters['session_format']);
         }
+
+        // 5) Availability — "Accepting new clients" returns only CURRENT, unexpired
+        //    accepting statuses. Unknown/expired never counts as accepting (guide §5.4).
+        if (! empty($filters['accepting'])) {
+            $query->where('accepting_new_clients', true)
+                ->whereNotNull('availability_confirmed_at')
+                ->where('availability_confirmed_at', '>=', now()->subDays(self::AVAILABILITY_FRESH_DAYS));
+        }
     }
 
-    private function applyLocationFilter(Builder $query, string $loc, bool $includeVirtual): void
+    private function applyLocationFilter(Builder $query, string $loc, string $region, bool $includeVirtual): void
     {
         $query->where(function (Builder $q) use ($loc, $includeVirtual) {
             $q->where('country', $loc)
@@ -284,6 +302,14 @@ class ProviderService extends BaseService
                     ->orWhereJsonContains('service_formats', 'Telehealth');
             }
         });
+
+        // Secondary geography (parish/state/province) narrows within the country.
+        if ($region !== '') {
+            $query->where(fn(Builder $q) => $q
+                ->where('state_province', $region)
+                ->orWhere('city', $region)
+                ->orWhereJsonContains('telehealth_regions', $region));
+        }
     }
 
     private function applyPaymentGroupFilter(Builder $query, string $group, string $insurer = ''): void
@@ -386,24 +412,36 @@ class ProviderService extends BaseService
             'populations' => array_slice($this->toArray($p->populations_served), 0, 4),
             'languages'   => array_slice($this->toArray($p->languages), 0, 3),
 
-            // Payment (client card spec)
-            // Payment (client card spec)
+            // Payment (guide §4.2)
             'insurances'   => array_slice($this->toList($p->insurance_plans), 0, 6),
             'selfPay'      => in_array('Self-Pay', $payments, true),
             'slidingScale' => in_array('Sliding Scale', $payments, true),
             'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
-
-            // Fee: only if a column/attribute exists; otherwise omitted client-side.
             'fee'          => $p->fee_range ?: null,
 
-            // "Accepting new clients": null when the column doesn't exist yet.
-            'acceptingNewClients' => is_null($p->accepting_new_clients) ? null : (bool) $p->accepting_new_clients,
+            // Availability — 3 states (guide §5.1): accepting | not_accepting | unknown
+            'availability' => $this->availabilityState($p),
 
             // Verification indicator — approved profiles are Bahali-verified.
             'verified'     => true,
 
             'caribbeanExperience' => (bool) $p->caribbean_experience,
         ];
+    }
+
+    /**
+     * Resolve the public availability state (guide §5.1).
+     * unknown when never set OR confirmation older than the 60-day window.
+     */
+    private function availabilityState(Provider $p): string
+    {
+        if (is_null($p->accepting_new_clients) || is_null($p->availability_confirmed_at)) {
+            return 'unknown';
+        }
+        if ($p->availability_confirmed_at->lt(now()->subDays(self::AVAILABILITY_FRESH_DAYS))) {
+            return 'unknown';
+        }
+        return $p->accepting_new_clients ? 'accepting' : 'not_accepting';
     }
 
     private function formatKey(array $formats): ?string
@@ -537,6 +575,10 @@ class ProviderService extends BaseService
                     : $provider->social_links,
                 'status'               => $provider->status,
                 'email'                => $provider->user?->email ?? $provider->email,
+
+                // Availability (guide §5)
+                'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
+                'availability_confirmed_at'  => $provider->availability_confirmed_at?->format('F j, Y'),
             ],
             'supportAreas' => $provider->supportAreas
                 ->map(fn($r) => ['category' => $r->category, 'area' => $r->area])
@@ -565,6 +607,9 @@ class ProviderService extends BaseService
         $data['certifications']       = $request->input('certifications', []);
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+        // Availability (guide §5) — stamp confirmation time so the 60-day
+        // freshness window resets on every profile save.
+        $data['availability_confirmed_at'] = now();
 
         $supportAreas = $request->mappedAreasOfSupport();
 
