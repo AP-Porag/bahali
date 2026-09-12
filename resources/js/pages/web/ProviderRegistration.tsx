@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -133,151 +134,151 @@ const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
 /**
  * Areas of Support — grouped taxonomy.
  */
-const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
-    {
-        category: 'Mental & Emotional Well-Being',
-        items: [
-            'Anxiety & Worry',
-            'Depression & Low Mood',
-            'Stress & Burnout',
-            'Trauma & Recovery',
-            'Grief & Loss',
-            'Anger & Irritability',
-            'Building Self-Confidence',
-            'Managing Emotions',
-            'Life Changes & Transitions',
-            'Panic Attacks',
-            'Obsessive Thoughts & Compulsive Behaviors (OCD)',
-            'Mood Changes',
-        ],
-    },
-    {
-        category: 'Relationships & Family',
-        items: [
-            'Couples & Relationship Counseling',
-            'Marriage Counseling',
-            'Premarital Counseling',
-            'Parenting Support',
-            'Co-Parenting',
-            'Family Conflict',
-            'Divorce & Separation',
-            'Blended Families',
-            'Communication Challenges',
-            'Caregiver Support',
-            'Healing from Relationship Abuse',
-            'Sex Therapy'
-        ],
-    },
-    {
-        category: 'Children, Teens & Families',
-        items: [
-            'Child Behavioral Challenges',
-            'Teen Emotional Wellness',
-            'ADHD',
-            'Autism & Neurodiversity',
-            'School Challenges',
-            'Bullying',
-            'Social Skills',
-            'Parent-Child Relationships',
-            'Childhood Trauma',
-            'Big Feelings & Emotional Regulation',
-        ],
-    },
-    {
-        category: "Women's Health & Wellness",
-        items: [
-            'Pregnancy Support',
-            'Pregnancy & Infant Loss',
-            'Postpartum Depression',
-            'Postpartum Anxiety',
-            'Infertility',
-            'Menopause & Midlife',
-        ],
-    },
-    {
-        category: "Men's Health & Wellness",
-        items: [
-            "Men's Emotional Wellness",
-            'Fatherhood',
-            'Relationship Challenges',
-            'Managing Anger',
-            'Identity & Purpose',
-        ],
-    },
-    {
-        category: 'Older Adults & Aging',
-        items: [
-            'Healthy Aging & Older Adult Well-Being',
-            'Memory Concerns',
-            'Dementia Support',
-            "Alzheimer's Disease Support",
-            'Retirement & Life Changes',
-            'Coping with Chronic Illness',
-            'Grief & Loss in Later Life',
-        ],
-    },
-    {
-        category: 'Trauma, Crisis & Recovery',
-        items: [
-            'Trauma',
-            'PTSD',
-            'Childhood Trauma',
-            'Sexual Assault & Sexual Trauma',
-            'Domestic & Intimate Partner Violence',
-            'Military & Service-Related Trauma',
-            'Disaster & Displacement',
-            'Community Violence',
-            'Self-Harm',
-            'Suicidal Thoughts & Behaviors',
-        ],
-    },
-    {
-        category: 'Health & Everyday Wellness',
-        items: [
-            'Living with Chronic Illness',
-            'Living with Chronic Pain',
-            'Sleep & Insomnia',
-            'Health-Related Anxiety',
-            'Stress Management',
-            'Lifestyle Changes',
-            'Emotional Eating & Weight Concerns',
-        ],
-    },
-    {
-        category: 'Substance Use & Recovery',
-        items: [
-            'Alcohol Use',
-            'Substance Use',
-            'Recovery Support',
-            'Relapse Prevention',
-        ],
-    },
-    {
-        category: 'Work, School & Daily Life',
-        items: [
-            'Workplace Stress',
-            'Compassion Fatigue',
-            'Vicarious Trauma',
-            'Leadership & Executive Wellness',
-            'Career Changes',
-            'Academic Stress',
-            'College & University Adjustment',
-        ],
-    },
-    {
-        category: 'Culture, Faith & Community',
-        items: [
-            'Caribbean & Diaspora Wellness',
-            'Faith & Spiritual Support',
-            'Psychological First Aid',
-            'Church & Ministry Support',
-            'Immigration & Adjusting to a New Culture',
-            'Cultural Identity & Belonging',
-            'Experiences of Racism & Discrimination',
-            'LGBTQIA+ Support',
-        ],
-    },
-];
+// const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
+//     {
+//         category: 'Mental & Emotional Well-Being',
+//         items: [
+//             'Anxiety & Worry',
+//             'Depression & Low Mood',
+//             'Stress & Burnout',
+//             'Trauma & Recovery',
+//             'Grief & Loss',
+//             'Anger & Irritability',
+//             'Building Self-Confidence',
+//             'Managing Emotions',
+//             'Life Changes & Transitions',
+//             'Panic Attacks',
+//             'Obsessive Thoughts & Compulsive Behaviors (OCD)',
+//             'Mood Changes',
+//         ],
+//     },
+//     {
+//         category: 'Relationships & Family',
+//         items: [
+//             'Couples & Relationship Counseling',
+//             'Marriage Counseling',
+//             'Premarital Counseling',
+//             'Parenting Support',
+//             'Co-Parenting',
+//             'Family Conflict',
+//             'Divorce & Separation',
+//             'Blended Families',
+//             'Communication Challenges',
+//             'Caregiver Support',
+//             'Healing from Relationship Abuse',
+//             'Sex Therapy'
+//         ],
+//     },
+//     {
+//         category: 'Children, Teens & Families',
+//         items: [
+//             'Child Behavioral Challenges',
+//             'Teen Emotional Wellness',
+//             'ADHD',
+//             'Autism & Neurodiversity',
+//             'School Challenges',
+//             'Bullying',
+//             'Social Skills',
+//             'Parent-Child Relationships',
+//             'Childhood Trauma',
+//             'Big Feelings & Emotional Regulation',
+//         ],
+//     },
+//     {
+//         category: "Women's Health & Wellness",
+//         items: [
+//             'Pregnancy Support',
+//             'Pregnancy & Infant Loss',
+//             'Postpartum Depression',
+//             'Postpartum Anxiety',
+//             'Infertility',
+//             'Menopause & Midlife',
+//         ],
+//     },
+//     {
+//         category: "Men's Health & Wellness",
+//         items: [
+//             "Men's Emotional Wellness",
+//             'Fatherhood',
+//             'Relationship Challenges',
+//             'Managing Anger',
+//             'Identity & Purpose',
+//         ],
+//     },
+//     {
+//         category: 'Older Adults & Aging',
+//         items: [
+//             'Healthy Aging & Older Adult Well-Being',
+//             'Memory Concerns',
+//             'Dementia Support',
+//             "Alzheimer's Disease Support",
+//             'Retirement & Life Changes',
+//             'Coping with Chronic Illness',
+//             'Grief & Loss in Later Life',
+//         ],
+//     },
+//     {
+//         category: 'Trauma, Crisis & Recovery',
+//         items: [
+//             'Trauma',
+//             'PTSD',
+//             'Childhood Trauma',
+//             'Sexual Assault & Sexual Trauma',
+//             'Domestic & Intimate Partner Violence',
+//             'Military & Service-Related Trauma',
+//             'Disaster & Displacement',
+//             'Community Violence',
+//             'Self-Harm',
+//             'Suicidal Thoughts & Behaviors',
+//         ],
+//     },
+//     {
+//         category: 'Health & Everyday Wellness',
+//         items: [
+//             'Living with Chronic Illness',
+//             'Living with Chronic Pain',
+//             'Sleep & Insomnia',
+//             'Health-Related Anxiety',
+//             'Stress Management',
+//             'Lifestyle Changes',
+//             'Emotional Eating & Weight Concerns',
+//         ],
+//     },
+//     {
+//         category: 'Substance Use & Recovery',
+//         items: [
+//             'Alcohol Use',
+//             'Substance Use',
+//             'Recovery Support',
+//             'Relapse Prevention',
+//         ],
+//     },
+//     {
+//         category: 'Work, School & Daily Life',
+//         items: [
+//             'Workplace Stress',
+//             'Compassion Fatigue',
+//             'Vicarious Trauma',
+//             'Leadership & Executive Wellness',
+//             'Career Changes',
+//             'Academic Stress',
+//             'College & University Adjustment',
+//         ],
+//     },
+//     {
+//         category: 'Culture, Faith & Community',
+//         items: [
+//             'Caribbean & Diaspora Wellness',
+//             'Faith & Spiritual Support',
+//             'Psychological First Aid',
+//             'Church & Ministry Support',
+//             'Immigration & Adjusting to a New Culture',
+//             'Cultural Identity & Belonging',
+//             'Experiences of Racism & Discrimination',
+//             'LGBTQIA+ Support',
+//         ],
+//     },
+// ];
 const POPULATIONS_SERVED = [
     'Infants & Toddlers (0–5)',
     'Children (6–12)',
