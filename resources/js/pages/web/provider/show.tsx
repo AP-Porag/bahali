@@ -2,6 +2,7 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import { HelpCircle } from 'lucide-react';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const has = (a) => Array.isArray(a) && a.length > 0;
@@ -62,7 +63,12 @@ function AvailabilityBox({ availability, confirmedAt }) {
     return (
         <div className="rounded-xl border border-[#E8B84B]/40 bg-[#E8B84B]/12 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#9A6B12]">Current availability</p>
-            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#9A6B12]"><Icon d={Ico.question} className="h-5 w-5" /> Availability unknown</p>
+            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#9A6B12]">
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#9A6B12]">
+                    <HelpCircle className="h-3 w-3 text-white" strokeWidth={2.6} aria-hidden />
+                </span>
+                Availability unknown
+            </p>
             <p className="mt-0.5 text-sm text-[#8A6D3B]">Contact the provider directly to confirm current availability.</p>
         </div>
     );

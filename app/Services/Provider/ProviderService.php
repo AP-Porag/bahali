@@ -259,18 +259,45 @@ class ProviderService extends BaseService
             );
         }
 
+        // // Price range — filter on the numeric bounds stored inside fee_range.
+        // // fee_range looks like "$100–$150 / session"; we compare the first
+        // // number (the provider's low end) against the visitor's max, and the
+        // // last number (high end) against the visitor's min.
+        // $feeMin = $filters['fee_min'] ?? '';
+        // $feeMax = $filters['fee_max'] ?? '';
+        // if ($feeMin !== '' || $feeMax !== '') {
+        //     $query->whereNotNull('fee_range')->where('fee_range', '!=', '');
+
+        //     // MySQL: pull the first and last integer out of the fee_range string.
+        //     $lowExpr  = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+') AS UNSIGNED)";
+        //     $highExpr = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+$') AS UNSIGNED)";
+
+        //     if ($feeMin !== '') {
+        //         // provider's high end must be >= visitor's minimum
+        //         $query->whereRaw("$highExpr >= ?", [(int) $feeMin]);
+        //     }
+        //     if ($feeMax !== '') {
+        //         // provider's low end must be <= visitor's maximum
+        //         $query->whereRaw("$lowExpr <= ?", [(int) $feeMax]);
+        //     }
+        // }
+
         // Price range — filter on the numeric bounds stored inside fee_range.
-        // fee_range looks like "$100–$150 / session"; we compare the first
-        // number (the provider's low end) against the visitor's max, and the
-        // last number (high end) against the visitor's min.
+        // fee_range looks like "$150–$200 / session" or "From $150 / session".
+        // We pull the 1st number (low) and the 2nd number (high, or fallback to 1st).
         $feeMin = $filters['fee_min'] ?? '';
         $feeMax = $filters['fee_max'] ?? '';
         if ($feeMin !== '' || $feeMax !== '') {
             $query->whereNotNull('fee_range')->where('fee_range', '!=', '');
 
-            // MySQL: pull the first and last integer out of the fee_range string.
-            $lowExpr  = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+') AS UNSIGNED)";
-            $highExpr = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+$') AS UNSIGNED)";
+            // MySQL 8+: REGEXP_SUBSTR(string, pattern, position, occurrence)
+            // – 1st occurrence of digits = low end
+            // – 2nd occurrence of digits = high end (fallback to 1st for single-value fees)
+            $firstNum = "REGEXP_SUBSTR(fee_range, '[0-9]+', 1, 1)";
+            $secondNum = "REGEXP_SUBSTR(fee_range, '[0-9]+', 1, 2)";
+
+            $lowExpr  = "CAST($firstNum AS UNSIGNED)";
+            $highExpr = "CAST(COALESCE($secondNum, $firstNum) AS UNSIGNED)";
 
             if ($feeMin !== '') {
                 // provider's high end must be >= visitor's minimum
