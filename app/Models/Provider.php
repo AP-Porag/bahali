@@ -62,6 +62,7 @@ class Provider extends Model
         // Payment
         'payment_methods',
         'insurance_plans',
+        'fee_range',
 
         // Contact
         'phone',

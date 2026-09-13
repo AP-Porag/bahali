@@ -318,6 +318,19 @@ function CardSkeleton() {
 /* ------------------------------ Refine sidebar (mockup 6) ------------------------------ */
 
 function RefinePanel({ f, patch, onKeyword, filterOptions }) {
+    // Keyword — local until the user presses the search button / Enter (no auto-search).
+    const [kw, setKw] = useState(f.keyword || '');
+    useEffect(() => { setKw(f.keyword || ''); }, [f.keyword]);
+    const submitKeyword = () => onKeyword(kw.trim());
+
+    // Price range — local until "Apply".
+    const [priceMin, setPriceMin] = useState(f.fee_min || '');
+    const [priceMax, setPriceMax] = useState(f.fee_max || '');
+    useEffect(() => { setPriceMin(f.fee_min || ''); setPriceMax(f.fee_max || ''); }, [f.fee_min, f.fee_max]);
+    const applyPrice = () => patch({ fee_min: priceMin.trim(), fee_max: priceMax.trim() });
+    const clearPrice = () => { setPriceMin(''); setPriceMax(''); patch({ fee_min: '', fee_max: '' }); };
+    const onlyNum = (v) => v.replace(/[^0-9]/g, '');
+
     const Group = ({ title, children }) => (
         <div className="border-b border-[#EFEAE0] pb-4 last:border-0 last:pb-0">
             <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">{title}</p>
@@ -343,6 +356,31 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
             </Group>
 
             <Group title="Practical considerations">
+                {/* Price range */}
+                <div>
+                    <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Price range (per session)</span>
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+                            <input inputMode="numeric" value={priceMin} onChange={(e) => setPriceMin(onlyNum(e.target.value))}
+                                onKeyDown={(e) => e.key === 'Enter' && applyPrice()} placeholder="Min"
+                                className="w-full rounded-xl border border-[#DED7C9] bg-white py-2.5 pl-6 pr-2 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                        </div>
+                        <span className="text-[#9AA6A4]">–</span>
+                        <div className="relative flex-1">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+                            <input inputMode="numeric" value={priceMax} onChange={(e) => setPriceMax(onlyNum(e.target.value))}
+                                onKeyDown={(e) => e.key === 'Enter' && applyPrice()} placeholder="Max"
+                                className="w-full rounded-xl border border-[#DED7C9] bg-white py-2.5 pl-6 pr-2 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                        <button type="button" onClick={applyPrice} className="rounded-lg bg-[#0E7C7B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0B6463]">Apply</button>
+                        {(f.fee_min || f.fee_max) && <button type="button" onClick={clearPrice} className="text-xs font-medium text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear</button>}
+                    </div>
+                </div>
+
+                {/* Payment */}
                 <div>
                     <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Payment</span>
                     <div role="radiogroup" aria-label="Payment" className="flex flex-wrap gap-2">
@@ -372,8 +410,14 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
             </Group>
 
             <Group title="Keyword">
-                <input value={f.keyword} onChange={(e) => onKeyword(e.target.value)} placeholder="Name, specialty…"
-                    className="w-full rounded-xl border border-[#DED7C9] bg-white px-3.5 py-2.5 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                <div className="flex items-center gap-2">
+                    <input value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitKeyword()} placeholder="Name, specialty…"
+                        className="w-full rounded-xl border border-[#DED7C9] bg-white px-3.5 py-2.5 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                    <button type="button" onClick={submitKeyword} aria-label="Search"
+                        className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center rounded-xl bg-[#0E7C7B] text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    </button>
+                </div>
             </Group>
         </div>
     );
@@ -402,6 +446,8 @@ export default function Directory({
         areas: Array.isArray(filters.areas) ? filters.areas : [],
         payment: filters.payment || '',
         insurer: filters.insurer || '',
+        fee_min: filters.fee_min || '',
+        fee_max: filters.fee_max || '',
         population: filters.population || '',
         session_format: filters.session_format || '',
         language: Array.isArray(filters.language) ? filters.language : (filters.language ? [filters.language] : []),
@@ -411,7 +457,6 @@ export default function Directory({
     });
 
     const fRef = useRef(f); fRef.current = f;
-    const kwTimer = useRef(null);
 
     const selectedCountry = useMemo(() => countries.find((c) => c.name === f.location), [countries, f.location]);
     const regions = selectedCountry?.regions ?? [];
@@ -442,14 +487,11 @@ export default function Directory({
     };
     const removeArea = (area) => { const s = new Set(fRef.current.areas); s.delete(area); patch({ areas: Array.from(s) }); };
 
-    const onKeyword = (val) => {
-        setF((prev) => ({ ...prev, keyword: val }));
-        clearTimeout(kwTimer.current);
-        kwTimer.current = setTimeout(() => runQuery({ ...fRef.current, keyword: val }, { append: false, page: 1 }), 350);
-    };
+    // Keyword now searches on submit (button/Enter), not on every keystroke.
+    const onKeyword = (val) => patch({ keyword: val });
 
     const clearAll = () => {
-        const empty = { location: '', region: '', include_virtual: false, areas: [], payment: '', insurer: '', population: '', session_format: '', language: [], provider_type: '', accepting: false, keyword: '' };
+        const empty = { location: '', region: '', include_virtual: false, areas: [], payment: '', insurer: '', fee_min: '', fee_max: '', population: '', session_format: '', language: [], provider_type: '', accepting: false, keyword: '' };
         setF(empty); runQuery(empty, { append: false, page: 1 });
     };
 
@@ -462,6 +504,7 @@ export default function Directory({
         if (f.region) chips.push({ key: 'region', label: f.region, clear: () => patch({ region: '' }) });
         if (f.include_virtual) chips.push({ key: 'virtual', label: 'Virtual', clear: () => patch({ include_virtual: false }) });
         f.areas.forEach((a) => chips.push({ key: `area:${a}`, label: a, clear: () => removeArea(a) }));
+        if (f.fee_min || f.fee_max) chips.push({ key: 'price', label: `$${f.fee_min || '0'}–$${f.fee_max || '∞'}`, clear: () => patch({ fee_min: '', fee_max: '' }) });
         if (f.payment) chips.push({ key: 'payment', label: PAYMENT_LABEL[f.payment], clear: () => patch({ payment: '', insurer: '' }) });
         if (f.insurer) chips.push({ key: 'insurer', label: f.insurer, clear: () => patch({ insurer: '' }) });
         f.language.forEach((l) => chips.push({ key: `lang:${l}`, label: l, clear: () => patch({ language: f.language.filter((x) => x !== l) }) }));
@@ -469,7 +512,7 @@ export default function Directory({
         if (f.session_format) chips.push({ key: 'session_format', label: f.session_format, clear: () => patch({ session_format: '' }) });
         if (f.provider_type) chips.push({ key: 'provider_type', label: f.provider_type, clear: () => patch({ provider_type: '' }) });
         if (f.accepting) chips.push({ key: 'accepting', label: 'Accepting new clients', clear: () => patch({ accepting: false }) });
-        if (f.keyword) chips.push({ key: 'keyword', label: `“${f.keyword}”`, clear: () => onKeyword('') });
+        if (f.keyword) chips.push({ key: 'keyword', label: `“${f.keyword}”`, clear: () => patch({ keyword: '' }) });
         return chips;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [f]);
@@ -594,6 +637,7 @@ export default function Directory({
                                     <div className="mt-5 flex flex-wrap justify-center gap-2.5">
                                         {!f.include_virtual && <button onClick={() => patch({ include_virtual: true })} className="rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#0B6463]">Include virtual providers</button>}
                                         {(f.location || f.region) && <button onClick={() => patch({ location: '', region: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Expand search area</button>}
+                                        {(f.fee_min || f.fee_max) && <button onClick={() => patch({ fee_min: '', fee_max: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Remove price range</button>}
                                         {f.payment && <button onClick={() => patch({ payment: '', insurer: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Remove payment preference</button>}
                                         <button onClick={clearAll} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">View all providers</button>
                                     </div>

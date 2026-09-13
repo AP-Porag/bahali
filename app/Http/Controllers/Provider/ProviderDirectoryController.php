@@ -80,6 +80,8 @@ class ProviderDirectoryController extends Controller
             'areas'           => $areas,
             'payment'         => (string) $request->input('payment', ''),
             'insurer'         => (string) $request->input('insurer', ''),
+            'fee_min'         => $request->input('fee_min', ''),
+            'fee_max'         => $request->input('fee_max', ''),
             'population'      => (string) $request->input('population', ''),
             'service'         => (string) $request->input('service', ''),
             'language'        => $language,
@@ -106,6 +108,8 @@ class ProviderDirectoryController extends Controller
                 'areas',
                 'payment',
                 'insurer',
+                'fee_min',
+                'fee_max',
                 'population',
                 'service',
                 'language',
@@ -873,6 +877,7 @@ class ProviderDirectoryController extends Controller
                 // Payment
                 'payment_methods' => $provider->payment_methods,
                 'insurance_plans' => $provider->insurance_plans,
+                'fee_range' => $provider->fee_range,
 
                 // Contact
                 'phone' => $provider->phone,
@@ -893,6 +898,10 @@ class ProviderDirectoryController extends Controller
 
                 // Accessibility
                 'accessibility' => $provider->accessibility,
+
+                // Availability
+                'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
+                'availability_confirmed_at'  => $provider->availability_confirmed_at?->format('F j, Y'),
 
                 // Consent
                 'consent_accurate' => (bool) $provider->consent_accurate,

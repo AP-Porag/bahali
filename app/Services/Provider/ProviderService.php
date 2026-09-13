@@ -188,6 +188,7 @@ class ProviderService extends BaseService
             ],
             'fee'             => $p->fee_range ?: null,
             'availability'    => $this->availabilityState($p),
+            'availabilityConfirmedAt' => $p->availability_confirmed_at?->format('F j, Y'),
             'acceptingNewClients' => $this->availabilityState($p) === 'accepting'
                 ? true : ($this->availabilityState($p) === 'not_accepting' ? false : null),
         ];
@@ -256,6 +257,29 @@ class ProviderService extends BaseService
                 (string) $filters['payment'],
                 (string) ($filters['insurer'] ?? '')
             );
+        }
+
+        // Price range — filter on the numeric bounds stored inside fee_range.
+        // fee_range looks like "$100–$150 / session"; we compare the first
+        // number (the provider's low end) against the visitor's max, and the
+        // last number (high end) against the visitor's min.
+        $feeMin = $filters['fee_min'] ?? '';
+        $feeMax = $filters['fee_max'] ?? '';
+        if ($feeMin !== '' || $feeMax !== '') {
+            $query->whereNotNull('fee_range')->where('fee_range', '!=', '');
+
+            // MySQL: pull the first and last integer out of the fee_range string.
+            $lowExpr  = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+') AS UNSIGNED)";
+            $highExpr = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+$') AS UNSIGNED)";
+
+            if ($feeMin !== '') {
+                // provider's high end must be >= visitor's minimum
+                $query->whereRaw("$highExpr >= ?", [(int) $feeMin]);
+            }
+            if ($feeMax !== '') {
+                // provider's low end must be <= visitor's maximum
+                $query->whereRaw("$lowExpr <= ?", [(int) $feeMax]);
+            }
         }
 
         // 4) Refine filters.
@@ -575,6 +599,7 @@ class ProviderService extends BaseService
                     : $provider->social_links,
                 'status'               => $provider->status,
                 'email'                => $provider->user?->email ?? $provider->email,
+                'fee_range'            => $provider->fee_range,
 
                 // Availability (guide §5)
                 'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
@@ -605,6 +630,25 @@ class ProviderService extends BaseService
         $data['treatment_approaches'] = $request->input('treatment_approaches', []);
         $data['specialized_training'] = $request->input('specialized_training', []);
         $data['certifications']       = $request->input('certifications', []);
+
+
+        // Session fee range -> "$min–$max / session" (guide §4.2).
+        $feeMin = $request->input('fee_min');
+        $feeMax = $request->input('fee_max');
+        $fmt = static function ($v): string {
+            // Keep whole numbers clean (150 not 150.00) but preserve real decimals.
+            $n = (float) $v;
+            return $n == (int) $n ? (string) (int) $n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+        };
+
+        if ($feeMin !== null && $feeMin !== '' && $feeMax !== null && $feeMax !== '') {
+            $data['fee_range'] = '$' . $fmt($feeMin) . '–$' . $fmt($feeMax) . ' / session';
+        } elseif ($feeMin !== null && $feeMin !== '') {
+            $data['fee_range'] = 'From $' . $fmt($feeMin) . ' / session';
+        } else {
+            $data['fee_range'] = null;
+        }
+        unset($data['fee_min'], $data['fee_max']);
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
         // Availability (guide §5) — stamp confirmation time so the 60-day
@@ -730,6 +774,9 @@ class ProviderService extends BaseService
                 'reviewed_at'          => $provider->reviewed_at?->format('F j, Y'),
                 'review_note'          => $provider->note,
                 'status'               => $status,
+                'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
+                'availability_confirmed_at'  => $provider->availability_confirmed_at?->format('M j, Y'),
+                'availability_next_reminder' => $provider->availability_confirmed_at?->copy()->addDays(60)->format('M j, Y'),
             ],
             'status' => [
                 'value'       => $status,

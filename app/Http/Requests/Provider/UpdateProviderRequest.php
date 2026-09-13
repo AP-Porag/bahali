@@ -64,6 +64,8 @@ class UpdateProviderRequest extends FormRequest
             'existing_additional_photos.*' => ['string'],
 
             'accepting_new_clients' => ['nullable', 'boolean'],
+            'fee_min' => ['nullable', 'numeric', 'min:0'],
+            'fee_max' => ['nullable', 'numeric', 'min:0', 'gte:fee_min'],
 
             // Array columns are re-read via input() in the service, but must have
             // rules so they survive validation:
