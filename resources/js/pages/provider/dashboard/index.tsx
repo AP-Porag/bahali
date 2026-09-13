@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import ProviderMenu from '@/components/provider/ProviderMenu'; // নতুন মেনু কম্পোনেন্ট
 import Footer from '@/components/Footer';
 
@@ -49,6 +49,9 @@ interface DashboardProps {
         reviewed_at?: string | null;
         review_note?: string | null;
         status?: string;
+        accepting_new_clients?: boolean | null;
+        availability_confirmed_at?: string | null;
+        availability_next_reminder?: string | null;
     };
     status: {
         value: string;
@@ -150,6 +153,108 @@ function BadgeList({ items }: { items?: string[] }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Availability panel (guide §6)                                      */
+/* ------------------------------------------------------------------ */
+
+function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] }) {
+    // null on the server -> default the radio to "yes" so the provider makes an explicit choice.
+    const initial: 'yes' | 'no' =
+        provider.accepting_new_clients === false ? 'no' : 'yes';
+    const [choice, setChoice] = useState<'yes' | 'no'>(initial);
+    const [saving, setSaving] = useState(false);
+
+    const currentStatusLabel =
+        provider.accepting_new_clients === true
+            ? 'Accepting new clients'
+            : provider.accepting_new_clients === false
+                ? 'Not accepting new clients'
+                : 'Not set yet';
+
+    const save = () => {
+        if (saving) return;
+        setSaving(true);
+        router.post(
+            '/provider/availability',
+            { accepting_new_clients: choice === 'yes' ? 1 : 0 },
+            {
+                preserveScroll: true,
+                onFinish: () => setSaving(false),
+            },
+        );
+    };
+
+    const Radio = ({ value, label }: { value: 'yes' | 'no'; label: string }) => {
+        const active = choice === value;
+        return (
+            <button
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setChoice(value)}
+                className="flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left transition hover:bg-white/50"
+            >
+                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition ${active ? 'border-[#0E7C7B]' : 'border-[#C7BEAD]'}`}>
+                    {active && <span className="h-2.5 w-2.5 rounded-full bg-[#0E7C7B]" />}
+                </span>
+                <span className="text-sm text-[#26403F]">{label}</span>
+            </button>
+        );
+    };
+
+    return (
+        <div className="mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm sm:p-6 lg:grid-cols-[1fr_1px_320px]">
+            {/* left — question + save */}
+            <div>
+                <h2 className="font-serif text-base font-semibold text-[#16302F]">Are you currently accepting new clients?</h2>
+                <p className="mt-1 text-xs text-[#8A9795]">This shows on your public listing. Please reconfirm periodically so it stays accurate.</p>
+                <div className="mt-4 space-y-1">
+                    <Radio value="yes" label="Yes, I am accepting new clients" />
+                    <Radio value="no" label="No, I am not currently accepting new clients" />
+                </div>
+                <button
+                    type="button"
+                    onClick={save}
+                    disabled={saving}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0d4a45] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c3f3b] disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
+                >
+                    {saving ? (
+                        <>
+                            <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M21 12a9 9 0 1 1-6.2-8.5" /></svg>
+                            Saving…
+                        </>
+                    ) : 'Save availability'}
+                </button>
+            </div>
+
+            {/* divider */}
+            <div className="hidden bg-[#EFEAE0] lg:block" aria-hidden />
+
+            {/* right — status information */}
+            <div className="rounded-xl bg-[#FBF8F2] p-4">
+                <p className="text-sm font-semibold text-[#16302F]">Status Information <span className="font-normal text-[#9AA6A4]">(shown to provider)</span></p>
+                <dl className="mt-3 space-y-2 text-sm">
+                    <div className="flex justify-between gap-3">
+                        <dt className="text-[#5B6B6E]">Current status:</dt>
+                        <dd className="text-right font-medium text-[#16302F]">{currentStatusLabel}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                        <dt className="text-[#5B6B6E]">Last confirmed:</dt>
+                        <dd className="text-right text-[#16302F]">{provider.availability_confirmed_at || '—'}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                        <dt className="text-[#5B6B6E]">Next reminder:</dt>
+                        <dd className="text-right text-[#16302F]">{provider.availability_next_reminder || '—'}</dd>
+                    </div>
+                </dl>
+                <p className="mt-3 text-xs leading-relaxed text-[#8A9795]">
+                    Please reconfirm your availability periodically so clients receive current information.
+                </p>
+            </div>
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -224,30 +329,10 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                 <span className="font-medium">Reviewer note:</span> {provider.review_note}
                             </p>
                         )}
-
-                        <div className="mt-4 flex flex-wrap gap-3">
-                            <Link
-                                href={links.editProfile}
-                                className="inline-flex items-center gap-2 rounded-lg bg-[#0E7C7B] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0c6a69]"
-                            >
-                                Edit profile
-                            </Link>
-                            {status.isPublic && links.publicProfile && (
-                                <Link
-                                    href={links.publicProfile}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-[#DED7C9] px-4 py-2 text-sm font-medium text-[#16302F] transition hover:bg-[#F7F3EC]"
-                                >
-                                    View public profile
-                                </Link>
-                            )}
-                            <Link
-                                href={links.directory}
-                                className="inline-flex items-center gap-2 rounded-lg border border-[#DED7C9] px-4 py-2 text-sm font-medium text-[#16302F] transition hover:bg-[#F7F3EC]"
-                            >
-                                Browse directory
-                            </Link>
-                        </div>
                     </div>
+
+                    {/* Availability panel */}
+                    <AvailabilityPanel provider={provider} />
 
                     {/* Stats cards */}
                     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -264,40 +349,6 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                             <span className="block text-sm text-[#5B6B6E]">Populations served</span>
                         </div>
                     </div>
-
-                    {/* Completeness card */}
-                    {/* <div className="mb-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <h2 className="font-serif text-sm font-semibold text-[#16302F]">Profile completeness</h2>
-                            <span className="text-sm font-medium text-[#0E7C7B]">{completeness.percent}%</span>
-                        </div>
-                        <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-[#E2DACB]">
-                            <div
-                                className="h-full rounded-full bg-[#0E7C7B] transition-all duration-500"
-                                style={{ width: `${completeness.percent}%` }}
-                            />
-                        </div>
-                        <p className="mt-2 text-xs text-[#5B6B6E]">
-                            {completeness.done} of {completeness.total} sections complete
-                        </p>
-                        {completeness.missing.length > 0 && (
-                            <div className="mt-4">
-                                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">
-                                    Still to complete
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {completeness.missing.map((item) => (
-                                        <span key={item} className="inline-flex items-center rounded-full bg-[#F1EDE3] px-3 py-1 text-xs text-[#5B6B6E]">
-                                            {item}
-                                        </span>
-                                    ))}
-                                </div>
-                                <Link href={links.editProfile} className="mt-4 inline-block text-sm font-medium text-[#0E7C7B] hover:underline">
-                                    Complete your profile →
-                                </Link>
-                            </div>
-                        )}
-                    </div> */}
 
                     {/* Detailed sections */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

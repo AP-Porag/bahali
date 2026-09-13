@@ -1,6 +1,7 @@
 import ProviderIntakeForm from "@/pages/shared/ProviderForm";
 import type { Country, ProfessionCategory, Credential, SupportArea } from "@/types/provider";
 import AppLayout from '@/layouts/app-layout.js';
+import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import { Button } from '@/components/ui/button';
 import { Head, router, usePage } from '@inertiajs/react';
 import ProviderRegistration from "@/pages/web/ProviderRegistration";
@@ -45,14 +46,6 @@ export default function CreateProviderPage({
                     /> */}
                 <ProviderRegistration countries={countries} />
             </div>
-
-
-
-
-
-
-
-
         </div>
     );
 }

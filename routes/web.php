@@ -54,6 +54,9 @@ Route::middleware(['auth'])->prefix('provider')->group(function () {
     Route::get('/profile/edit', [ProviderDirectoryController::class, 'edit'])->name('provider.profile.edit');
     Route::post('/profile/update', [ProviderDirectoryController::class, 'updateProvider'])->name('provider.profile.update');
 
+    // Availability — provider sets/reconfirms "accepting new clients" (guide §5).
+    Route::post('/availability', [ProviderDirectoryController::class, 'updateAvailability'])->name('provider.availability.update');
+
     Route::get('/dashboard', [ProviderDashboardController::class, 'index'])->name('provider.dashboard');
 });
 

@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/react';
 import Header from "@/components/provider/ProviderMenu";
 import ProviderMenu from '@/components/provider/ProviderMenu';
 import Footer from '@/components/Footer';
+import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -53,6 +54,8 @@ interface ProviderFormData {
     telehealth_regions_other: string;
     payment_methods: string[];
     insurance_plans: string;
+    fee_min: string;
+    fee_max: string;
     phone: string;
     website: string;
     social_links: string;
@@ -60,6 +63,7 @@ interface ProviderFormData {
     additional_photos: File[];
     accessibility: string[];
     accessibility_other: string;
+    accepting_new_clients: boolean | null;
 }
 type FieldName = keyof ProviderFormData;
 type FormErrors = Partial<Record<FieldName, string>>;
@@ -89,19 +93,6 @@ const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
     { value: 'provisional', label: 'Provisional' },
     { value: 'not_applicable', label: 'Not Applicable' },
 ];
-const AREAS_OF_SUPPORT_GROUPS: { category: string; items: string[] }[] = [
-    { category: 'Mental & Emotional Well-Being', items: ['Anxiety & Worry', 'Depression & Low Mood', 'Stress & Burnout', 'Trauma & Recovery', 'Grief & Loss', 'Anger & Irritability', 'Building Self-Confidence', 'Managing Emotions', 'Life Changes & Transitions', 'Panic Attacks', 'Obsessive Thoughts & Compulsive Behaviors (OCD)', 'Mood Changes'] },
-    { category: 'Relationships & Family', items: ['Couples & Relationship Counseling', 'Marriage Counseling', 'Premarital Counseling', 'Parenting Support', 'Co-Parenting', 'Family Conflict', 'Divorce & Separation', 'Blended Families', 'Communication Challenges', 'Caregiver Support', 'Healing from Relationship Abuse', 'Sex Therapy'] },
-    { category: 'Children, Teens & Families', items: ['Child Behavioral Challenges', 'Teen Emotional Wellness', 'ADHD', 'Autism & Neurodiversity', 'School Challenges', 'Bullying', 'Social Skills', 'Parent-Child Relationships', 'Childhood Trauma', 'Big Feelings & Emotional Regulation'] },
-    { category: "Women's Health & Wellness", items: ['Pregnancy Support', 'Pregnancy & Infant Loss', 'Postpartum Depression', 'Postpartum Anxiety', 'Infertility', 'Menopause & Midlife'] },
-    { category: "Men's Health & Wellness", items: ["Men's Emotional Wellness", 'Fatherhood', 'Relationship Challenges', 'Managing Anger', 'Identity & Purpose'] },
-    { category: 'Older Adults & Aging', items: ['Healthy Aging & Older Adult Well-Being', 'Memory Concerns', 'Dementia Support', "Alzheimer's Disease Support", 'Retirement & Life Changes', 'Coping with Chronic Illness', 'Grief & Loss in Later Life'] },
-    { category: 'Trauma, Crisis & Recovery', items: ['Trauma', 'PTSD', 'Childhood Trauma', 'Sexual Assault & Sexual Trauma', 'Domestic & Intimate Partner Violence', 'Military & Service-Related Trauma', 'Disaster & Displacement', 'Community Violence', 'Self-Harm', 'Suicidal Thoughts & Behaviors'] },
-    { category: 'Health & Everyday Wellness', items: ['Living with Chronic Illness', 'Living with Chronic Pain', 'Sleep & Insomnia', 'Health-Related Anxiety', 'Stress Management', 'Lifestyle Changes', 'Emotional Eating & Weight Concerns'] },
-    { category: 'Substance Use & Recovery', items: ['Alcohol Use', 'Substance Use', 'Recovery Support', 'Relapse Prevention'] },
-    { category: 'Work, School & Daily Life', items: ['Workplace Stress', 'Compassion Fatigue', 'Vicarious Trauma', 'Leadership & Executive Wellness', 'Career Changes', 'Academic Stress', 'College & University Adjustment'] },
-    { category: 'Culture, Faith & Community', items: ['Caribbean & Diaspora Wellness', 'Faith & Spiritual Support', 'Psychological First Aid', 'Church & Ministry Support', 'Immigration & Adjusting to a New Culture', 'Cultural Identity & Belonging', 'Experiences of Racism & Discrimination', 'LGBTQIA+ Support'] },
-];
 const POPULATIONS_SERVED = ['Infants & Toddlers (0–5)', 'Children (6–12)', 'Adolescents (13–17)', 'Young Adults (18–25)', 'Adults (26–64)', 'Older Adults (65+)', 'Parents', 'Caregivers', 'Couples', 'Families', 'Veterans', 'Faith Leaders & Clergy', 'Helping Professionals', 'Educators', 'First Responders', 'Healthcare Professionals', 'Community Leaders'];
 const TREATMENT_APPROACHES = ['Acceptance & Commitment Therapy (ACT)', 'Cognitive Behavioral Therapy (CBT)', 'Cognitive Processing Therapy (CPT)', 'Dialectical Behavior Therapy (DBT)', 'Eye Movement Desensitization & Reprocessing (EMDR)', 'Exposure & Response Prevention (ERP)', 'Family Systems Therapy', 'Gottman Method', 'Interpersonal Psychotherapy (IPT)', 'Mindfulness-Based Approaches', 'Motivational Interviewing (MI)', 'Person-Centered Therapy', 'Prolonged Exposure (PE)', 'Psychodynamic Therapy', 'Solution-Focused Brief Therapy (SFBT)', 'Trauma-Focused Cognitive Behavioral Therapy (TF-CBT)', 'Integrative / Eclectic Therapy', 'Other (specify)'];
 const SPECIALIZED_TRAINING_OPTIONS = ['Psychological First Aid (PFA)', 'Trauma & PTSD', 'Suicide Prevention & Intervention', 'Grief & Bereavement', 'Perinatal Mental Health', 'Substance Use & Recovery', 'Domestic & Intimate Partner Violence', 'Military & Veteran Mental Health', 'Dementia & Cognitive Care', 'Autism & Neurodiversity', 'ADHD', 'Couples & Family Therapy', 'Other Specialized Training'];
@@ -126,10 +117,13 @@ const STEPS = [
     { key: 'service', title: 'Service Information', subtitle: 'How you work' },
     { key: 'location', title: 'Location', subtitle: 'Where you are' },
     { key: 'payment', title: 'Insurance & Payment', subtitle: 'Accepted methods' },
+    { key: 'fee', title: 'Session Fee', subtitle: 'Your fee range' },
     { key: 'contact', title: 'Contact Information', subtitle: 'Reach you' },
     { key: 'media', title: 'Profile Media', subtitle: 'Photos & logo' },
     { key: 'accessibility', title: 'Accessibility', subtitle: 'Accommodations' },
+    { key: 'availability', title: 'Availability', subtitle: 'Accepting new clients?' },
 ] as const;
+
 const TOTAL_STEPS = STEPS.length;
 
 const FIELD_STEP: Record<string, number> = {
@@ -143,9 +137,11 @@ const FIELD_STEP: Record<string, number> = {
     service_formats: 7, practice_settings: 7, practice_settings_other: 7,
     address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
-    phone: 10, website: 10, social_links: 10,
-    profile_photo: 11, additional_photos: 11,
-    accessibility: 12, accessibility_other: 12,
+    fee_min: 10, fee_max: 10,
+    phone: 11, website: 11, social_links: 11,
+    profile_photo: 12, additional_photos: 12,
+    accessibility: 13, accessibility_other: 13,
+    accepting_new_clients: 14,
 };
 
 /* ------------------------------------------------------------------ */
@@ -153,6 +149,15 @@ const FIELD_STEP: Record<string, number> = {
 /* ------------------------------------------------------------------ */
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
+
+/* ---- parse a stored fee_range string back into min/max ---- */
+const parseFeeRange = (raw?: string): { min: string; max: string } => {
+    if (!raw) return { min: '', max: '' };
+    const nums = raw.match(/\d+(?:\.\d+)?/g) || [];
+    if (nums.length >= 2) return { min: nums[0], max: nums[1] };
+    if (nums.length === 1) return { min: nums[0], max: '' };
+    return { min: '', max: '' };
+};
 
 /* ------------------------------------------------------------------ */
 /*  Reverse-mapping of stored values -> form values                   */
@@ -208,6 +213,18 @@ function TextArea({ value, onChange, error, placeholder, rows = 5 }: { value: st
         <textarea value={value} rows={rows} placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
             className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+    );
+}
+
+/* ---- money input (numbers + one dot only) ---- */
+function MoneyInput({ value, onChange, error, placeholder }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; }) {
+    return (
+        <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+            <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
+                onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
+                className={`w-full rounded-lg border bg-white py-2.5 pl-7 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+        </div>
     );
 }
 
@@ -369,7 +386,6 @@ export default function ProviderProfileEdit({
     const [submitted, setSubmitted] = useState(false);
     const topRef = useRef<HTMLDivElement>(null);
 
-    // Kept existing additional photos (removable).
     const [keptPhotos, setKeptPhotos] = useState(existingAdditionalPhotos);
 
     /* ---- Build initial form data by reversing the stored "Other" merges ---- */
@@ -386,7 +402,6 @@ export default function ProviderProfileEdit({
         const ta = splitStored(arr('treatment_approaches'), TREATMENT_APPROACHES.filter(t => t !== 'Other (specify)'), 'Other (specify)');
         const st = splitStored(arr('specialized_training'), SPECIALIZED_TRAINING_OPTIONS.filter(t => t !== 'Other Specialized Training'), 'Other Specialized Training');
 
-        // Areas of support: known area -> flat list; unknown -> custom per category.
         const knownAreas = new Set<string>();
         AREAS_OF_SUPPORT_GROUPS.forEach(g => g.items.forEach(i => knownAreas.add(i)));
         const areasFlat: string[] = [];
@@ -400,6 +415,8 @@ export default function ProviderProfileEdit({
                 customAreas[category] = { checked: true, text: prev ? `${prev}, ${area}` : area };
             }
         });
+
+        const fee = parseFeeRange(p.fee_range as string | undefined);
 
         const data: ProviderFormData = {
             provider_type: (p.provider_type as ProviderType) || '',
@@ -441,6 +458,8 @@ export default function ProviderProfileEdit({
             telehealth_regions_other: tr.otherText,
             payment_methods: arr('payment_methods'),
             insurance_plans: (p.insurance_plans as string) || '',
+            fee_min: fee.min,
+            fee_max: fee.max,
             phone: (p.phone as string) || '',
             website: (p.website as string) || '',
             social_links: (p.social_links as string) || '',
@@ -448,6 +467,8 @@ export default function ProviderProfileEdit({
             additional_photos: [],
             accessibility: acc.values,
             accessibility_other: acc.otherText,
+            accepting_new_clients:
+                typeof p.accepting_new_clients === 'boolean' ? (p.accepting_new_clients as boolean) : null,
         };
         return { data, customAreas };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -540,21 +561,34 @@ export default function ProviderProfileEdit({
             case 9:
                 if (d.payment_methods.length === 0) e.payment_methods = 'Select at least one accepted payment method.';
                 break;
-            case 10:
+            case 10: {
+                // Session Fee — optional, but if given must be valid & min <= max.
+                const min = d.fee_min.trim();
+                const max = d.fee_max.trim();
+                if (max && !min) e.fee_min = 'Enter a minimum fee, or clear the maximum.';
+                if (min && max && Number(min) > Number(max)) e.fee_max = 'Maximum must be greater than or equal to the minimum.';
+                break;
+            }
+            case 11:
                 if (!d.phone.trim()) e.phone = 'Phone number is required.';
                 else if (d.phone.replace(/[^\d]/g, '').length < 7) e.phone = 'Please enter a valid phone number.';
                 if (d.website && !isUrl(d.website)) e.website = 'Enter a valid website';
                 break;
-            case 11:
+            case 12:
                 if (!d.profile_photo && !existingProfilePhoto) e.profile_photo = 'A professional photo or organization logo is required.';
                 break;
-            case 12: {
+            case 13: {
                 const hasOther = d.accessibility.includes('__other__');
                 const hasSel = d.accessibility.length > 0 && !(d.accessibility.length === 1 && hasOther);
                 if (!hasSel && !(hasOther && d.accessibility_other.trim())) e.accessibility = 'Select at least one option, or specify an "Other" accommodation.';
                 if (hasOther && !d.accessibility_other.trim()) e.accessibility_other = 'Please describe the other accommodation.';
                 break;
             }
+            case 14:
+                if (d.accepting_new_clients !== true && d.accepting_new_clients !== false) {
+                    e.accepting_new_clients = 'Please let visitors know if you are accepting new clients.';
+                }
+                break;
         }
         return e;
     };
@@ -610,6 +644,9 @@ export default function ProviderProfileEdit({
                 specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
                 certifications: data.certifications.filter(c => c.trim() !== ''),
                 existing_additional_photos: keptPaths,
+                accepting_new_clients: data.accepting_new_clients ? 1 : 0,
+                fee_min: data.fee_min.trim() === '' ? '' : data.fee_min.trim(),
+                fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
             } as unknown as ProviderFormData;
         });
 
@@ -650,7 +687,6 @@ export default function ProviderProfileEdit({
                         </div>
                     </div>
                 </div>
-                {/* <Footer /> */}
             </>
         );
     }
@@ -677,7 +713,6 @@ export default function ProviderProfileEdit({
                     </div>
 
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-                        {/* Stepper */}
                         <aside className="lg:sticky lg:top-8 lg:self-start">
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
@@ -714,7 +749,6 @@ export default function ProviderProfileEdit({
                             </nav>
                         </aside>
 
-                        {/* Form card */}
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
                                 <div className="mb-6 border-b border-[#EFEAE0] pb-5">
@@ -998,6 +1032,33 @@ function StepBody({
             );
         case 10:
             return (
+                <FieldShell
+                    label="Session fee range"
+                    hint="Optional. Shown on your public card and profile as, for example, “$100–$150 / session”. Leave blank if you'd rather not display a fee."
+                    error={fieldError('fee_min') || fieldError('fee_max')}
+                >
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
+                            <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" />
+                        </div>
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
+                            <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" />
+                        </div>
+                    </div>
+                    {(d.fee_min || d.fee_max) && (
+                        <p className="mt-2.5 text-sm text-[#5B6B6E]">
+                            Preview:{' '}
+                            <span className="font-semibold text-[#16302F]">
+                                {d.fee_min && d.fee_max ? `$${d.fee_min}–$${d.fee_max} / session` : d.fee_min ? `From $${d.fee_min} / session` : '—'}
+                            </span>
+                        </p>
+                    )}
+                </FieldShell>
+            );
+        case 11:
+            return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
                         <PhoneInput value={d.phone} onChange={(v) => set('phone', v)} error={!!fieldError('phone')} placeholder="+1 (555) 000-0000" />
@@ -1010,7 +1071,7 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        case 11:
+        case 12:
             return (
                 <>
                     <FieldShell label="Professional photo or organization logo" required hint="A clear headshot or your logo. JPG or PNG." error={fieldError('profile_photo')}>
@@ -1040,13 +1101,31 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        case 12:
+        case 13:
             return (
                 <FieldShell label="Accessibility" required hint='Select all that apply. If you need an option not listed, check "Other".' error={fieldError('accessibility')}>
                     <CheckGrid options={ACCESSIBILITY_OPTIONS} selected={d.accessibility} onToggle={(v) => toggle('accessibility', v)} columns={2} />
                     <OtherCheckboxField checked={d.accessibility.includes('__other__')} text={d.accessibility_other}
                         onToggle={() => { const o = '__other__'; set('accessibility', d.accessibility.includes(o) ? d.accessibility.filter(v => v !== o) : [...d.accessibility, o]); }}
                         onTextChange={(v) => set('accessibility_other', v)} placeholder="Describe the accessibility feature or accommodation…" error={!!fieldError('accessibility_other')} />
+                </FieldShell>
+            );
+        case 14:
+            return (
+                <FieldShell
+                    label="Are you currently accepting new clients?"
+                    required
+                    hint="This shows on your public listing. We'll ask you to reconfirm every 60 days so it stays accurate — if it isn't reconfirmed, your listing will show “Contact to confirm availability” instead."
+                    error={fieldError('accepting_new_clients')}
+                >
+                    <RadioRow
+                        value={d.accepting_new_clients === true ? 'yes' : d.accepting_new_clients === false ? 'no' : ''}
+                        onChange={(v) => set('accepting_new_clients', v === 'yes')}
+                        options={[
+                            { value: 'yes', label: 'Yes, I am accepting new clients' },
+                            { value: 'no', label: 'No, I am not currently accepting new clients' },
+                        ]}
+                    />
                 </FieldShell>
             );
         default:
