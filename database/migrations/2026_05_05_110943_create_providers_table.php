@@ -107,6 +107,9 @@ return new class extends Migration
             $table->string('booking_url')->nullable();
             $table->string('contact_email')->nullable();
 
+            $table->string('lgbtq_affirming')->nullable();
+            $table->string('culturally_affirming')->nullable();
+
             $table->timestamps();
         });
     }

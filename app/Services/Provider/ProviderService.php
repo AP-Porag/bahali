@@ -51,9 +51,10 @@ class ProviderService extends BaseService
             $this->applyKeywordSearch($query, $keyword);
         }
 
+        // ✅ সব filter এখানে apply হবে
         $this->applyFilters($query, $filters);
 
-        // Relevance when keyword present; otherwise fair rotating order.
+        // ✅ Ordering একদম শেষে
         if ($keyword !== '') {
             $this->applyRelevanceOrder($query, $keyword);
         } else {
@@ -62,9 +63,12 @@ class ProviderService extends BaseService
 
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
+
         $items = collect($paginator->items())
             ->map(fn(Provider $p) => $this->transformCard($p))
             ->all();
+
+
 
         return [
             'providers' => $items,
@@ -226,11 +230,11 @@ class ProviderService extends BaseService
         });
     }
 
+
+
     private function applyFilters(Builder $query, array $filters): void
     {
-        // 1) Location — provider must SERVE this place (office OR telehealth region),
-        //    optionally virtual when the visitor opts in. Secondary geography (parish/
-        //    state) narrows further when supplied.
+        // 1) Location
         if (! empty($filters['location'])) {
             $this->applyLocationFilter(
                 $query,
@@ -244,13 +248,21 @@ class ProviderService extends BaseService
                 ->orWhereJsonContains('service_formats', 'Telehealth'));
         }
 
-        // 2) Areas of Support — multiple (any match).
+        // 2) Areas of Support
         $areas = $this->normaliseAreas($filters['areas'] ?? ($filters['area_of_support'] ?? []));
         if (! empty($areas)) {
             $query->whereHas('supportAreas', fn(Builder $q) => $q->whereIn('area', $areas));
         }
 
-        // 3) Grouped payment.
+        // 3) UK City (third-level)
+        if (! empty($filters['city'])) {
+            $query->where(function (Builder $q) use ($filters) {
+                $q->where('city', $filters['city'])
+                    ->orWhere('state_province', $filters['city']);
+            });
+        }
+
+        // 4) Grouped payment
         if (! empty($filters['payment'])) {
             $this->applyPaymentGroupFilter(
                 $query,
@@ -259,57 +271,26 @@ class ProviderService extends BaseService
             );
         }
 
-        // // Price range — filter on the numeric bounds stored inside fee_range.
-        // // fee_range looks like "$100–$150 / session"; we compare the first
-        // // number (the provider's low end) against the visitor's max, and the
-        // // last number (high end) against the visitor's min.
-        // $feeMin = $filters['fee_min'] ?? '';
-        // $feeMax = $filters['fee_max'] ?? '';
-        // if ($feeMin !== '' || $feeMax !== '') {
-        //     $query->whereNotNull('fee_range')->where('fee_range', '!=', '');
-
-        //     // MySQL: pull the first and last integer out of the fee_range string.
-        //     $lowExpr  = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+') AS UNSIGNED)";
-        //     $highExpr = "CAST(REGEXP_SUBSTR(fee_range, '[0-9]+$') AS UNSIGNED)";
-
-        //     if ($feeMin !== '') {
-        //         // provider's high end must be >= visitor's minimum
-        //         $query->whereRaw("$highExpr >= ?", [(int) $feeMin]);
-        //     }
-        //     if ($feeMax !== '') {
-        //         // provider's low end must be <= visitor's maximum
-        //         $query->whereRaw("$lowExpr <= ?", [(int) $feeMax]);
-        //     }
-        // }
-
-        // Price range — filter on the numeric bounds stored inside fee_range.
-        // fee_range looks like "$150–$200 / session" or "From $150 / session".
-        // We pull the 1st number (low) and the 2nd number (high, or fallback to 1st).
+        // 5) Price range
         $feeMin = $filters['fee_min'] ?? '';
         $feeMax = $filters['fee_max'] ?? '';
         if ($feeMin !== '' || $feeMax !== '') {
             $query->whereNotNull('fee_range')->where('fee_range', '!=', '');
 
-            // MySQL 8+: REGEXP_SUBSTR(string, pattern, position, occurrence)
-            // – 1st occurrence of digits = low end
-            // – 2nd occurrence of digits = high end (fallback to 1st for single-value fees)
-            $firstNum = "REGEXP_SUBSTR(fee_range, '[0-9]+', 1, 1)";
+            $firstNum  = "REGEXP_SUBSTR(fee_range, '[0-9]+', 1, 1)";
             $secondNum = "REGEXP_SUBSTR(fee_range, '[0-9]+', 1, 2)";
-
-            $lowExpr  = "CAST($firstNum AS UNSIGNED)";
-            $highExpr = "CAST(COALESCE($secondNum, $firstNum) AS UNSIGNED)";
+            $lowExpr   = "CAST($firstNum AS UNSIGNED)";
+            $highExpr  = "CAST(COALESCE($secondNum, $firstNum) AS UNSIGNED)";
 
             if ($feeMin !== '') {
-                // provider's high end must be >= visitor's minimum
                 $query->whereRaw("$highExpr >= ?", [(int) $feeMin]);
             }
             if ($feeMax !== '') {
-                // provider's low end must be <= visitor's maximum
                 $query->whereRaw("$lowExpr <= ?", [(int) $feeMax]);
             }
         }
 
-        // 4) Refine filters.
+        // 6) Refine filters
         if (! empty($filters['population'])) {
             $query->whereJsonContains('populations_served', $filters['population']);
         }
@@ -331,8 +312,15 @@ class ProviderService extends BaseService
             $this->applySessionFormatFilter($query, $filters['session_format']);
         }
 
-        // 5) Availability — "Accepting new clients" returns only CURRENT, unexpired
-        //    accepting statuses. Unknown/expired never counts as accepting (guide §5.4).
+        // 7) ✅ Identity-affirming care (NEW — এটাই missing ছিল)
+        if (! empty($filters['lgbtq_affirming'])) {
+            $query->where('lgbtq_affirming', $filters['lgbtq_affirming']);
+        }
+        if (! empty($filters['culturally_affirming'])) {
+            $query->where('culturally_affirming', $filters['culturally_affirming']);
+        }
+
+        // 8) Availability
         if (! empty($filters['accepting'])) {
             $query->where('accepting_new_clients', true)
                 ->whereNotNull('availability_confirmed_at')
@@ -557,28 +545,31 @@ class ProviderService extends BaseService
 
     /* ---------- (edit / dashboard / profile — UNCHANGED below) ---------- */
 
-    public function getCountriesForForm(): array
+    // app/Services/ProviderService.php
+
+    public function getCountriesForForm()
     {
-        return Country::with('regions.regionType')
-            ->orderBy('name')
+        return Country::with([
+            'regions' => function ($q) {
+                $q->select('id', 'country_id', 'parent_id', 'name', 'region_type_id', 'display_order')
+                    ->where('is_active', true)
+                    ->with('regionType:id,name,label')
+                    ->orderBy('parent_id')
+                    ->orderBy('display_order');
+            }
+        ])
+            ->orderBy('display_order')
             ->get()
-            ->map(fn($country) => [
-                'id' => $country->id,
-                'name' => $country->name,
-                'code' => $country->code,
-                'regions' => $country->regions
-                    ->sortBy('name')
-                    ->map(fn($region) => [
-                        'id' => $region->id,
-                        'name' => $region->name,
-                        'regionTypeName' => $region->regionType?->name,
-                        'regionTypeLabel' => $region->regionType?->label,
-                    ])
-                    ->values()
-                    ->toArray(),
-            ])
-            ->values()
-            ->toArray();
+            ->map(fn($c) => [
+                'id'   => $c->id,
+                'name' => $c->name,
+                'regions' => $c->regions->map(fn($r) => [
+                    'id'              => $r->id,
+                    'name'            => $r->name,
+                    'parentId'        => $r->parent_id,      // ← frontend expects this
+                    'regionTypeLabel' => $r->regionType?->label,
+                ]),
+            ]);
     }
 
     public function getEditData(Provider $provider): array
@@ -626,6 +617,8 @@ class ProviderService extends BaseService
                     : $provider->social_links,
                 'status'               => $provider->status,
                 'email'                => $provider->user?->email ?? $provider->email,
+                'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : ($provider->lgbtq_affirming ? 'yes' : 'no'),
+                'culturally_affirming' => $provider->culturally_affirming === null ? '' : ($provider->culturally_affirming ? 'yes' : 'no'),
                 'fee_range'            => $provider->fee_range,
 
                 // Availability (guide §5)

@@ -38,6 +38,8 @@ interface ProviderFormData {
     certifications: string[];
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
+    lgbtq_affirming: YesNo | '';
+    culturally_affirming: YesNo | '';
     languages: string[];
     languages_other: string;
     cultural_approach: string;
@@ -133,7 +135,7 @@ const FIELD_STEP: Record<string, number> = {
     areas_of_support: 3, areas_of_support_other: 3,
     populations_served: 4,
     treatment_approaches: 5, treatment_approaches_other: 5, specialized_training: 5, specialized_training_other: 5, certifications: 5,
-    caribbean_identity: 6, caribbean_experience: 6, languages: 6, languages_other: 6, cultural_approach: 6,
+    caribbean_identity: 6, caribbean_experience: 6, lgbtq_affirming: 6, culturally_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
     service_formats: 7, practice_settings: 7, practice_settings_other: 7,
     address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
@@ -442,6 +444,8 @@ export default function ProviderProfileEdit({
             certifications: arr('certifications'),
             caribbean_identity: (p.caribbean_identity as CaribbeanIdentity) || '',
             caribbean_experience: (p.caribbean_experience as YesNo) || '',
+            lgbtq_affirming: (p.lgbtq_affirming as YesNo) || '',
+            culturally_affirming: (p.culturally_affirming as YesNo) || '',
             languages: lang.values,
             languages_other: lang.otherText,
             cultural_approach: (p.cultural_approach as string) || '',
@@ -538,6 +542,8 @@ export default function ProviderProfileEdit({
             case 6:
                 if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';
+                if (!d.culturally_affirming) e.culturally_affirming = 'Please answer so people can find the right support.';
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
                 if (d.languages.includes('Other') && !d.languages_other.trim()) e.languages_other = 'Please specify the other language(s).';
                 if (d.cultural_approach && wordCount(d.cultural_approach) > 250) e.cultural_approach = 'Please keep this to 250 words or fewer.';
@@ -955,6 +961,12 @@ function StepBody({
                     </FieldShell>
                     <FieldShell label="Do you have experience working with Caribbean individuals and families?" required error={fieldError('caribbean_experience')}>
                         <RadioRow value={d.caribbean_experience} onChange={(v) => set('caribbean_experience', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
+                    </FieldShell>
+                    <FieldShell label="Do you offer LGBTQIA+ affirming care?" required hint="This helps people find providers who understand and support their identity." error={fieldError('lgbtq_affirming')}>
+                        <RadioRow value={d.lgbtq_affirming} onChange={(v) => set('lgbtq_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
+                    </FieldShell>
+                    <FieldShell label="Do you offer culturally affirming care (Caribbean-informed)?" required hint="This means integrating Caribbean cultural context, family dynamics, and community experience into your care." error={fieldError('culturally_affirming')}>
+                        <RadioRow value={d.culturally_affirming} onChange={(v) => set('culturally_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
                     </FieldShell>
                     <FieldShell label="Languages spoken" required hint="Select all that apply." error={fieldError('languages')}>
                         <CheckGrid options={LANGUAGES} selected={d.languages} onToggle={(v) => toggle('languages', v)} columns={2} />

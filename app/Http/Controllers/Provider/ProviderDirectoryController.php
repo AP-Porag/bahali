@@ -75,7 +75,8 @@ class ProviderDirectoryController extends Controller
         $filters = [
             'keyword'         => (string) $request->input('keyword', ''),
             'location'        => (string) $request->input('location', ''),
-            'region'          => (string) $request->input('region', ''),   // secondary geography (parish/state)
+            'region'          => (string) $request->input('region', ''),   // secondary geography (parish/state/country)
+            'city'            => (string) $request->input('city', ''),     // UK third-level (city / local area)
             'include_virtual' => $request->boolean('include_virtual'),
             'areas'           => $areas,
             'payment'         => (string) $request->input('payment', ''),
@@ -87,7 +88,9 @@ class ProviderDirectoryController extends Controller
             'language'        => $language,
             'provider_type'   => (string) $request->input('provider_type', ''),
             'session_format'  => (string) $request->input('session_format', ''),
-            'accepting'       => $request->boolean('accepting'), // guide §5.4
+            'accepting'       => $request->boolean('accepting'),
+            'lgbtq_affirming'      => (string) $request->input('lgbtq_affirming', ''),       // ← NEW
+            'culturally_affirming' => (string) $request->input('culturally_affirming', ''),  // ← NEW
             'perPage'         => (int) $request->input('perPage', 6),
             'page'            => $page,
             'seed'            => $seed,
@@ -104,6 +107,7 @@ class ProviderDirectoryController extends Controller
                 'keyword',
                 'location',
                 'region',
+                'city',           // ← added
                 'include_virtual',
                 'areas',
                 'payment',
@@ -116,7 +120,10 @@ class ProviderDirectoryController extends Controller
                 'provider_type',
                 'session_format',
                 'accepting',
+                'lgbtq_affirming',
+                'culturally_affirming',
             ]),
+            'dataVersion' => $result['pagination']['total'] . '-' . now()->timestamp,
             'seed' => $result['seed'],
         ]);
     }
@@ -139,7 +146,12 @@ class ProviderDirectoryController extends Controller
     public function create()
     {
         // Fetch countries with regions, organized for dependent dropdown
-        $countries = Country::with('regions.regionType')
+        $countries = Country::with(['regions' => function ($q) {
+            $q->select('id', 'country_id', 'parent_id', 'name', 'region_type_id', 'display_order')
+                ->where('is_active', true)
+                ->with('regionType:id,name,label')
+                ->orderBy('display_order');
+        }])
             ->orderBy('name')
             ->get()
             ->map(fn($country) => [
@@ -147,10 +159,10 @@ class ProviderDirectoryController extends Controller
                 'name' => $country->name,
                 'code' => $country->code,
                 'regions' => $country->regions
-                    ->sortBy('name')
                     ->map(fn($region) => [
                         'id' => $region->id,
                         'name' => $region->name,
+                        'parentId' => $region->parent_id,             // ← NEW: UK hierarchy
                         'regionTypeName' => $region->regionType?->name,
                         'regionTypeLabel' => $region->regionType?->label,
                     ])
@@ -506,91 +518,7 @@ class ProviderDirectoryController extends Controller
             ->route('providers.create')
             ->with('success', 'Your application has been received.');
     }
-    // public function store(StoreProviderRequest $request)
-    // {
-    //     $userId = $request->session()->get(self::SESSION_PENDING_USER);
-    //     $user = $userId ? User::find($userId) : null;
 
-    //     if (!$user || !$user->email_verified_at) {
-    //         return back()->withErrors([
-    //             'email' => 'Please verify your email before submitting.'
-    //         ]);
-    //     }
-
-    //     $data = $request->validated();
-
-    //     $data['user_id'] = $user->id;
-
-    //     unset($data['email'], $data['password']);
-
-    //     // Get support areas
-    //     $supportAreas = $request->mappedAreasOfSupport();
-
-    //     unset(
-    //         $data['areas_of_support'],
-    //         $data['areas_of_support_other']
-    //     );
-
-
-    //     // Upload verification document
-    //     if ($request->hasFile('verification_document')) {
-    //         $data['verification_document'] = $this->storeUpload(
-    //             $request->file('verification_document'),
-    //             'providers/verification'
-    //         );
-    //     }
-
-
-    //     // Upload profile photo
-    //     if ($request->hasFile('profile_photo')) {
-    //         $data['profile_photo'] = $this->storeUpload(
-    //             $request->file('profile_photo'),
-    //             'providers/photos'
-    //         );
-    //     }
-
-
-    //     // Upload additional photos
-    //     $additionalPhotos = [];
-
-    //     if ($request->hasFile('additional_photos')) {
-
-    //         foreach ($request->file('additional_photos') as $photo) {
-
-    //             $path = $this->storeUpload(
-    //                 $photo,
-    //                 'providers/photos'
-    //             );
-
-    //             if ($path) {
-    //                 $additionalPhotos[] = $path;
-    //             }
-    //         }
-    //     }
-
-    //     $data['additional_photos'] = $additionalPhotos;
-
-
-    //     DB::transaction(function () use ($data, $supportAreas) {
-
-    //         $provider = Provider::create($data);
-
-    //         if (!empty($supportAreas)) {
-    //             $provider->supportAreas()->createMany($supportAreas);
-    //         }
-    //     });
-
-
-    //     $request->session()->forget(self::SESSION_PENDING_USER);
-
-
-    //     return redirect()
-    //         ->route('providers.create')
-    //         ->with(
-    //             'success',
-    //             'Your application has been received.'
-    //         );
-    // }
 
     /**
      * Store an uploaded file without any path resolution issues.
