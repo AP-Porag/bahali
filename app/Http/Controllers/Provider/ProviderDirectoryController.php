@@ -916,55 +916,6 @@ class ProviderDirectoryController extends Controller
     }
 
 
-    /**
-     * Display the specified pending provider.
-     */
-    // ProviderDirectoryController@show
-    // public function showPendingProvider(Provider $provider)
-    // {
-    //     // Only show approved, publicly-visible profiles (see review queue below)
-    //     abort_unless($provider->status === 'approved' && $provider->is_public, 404);
-
-    //     return Inertia::render('provider/Show', [
-    //         'provider' => [
-    //             'name'             => $provider->display_name,
-    //             'credentials'      => $provider->credentials,
-    //             'title'            => $provider->professional_title,
-    //             'pronouns'         => $provider->pronouns,
-    //             'photo'            => $provider->profile_photo ? Storage::url($provider->profile_photo) : null,
-    //             'verifiedByBahali' => (bool) $provider->license_verified_at,
-    //             'verifiedOn'       => $provider->license_verified_at?->format('F Y'),
-    //             'caribbeanInformed' => (bool) $provider->caribbean_informed,
-    //             'acceptingClients' => (bool) $provider->accepting_clients,
-    //             'tagline'          => $provider->tagline,
-    //             'bio'              => $provider->bio,
-    //             'location'         => [
-    //                 'city'    => $provider->city,
-    //                 'region'  => $provider->region?->name,
-    //                 'country' => $provider->country?->name,
-    //             ],
-    //             'servesRemotely'   => (bool) $provider->serves_remotely,
-    //             'regionsServed'    => $provider->regions_served,      // array cast
-    //             'languages'        => $provider->languages,           // array cast
-    //             'sessionFormats'   => $provider->session_formats,     // array cast
-    //             'areasOfSupport'   => $provider->areas_of_support,    // array cast
-    //             'populations'      => $provider->populations,         // array cast
-    //             'culturalApproach' => $provider->cultural_approach,
-    //             'yearsExperience'  => $provider->years_experience,
-    //             'feeRange'         => $provider->fee_range,
-    //             'slidingScale'     => (bool) $provider->sliding_scale,
-    //             'insurances'       => $provider->insurances,          // array cast
-    //             'accessibility'    => $provider->accessibility,       // array cast
-    //             'email'            => $provider->show_email ? $provider->contact_email : null,
-    //             'phone'            => $provider->show_phone ? $provider->contact_phone : null,
-    //             'website'          => $provider->website,
-    //         ],
-    //     ]);
-    // }
-
-    /**
-     * Approve a pending provider.
-     */
     public function approveProvider(Request $request, $id)
     {
         $provider = Provider::where('status', 'pending')->findOrFail($id);

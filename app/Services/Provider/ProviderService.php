@@ -168,6 +168,9 @@ class ProviderService extends BaseService
             'practiceSettings' => $this->toArray($p->practice_settings),
             'languages'       => $this->toArray($p->languages),
             'culturalApproach' => $p->cultural_approach,
+            'culturallyAffirming' => $p->culturally_affirming,    // ← যোগ করুন
+            'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
+
             'caribbeanIdentity'   => $p->caribbean_identity,
             'caribbeanExperience' => (bool) $p->caribbean_experience,
             'supportAreas'    => $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
