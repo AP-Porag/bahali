@@ -170,6 +170,8 @@ class ProviderService extends BaseService
             'culturalApproach' => $p->cultural_approach,
             'culturallyAffirming' => $p->culturally_affirming,    // ← যোগ করুন
             'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
+            'providerType' => $p->provider_type,
+            'licenceVerified' => (bool) $p->licence_verified,
 
             'caribbeanIdentity'   => $p->caribbean_identity,
             'caribbeanExperience' => (bool) $p->caribbean_experience,
@@ -466,6 +468,7 @@ class ProviderService extends BaseService
 
             // Verification indicator — approved profiles are Bahali-verified.
             'verified'     => true,
+            'licenceVerified' => (bool) $p->licence_verified,
 
             'caribbeanExperience' => (bool) $p->caribbean_experience,
         ];
@@ -558,10 +561,10 @@ class ProviderService extends BaseService
                     ->where('is_active', true)
                     ->with('regionType:id,name,label')
                     ->orderBy('parent_id')
-                    ->orderBy('display_order');
+                    ->orderBy('name');
             }
         ])
-            ->orderBy('display_order')
+            ->orderBy('name')
             ->get()
             ->map(fn($c) => [
                 'id'   => $c->id,

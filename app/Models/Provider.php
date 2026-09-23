@@ -106,6 +106,7 @@ class Provider extends Model
         'fee_range',
         'booking_url',
         'contact_email',
+        'licence_verified',
 
 
     ];
@@ -138,6 +139,7 @@ class Provider extends Model
 
         'lgbtq_affirming'      => 'string',
         'culturally_affirming' => 'string',
+        'licence_verified' => 'boolean',
 
     ];
 

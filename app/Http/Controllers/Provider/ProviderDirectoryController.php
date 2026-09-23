@@ -122,6 +122,7 @@ class ProviderDirectoryController extends Controller
                 'accepting',
                 'lgbtq_affirming',
                 'culturally_affirming',
+                'licence_verified'
             ]),
             'dataVersion' => $result['pagination']['total'] . '-' . now()->timestamp,
             'seed' => $result['seed'],
@@ -750,6 +751,7 @@ class ProviderDirectoryController extends Controller
                 'credentials' => $provider->credentials,
                 'professional_title' => $provider->professional_title,
                 'professional_title_other' => $provider->professional_title_other,
+                'licence_verified'           => $provider->licence_verified,
 
                 // About - user থেকে email নিন
                 'email' => $provider->user?->email ?? $provider->email,
@@ -855,6 +857,7 @@ class ProviderDirectoryController extends Controller
         \Log::info('[update] Starting provider status update', [
             'provider_id' => $id,
             'new_status' => $request->input('status'),
+            'licence_verified' => $request->input('licence_verified'),
         ]);
 
         // Provider খুঁজে বের করুন
@@ -864,6 +867,7 @@ class ProviderDirectoryController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(self::STATUSES)],
             'note'   => ['nullable', 'string', 'max:2000'],
+            'licence_verified' => ['nullable', 'boolean'],
         ]);
 
         // পুরানো স্ট্যাটাস সংরক্ষণ করুন
@@ -875,6 +879,12 @@ class ProviderDirectoryController extends Controller
         $provider->status = $newStatus;
         $provider->note = $note;
         $provider->reviewed_at = now();
+
+        if ($provider->provider_type === 'individual' && $newStatus === GlobalConstant::VERIFICATION_STATUS_APPROVED) {
+            $provider->licence_verified = !empty($validated['licence_verified']) ? 1 : 0;
+        } else {
+            $provider->licence_verified = 0;   // ✅ false (TINYINT 0), NULL নয়
+        }
 
         $provider->save();
 
@@ -914,6 +924,7 @@ class ProviderDirectoryController extends Controller
             ->route('providers.pending')
             ->with('success', 'Verification status updated successfully!');
     }
+
 
 
     public function approveProvider(Request $request, $id)

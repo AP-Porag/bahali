@@ -122,7 +122,7 @@ function contactMethods(provider) {
     return [
         c.booking && { icon: Ico.calendar, label: 'Book a consultation', sub: "Opens the provider's scheduling site", href: normHref(c.booking), external: true },
         c.email && { icon: Ico.mail, label: 'Email provider', sub: 'Opens your email app', href: `mailto:${c.email}` },
-        c.phone && { icon: Ico.phone, label: 'Call provider', sub: c.phone, href: `tel:${String(c.phone).replace(/[^+\d]/g, '')}` },
+        c.phone && { icon: Ico.phone, label: 'Call', sub: c.phone, href: `tel:${String(c.phone).replace(/[^+\d]/g, '')}` },
         c.website && { icon: Ico.globe, label: 'Visit website', sub: 'Opens in a new tab', href: normHref(c.website), external: true },
     ].filter(Boolean);
 }
@@ -252,8 +252,13 @@ export default function ProviderProfile({ provider }) {
 
             <div className="border-b border-[#E7E0D2] bg-white/60">
                 <div className="mx-auto max-w-6xl px-5 py-3">
-                    <Link href="/provider" className="inline-flex items-center gap-1.5 text-sm text-[#0E7C7B] hover:underline">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <Link
+                        href={`/provider${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`}
+                        className="inline-flex items-center gap-1.5 text-sm text-[#0E7C7B] hover:underline"
+                    >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                            <path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                         Back to directory
                     </Link>
                 </div>
@@ -279,7 +284,9 @@ export default function ProviderProfile({ provider }) {
                             )}
                             <h2 className="text-2xl text-[#16302F]" style={SERIF}>
                                 {displayName}
-                                {p.credentials ? <span className="text-lg font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}
+                                {p.providerType === 'individual' && p.credentials ? (
+                                    <span className="text-lg font-normal text-[#5B6B6E]">, {p.credentials}</span>
+                                ) : null}
                             </h2>
                             {p.title && <p className="mt-0.5 text-[#5B6B6E]">{p.title}</p>}
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">

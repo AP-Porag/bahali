@@ -77,10 +77,14 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
 
     const ALL_VALUE = '__all__';
     const allLabel = (placeholder || '').trim().toLowerCase();
-    const hasDuplicate = normalizedOptions.some(
-        (o) => (o.label || '').trim().toLowerCase() === allLabel
+
+    // Remove any region whose name matches the placeholder (e.g. "All Bahamas")
+    // so the placeholder row is the single source of truth for "All".
+    const displayOptions = normalizedOptions.filter(
+        (o) => (o.label || '').trim().toLowerCase() !== allLabel
     );
-    const showAllOption = !hideAllOption && placeholder && !hasDuplicate;
+
+    const showAllOption = !hideAllOption && !!placeholder;
 
     return (
         <div>
@@ -88,7 +92,7 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
                 {label}
             </label>
             <Select
-                value={value || (showAllOption ? ALL_VALUE : (normalizedOptions[0]?.value ?? ''))}
+                value={value || (showAllOption ? ALL_VALUE : (displayOptions[0]?.value ?? ''))}
                 onValueChange={(v) => onChange(v === ALL_VALUE ? '' : v)}
             >
                 <SelectTrigger
@@ -99,7 +103,7 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
                 </SelectTrigger>
                 <SelectContent>
                     {showAllOption && <SelectItem value={ALL_VALUE}>{placeholder}</SelectItem>}
-                    {normalizedOptions.map((opt) => (
+                    {displayOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                         </SelectItem>
@@ -291,7 +295,7 @@ function ProviderRow({ children }) {
     return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
 }
 
-function ProviderCard({ p, selectedAreas = [] }) {
+function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
     const [imgError, setImgError] = useState(false);
     const specialties = useMemo(() => {
         const all = p.specialties || [];
@@ -318,9 +322,28 @@ function ProviderCard({ p, selectedAreas = [] }) {
             )}
 
             <div className="min-w-0 flex-1">
+                {p.providerType === 'individual' && p.licenceVerified === true ? (
+                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                        </svg>
+                        Licence Verified
+                    </span>
+                ) : (
+                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
+                            <circle cx="10" cy="10" r="2.25" />
+                        </svg>
+                        Profile Reviewed
+                    </span>
+                )}
                 <h3 className="text-[20px] leading-tight text-[#16302F]" style={SERIF}>
                     {p.name}{p.credentials ? <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}
                 </h3>
+
+
+                {p.title && <p className="mt-0.5 text-sm text-[#5B6B6E]">{p.title}</p>}
                 {p.title && <p className="mt-0.5 text-sm text-[#5B6B6E]">{p.title}</p>}
                 {(p.location || formatLabel) && (
                     <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-[#3A4B49]">
@@ -362,7 +385,11 @@ function ProviderCard({ p, selectedAreas = [] }) {
                         <span className="text-[#5B6B6E]">{languages.slice(0, 2).join(', ')}{languages.length > 2 ? ` +${languages.length - 2} more` : ''}</span>
                     </ProviderRow>
                 )}
-                <Link href={`/provider/${p.id}`} className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40" aria-label={`View profile for ${p.name}`}>
+                <Link
+                    href={`/provider/${p.id}${currentQuery ? `?${currentQuery}` : ''}`}
+                    className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                    aria-label={`View profile for ${p.name}`}
+                >
                     View profile
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                 </Link>
@@ -512,6 +539,35 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
 export default function Directory({
     providers = [], dataVersion = '', pagination = {}, filterOptions = {}, countries = [], filters = {}, seed: initialSeed = 0,
 }) {
+    // Country-specific "All X" default option text (guide §2/§3).
+    // Only countries the guide calls out need an explicit override;
+    // everything else falls back to generic "All".
+    const REGION_DEFAULT_LABEL = {
+        'Anguilla': 'All Anguilla',
+        'Antigua and Barbuda': 'All parishes / dependencies',
+        'Aruba': 'All regions',
+        'Bahamas': 'All Bahamas',
+        'Bermuda': 'All parishes / municipalities',
+        'Bonaire': 'All districts',
+        'British Virgin Islands': 'All islands',
+        'Canada': 'All provinces / territories',
+        'Cayman Islands': 'All districts / islands',
+        'Cuba': 'All provinces / special municipalities',
+        'Curaçao': 'All areas',
+        'Dominican Republic': 'All provinces / National District',
+        'France': 'All regions',
+        'Grenada': 'All parishes / dependencies',
+        'Guadeloupe': 'All Guadeloupe',
+        'Martinique': 'All Martinique',
+        'Netherlands': 'All Netherlands',
+        'Puerto Rico': 'All Puerto Rico',
+        'Saint Kitts and Nevis': 'All Saint Kitts and Nevis',
+        'Saint Martin / Sint Maarten': 'All Saint Martin / Sint Maarten',
+        'Spain': 'All autonomous communities',
+        'Trinidad and Tobago': 'All Trinidad and Tobago',
+        'Turks and Caicos Islands': 'All Turks and Caicos Islands',
+        'United States Virgin Islands': 'All U.S. Virgin Islands',
+    };
     const initialF = useMemo(() => ({
         location: filters.location || '',
         region: filters.region || '',
@@ -684,6 +740,36 @@ export default function Directory({
     const hasAnySelection = activeChips.length > 0;
     const total = meta.total ?? items.length;
     const extraSelectedCount = f.areas.filter((a) => !COMMON_SUPPORT_AREAS.some((c) => c.areas.includes(a))).length;
+    // Build the current filter query string so it can be carried to the show page.
+    const currentQueryString = useMemo(() => {
+        const params = new URLSearchParams();
+        const push = (k, v) => {
+            if (v === undefined || v === null || v === '') return;
+            if (Array.isArray(v)) {
+                v.forEach((item) => { if (item) params.append(`${k}[]`, item); });
+            } else {
+                params.append(k, String(v));
+            }
+        };
+        push('location', f.location);
+        push('region', f.region);
+        push('city', f.city);
+        push('include_virtual', f.include_virtual ? '1' : '');
+        push('areas', f.areas);
+        push('payment', f.payment);
+        push('insurer', f.insurer);
+        push('fee_min', f.fee_min);
+        push('fee_max', f.fee_max);
+        push('population', f.population);
+        push('session_format', f.session_format);
+        push('language', f.language);
+        push('provider_type', f.provider_type);
+        push('accepting', f.accepting ? '1' : '');
+        push('lgbtq_affirming', f.lgbtq_affirming);
+        push('culturally_affirming', f.culturally_affirming);
+        push('keyword', f.keyword);
+        return params.toString();
+    }, [f]);
 
     return (
         <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
@@ -732,14 +818,18 @@ export default function Directory({
                                         label="Country or territory"
                                         value={f.location}
                                         onChange={(v) => {
-                                            const country = countries.find((c) => c.name === v);
-                                            const firstRegion = country?.regions?.[0];
-                                            let firstCity = '';
-                                            if (v === 'United Kingdom' && firstRegion) {
-                                                const firstChild = country.regions.find((r) => getParentId(r) === firstRegion.id);
-                                                firstCity = firstChild?.name || '';
+                                            // UK keeps its 2-level auto-select (England → first city), per spec.
+                                            if (v === 'United Kingdom') {
+                                                const country = countries.find((c) => c.name === v);
+                                                const firstParent = country?.regions?.find((r) => !getParentId(r));
+                                                const firstChild = firstParent
+                                                    ? country.regions.find((r) => getParentId(r) === firstParent.id)
+                                                    : null;
+                                                patch({ location: v, region: firstParent?.name || '', city: firstChild?.name || '' });
+                                                return;
                                             }
-                                            patch({ location: v, region: firstRegion?.name || '', city: firstCity });
+                                            // Every other country: clear secondary geography so the "All …" default shows.
+                                            patch({ location: v, region: '', city: '' });
                                         }}
                                         options={countries.map((c) => c.name)}
                                         placeholder="Anywhere"
@@ -753,6 +843,7 @@ export default function Directory({
                                             value={f.region}
                                             onChange={(v) => patch({ region: v })}
                                             options={regions.map((r) => r.name)}
+                                            placeholder={REGION_DEFAULT_LABEL[f.location] || 'All'}
                                         />
                                     )}
 
@@ -874,7 +965,16 @@ export default function Directory({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 gap-5">{items.map((p) => <ProviderCard key={p.id} p={p} selectedAreas={f.areas} />)}</div>
+                                    <div className="grid grid-cols-1 gap-5">
+                                        {items.map((p) => (
+                                            <ProviderCard
+                                                key={p.id}
+                                                p={p}
+                                                selectedAreas={f.areas}
+                                                currentQuery={currentQueryString}
+                                            />
+                                        ))}
+                                    </div>
                                 )}
 
                                 {meta.hasMore && items.length > 0 && !loading && (
