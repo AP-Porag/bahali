@@ -79,6 +79,8 @@ class StoreProviderRequest extends FormRequest
             'languages.*' => ['string', 'max:255'],
             'languages_other' => ['nullable', 'string', 'max:255'],
             'cultural_approach' => ['nullable', 'string', 'max:2500'],
+            'lgbtq_affirming'       => ['required', 'in:yes,no'],           // ← NEW
+            'culturally_affirming'  => ['required', 'in:yes,no'],           // ← NEW
 
             // Step 8 — Service Information
             'service_formats' => ['required', 'array', 'min:1'],

@@ -50,9 +50,9 @@ interface ProviderFormData {
     // Step 7 — Cultural & Language Responsiveness
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
+    lgbtq_affirming: YesNo | '';              // ← NEW
+    culturally_affirming: YesNo | '';         // ← NEW
     languages: string[];
-    languages_other: string;
-    cultural_approach: string;
     // Step 8 — Service Information
     service_formats: string[];
     practice_settings: string[];
@@ -68,6 +68,8 @@ interface ProviderFormData {
     // Step 10 — Insurance & Payment
     payment_methods: string[];
     insurance_plans: string;
+    fee_min: string;
+    fee_max: string;
     // Step 11 — Contact Information
     phone: string;
     website: string;
@@ -438,6 +440,7 @@ const STEPS = [
     { key: 'service', title: 'Service Information', subtitle: 'How you work' },
     { key: 'location', title: 'Location', subtitle: 'Where you are' },
     { key: 'payment', title: 'Insurance & Payment', subtitle: 'Accepted methods' },
+    { key: 'fee', title: 'Session Fee', subtitle: 'Your fee range' },
     { key: 'contact', title: 'Contact Information', subtitle: 'Reach you' },
     { key: 'media', title: 'Profile Media', subtitle: 'Photos & logo' },
     { key: 'accessibility', title: 'Accessibility', subtitle: 'Accommodations' },
@@ -458,13 +461,15 @@ const FIELD_STEP: Record<string, number> = {
     treatment_approaches: 6, treatment_approaches_other: 6,
     specialized_training: 6, specialized_training_other: 6,
     certifications: 6,
-    caribbean_identity: 7, caribbean_experience: 7, languages: 7,
-    languages_other: 7, cultural_approach: 7,
+    caribbean_identity: 7, caribbean_experience: 7,
+    lgbtq_affirming: 7, culturally_affirming: 7,        // ← NEW
+    languages: 7, languages_other: 7, cultural_approach: 7,
     service_formats: 8, practice_settings: 8,
     practice_settings_other: 8,
     address: 9, city: 9, state_province: 9, country: 9,
     multiple_locations: 9, hide_address: 9, telehealth_regions: 9, telehealth_regions_other: 9,
     payment_methods: 10, insurance_plans: 10,
+    fee_min: 11, fee_max: 11,
     phone: 11, website: 11, social_links: 11,
     profile_photo: 12, additional_photos: 12,
     accessibility: 13, accessibility_other: 13,
@@ -554,6 +559,16 @@ function TextArea({
             onChange={(ev) => onChange(ev.target.value)}
             className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`}
         />
+    );
+}
+function MoneyInput({ value, onChange, error, placeholder }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; }) {
+    return (
+        <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+            <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
+                onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
+                className={`w-full rounded-lg border bg-white py-2.5 pl-7 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+        </div>
     );
 }
 function PasswordInput({
@@ -987,6 +1002,7 @@ function CertificationsInput({
 interface RegionData {
     id: number;
     name: string;
+    parentId?: number | null;      // ← NEW (UK hierarchy)
     regionTypeName?: string;
     regionTypeLabel?: string;
 }
@@ -1053,6 +1069,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         certifications: [],
         caribbean_identity: '',
         caribbean_experience: '',
+        lgbtq_affirming: '',              // ← NEW
+        culturally_affirming: '',         // ← NEW
         languages: [],
         languages_other: '',
         cultural_approach: '',
@@ -1069,6 +1087,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         telehealth_regions_other: '',
         payment_methods: [],
         insurance_plans: '',
+        fee_min: '',
+        fee_max: '',
         phone: '',
         website: '',
         social_links: '',
@@ -1273,6 +1293,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             case 7:
                 if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';         // ← NEW
+                if (!d.culturally_affirming) e.culturally_affirming = 'Please answer so people can find the right support.';  // ← NEW
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
                 if (d.languages.includes('Other') && !d.languages_other.trim())
                     e.languages_other = 'Please specify the other language(s).';
@@ -1303,15 +1325,22 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             case 10:
                 if (d.payment_methods.length === 0) e.payment_methods = 'Select at least one accepted payment method.';
                 break;
-            case 11:
+            case 11: {
+                const min = d.fee_min.trim();
+                const max = d.fee_max.trim();
+                if (max && !min) e.fee_min = 'Enter a minimum fee, or clear the maximum.';
+                if (min && max && Number(min) > Number(max)) e.fee_max = 'Maximum must be greater than or equal to the minimum.';
+                break;
+            }
+            case 12:
                 if (!d.phone.trim()) e.phone = 'Phone number is required.';
                 else if (d.phone.replace(/[^\d]/g, '').length < 7) e.phone = 'Please enter a valid phone number.';
                 if (d.website && !isUrl(d.website)) e.website = 'Enter a valid website';
                 break;
-            case 12:
+            case 13:
                 if (!d.profile_photo) e.profile_photo = 'A professional photo or organization logo is required.';
                 break;
-            case 13: {
+            case 14: {
                 const hasOther = d.accessibility.includes('__other__');
                 const hasSelection = d.accessibility.length > 0 && !(d.accessibility.length === 1 && hasOther);
                 if (!hasSelection && !(hasOther && d.accessibility_other.trim())) {
@@ -1322,7 +1351,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 }
                 break;
             }
-            case 14:
+            case 15:
                 if (!d.consent_accurate) e.consent_accurate = 'Please confirm the information is accurate.';
                 if (!d.consent_notify) e.consent_notify = 'Please agree to notify Bahali of changes.';
                 if (!d.consent_no_endorsement) e.consent_no_endorsement = 'Please acknowledge this is not an endorsement.';
@@ -1412,6 +1441,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 treatment_approaches: mergeOther(data.treatment_approaches, 'Other (specify)', data.treatment_approaches_other),
                 specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
                 certifications: data.certifications.filter(c => c.trim() !== ''),
+                fee_min: data.fee_min.trim() === '' ? '' : data.fee_min.trim(),
+                fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
             };
         });
 
@@ -1862,6 +1893,23 @@ function StepBody({
     const [openCat, setOpenCat] = useState<string>(
         AREAS_OF_SUPPORT_GROUPS[0]?.category ?? ''
     );
+
+    // ==== UK 3-level hierarchy helpers ====
+    const isUK = d.country === 'United Kingdom';
+
+    // Top-level UK countries (England / Scotland / Wales / Northern Ireland)
+    const ukCountries = useMemo(
+        () => (isUK ? availableRegions.filter(r => !r.parentId) : []),
+        [isUK, availableRegions]
+    );
+
+    // Cities belonging to the currently-selected UK country
+    const ukCities = useMemo(() => {
+        if (!isUK || !d.state_province) return [];
+        const parent = ukCountries.find(r => r.name === d.state_province);
+        if (!parent) return [];
+        return availableRegions.filter(r => r.parentId === parent.id);
+    }, [isUK, d.state_province, ukCountries, availableRegions]);
 
     switch (step) {
         /* ---------------- Step 0: Basic Information ------------------- */
@@ -2344,6 +2392,39 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
+                    {/* ==== NEW: Identity-Affirming Care ==== */}
+                    <FieldShell
+                        label="Do you offer LGBTQIA+ affirming care?"
+                        required
+                        hint="This helps people find providers who understand and support their identity."
+                        error={fieldError('lgbtq_affirming')}
+                    >
+                        <RadioRow
+                            name="lgbtq_affirming"
+                            value={d.lgbtq_affirming}
+                            onChange={(v) => set('lgbtq_affirming', v as YesNo)}
+                            options={[
+                                { value: 'yes', label: 'Yes' },
+                                { value: 'no', label: 'No' },
+                            ]}
+                        />
+                    </FieldShell>
+                    <FieldShell
+                        label="Do you offer culturally affirming care (Caribbean-informed)?"
+                        required
+                        hint="This means integrating Caribbean cultural context, family dynamics, and community experience into your care."
+                        error={fieldError('culturally_affirming')}
+                    >
+                        <RadioRow
+                            name="culturally_affirming"
+                            value={d.culturally_affirming}
+                            onChange={(v) => set('culturally_affirming', v as YesNo)}
+                            options={[
+                                { value: 'yes', label: 'Yes' },
+                                { value: 'no', label: 'No' },
+                            ]}
+                        />
+                    </FieldShell>
                     <FieldShell
                         label="Languages spoken"
                         required
@@ -2455,60 +2536,126 @@ function StepBody({
                     >
                         Hide the address from public view
                     </ConsentItem>
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <FieldShell label="City" required error={fieldError('city')}>
-                            <TextInput
-                                value={d.city}
-                                onChange={(v) => set('city', v)}
-                                error={!!fieldError('city')}
-                                placeholder="City"
-                            />
-                        </FieldShell>
-                        <FieldShell label="Country" required error={fieldError('country')}>
-                            <SearchableSelect
-                                value={d.country}
-                                onChange={(v) => {
-                                    set('country', v);
-                                    set('state_province', '');
-                                }}
-                                options={countries.map(c => ({
-                                    value: c.name,
-                                    label: c.name
-                                }))}
-                                error={!!fieldError('country')}
-                                placeholder="Select country…"
-                                searchPlaceholder="Search countries…"
-                            />
-                        </FieldShell>
-                    </div>
-                    <FieldShell
-                        label={regionTypeLabel}
-                        required
-                        error={fieldError('state_province')}
-                        hint={!d.country ? 'Please select a country first' : undefined}
-                    >
-                        {d.country && availableRegions.length > 0 ? (
-                            <SearchableSelect
-                                value={d.state_province}
-                                onChange={(v) => set('state_province', v)}
-                                options={availableRegions.map(r => ({
-                                    value: r.name,
-                                    label: r.name
-                                }))}
-                                error={!!fieldError('state_province')}
-                                placeholder={`Select ${regionTypeLabel.toLowerCase()}…`}
-                                searchPlaceholder={`Search ${regionTypeLabel.toLowerCase()}…`}
-                            />
-                        ) : d.country && availableRegions.length === 0 ? (
-                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
-                                No regions available for this country
+
+                    {isUK ? (
+                        /* ==================== UNITED KINGDOM (3-level) ==================== */
+                        <>
+                            {/* Level 1: Country (always United Kingdom) */}
+                            <FieldShell label="Country" required error={fieldError('country')}>
+                                <SearchableSelect
+                                    value={d.country}
+                                    onChange={(v) => {
+                                        set('country', v);
+                                        set('state_province', '');
+                                        set('city', '');
+                                    }}
+                                    options={countries.map(c => ({ value: c.name, label: c.name }))}
+                                    error={!!fieldError('country')}
+                                    placeholder="Select country…"
+                                    searchPlaceholder="Search countries…"
+                                />
+                            </FieldShell>
+
+                            {/* Level 2: Country / City or Local Area (England / Scotland / Wales / NI) */}
+                            <FieldShell
+                                label="Country / City or Local Area"
+                                required
+                                error={fieldError('state_province')}
+                            >
+                                <SearchableSelect
+                                    value={d.state_province}
+                                    onChange={(v) => {
+                                        set('state_province', v);
+                                        set('city', '');   // reset city when country changes
+                                    }}
+                                    options={ukCountries.map(r => ({ value: r.name, label: r.name }))}
+                                    error={!!fieldError('state_province')}
+                                    placeholder="Select England / Scotland / Wales / Northern Ireland…"
+                                    searchPlaceholder="Search…"
+                                />
+                            </FieldShell>
+
+                            {/* Level 3: City / Local Area */}
+                            <FieldShell
+                                label="City / Local Area"
+                                required
+                                error={fieldError('city')}
+                                hint={!d.state_province ? 'Please select a country first' : undefined}
+                            >
+                                {d.state_province && ukCities.length > 0 ? (
+                                    <SearchableSelect
+                                        value={d.city}
+                                        onChange={(v) => set('city', v)}
+                                        options={ukCities.map(r => ({ value: r.name, label: r.name }))}
+                                        error={!!fieldError('city')}
+                                        placeholder="Select City / Local Area…"
+                                        searchPlaceholder="Search cities…"
+                                    />
+                                ) : d.state_province && ukCities.length === 0 ? (
+                                    <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                        No cities available for this country
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                        Select a country to see available cities
+                                    </div>
+                                )}
+                            </FieldShell>
+                        </>
+                    ) : (
+                        /* ==================== NON-UK (existing 2-level) ==================== */
+                        <>
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                <FieldShell label="City" required error={fieldError('city')}>
+                                    <TextInput
+                                        value={d.city}
+                                        onChange={(v) => set('city', v)}
+                                        error={!!fieldError('city')}
+                                        placeholder="City"
+                                    />
+                                </FieldShell>
+                                <FieldShell label="Country" required error={fieldError('country')}>
+                                    <SearchableSelect
+                                        value={d.country}
+                                        onChange={(v) => {
+                                            set('country', v);
+                                            set('state_province', '');
+                                        }}
+                                        options={countries.map(c => ({ value: c.name, label: c.name }))}
+                                        error={!!fieldError('country')}
+                                        placeholder="Select country…"
+                                        searchPlaceholder="Search countries…"
+                                    />
+                                </FieldShell>
                             </div>
-                        ) : (
-                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
-                                Select a country to see available regions
-                            </div>
-                        )}
-                    </FieldShell>
+                            <FieldShell
+                                label={regionTypeLabel}
+                                required
+                                error={fieldError('state_province')}
+                                hint={!d.country ? 'Please select a country first' : undefined}
+                            >
+                                {d.country && availableRegions.length > 0 ? (
+                                    <SearchableSelect
+                                        value={d.state_province}
+                                        onChange={(v) => set('state_province', v)}
+                                        options={availableRegions.map(r => ({ value: r.name, label: r.name }))}
+                                        error={!!fieldError('state_province')}
+                                        placeholder={`Select ${regionTypeLabel.toLowerCase()}…`}
+                                        searchPlaceholder={`Search ${regionTypeLabel.toLowerCase()}…`}
+                                    />
+                                ) : d.country && availableRegions.length === 0 ? (
+                                    <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                        No regions available for this country
+                                    </div>
+                                ) : (
+                                    <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">
+                                        Select a country to see available regions
+                                    </div>
+                                )}
+                            </FieldShell>
+                        </>
+                    )}
+
                     <FieldShell
                         label="Do you provide services across multiple locations?"
                         required
@@ -2535,7 +2682,6 @@ function StepBody({
                             onToggle={(v) => toggle('telehealth_regions', v)}
                             columns={2}
                         />
-                        {/* "Other" — same design as the form, no background box */}
                         <OtherCheckboxField
                             checked={d.telehealth_regions.includes('__other__')}
                             text={d.telehealth_regions_other}
@@ -2584,8 +2730,36 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        /* ---------------- Step 11: Contact Information --------------- */
+        /* ---------------- Step 11: Fee Range--------------- */
         case 11:
+            return (
+                <FieldShell
+                    label="Session fee range"
+                    hint="Optional. Shown on your public card and profile as, for example, “$100–$150 / session”. Leave blank if you'd rather not display a fee."
+                    error={fieldError('fee_min') || fieldError('fee_max')}
+                >
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
+                            <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" />
+                        </div>
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
+                            <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" />
+                        </div>
+                    </div>
+                    {(d.fee_min || d.fee_max) && (
+                        <p className="mt-2.5 text-sm text-[#5B6B6E]">
+                            Preview:{' '}
+                            <span className="font-semibold text-[#16302F]">
+                                {d.fee_min && d.fee_max ? `$${d.fee_min}–$${d.fee_max} / session` : d.fee_min ? `From $${d.fee_min} / session` : '—'}
+                            </span>
+                        </p>
+                    )}
+                </FieldShell>
+            );
+        /* ---------------- Step 12: Contact Information --------------- */
+        case 12:
             return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
@@ -2616,8 +2790,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        /* ---------------- Step 12: Profile Media -------------------- */
-        case 12:
+        /* ---------------- Step 13: Profile Media -------------------- */
+        case 13:
             return (
                 <>
                     <FieldShell
@@ -2651,8 +2825,8 @@ function StepBody({
                     </FieldShell>
                 </>
             );
-        /* ---------------- Step 13: Accessibility -------------------- */
-        case 13:
+        /* ---------------- Step 14: Accessibility -------------------- */
+        case 14:
             return (
                 <FieldShell
                     label="Accessibility"
@@ -2684,7 +2858,7 @@ function StepBody({
                 </FieldShell>
             );
         /* ---------------- Step 14: Consent & Agreement -------------- */
-        case 14:
+        case 15:
             return (
                 <div className="space-y-4">
                     <p className="text-sm text-[#5B6B6E]">

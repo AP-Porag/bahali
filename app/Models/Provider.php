@@ -40,6 +40,8 @@ class Provider extends Model
         // Culture & language
         'caribbean_identity',
         'caribbean_experience',
+        'lgbtq_affirming',
+        'culturally_affirming',
         'languages',
         'languages_other',
         'cultural_approach',
@@ -104,6 +106,9 @@ class Provider extends Model
         'fee_range',
         'booking_url',
         'contact_email',
+        'licence_verified',
+
+
     ];
 
     protected $casts = [
@@ -131,6 +136,10 @@ class Provider extends Model
 
         'accepting_new_clients'     => 'boolean',
         'availability_confirmed_at' => 'datetime',
+
+        'lgbtq_affirming'      => 'string',
+        'culturally_affirming' => 'string',
+        'licence_verified' => 'boolean',
 
     ];
 
