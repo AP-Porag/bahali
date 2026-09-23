@@ -50,6 +50,7 @@ class UpdateProviderRequest extends FormRequest
             'payment_methods'   => ['nullable', 'array'],
             'payment_methods.*' => ['string', 'max:255'],
             'insurance_plans'   => ['nullable', 'string'],
+            'culturally_affirming' => ['nullable', 'string'],
 
             'phone'        => ['nullable', 'string', 'max:50'],
             'website'      => ['nullable', 'string', 'max:255'],

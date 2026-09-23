@@ -75,7 +75,8 @@ class ProviderDirectoryController extends Controller
         $filters = [
             'keyword'         => (string) $request->input('keyword', ''),
             'location'        => (string) $request->input('location', ''),
-            'region'          => (string) $request->input('region', ''),   // secondary geography (parish/state)
+            'region'          => (string) $request->input('region', ''),   // secondary geography (parish/state/country)
+            'city'            => (string) $request->input('city', ''),     // UK third-level (city / local area)
             'include_virtual' => $request->boolean('include_virtual'),
             'areas'           => $areas,
             'payment'         => (string) $request->input('payment', ''),
@@ -87,7 +88,9 @@ class ProviderDirectoryController extends Controller
             'language'        => $language,
             'provider_type'   => (string) $request->input('provider_type', ''),
             'session_format'  => (string) $request->input('session_format', ''),
-            'accepting'       => $request->boolean('accepting'), // guide §5.4
+            'accepting'       => $request->boolean('accepting'),
+            'lgbtq_affirming'      => (string) $request->input('lgbtq_affirming', ''),       // ← NEW
+            'culturally_affirming' => (string) $request->input('culturally_affirming', ''),  // ← NEW
             'perPage'         => (int) $request->input('perPage', 6),
             'page'            => $page,
             'seed'            => $seed,
@@ -104,6 +107,7 @@ class ProviderDirectoryController extends Controller
                 'keyword',
                 'location',
                 'region',
+                'city',           // ← added
                 'include_virtual',
                 'areas',
                 'payment',
@@ -116,7 +120,11 @@ class ProviderDirectoryController extends Controller
                 'provider_type',
                 'session_format',
                 'accepting',
+                'lgbtq_affirming',
+                'culturally_affirming',
+                'licence_verified'
             ]),
+            'dataVersion' => $result['pagination']['total'] . '-' . now()->timestamp,
             'seed' => $result['seed'],
         ]);
     }
@@ -139,7 +147,12 @@ class ProviderDirectoryController extends Controller
     public function create()
     {
         // Fetch countries with regions, organized for dependent dropdown
-        $countries = Country::with('regions.regionType')
+        $countries = Country::with(['regions' => function ($q) {
+            $q->select('id', 'country_id', 'parent_id', 'name', 'region_type_id', 'display_order')
+                ->where('is_active', true)
+                ->with('regionType:id,name,label')
+                ->orderBy('display_order');
+        }])
             ->orderBy('name')
             ->get()
             ->map(fn($country) => [
@@ -147,10 +160,10 @@ class ProviderDirectoryController extends Controller
                 'name' => $country->name,
                 'code' => $country->code,
                 'regions' => $country->regions
-                    ->sortBy('name')
                     ->map(fn($region) => [
                         'id' => $region->id,
                         'name' => $region->name,
+                        'parentId' => $region->parent_id,             // ← NEW: UK hierarchy
                         'regionTypeName' => $region->regionType?->name,
                         'regionTypeLabel' => $region->regionType?->label,
                     ])
@@ -506,91 +519,7 @@ class ProviderDirectoryController extends Controller
             ->route('providers.create')
             ->with('success', 'Your application has been received.');
     }
-    // public function store(StoreProviderRequest $request)
-    // {
-    //     $userId = $request->session()->get(self::SESSION_PENDING_USER);
-    //     $user = $userId ? User::find($userId) : null;
 
-    //     if (!$user || !$user->email_verified_at) {
-    //         return back()->withErrors([
-    //             'email' => 'Please verify your email before submitting.'
-    //         ]);
-    //     }
-
-    //     $data = $request->validated();
-
-    //     $data['user_id'] = $user->id;
-
-    //     unset($data['email'], $data['password']);
-
-    //     // Get support areas
-    //     $supportAreas = $request->mappedAreasOfSupport();
-
-    //     unset(
-    //         $data['areas_of_support'],
-    //         $data['areas_of_support_other']
-    //     );
-
-
-    //     // Upload verification document
-    //     if ($request->hasFile('verification_document')) {
-    //         $data['verification_document'] = $this->storeUpload(
-    //             $request->file('verification_document'),
-    //             'providers/verification'
-    //         );
-    //     }
-
-
-    //     // Upload profile photo
-    //     if ($request->hasFile('profile_photo')) {
-    //         $data['profile_photo'] = $this->storeUpload(
-    //             $request->file('profile_photo'),
-    //             'providers/photos'
-    //         );
-    //     }
-
-
-    //     // Upload additional photos
-    //     $additionalPhotos = [];
-
-    //     if ($request->hasFile('additional_photos')) {
-
-    //         foreach ($request->file('additional_photos') as $photo) {
-
-    //             $path = $this->storeUpload(
-    //                 $photo,
-    //                 'providers/photos'
-    //             );
-
-    //             if ($path) {
-    //                 $additionalPhotos[] = $path;
-    //             }
-    //         }
-    //     }
-
-    //     $data['additional_photos'] = $additionalPhotos;
-
-
-    //     DB::transaction(function () use ($data, $supportAreas) {
-
-    //         $provider = Provider::create($data);
-
-    //         if (!empty($supportAreas)) {
-    //             $provider->supportAreas()->createMany($supportAreas);
-    //         }
-    //     });
-
-
-    //     $request->session()->forget(self::SESSION_PENDING_USER);
-
-
-    //     return redirect()
-    //         ->route('providers.create')
-    //         ->with(
-    //             'success',
-    //             'Your application has been received.'
-    //         );
-    // }
 
     /**
      * Store an uploaded file without any path resolution issues.
@@ -822,6 +751,7 @@ class ProviderDirectoryController extends Controller
                 'credentials' => $provider->credentials,
                 'professional_title' => $provider->professional_title,
                 'professional_title_other' => $provider->professional_title_other,
+                'licence_verified'           => $provider->licence_verified,
 
                 // About - user থেকে email নিন
                 'email' => $provider->user?->email ?? $provider->email,
@@ -927,6 +857,7 @@ class ProviderDirectoryController extends Controller
         \Log::info('[update] Starting provider status update', [
             'provider_id' => $id,
             'new_status' => $request->input('status'),
+            'licence_verified' => $request->input('licence_verified'),
         ]);
 
         // Provider খুঁজে বের করুন
@@ -936,6 +867,7 @@ class ProviderDirectoryController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(self::STATUSES)],
             'note'   => ['nullable', 'string', 'max:2000'],
+            'licence_verified' => ['nullable', 'boolean'],
         ]);
 
         // পুরানো স্ট্যাটাস সংরক্ষণ করুন
@@ -947,6 +879,12 @@ class ProviderDirectoryController extends Controller
         $provider->status = $newStatus;
         $provider->note = $note;
         $provider->reviewed_at = now();
+
+        if ($provider->provider_type === 'individual' && $newStatus === GlobalConstant::VERIFICATION_STATUS_APPROVED) {
+            $provider->licence_verified = !empty($validated['licence_verified']) ? 1 : 0;
+        } else {
+            $provider->licence_verified = 0;   // ✅ false (TINYINT 0), NULL নয়
+        }
 
         $provider->save();
 
@@ -988,55 +926,7 @@ class ProviderDirectoryController extends Controller
     }
 
 
-    /**
-     * Display the specified pending provider.
-     */
-    // ProviderDirectoryController@show
-    // public function showPendingProvider(Provider $provider)
-    // {
-    //     // Only show approved, publicly-visible profiles (see review queue below)
-    //     abort_unless($provider->status === 'approved' && $provider->is_public, 404);
 
-    //     return Inertia::render('provider/Show', [
-    //         'provider' => [
-    //             'name'             => $provider->display_name,
-    //             'credentials'      => $provider->credentials,
-    //             'title'            => $provider->professional_title,
-    //             'pronouns'         => $provider->pronouns,
-    //             'photo'            => $provider->profile_photo ? Storage::url($provider->profile_photo) : null,
-    //             'verifiedByBahali' => (bool) $provider->license_verified_at,
-    //             'verifiedOn'       => $provider->license_verified_at?->format('F Y'),
-    //             'caribbeanInformed' => (bool) $provider->caribbean_informed,
-    //             'acceptingClients' => (bool) $provider->accepting_clients,
-    //             'tagline'          => $provider->tagline,
-    //             'bio'              => $provider->bio,
-    //             'location'         => [
-    //                 'city'    => $provider->city,
-    //                 'region'  => $provider->region?->name,
-    //                 'country' => $provider->country?->name,
-    //             ],
-    //             'servesRemotely'   => (bool) $provider->serves_remotely,
-    //             'regionsServed'    => $provider->regions_served,      // array cast
-    //             'languages'        => $provider->languages,           // array cast
-    //             'sessionFormats'   => $provider->session_formats,     // array cast
-    //             'areasOfSupport'   => $provider->areas_of_support,    // array cast
-    //             'populations'      => $provider->populations,         // array cast
-    //             'culturalApproach' => $provider->cultural_approach,
-    //             'yearsExperience'  => $provider->years_experience,
-    //             'feeRange'         => $provider->fee_range,
-    //             'slidingScale'     => (bool) $provider->sliding_scale,
-    //             'insurances'       => $provider->insurances,          // array cast
-    //             'accessibility'    => $provider->accessibility,       // array cast
-    //             'email'            => $provider->show_email ? $provider->contact_email : null,
-    //             'phone'            => $provider->show_phone ? $provider->contact_phone : null,
-    //             'website'          => $provider->website,
-    //         ],
-    //     ]);
-    // }
-
-    /**
-     * Approve a pending provider.
-     */
     public function approveProvider(Request $request, $id)
     {
         $provider = Provider::where('status', 'pending')->findOrFail($id);

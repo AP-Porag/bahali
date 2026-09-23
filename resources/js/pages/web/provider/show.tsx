@@ -10,9 +10,51 @@ const has = (a) => Array.isArray(a) && a.length > 0;
 function initials(name = '') {
     return name.replace(/^Dr\.?\s+/i, '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'B';
 }
+
+/* NEW: Caribbean-Informed Care badge */
+function CaribbeanBadge() {
+    return (
+        <span
+            className="inline-flex items-center rounded-full border border-[#D9C89E] bg-[#F5EDDC] px-3.5 py-1 text-[13px] font-medium text-[#8A5A2B]"
+            style={{ letterSpacing: '0.01em' }}
+        >
+            Caribbean-informed care
+        </span>
+    );
+}
+
 function normHref(url) { return url ? (url.startsWith('http') ? url : `https://${url}`) : null; }
 
-/* ---------------------------------- icons ---------------------------------- */
+/* Name + credential normalization (client §4 Provider Cards) */
+function normalizeName(name = '') {
+    if (!name) return '';
+    return name
+        .trim()
+        .split(/\s+/)
+        .map((w) => {
+            // Keep all-caps credentials like "PhD", "MD", "LCSW" intact
+            if (/^(PhD|PsyD|MD|DO|MSW|MPH|LCSW|LMSW|LMHC|LPC|LMFT|NP|RN|BCBA)$/i.test(w)) {
+                return w.toUpperCase();
+            }
+            return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+        })
+        .join(' ');
+}
+
+/* Language list with wrapping / +N more treatment (client §4 Provider Cards) */
+function LanguageList({ languages = [], max = 4 }) {
+    if (!languages.length) return null;
+    const shown = languages.slice(0, max);
+    const rest = languages.length - shown.length;
+    return (
+        <span className="inline-flex flex-wrap items-center gap-x-1.5">
+            {shown.join(', ')}
+            {rest > 0 && <span className="text-[#8A9795]"> +{rest} more</span>}
+        </span>
+    );
+}
+
+/* Icons (unchanged) */
 const Ico = {
     pin: <><path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" /><circle cx="12" cy="11" r="2" /></>,
     monitor: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>,
@@ -29,17 +71,18 @@ const Ico = {
     minus: <><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /></>,
     question: <path d="M12 17h.01M12 13a2 2 0 0 0 .5-3.94A2 2 0 1 0 10 7m2 14a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" />,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 16v-4M12 8h.01" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
 };
 function Icon({ d, className = 'h-4 w-4' }) {
     return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>;
 }
 
-function Chip({ children }) {
-    return <span className="inline-flex items-center rounded-full bg-[#EFEAE0] px-3 py-1 text-sm text-[#5B6B6E]">{children}</span>;
+/* Chips as plain text (client §5 – remove pill background) */
+function ChipRow({ items }) {
+    if (!items || items.length === 0) return null;
+    return <p className="text-sm leading-relaxed text-[#3A4B49]">{items.join('  ·  ')}</p>;
 }
-function ChipRow({ items }) { return <div className="flex flex-wrap gap-2">{items.map((x) => <Chip key={x}>{x}</Chip>)}</div>; }
 
-/* ------------------------- Availability box (guide §5) ------------------------- */
 function AvailabilityBox({ availability, confirmedAt }) {
     if (availability === 'accepting') {
         return (
@@ -74,13 +117,12 @@ function AvailabilityBox({ availability, confirmedAt }) {
     );
 }
 
-/* ----------------- Contact methods (shared by panel + mobile modal) ----------------- */
 function contactMethods(provider) {
     const c = provider.contact || {};
     return [
         c.booking && { icon: Ico.calendar, label: 'Book a consultation', sub: "Opens the provider's scheduling site", href: normHref(c.booking), external: true },
         c.email && { icon: Ico.mail, label: 'Email provider', sub: 'Opens your email app', href: `mailto:${c.email}` },
-        c.phone && { icon: Ico.phone, label: 'Call provider', sub: c.phone, href: `tel:${String(c.phone).replace(/[^+\d]/g, '')}` },
+        c.phone && { icon: Ico.phone, label: 'Call', sub: c.phone, href: `tel:${String(c.phone).replace(/[^+\d]/g, '')}` },
         c.website && { icon: Ico.globe, label: 'Visit website', sub: 'Opens in a new tab', href: normHref(c.website), external: true },
     ].filter(Boolean);
 }
@@ -108,7 +150,6 @@ function CrisisNote() {
     );
 }
 
-/* ----------------- Contact panel (desktop right rail, guide §5 mockup) ----------------- */
 function ContactPanel({ provider }) {
     const methods = contactMethods(provider);
     return (
@@ -117,7 +158,7 @@ function ContactPanel({ provider }) {
             <p className="mt-1 text-sm text-[#5B6B6E]">Reach the provider directly to ask about services, availability or scheduling. Bahali does not manage appointments or communications between you and the provider.</p>
             <div className="mt-4 space-y-2.5">
                 {methods.length === 0
-                    ? <p className="text-sm text-[#8A9795]">This provider hasn’t listed a contact method yet.</p>
+                    ? <p className="text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p>
                     : methods.map((m) => <MethodRow key={m.label} m={m} />)}
             </div>
             <CrisisNote />
@@ -125,7 +166,6 @@ function ContactPanel({ provider }) {
     );
 }
 
-/* ----------------- Mobile contact modal ----------------- */
 function ContactModal({ open, onClose, provider }) {
     if (!open) return null;
     const methods = contactMethods(provider);
@@ -140,7 +180,7 @@ function ContactModal({ open, onClose, provider }) {
                     <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </div>
                 <div className="space-y-2.5 p-5">
-                    {methods.length === 0 ? <p className="text-sm text-[#8A9795]">This provider hasn’t listed a contact method yet.</p> : methods.map((m) => <MethodRow key={m.label} m={m} />)}
+                    {methods.length === 0 ? <p className="text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p> : methods.map((m) => <MethodRow key={m.label} m={m} />)}
                     <CrisisNote />
                 </div>
             </div>
@@ -148,7 +188,30 @@ function ContactModal({ open, onClose, provider }) {
     );
 }
 
-/* --------------------------------- Page --------------------------------- */
+/* Verification language – client §5 */
+function VerificationNote({ providerType, isVerified }) {
+    const isIndividual = providerType === 'individual';
+    if (isIndividual && isVerified) {
+        return (
+            <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
+                This provider's licence has been verified by the Bahali team against the relevant licensing authority. This is not a guarantee of treatment quality, fit or outcome.
+            </p>
+        );
+    }
+    if (isIndividual) {
+        return (
+            <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
+                This profile has been reviewed by the Bahali team. Licence has not been independently verified. This is not a guarantee of treatment quality, fit or outcome.
+            </p>
+        );
+    }
+    return (
+        <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
+            This profile has been reviewed by the Bahali team. This is not a guarantee of treatment quality, fit or outcome. Bahali is a directory and discovery resource, not a clinical endorsement.
+        </p>
+    );
+}
+
 export default function ProviderProfile({ provider }) {
     const p = provider || {};
     const [imgError, setImgError] = useState(false);
@@ -179,56 +242,73 @@ export default function ProviderProfile({ provider }) {
         </p>
     );
 
+    const displayName = normalizeName(p.name);
+
     return (
         <div className="min-h-screen bg-[#F7F3EC] pb-24 text-[#1F2A2E] lg:pb-0">
-            <Head title={`${p.name} — Bahali`} />
+            <Head title={`${displayName} — Bahali`} />
             <Header />
             <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} provider={p} />
 
             <div className="border-b border-[#E7E0D2] bg-white/60">
                 <div className="mx-auto max-w-6xl px-5 py-3">
-                    <Link href="/provider" className="inline-flex items-center gap-1.5 text-sm text-[#0E7C7B] hover:underline">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <Link
+                        href={`/provider${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`}
+                        className="inline-flex items-center gap-1.5 text-sm text-[#0E7C7B] hover:underline"
+                    >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                            <path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                         Back to directory
                     </Link>
                 </div>
             </div>
 
             <div className="mx-auto max-w-6xl px-5 py-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">Provider profile</p>
-                <h1 className="mt-1 mb-6 text-3xl text-[#16302F]" style={SERIF}>The profile provides detail, then connects you directly to the provider.</h1>
+                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">Provider profile</p>
 
                 {/* header card */}
                 <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm">
                     <div className="flex flex-col gap-6 lg:flex-row">
                         {showPhoto ? (
-                            <img src={p.photo} alt={p.name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-2xl object-cover ring-1 ring-black/5 lg:h-44 lg:w-40" />
+                            <img src={p.photo} alt={displayName} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-2xl object-cover ring-1 ring-black/5 lg:h-44 lg:w-40" />
                         ) : (
-                            <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(p.name)}</div>
+                            <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(displayName)}</div>
                         )}
 
                         <div className="min-w-0 flex-1">
-                            {p.caribbeanExperience && (
-                                <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#E8B84B]/18 px-3 py-1 text-xs font-semibold text-[#9A6B12] ring-1 ring-inset ring-[#E8B84B]/40">Caribbean-informed care</span>
+                            {p.culturallyAffirming === 'yes' && (
+                                <div className="mb-2">
+                                    <CaribbeanBadge />
+                                </div>
                             )}
-                            <h2 className="text-2xl text-[#16302F]" style={SERIF}>{p.name}{p.credentials ? <span className="text-lg font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}</h2>
+                            <h2 className="text-2xl text-[#16302F]" style={SERIF}>
+                                {displayName}
+                                {p.providerType === 'individual' && p.credentials ? (
+                                    <span className="text-lg font-normal text-[#5B6B6E]">, {p.credentials}</span>
+                                ) : null}
+                            </h2>
                             {p.title && <p className="mt-0.5 text-[#5B6B6E]">{p.title}</p>}
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">
                                 {p.location && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.pin} /></span>{p.location}</span>}
                                 {p.sessionFormat && p.sessionFormat !== 'Not specified' && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.monitor} /></span>{p.sessionFormat}</span>}
                             </div>
-                            {has(p.languages) && <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]"><span className="text-[#0E7C7B]"><Icon d={Ico.chat} /></span>{p.languages.join(', ')}</p>}
+                            {has(p.languages) && (
+                                <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]">
+                                    <span className="text-[#0E7C7B]"><Icon d={Ico.chat} /></span>
+                                    <LanguageList languages={p.languages} max={4} />
+                                </p>
+                            )}
                         </div>
 
-                        {/* availability box */}
                         <div className="w-full flex-shrink-0 lg:w-72">
                             <AvailabilityBox availability={p.availability} confirmedAt={p.availabilityConfirmedAt} />
                         </div>
                     </div>
                 </div>
 
-                {/* body: left = tabs, right = contact panel + at a glance */}
-                <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
+                {/* body */}
+                <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
                     {/* LEFT */}
                     <div className="rounded-2xl border border-[#E7E0D2] bg-white shadow-sm">
                         <div className="flex flex-wrap gap-1 border-b border-[#EFEAE0] px-4 pt-3">
@@ -239,7 +319,6 @@ export default function ProviderProfile({ provider }) {
                         <div className="p-6">
                             {tab === 'About' && (
                                 <div className="space-y-4">
-                                    {p.yearsExperience && <p className="text-sm text-[#5B6B6E]"><span className="font-semibold text-[#3A4B49]">Experience:</span> {p.yearsExperience}</p>}
                                     {p.bio && <p className="whitespace-pre-line leading-relaxed text-[15px] text-[#33302a]">{p.bio}</p>}
                                 </div>
                             )}
@@ -264,8 +343,12 @@ export default function ProviderProfile({ provider }) {
                             )}
                             {tab === 'Fees & Insurance' && (
                                 <div className="space-y-3 text-[15px] text-[#33302a]">
-                                    {p.fee && <p className="font-semibold text-[#16302F]">{p.fee}</p>}
-                                    {slidingScale && <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8B84B]/18 px-3 py-1 text-xs font-semibold text-[#9A6B12]"><Icon d={Ico.heart} className="h-3.5 w-3.5" /> Sliding scale available</span>}
+                                    <p className="font-semibold text-[#16302F]">{p.fee || 'Fee not provided'}</p>
+                                    {slidingScale && (
+                                        <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9A6B12]">
+                                            <Icon d={Ico.heart} className="h-3.5 w-3.5" /> Sliding scale available
+                                        </p>
+                                    )}
                                     {has(p.payment?.methods) && <div><p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Accepted methods</p><ChipRow items={p.payment.methods} /></div>}
                                     {insuranceList.length > 0 && (
                                         <div>
@@ -287,30 +370,34 @@ export default function ProviderProfile({ provider }) {
                         </div>
                     </div>
 
-                    {/* RIGHT: contact panel + at a glance */}
+                    {/* RIGHT */}
                     <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
                         {hasContact
                             ? <ContactPanel provider={p} />
                             : (
                                 <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                                    <h3 className="text-lg text-[#16302F]" style={SERIF}>Contact {p.name}</h3>
-                                    <p className="mt-1 text-sm text-[#8A9795]">This provider hasn’t listed a contact method yet.</p>
+                                    <h3 className="text-lg text-[#16302F]" style={SERIF}>Contact {displayName}</h3>
+                                    <p className="mt-1 text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p>
                                     <CrisisNote />
                                 </div>
                             )}
 
                         <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
                             <h3 className="mb-2 text-sm text-[#16302F]" style={SERIF}>At a glance</h3>
-                            {p.fee && <Glance d={Ico.wallet}>{p.fee}</Glance>}
+                            <Glance d={Ico.wallet}>{p.fee || 'Fee not provided'}</Glance>
+                            {p.yearsExperience && <Glance d={Ico.clock}>{p.yearsExperience} experience</Glance>}
                             {insuranceList.length > 0 && <Glance d={Ico.shield}>{insuranceList.slice(0, 3).join(', ')}{insuranceList.length > 3 ? ` +${insuranceList.length - 3}` : ''} (insurance)</Glance>}
                             {slidingScale && <Glance d={Ico.heart}>Sliding scale available</Glance>}
                             {p.sessionFormat && p.sessionFormat !== 'Not specified' && <Glance d={Ico.monitor}>{p.sessionFormat}</Glance>}
-                            {has(p.languages) && <Glance d={Ico.chat}>{p.languages.join(', ')}</Glance>}
+                            {has(p.languages) && (
+                                <p className="flex items-center gap-2.5 border-b border-[#F0EBE0] py-2.5 text-sm text-[#33302a] last:border-0">
+                                    <span className="text-[#0E7C7B]"><Icon d={Ico.chat} className="h-4 w-4" /></span>
+                                    <LanguageList languages={p.languages} max={5} />
+                                </p>
+                            )}
                         </div>
 
-                        <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
-                            Approved profiles have had their licensure confirmed by the Bahali team. This is not a guarantee of treatment quality, fit or outcome. Bahali is a directory and discovery resource, not a clinical endorsement.
-                        </p>
+                        <VerificationNote providerType={p.providerType} isVerified={p.licenceVerified} />
                     </aside>
                 </div>
             </div>
@@ -322,7 +409,7 @@ export default function ProviderProfile({ provider }) {
                 <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E7E0D2] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
                     <div className="mx-auto flex max-w-6xl items-center gap-3">
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm text-[#16302F]" style={SERIF}>{p.name}</p>
+                            <p className="truncate text-sm text-[#16302F]" style={SERIF}>{displayName}</p>
                             {p.availability === 'accepting' && <p className="text-xs text-[#0E7C7B]">Accepting new clients</p>}
                         </div>
                         <button onClick={() => setContactOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-[#C2543B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#b25a3d]">Contact provider</button>
