@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Badge, HelpCircle, Verified, VerifiedIcon } from 'lucide-react';
+import { formatPhoneDisplay, phoneHref } from '@/lib/phone';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const has = (a) => Array.isArray(a) && a.length > 0;
@@ -59,6 +60,7 @@ function CaribbeanBadge() {
             className="inline-flex items-center rounded-full border border-[#D9C89E] bg-[#F5EDDC] px-3.5 py-1 text-[13px] font-medium text-[#8A5A2B]"
             style={{ letterSpacing: '0.01em' }}
         >
+
             Caribbean-informed care
         </span>
     );
@@ -183,7 +185,7 @@ function contactMethods(provider) {
     return [
         c.booking && { icon: Ico.calendar, label: 'Book a consultation', sub: "Opens the provider's scheduling site", href: normHref(c.booking), external: true },
         c.email && { icon: Ico.mail, label: 'Email provider', sub: 'Opens your email app', href: `mailto:${c.email}` },
-        c.phone && { icon: Ico.phone, label: 'Call', sub: c.phone, href: `tel:${String(c.phone).replace(/[^+\d]/g, '')}` },
+        c.phone && { icon: Ico.phone, label: 'Call', sub: formatPhoneDisplay(c.phone), href: phoneHref(c.phone) },
         c.website && { icon: Ico.globe, label: 'Visit website', sub: 'Opens in a new tab', href: normHref(c.website), external: true },
     ].filter(Boolean);
 }
@@ -340,12 +342,12 @@ export default function ProviderProfile({ provider }) {
                         <div className="min-w-0 flex-1">
                             {/* Badges row — Caribbean + Verification */}
                             <div className="mb-2 flex flex-wrap items-center gap-2">
-                                {p.culturallyAffirming === 'yes' && <CaribbeanBadge />}
                                 <VerificationBadge
                                     providerType={p.providerType}
                                     isVerified={p.licenceVerified}
                                 />
-                                <CaribbeanBadge />
+                                {p.culturallyAffirming === 'yes' && <CaribbeanBadge />}
+
 
                             </div>
 
@@ -419,36 +421,153 @@ export default function ProviderProfile({ provider }) {
                                 </div>
                             )}
                             {tab === 'Services' && (
-                                <div className="space-y-4">
-                                    {has(p.treatmentApproaches) && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Treatment approaches</p><ChipRow items={p.treatmentApproaches} /></div>}
-                                    {has(p.specializedTraining) && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Specialized training</p><ChipRow items={p.specializedTraining} /></div>}
-                                    {has(p.certifications) && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Certifications</p><ChipRow items={p.certifications} /></div>}
-                                    {has(p.practiceSettings) && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Practice settings</p><ChipRow items={p.practiceSettings} /></div>}
-                                </div>
-                            )}
-                            {tab === 'Fees & Insurance' && (
-                                <div className="space-y-3 text-[15px] text-[#33302a]">
-                                    <p className="font-semibold text-[#16302F]">{p.fee || 'Fee not provided'}</p>
-                                    {slidingScale && (
-                                        <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9A6B12]">
-                                            <Icon d={Ico.heart} className="h-3.5 w-3.5" /> Sliding scale available
-                                        </p>
-                                    )}
-                                    {has(p.payment?.methods) && <div><p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Accepted methods</p><ChipRow items={p.payment.methods} /></div>}
-                                    {insuranceList.length > 0 && (
+                                <div className="space-y-6">
+                                    {has(p.treatmentApproaches) && (
                                         <div>
-                                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Insurance plans accepted</p>
-                                            <p>{insuranceList.join(', ')}</p>
-                                            <p className="mt-1.5 text-xs text-[#8A9795]">Coverage varies by plan — confirm directly with the provider.</p>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                Treatment approaches
+                                            </p>
+                                            <CategoryList items={p.treatmentApproaches} />
+                                        </div>
+                                    )}
+
+                                    {has(p.specializedTraining) && (
+                                        <div className={has(p.treatmentApproaches) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                Specialized training
+                                            </p>
+                                            <CategoryList items={p.specializedTraining} />
+                                        </div>
+                                    )}
+
+                                    {has(p.certifications) && (
+                                        <div className={has(p.treatmentApproaches) || has(p.specializedTraining) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                Certifications
+                                            </p>
+                                            <CategoryList items={p.certifications} />
+                                        </div>
+                                    )}
+
+                                    {has(p.practiceSettings) && (
+                                        <div className={has(p.treatmentApproaches) || has(p.specializedTraining) || has(p.certifications) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                Practice setting
+                                            </p>
+                                            <CategoryList items={p.practiceSettings} />
                                         </div>
                                     )}
                                 </div>
                             )}
+                            {tab === 'Fees & Insurance' && (() => {
+                                const sections = [
+                                    {
+                                        key: 'fee',
+                                        label: null,                          // fee-এর নিজের heading নেই, bold text
+                                        show: !!p.fee,
+                                        content: (
+                                            <p className="font-semibold text-[#16302F]">{p.fee}</p>
+                                        ),
+                                    },
+                                    {
+                                        key: 'sliding',
+                                        label: null,
+                                        show: slidingScale,
+                                        content: (
+                                            <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9A6B12]">
+                                                <Icon d={Ico.heart} className="h-3.5 w-3.5" /> Sliding scale available
+                                            </p>
+                                        ),
+                                    },
+                                    {
+                                        key: 'methods',
+                                        label: 'Accepted methods',
+                                        show: has(p.payment?.methods),
+                                        content: <CategoryList items={p.payment.methods} />,
+                                    },
+                                    {
+                                        key: 'insurance',
+                                        label: 'Insurance plans accepted',
+                                        show: insuranceList.length > 0,
+                                        content: (
+                                            <>
+                                                <p className="text-[15px] text-[#33302a]">{insuranceList.join(', ')}</p>
+                                                <p className="mt-1.5 text-xs text-[#8A9795]">
+                                                    Coverage varies by plan — confirm directly with the provider.
+                                                </p>
+                                            </>
+                                        ),
+                                    },
+                                ].filter((s) => s.show);
+
+                                if (sections.length === 0) {
+                                    return (
+                                        <p className="text-sm text-[#8A9795]">
+                                            Contact provider for fee and insurance information.
+                                        </p>
+                                    );
+                                }
+
+                                return (
+                                    <div className="space-y-5">
+                                        {sections.map((s, idx) => (
+                                            <div key={s.key} className={idx > 0 ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                                                {s.label && (
+                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                        {s.label}
+                                                    </p>
+                                                )}
+                                                {s.content}
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
                             {tab === 'Approach' && (
-                                <div className="space-y-4">
-                                    {p.culturalApproach && <p className="leading-relaxed text-[15px] text-[#33302a]">{p.culturalApproach}</p>}
-                                    {p.caribbeanIdentity === 'yes' && <p className="text-sm text-[#5B6B6E]">Identifies as part of the Caribbean community.</p>}
-                                    {p.caribbeanExperience && <p className="text-sm text-[#5B6B6E]">Experienced working with Caribbean individuals and families.</p>}
+                                <div className="space-y-6">
+                                    {/* ── 1. Provider's own description of how they work ── */}
+                                    {p.culturalApproach && (
+                                        <div>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                About my approach
+                                            </p>
+                                            <p className="whitespace-pre-line leading-relaxed text-[15px] text-[#33302a]">
+                                                {p.culturalApproach}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* ── 2 & 3. Caribbean-specific info — separate subsection ── */}
+                                    {(p.caribbeanIdentity === 'yes' || p.caribbeanExperience) && (
+                                        <div className="border-t border-[#EFEAE0] pt-5 space-y-5">
+                                            {p.caribbeanIdentity === 'yes' && (
+                                                <div>
+                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                        Caribbean connection
+                                                    </p>
+                                                    <p className="inline-flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
+                                                        <span
+                                                            className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40"
+                                                            aria-hidden
+                                                        />
+                                                        <span>Identifies as part of the Caribbean community.</span>
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {p.caribbeanExperience && (
+                                                <div>
+                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                                                        Experience with Caribbean communities
+                                                    </p>
+                                                    <p className="inline-flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
+                                                        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40" aria-hidden />
+                                                        <span>{p.caribbeanExperience}</span>
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -469,7 +588,7 @@ export default function ProviderProfile({ provider }) {
 
                         <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
                             <h3 className="mb-2 text-sm text-[#16302F]" style={SERIF}>At a glance</h3>
-                            <Glance d={Ico.wallet}>{p.fee || 'Fee not provided'}</Glance>
+                            <Glance d={p.fee ? Ico.wallet : Ico.mail}>{p.fee || "Contact provider for fee information"}</Glance>
                             {p.yearsExperience && <Glance d={Ico.clock}>{p.yearsExperience} experience</Glance>}
                             {insuranceList.length > 0 && <Glance d={Ico.shield}>{insuranceList.slice(0, 3).join(', ')}{insuranceList.length > 3 ? ` +${insuranceList.length - 3}` : ''} (insurance)</Glance>}
                             {slidingScale && <Glance d={Ico.heart}>Sliding scale available</Glance>}
