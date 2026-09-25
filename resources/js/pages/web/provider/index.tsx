@@ -420,7 +420,10 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
                     </span>
                 )}
                 <h3 className="text-[20px] leading-tight text-[#16302F]" style={SERIF}>
-                    {p.name}{p.credentials ? <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}
+                    {p.name}
+                    {p.providerType === 'individual' && p.credentials ? (
+                        <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span>
+                    ) : null}
                 </h3>
 
 
