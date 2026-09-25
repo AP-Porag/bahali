@@ -2,13 +2,54 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { Badge, HelpCircle, Verified, VerifiedIcon } from 'lucide-react';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const has = (a) => Array.isArray(a) && a.length > 0;
 
 function initials(name = '') {
     return name.replace(/^Dr\.?\s+/i, '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'B';
+}
+/* NEW: Verification badge (Licence Verified / Profile Reviewed) */
+function VerificationBadge({ providerType, isVerified }) {
+    const isIndividual = providerType === 'individual';
+
+    if (isIndividual && isVerified === true) {
+        return (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+                    <defs>
+                        <mask id="award-cut">
+                            <rect width="24" height="24" fill="#fff" />
+                            <circle cx="12" cy="9.5" r="4.9" fill="none" stroke="#000" stroke-width="1.2" />
+                            <path d="M9.7 9.7l1.6 1.6 3.1-3.3" fill="none" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                        </mask>
+                    </defs>
+                    <path d="M8.2 14 5 21.5l2.4-.6 1.2 2.1L11 16.5zM15.8 14 19 21.5l-2.4-.6-1.2 2.1L13 16.5z" />
+                    <g mask="url(#award-cut)">
+                        <circle cx="12" cy="9.5" r="7" />
+                        <circle cx="12" cy="2.5" r="1.5" /><circle cx="15.5" cy="3.44" r="1.5" />
+                        <circle cx="18.06" cy="6" r="1.5" /><circle cx="19" cy="9.5" r="1.5" />
+                        <circle cx="18.06" cy="13" r="1.5" /><circle cx="15.5" cy="15.56" r="1.5" />
+                        <circle cx="12" cy="16.5" r="1.5" /><circle cx="8.5" cy="15.56" r="1.5" />
+                        <circle cx="5.94" cy="13" r="1.5" /><circle cx="5" cy="9.5" r="1.5" />
+                        <circle cx="5.94" cy="6" r="1.5" /><circle cx="8.5" cy="3.44" r="1.5" />
+                    </g>
+                </svg>
+                Licence Verified
+            </span>
+        );
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
+            <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
+                <circle cx="10" cy="10" r="2.25" />
+            </svg>
+            Profile Reviewed
+        </span>
+    );
 }
 
 /* NEW: Caribbean-Informed Care badge */
@@ -81,6 +122,26 @@ function Icon({ d, className = 'h-4 w-4' }) {
 function ChipRow({ items }) {
     if (!items || items.length === 0) return null;
     return <p className="text-sm leading-relaxed text-[#3A4B49]">{items.join('  ·  ')}</p>;
+}
+
+function CategoryList({ items }) {
+    if (!items || items.length === 0) return null;
+    return (
+        <ul className="mt-2 space-y-1.5">
+            {items.map((item) => (
+                <li
+                    key={item}
+                    className="flex items-start gap-2 text-sm leading-relaxed text-[#3A4B49]"
+                >
+                    <span
+                        className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40"
+                        aria-hidden
+                    />
+                    <span>{item}</span>
+                </li>
+            ))}
+        </ul>
+    );
 }
 
 function AvailabilityBox({ availability, confirmedAt }) {
@@ -188,6 +249,7 @@ function ContactModal({ open, onClose, provider }) {
     );
 }
 
+
 /* Verification language – client §5 */
 function VerificationNote({ providerType, isVerified }) {
     const isIndividual = providerType === 'individual';
@@ -226,11 +288,10 @@ export default function ProviderProfile({ provider }) {
         const t = [];
         if (p.bio || p.yearsExperience) t.push('About');
         if (has(p.supportAreas)) t.push('Areas of Support');
-        if (has(p.populations)) t.push('Populations');
         if (has(p.treatmentApproaches) || has(p.specializedTraining) || has(p.certifications) || has(p.practiceSettings)) t.push('Services');
         if (p.fee || has(p.payment?.methods) || insuranceList.length) t.push('Fees & Insurance');
         if (p.culturalApproach || p.caribbeanExperience) t.push('Approach');
-        if (has(p.accessibility)) t.push('Accessibility');
+
         return t;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [p]);
@@ -277,11 +338,17 @@ export default function ProviderProfile({ provider }) {
                         )}
 
                         <div className="min-w-0 flex-1">
-                            {p.culturallyAffirming === 'yes' && (
-                                <div className="mb-2">
-                                    <CaribbeanBadge />
-                                </div>
-                            )}
+                            {/* Badges row — Caribbean + Verification */}
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                                {p.culturallyAffirming === 'yes' && <CaribbeanBadge />}
+                                <VerificationBadge
+                                    providerType={p.providerType}
+                                    isVerified={p.licenceVerified}
+                                />
+                                <CaribbeanBadge />
+
+                            </div>
+
                             <h2 className="text-2xl text-[#16302F]" style={SERIF}>
                                 {displayName}
                                 {p.providerType === 'individual' && p.credentials ? (
@@ -291,7 +358,14 @@ export default function ProviderProfile({ provider }) {
                             {p.title && <p className="mt-0.5 text-[#5B6B6E]">{p.title}</p>}
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">
                                 {p.location && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.pin} /></span>{p.location}</span>}
-                                {p.sessionFormat && p.sessionFormat !== 'Not specified' && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.monitor} /></span>{p.sessionFormat}</span>}
+                                {has(p.sessionFormats) && (
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <span className="text-[#0E7C7B]">
+                                            <Icon d={Ico.monitor} />
+                                        </span>
+                                        {p.sessionFormats.join(' | ')}
+                                    </span>
+                                )}
                             </div>
                             {has(p.languages) && (
                                 <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]">
@@ -323,16 +397,27 @@ export default function ProviderProfile({ provider }) {
                                 </div>
                             )}
                             {tab === 'Areas of Support' && (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {p.supportAreas.map((g) => (
                                         <div key={g.category}>
-                                            <p className="text-sm font-semibold text-[#33302a]">{g.category}</p>
-                                            <div className="mt-2"><ChipRow items={g.areas} /></div>
+                                            <p className="text-sm font-semibold text-[#33302a]">
+                                                {g.category}
+                                            </p>
+                                            <CategoryList items={g.areas} />
                                         </div>
                                     ))}
+
+                                    {/* Populations subsection (আগের requirement অনুযায়ী) */}
+                                    {has(p.populations) && (
+                                        <div className="border-t border-[#EFEAE0] pt-5">
+                                            <p className="text-sm font-semibold text-[#33302a]">
+                                                Populations I Support
+                                            </p>
+                                            <CategoryList items={p.populations} />
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            {tab === 'Populations' && <ChipRow items={p.populations} />}
                             {tab === 'Services' && (
                                 <div className="space-y-4">
                                     {has(p.treatmentApproaches) && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Treatment approaches</p><ChipRow items={p.treatmentApproaches} /></div>}
@@ -366,7 +451,7 @@ export default function ProviderProfile({ provider }) {
                                     {p.caribbeanExperience && <p className="text-sm text-[#5B6B6E]">Experienced working with Caribbean individuals and families.</p>}
                                 </div>
                             )}
-                            {tab === 'Accessibility' && <ChipRow items={p.accessibility} />}
+
                         </div>
                     </div>
 
@@ -388,13 +473,23 @@ export default function ProviderProfile({ provider }) {
                             {p.yearsExperience && <Glance d={Ico.clock}>{p.yearsExperience} experience</Glance>}
                             {insuranceList.length > 0 && <Glance d={Ico.shield}>{insuranceList.slice(0, 3).join(', ')}{insuranceList.length > 3 ? ` +${insuranceList.length - 3}` : ''} (insurance)</Glance>}
                             {slidingScale && <Glance d={Ico.heart}>Sliding scale available</Glance>}
-                            {p.sessionFormat && p.sessionFormat !== 'Not specified' && <Glance d={Ico.monitor}>{p.sessionFormat}</Glance>}
+                            {has(p.sessionFormats) && (
+                                <Glance d={Ico.monitor}>
+                                    {p.sessionFormats.join(' | ')}
+                                </Glance>
+                            )}
                             {has(p.languages) && (
                                 <p className="flex items-center gap-2.5 border-b border-[#F0EBE0] py-2.5 text-sm text-[#33302a] last:border-0">
                                     <span className="text-[#0E7C7B]"><Icon d={Ico.chat} className="h-4 w-4" /></span>
                                     <LanguageList languages={p.languages} max={5} />
                                 </p>
                             )}
+                            {has(p.accessibility) && (
+                                <Glance d={Ico.check}>
+                                    {p.accessibility.join(' · ')}
+                                </Glance>
+                            )}
+
                         </div>
 
                         <VerificationNote providerType={p.providerType} isVerified={p.licenceVerified} />

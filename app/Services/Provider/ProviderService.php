@@ -94,6 +94,7 @@ class ProviderService extends BaseService
 
             $languages = Language::query()->orderBy('name')->pluck('name')->toArray();
 
+
             $providers = Provider::query()
                 ->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)
                 ->get([
@@ -103,7 +104,15 @@ class ProviderService extends BaseService
                     'treatment_approaches',
                     'payment_methods',
                     'insurance_plans',
+                    'service_formats',
                 ]);
+            $sessionFormats = $providers
+                ->flatMap(fn($p) => $this->toList($p->service_formats))
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
 
             $populations = $this->distinctFromJson($providers, 'populations_served');
             $services    = $this->distinctFromJson($providers, 'treatment_approaches');
@@ -132,7 +141,7 @@ class ProviderService extends BaseService
                 'populations'    => $populations,
                 'services'       => $services,
                 'languages'      => array_values(array_unique($languages)),
-                'sessionFormats' => ['In Person', 'Telehealth', 'Both'],
+                'sessionFormats' => $sessionFormats,
                 'payments'       => $payments,
                 'insurers'       => $insurers,
                 'providerTypes'  => $providerTypes,
@@ -164,7 +173,7 @@ class ProviderService extends BaseService
             'location'        => $this->displayLocation($p),
             'servesMultiple'  => (bool) $p->multiple_locations,
             'telehealthRegions' => $this->toArray($p->telehealth_regions),
-            'sessionFormat'   => $this->resolveSessionFormat($this->toArray($p->service_formats)),
+            'sessionFormats' => $this->toArray($p->service_formats),
             'practiceSettings' => $this->toArray($p->practice_settings),
             'languages'       => $this->toArray($p->languages),
             'culturalApproach' => $p->cultural_approach,
@@ -449,7 +458,7 @@ class ProviderService extends BaseService
             'photo'       => $p->profile_photo ? Storage::url($p->profile_photo) : null,
             'location'    => $this->displayLocation($p),
 
-            'sessionFormat' => $this->resolveSessionFormat($formats),
+            'sessionFormats' => $formats,
             'formatKey'     => $this->formatKey($formats),
 
             'specialties' => $this->cardSpecialties($p),
