@@ -1,14 +1,44 @@
+
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Verified } from 'lucide-react';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const PER_PAGE = 6;
 const STORAGE_KEY = 'bahali_directory_state_v1';
+
+/* Card rows-এ ব্যবহারের জন্য icons */
+const CardIco = {
+    wallet: <path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0 2-3h11l2 3M16 13h.01" />,
+    shield: <path d="M9 12.75 11.25 15 15 9.75M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3Z" />,
+    heart: <path d="M12 20s-7-4.35-9.2-8.6C1.4 8.5 3 5.5 6 5.5c1.8 0 3 1 3 1s1.2-1 3-1c3 0 4.6 3 3.2 5.9C19 15.65 12 20 12 20Z" />,
+    chat: <path d="M7.5 8.25h9m-9 3H12M4.5 4.5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H13l-4 3v-3H4.5A1.5 1.5 0 0 1 3 15V6a1.5 1.5 0 0 1 1.5-1.5Z" />,
+    check: <path d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />,
+    walletOut: <path d="M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0 2-3h11l2 3M16 13h.01" />,
+    info: <><circle cx="12" cy="12" r="9" /><path d="M12 16v-4M12 8h.01" /></>,
+};
+
+/* Icon render helper — inline SVG */
+function CardIcon({ d, className = 'h-4 w-4 text-[#0E7C7B]' }) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            className={className}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+        >
+            {d}
+        </svg>
+    );
+}
 
 const PAYMENT_OPTIONS = [
     { key: 'insurance', label: 'Insurance' },
@@ -152,11 +182,12 @@ function MultiSelect({ id, label, values = [], onChange, options = [], placehold
 function AreaButton({ area, active, onToggle }) {
     return (
         <button type="button" onClick={() => onToggle(area)} aria-pressed={active}
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'}`}>
-            <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'}`} aria-hidden>
+            className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 ${active ? 'border-[#0E7C7B] bg-[#E6F2F1] font-medium text-[#15403F] ring-1 ring-inset ring-[#0E7C7B]' : 'border-[#D4CBB8] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5'}`}>
+            <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#B9AF9B] bg-white'}`} aria-hidden>
                 {active && <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>}
             </span>
-            <span className="leading-snug">{area}</span>
+            <span className="flex-1 leading-snug">{area}</span>
+            {active && <span className="sr-only">(selected)</span>}
         </button>
     );
 }
@@ -186,8 +217,13 @@ function SeeAllAreasModal({ open, onClose, selected, onApply }) {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="All areas of support">
             <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
                 <div className="border-b border-[#EFEAE0] p-4 sm:p-5">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg text-[#16302F]" style={SERIF}>See all areas of support</h3>
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <h3 className="text-lg text-[#16302F]" style={SERIF}>See all areas of support</h3>
+                            <span aria-live="polite" className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${local.length > 0 ? 'bg-[#0E7C7B] text-white' : 'bg-[#EFEAE0] text-[#6B7A78]'}`}>
+                                {local.length} selected
+                            </span>
+                        </div>
                         <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
                         </button>
@@ -198,6 +234,21 @@ function SeeAllAreasModal({ open, onClose, selected, onApply }) {
                         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search areas of support"
                             className="w-full rounded-xl border border-[#DED7C9] bg-[#FBF8F2] py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
                     </div>
+
+                    {local.length > 0 && (
+                        <div className="mt-3">
+                            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Your selections</p>
+                            <div className="flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
+                                {local.map((a) => (
+                                    <button key={a} type="button" onClick={() => toggle(a)} aria-label={`Remove ${a}`}
+                                        className="inline-flex items-center gap-1 rounded-full bg-[#0E7C7B] px-2.5 py-1 text-xs font-medium text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
+                                        {a}
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
@@ -247,12 +298,14 @@ function SeeAllAreasModal({ open, onClose, selected, onApply }) {
 
                 <div className="flex items-center justify-between gap-3 border-t border-[#EFEAE0] p-4 sm:p-5">
                     <div className="flex items-center gap-3 text-sm text-[#5B6B6E]">
-                        <span><span className="font-semibold text-[#16302F]">{local.length}</span> selected</span>
+                        <span aria-live="polite"><span className="font-semibold text-[#16302F]">{local.length}</span> selected</span>
                         {local.length > 0 && <button onClick={() => setLocal([])} className="text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear all</button>}
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={onClose} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Cancel</button>
-                        <button onClick={() => onApply(local)} className="rounded-xl bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B6463]">Apply</button>
+                        <button onClick={() => onApply(local)} className="rounded-xl bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B6463]">
+                            Apply{local.length > 0 ? ` (${local.length})` : ''}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -291,8 +344,21 @@ function AvailabilityBadge({ availability }) {
 
 /* ------------------------------ Provider card ------------------------------ */
 
-function ProviderRow({ children }) {
-    return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
+// function ProviderRow({ icon, children, className = '' }) {
+//     return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
+// }
+
+function ProviderRow({ icon, children, className = '' }) {
+    return (
+        <p className={`flex items-center gap-2 text-sm text-[#3A4B49] ${className}`}>
+            {icon && (
+                <span className="flex-shrink-0 text-[#0E7C7B]">
+                    <CardIcon d={icon} />
+                </span>
+            )}
+            <span className="min-w-0">{children}</span>
+        </p>
+    );
 }
 
 function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
@@ -305,8 +371,7 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
         return [...matched, ...rest].slice(0, 3);
     }, [p.specialties, selectedAreas]);
 
-    const formatLabel = { in_person: 'In Person', virtual: 'Virtual', both: 'Virtual & In-person' }[p.formatKey]
-        || (p.sessionFormat && p.sessionFormat !== 'Not specified' ? p.sessionFormat : null);
+    const formatLabel = p.sessionFormats?.join(' | ');
     const insurers = p.insurances || [];
     const shownInsurers = insurers.slice(0, 2);
     const extraInsurers = Math.max(0, insurers.length - shownInsurers.length);
@@ -324,8 +389,24 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
             <div className="min-w-0 flex-1">
                 {p.providerType === 'individual' && p.licenceVerified === true ? (
                     <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
-                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
-                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+                            <defs>
+                                <mask id="award-cut">
+                                    <rect width="24" height="24" fill="#fff" />
+                                    <circle cx="12" cy="9.5" r="4.9" fill="none" stroke="#000" stroke-width="1.2" />
+                                    <path d="M9.7 9.7l1.6 1.6 3.1-3.3" fill="none" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                                </mask>
+                            </defs>
+                            <path d="M8.2 14 5 21.5l2.4-.6 1.2 2.1L11 16.5zM15.8 14 19 21.5l-2.4-.6-1.2 2.1L13 16.5z" />
+                            <g mask="url(#award-cut)">
+                                <circle cx="12" cy="9.5" r="7" />
+                                <circle cx="12" cy="2.5" r="1.5" /><circle cx="15.5" cy="3.44" r="1.5" />
+                                <circle cx="18.06" cy="6" r="1.5" /><circle cx="19" cy="9.5" r="1.5" />
+                                <circle cx="18.06" cy="13" r="1.5" /><circle cx="15.5" cy="15.56" r="1.5" />
+                                <circle cx="12" cy="16.5" r="1.5" /><circle cx="8.5" cy="15.56" r="1.5" />
+                                <circle cx="5.94" cy="13" r="1.5" /><circle cx="5" cy="9.5" r="1.5" />
+                                <circle cx="5.94" cy="6" r="1.5" /><circle cx="8.5" cy="3.44" r="1.5" />
+                            </g>
                         </svg>
                         Licence Verified
                     </span>
@@ -339,11 +420,13 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
                     </span>
                 )}
                 <h3 className="text-[20px] leading-tight text-[#16302F]" style={SERIF}>
-                    {p.name}{p.credentials ? <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span> : null}
+                    {p.name}
+                    {p.providerType === 'individual' && p.credentials ? (
+                        <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span>
+                    ) : null}
                 </h3>
 
 
-                {p.title && <p className="mt-0.5 text-sm text-[#5B6B6E]">{p.title}</p>}
                 {p.title && <p className="mt-0.5 text-sm text-[#5B6B6E]">{p.title}</p>}
                 {(p.location || formatLabel) && (
                     <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-[#3A4B49]">
@@ -374,24 +457,66 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
 
             <div className="flex w-full flex-shrink-0 flex-col gap-2.5 border-t border-[#EFEAE0] pt-4 sm:w-52 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                 <AvailabilityBadge availability={p.availability} />
-                <ProviderRow><span className="font-semibold text-[#16302F]">{p.fee || 'Fee not provided'}</span></ProviderRow>
 
-                {shownInsurers.length > 0 && <ProviderRow><span className="truncate">{shownInsurers.join(', ')}{extraInsurers > 0 ? ` + ${extraInsurers} more` : ''}</span></ProviderRow>}
-                {p.slidingScale && <ProviderRow><span className="text-[#0E6B6A]">Sliding scale available</span></ProviderRow>}
-                {p.freeLowCost && !p.slidingScale && <ProviderRow><span className="text-[#0E6B6A]">Free / low-cost</span></ProviderRow>}
-                {!shownInsurers.length && !p.slidingScale && !p.freeLowCost && p.selfPay && <ProviderRow><span>Self-pay</span></ProviderRow>}
-                {languages.length > 0 && (
-                    <ProviderRow>
-                        <span className="text-[#5B6B6E]">{languages.slice(0, 2).join(', ')}{languages.length > 2 ? ` +${languages.length - 2} more` : ''}</span>
+                {/* Fee — wallet icon, না থাকলে mail icon */}
+                <ProviderRow icon={p.fee ? CardIco.wallet : CardIco.info}>
+                    {p.fee ? (
+                        <span className="font-semibold text-[#16302F]">{p.fee}</span>
+                    ) : (
+                        <span className="text-[#516865]">Contact provider for fee information</span>
+                    )}
+                </ProviderRow>
+
+                {/* Insurance — shield icon */}
+                {shownInsurers.length > 0 && (
+                    <ProviderRow icon={CardIco.shield}>
+                        <span className="truncate">
+                            {shownInsurers.join(', ')}
+                            {extraInsurers > 0 ? ` + ${extraInsurers} more` : ''}
+                        </span>
                     </ProviderRow>
                 )}
+
+                {/* Sliding scale — heart icon */}
+                {p.slidingScale && (
+                    <ProviderRow icon={CardIco.heart}>
+                        <span className="text-[#0E6B6A]">Sliding scale available</span>
+                    </ProviderRow>
+                )}
+
+                {/* Free / low-cost — heart icon */}
+                {p.freeLowCost && !p.slidingScale && (
+                    <ProviderRow icon={CardIco.heart}>
+                        <span className="text-[#0E6B6A]">Free / low-cost</span>
+                    </ProviderRow>
+                )}
+
+                {/* Self-pay — wallet icon */}
+                {!shownInsurers.length && !p.slidingScale && !p.freeLowCost && p.selfPay && (
+                    <ProviderRow icon={CardIco.wallet}>
+                        <span>Self-pay</span>
+                    </ProviderRow>
+                )}
+
+                {/* Languages — chat icon */}
+                {languages.length > 0 && (
+                    <ProviderRow icon={CardIco.chat}>
+                        <span className="text-[#5B6B6E]">
+                            {languages.slice(0, 2).join(', ')}
+                            {languages.length > 2 ? ` +${languages.length - 2} more` : ''}
+                        </span>
+                    </ProviderRow>
+                )}
+
                 <Link
                     href={`/provider/${p.id}${currentQuery ? `?${currentQuery}` : ''}`}
                     className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
                     aria-label={`View profile for ${p.name}`}
                 >
                     View profile
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
                 </Link>
             </div>
         </article>
@@ -738,8 +863,20 @@ export default function Directory({
     }, [f]);
 
     const hasAnySelection = activeChips.length > 0;
+    // Virtual already selected কিনা (checkbox অথবা session_format filter থেকে)
+    const hasVirtualSelected = useMemo(() => {
+        if (f.include_virtual) return true;
+        if (!f.session_format) return false;
+        return /virtual|telehealth/i.test(f.session_format);
+    }, [f.include_virtual, f.session_format]);
+
+    // Geography state
+    const hasCityFilter = !!(f.city && f.city.trim());
+    const hasRegionFilter = !!(f.region && f.region.trim());
+    const hasCountryFilter = !!(f.location && f.location.trim());
+    const hasAnyGeoFilter = hasCityFilter || hasRegionFilter || hasCountryFilter;
     const total = meta.total ?? items.length;
-    const extraSelectedCount = f.areas.filter((a) => !COMMON_SUPPORT_AREAS.some((c) => c.areas.includes(a))).length;
+    const selectedAreasCount = f.areas.length;
     // Build the current filter query string so it can be carried to the show page.
     const currentQueryString = useMemo(() => {
         const params = new URLSearchParams();
@@ -832,7 +969,7 @@ export default function Directory({
                                             patch({ location: v, region: '', city: '' });
                                         }}
                                         options={countries.map((c) => c.name)}
-                                        placeholder="Anywhere"
+                                        placeholder="Select your location"
                                     />
 
                                     {/* Non-UK: single-level region dropdown */}
@@ -883,19 +1020,31 @@ export default function Directory({
 
                             <div>
                                 <h3 className="text-[15px] font-semibold text-[#16302F]">What would you like help with?</h3>
+                                <p className="mt-0.5 text-sm text-[#6B7A78]">Select one or more.</p>
                                 <div role="group" aria-label="Common areas of support" className="mt-3 flex flex-wrap gap-2">
                                     {COMMON_SUPPORT_AREAS.map((chip) => {
                                         const active = chip.areas.every((a) => f.areas.includes(a));
                                         return (
                                             <button key={chip.label} type="button" aria-pressed={active} onClick={() => toggleAreas(chip.areas)}
-                                                className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5'}`}>
-                                                {active && <span aria-hidden className="mr-1">✓</span>}{chip.label}
+                                                className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-1 ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white shadow-[0_4px_12px_-4px_rgba(14,124,123,0.55)]' : 'border-[#CFC5B1] bg-[#FBF8F2] text-[#2F3F3D] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#0E7C7B] hover:bg-white hover:text-[#0E6B6A]'}`}>
+                                                {active ? (
+                                                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
+                                                ) : (
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-[#0E7C7B]" aria-hidden><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
+                                                )}
+                                                {chip.label}
                                             </button>
                                         );
                                     })}
                                 </div>
-                                <button type="button" onClick={() => setShowAreasModal(true)} className="mt-3 text-sm font-medium text-[#C2543B] underline underline-offset-2 hover:opacity-80">
-                                    See all areas of support{extraSelectedCount > 0 ? ` (${extraSelectedCount} more selected)` : ''}
+                                <button type="button" onClick={() => setShowAreasModal(true)} aria-haspopup="dialog"
+                                    className="group mt-4 inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#C2543B]/50 bg-[#FBF0EB] px-4 py-2.5 text-sm font-semibold text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#F6E6DF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+                                    See all areas of support
+                                    {selectedAreasCount > 0 && (
+                                        <span className="rounded-full bg-[#C2543B] px-2 py-0.5 text-[11px] font-semibold text-white">{selectedAreasCount} selected</span>
+                                    )}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="transition-transform group-hover:translate-x-0.5" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                                 </button>
                             </div>
 
@@ -950,18 +1099,103 @@ export default function Directory({
                                 {loading ? (
                                     <div className="grid grid-cols-1 gap-5">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>
                                 ) : items.length === 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-[#D9CFBA] bg-white/70 p-8 text-center sm:p-12">
+                                    <div className="rounded-2xl border border-dashed border-[#D9CFBA] bg-white/70 p-6 text-center sm:p-12">
                                         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#EFEAE0] text-[#9AA6A4]">
-                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                                <circle cx="11" cy="11" r="7" />
+                                                <path d="m21 21-4.3-4.3" />
+                                            </svg>
                                         </div>
-                                        <h3 className="text-lg text-[#16302F]" style={SERIF}>We didn’t find an exact match for your selections</h3>
-                                        <p className="mx-auto mt-1 max-w-md text-sm text-[#5B6B6E]">Try including virtual providers, expanding your location, or removing one preference.</p>
-                                        <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-                                            {!f.include_virtual && <button onClick={() => patch({ include_virtual: true })} className="rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#0B6463]">Include virtual providers</button>}
-                                            {(f.location || f.region) && <button onClick={() => patch({ location: '', region: '', city: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Expand search area</button>}
-                                            {(f.fee_min || f.fee_max) && <button onClick={() => patch({ fee_min: '', fee_max: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Remove price range</button>}
-                                            {f.payment && <button onClick={() => patch({ payment: '', insurer: '' })} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Remove payment preference</button>}
-                                            <button onClick={clearAll} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">View all providers</button>
+
+                                        <h3 className="text-lg text-[#16302F]" style={SERIF}>
+                                            We didn’t find an exact match for your selections
+                                        </h3>
+                                        <p className="mx-auto mt-1 max-w-md text-sm text-[#5B6B6E]">
+                                            Try one of these adjustments — each keeps your other filters in place.
+                                        </p>
+
+                                        <div className="mt-5 flex flex-col flex-wrap items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">
+                                            {/* ── Progressive geography expansion ── */}
+
+                                            {/* Level 1: Any sub-country filter → "Search all of {country}" */}
+                                            {hasCountryFilter && (hasCityFilter || hasRegionFilter) && (
+                                                <button
+                                                    onClick={() => patch({ region: '', city: '' })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                                                        <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
+                                                        <circle cx="12" cy="11" r="2" />
+                                                    </svg>
+                                                    Search all of {f.location}
+                                                </button>
+                                            )}
+
+                                            {/* Level 2: Only country set → "View providers outside {country}" */}
+                                            {hasCountryFilter && !hasCityFilter && !hasRegionFilter && (
+                                                <button
+                                                    onClick={() => patch({ location: '', region: '', city: '' })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                                                        <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
+                                                        <circle cx="12" cy="11" r="2" />
+                                                    </svg>
+                                                    View providers outside {f.location}
+                                                </button>
+                                            )}
+
+                                            {/* ── Virtual suggestion — only if not already selected ── */}
+                                            {!hasVirtualSelected && (
+                                                <button
+                                                    onClick={() => patch({ include_virtual: true })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                                        <rect x="3" y="4" width="18" height="12" rx="2" />
+                                                        <path d="M8 20h8M12 16v4" />
+                                                    </svg>
+                                                    Also include virtual providers
+                                                </button>
+                                            )}
+
+                                            {/* ── Price suggestion — only if price is set ── */}
+                                            {(f.fee_min || f.fee_max) && (
+                                                <button
+                                                    onClick={() => patch({ fee_min: '', fee_max: '' })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    Remove price range
+                                                </button>
+                                            )}
+
+                                            {/* ── Payment suggestion — only if payment is set ── */}
+                                            {f.payment && (
+                                                <button
+                                                    onClick={() => patch({ payment: '', insurer: '' })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    Remove payment preference
+                                                </button>
+                                            )}
+
+                                            {/* ── Language suggestion — only if languages are set ── */}
+                                            {f.language.length > 0 && (
+                                                <button
+                                                    onClick={() => patch({ language: [] })}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                >
+                                                    Remove language filter
+                                                </button>
+                                            )}
+
+                                            {/* ── Last resort: clear everything ── */}
+                                            <button
+                                                onClick={clearAll}
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#5B6B6E] transition hover:border-[#C2543B]/50 hover:bg-[#FBF0EB] hover:text-[#C2543B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40"
+                                            >
+                                                View all providers
+                                            </button>
                                         </div>
                                     </div>
                                 ) : (

@@ -3,6 +3,8 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import PhoneInput from '@/components/PhoneInput';
+import { phoneError } from '@/lib/phone';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -1332,11 +1334,15 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (min && max && Number(min) > Number(max)) e.fee_max = 'Maximum must be greater than or equal to the minimum.';
                 break;
             }
-            case 12:
+            case 12: {
                 if (!d.phone.trim()) e.phone = 'Phone number is required.';
-                else if (d.phone.replace(/[^\d]/g, '').length < 7) e.phone = 'Please enter a valid phone number.';
+                else {
+                    const pe = phoneError(d.phone);
+                    if (pe) e.phone = pe;
+                }
                 if (d.website && !isUrl(d.website)) e.website = 'Enter a valid website';
                 break;
+            }
             case 13:
                 if (!d.profile_photo) e.profile_photo = 'A professional photo or organization logo is required.';
                 break;
@@ -2767,7 +2773,7 @@ function StepBody({
                             value={d.phone}
                             onChange={(v) => set('phone', v)}
                             error={!!fieldError('phone')}
-                            placeholder="+1 (555) 000-0000"
+                            defaultCountry={d.country}
                         />
                     </FieldShell>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
@@ -3146,27 +3152,6 @@ function SocialLinksInput({
                 );
             })}
         </div>
-    );
-}
-function PhoneInput({
-    value, onChange, error, placeholder,
-}: {
-    value: string;
-    onChange: (v: string) => void;
-    error?: boolean;
-    placeholder?: string;
-}) {
-    return (
-        <input
-            type="tel"
-            value={value}
-            placeholder={placeholder}
-            onChange={(ev) => {
-                const cleaned = ev.target.value.replace(/[^0-9\s\-\+\(\)]/g, '');
-                onChange(cleaned);
-            }}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`}
-        />
     );
 }
 function ConsentItem({

@@ -4,6 +4,8 @@ import Header from "@/components/provider/ProviderMenu";
 import ProviderMenu from '@/components/provider/ProviderMenu';
 import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import PhoneInput from '@/components/PhoneInput';
+import { phoneError } from '@/lib/phone';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -575,11 +577,15 @@ export default function ProviderProfileEdit({
                 if (min && max && Number(min) > Number(max)) e.fee_max = 'Maximum must be greater than or equal to the minimum.';
                 break;
             }
-            case 11:
+            case 11: {
                 if (!d.phone.trim()) e.phone = 'Phone number is required.';
-                else if (d.phone.replace(/[^\d]/g, '').length < 7) e.phone = 'Please enter a valid phone number.';
+                else {
+                    const pe = phoneError(d.phone);
+                    if (pe) e.phone = pe;
+                }
                 if (d.website && !isUrl(d.website)) e.website = 'Enter a valid website';
                 break;
+            }
             case 12:
                 if (!d.profile_photo && !existingProfilePhoto) e.profile_photo = 'A professional photo or organization logo is required.';
                 break;
@@ -1073,7 +1079,12 @@ function StepBody({
             return (
                 <>
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
-                        <PhoneInput value={d.phone} onChange={(v) => set('phone', v)} error={!!fieldError('phone')} placeholder="+1 (555) 000-0000" />
+                        <PhoneInput
+                            value={d.phone}
+                            onChange={(v) => set('phone', v)}
+                            error={!!fieldError('phone')}
+                            defaultCountry={d.country}
+                        />
                     </FieldShell>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
                         <TextInput value={d.website} onChange={(v) => set('website', v)} error={!!fieldError('website')} placeholder="yourpractice.com" />
@@ -1263,13 +1274,7 @@ function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: st
     );
 }
 
-function PhoneInput({ value, onChange, error, placeholder }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; }) {
-    return (
-        <input type="tel" value={value} placeholder={placeholder}
-            onChange={(ev) => onChange(ev.target.value.replace(/[^0-9\s\-\+\(\)]/g, ''))}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
-    );
-}
+
 
 function ConsentItem({ checked, onChange, error, children }: { checked: boolean; onChange: (v: boolean) => void; error?: string; children: React.ReactNode; }) {
     return (
