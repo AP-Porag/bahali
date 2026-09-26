@@ -94,6 +94,7 @@ class ProviderService extends BaseService
 
             $languages = Language::query()->orderBy('name')->pluck('name')->toArray();
 
+
             $providers = Provider::query()
                 ->where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)
                 ->get([
@@ -103,7 +104,15 @@ class ProviderService extends BaseService
                     'treatment_approaches',
                     'payment_methods',
                     'insurance_plans',
+                    'service_formats',
                 ]);
+            $sessionFormats = $providers
+                ->flatMap(fn($p) => $this->toList($p->service_formats))
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
 
             $populations = $this->distinctFromJson($providers, 'populations_served');
             $services    = $this->distinctFromJson($providers, 'treatment_approaches');
@@ -132,7 +141,7 @@ class ProviderService extends BaseService
                 'populations'    => $populations,
                 'services'       => $services,
                 'languages'      => array_values(array_unique($languages)),
-                'sessionFormats' => ['In Person', 'Telehealth', 'Both'],
+                'sessionFormats' => $sessionFormats,
                 'payments'       => $payments,
                 'insurers'       => $insurers,
                 'providerTypes'  => $providerTypes,
@@ -164,7 +173,7 @@ class ProviderService extends BaseService
             'location'        => $this->displayLocation($p),
             'servesMultiple'  => (bool) $p->multiple_locations,
             'telehealthRegions' => $this->toArray($p->telehealth_regions),
-            'sessionFormat'   => $this->resolveSessionFormat($this->toArray($p->service_formats)),
+            'sessionFormats' => $this->toArray($p->service_formats),
             'practiceSettings' => $this->toArray($p->practice_settings),
             'languages'       => $this->toArray($p->languages),
             'culturalApproach' => $p->cultural_approach,
@@ -172,9 +181,12 @@ class ProviderService extends BaseService
             'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
             'providerType' => $p->provider_type,
             'licenceVerified' => (bool) $p->licence_verified,
-
-            'caribbeanIdentity'   => $p->caribbean_identity,
-            'caribbeanExperience' => (bool) $p->caribbean_experience,
+            'caribbeanIdentity'   => $p->caribbean_identity ?: null,
+            'caribbeanExperience' => match (strtolower(trim((string) $p->caribbean_experience))) {
+                'yes', '1', 'true'  => 'Yes',
+                'no',  '0', 'false' => 'No',
+                default             => null,
+            },
             'supportAreas'    => $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
                 'category' => $cat,
                 'areas'    => $rows->pluck('area')->filter()->values(),
@@ -336,18 +348,24 @@ class ProviderService extends BaseService
     private function applyLocationFilter(Builder $query, string $loc, string $region, bool $includeVirtual): void
     {
         $query->where(function (Builder $q) use ($loc, $includeVirtual) {
-            $q->where('country', $loc)
-                ->orWhere('state_province', $loc)
-                ->orWhere('city', $loc)
-                ->orWhereJsonContains('telehealth_regions', $loc);
+            // ── Geography match ──
+            // Provider যাদের location Panama, OR যারা Panama-তে telehealth serve করে
+            $q->where(function (Builder $q2) use ($loc) {
+                $q2->where('country', $loc)
+                    ->orWhere('state_province', $loc)
+                    ->orWhere('city', $loc)
+                    ->orWhereJsonContains('telehealth_regions', $loc);
+            });
 
+            // ── Virtual filter (ANDed with geography) ──
             if ($includeVirtual) {
-                $q->orWhereJsonContains('service_formats', 'Virtual')
-                    ->orWhereJsonContains('service_formats', 'Telehealth');
+                $q->where(function (Builder $q2) {
+                    $q2->whereJsonContains('service_formats', 'Virtual')
+                        ->orWhereJsonContains('service_formats', 'Telehealth');
+                });
             }
         });
 
-        // Secondary geography (parish/state/province) narrows within the country.
         if ($region !== '') {
             $query->where(fn(Builder $q) => $q
                 ->where('state_province', $region)
@@ -449,7 +467,7 @@ class ProviderService extends BaseService
             'photo'       => $p->profile_photo ? Storage::url($p->profile_photo) : null,
             'location'    => $this->displayLocation($p),
 
-            'sessionFormat' => $this->resolveSessionFormat($formats),
+            'sessionFormats' => $formats,
             'formatKey'     => $this->formatKey($formats),
 
             'specialties' => $this->cardSpecialties($p),

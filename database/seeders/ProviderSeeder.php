@@ -209,6 +209,7 @@ class ProviderSeeder extends Seeder
             'note' => 'Provider profile approved and verified',
             'consent_accurate' => true,
             'consent_notify' => true,
+            'licence_verified' => 1,
             'consent_no_endorsement' => true,
             'consent_public' => true,
             'reviewed_at' => '2026-07-16 22:05:51',

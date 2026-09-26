@@ -52,7 +52,7 @@ class UpdateProviderRequest extends FormRequest
             'insurance_plans'   => ['nullable', 'string'],
             'culturally_affirming' => ['nullable', 'string'],
 
-            'phone'        => ['nullable', 'string', 'max:50'],
+            'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{6,14}$/'],
             'website'      => ['nullable', 'string', 'max:255'],
             'social_links' => ['nullable', 'string'],
 

@@ -106,7 +106,7 @@ class StoreProviderRequest extends FormRequest
             'insurance_plans' => ['nullable', 'string', 'max:2000'],
 
             // Step 11 — Contact
-            'phone' => ['required', 'string', 'max:40'],
+            'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{6,14}$/'],
             'website' => ['nullable', 'string', 'max:255'],
             'social_links' => ['nullable', 'string', 'max:2000'],
 
