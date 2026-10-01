@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
 
             // Real exported data (bahali.org)
             UserSeeder::class,      // aage — admin + provider users (id soho)
-            ProviderSeeder::class,  // pore — user_id-e link kore
         ]);
     }
 }
