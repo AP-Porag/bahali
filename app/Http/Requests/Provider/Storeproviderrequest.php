@@ -53,6 +53,10 @@ class StoreProviderRequest extends FormRequest
                 'max:10240'
             ],
 
+            'fee_min' => ['nullable', 'string', 'max:20'],
+            'fee_max' => ['nullable', 'string', 'max:20'],
+            'fee_range' => ['nullable', 'string', 'max:50'],
+
             // Step 4 — Areas of Support (pivot table)
             'areas_of_support' => ['required', 'array'],
             'areas_of_support.*' => ['string', 'max:600'],
@@ -128,53 +132,6 @@ class StoreProviderRequest extends FormRequest
         ];
     }
 
-    /**
-     * নমনীয় ভ্যালিডেশন: "category|area" ফরম্যাট যাচাই, খারাপ আইটেম স্কিপ করা
-     */
-    // public function withValidator(Validator $validator): void
-    // {
-    //     $validator->after(function (Validator $v) {
-    //         $items = $this->input('areas_of_support', []);
-    //         if (!is_array($items)) {
-    //             return;
-    //         }
-
-    //         $knownCategories = array_keys(AreasOfSupport::GROUPS);
-
-    //         foreach ($items as $index => $item) {
-    //             $key = "areas_of_support.$index";
-
-    //             // ফরম্যাট ঠিক না থাকলে – স্কিপ (এরর দেবেন না)
-    //             if (!is_string($item) || !str_contains($item, '|')) {
-    //                 continue;
-    //             }
-
-    //             [$category, $area] = array_map('trim', explode('|', $item, 2));
-
-    //             if (!in_array($category, $knownCategories, true)) {
-    //                 $v->errors()->add($key, 'This support-area category is not recognized.');
-    //                 continue;
-    //             }
-
-    //             if ($area === '') {
-    //                 $v->errors()->add($key, 'Please describe the area of support.');
-    //                 continue;
-    //             }
-
-    //             // প্রি-ডিফাইন্ড এলাকা চেক (যদি জানা থাকে)
-    //             $canonical = AreasOfSupport::categoryFor($area);
-    //             if ($canonical !== null && $canonical !== $category) {
-    //                 $v->errors()->add($key, 'This area does not belong to the selected category.');
-    //             }
-    //             // $canonical === null  →  custom "Other" text  →  allowed
-    //         }
-    //     });
-    // }
-
-    /**
-     * areas_of_support অ্যারে থেকে পিভট টেবিলের ডেটা তৈরি করে
-     * প্রি-ডিফাইন্ড → area কলামে, কাস্টম → area_other কলামে
-     */
     public function mappedAreasOfSupport(): array
     {
         $items = $this->input('areas_of_support', []);
@@ -218,6 +175,18 @@ class StoreProviderRequest extends FormRequest
             'hide_address' => $this->boolean('hide_address'),
             'multiple_locations' => $this->boolean('multiple_locations') ? 'yes' : 'no',
             'caribbean_experience' => $this->boolean('caribbean_experience') ? 'yes' : 'no',
+            'fee_range' => $this->buildFeeRange(
+                trim((string) $this->input('fee_min', '')),
+                trim((string) $this->input('fee_max', ''))
+            ),
         ]);
+    }
+
+    private function buildFeeRange(string $min, string $max): ?string
+    {
+        if ($min === '' && $max === '') return null;
+        if ($min !== '' && $max !== '') return "\${$min}–\${$max} / session";
+        if ($min !== '')                 return "From \${$min} / session";
+        return "Up to \${$max} / session";
     }
 }
