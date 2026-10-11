@@ -34,6 +34,63 @@ class ProviderService extends BaseService
     /** Availability freshness window (guide §5.3). */
     private const AVAILABILITY_FRESH_DAYS = 60;
 
+    /** Fee currency symbols — keep in sync with resources/js/constants/fees.ts. */
+    private const CURRENCY_SYMBOLS = [
+        'USD' => '$',
+        'CAD' => '$',
+        'GBP' => '£',
+        'EUR' => '€',
+        'XCD' => '$',
+        'JMD' => '$',
+        'TTD' => '$',
+        'BBD' => '$',
+        'BSD' => '$',
+        'BZD' => '$',
+        'BMD' => '$',
+        'KYD' => '$',
+        'GYD' => '$',
+        'SRD' => '$',
+        'DOP' => '$',
+        'CUP' => '$',
+        'HTG' => 'G',
+        'ANG' => 'ƒ',
+        'AWG' => 'ƒ',
+        'CRC' => '₡',
+        'PAB' => 'B/.',
+    ];
+
+    /** Reduced-cost scope values (card wording: "for this service" / "for other offerings"). */
+    public const REDUCED_COST_SCOPES = ['this_service', 'other_offerings'];
+
+    /**
+     * Build the stored fee_range string, e.g. "$100–$150 / session".
+     * The currency code is stored separately in fee_currency and shown beside the fee on the card.
+     */
+    public static function buildFeeRange($feeMin, $feeMax, ?string $currency = 'USD'): ?string
+    {
+        $symbol = self::CURRENCY_SYMBOLS[strtoupper((string) $currency)] ?? '$';
+        $fmt = static function ($v): string {
+            // Keep whole numbers clean (150 not 150.00) but preserve real decimals.
+            $n = (float) $v;
+            return $n == (int) $n ? (string) (int) $n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+        };
+
+        if ($feeMin !== null && $feeMin !== '' && $feeMax !== null && $feeMax !== '') {
+            return $symbol . $fmt($feeMin) . '–' . $symbol . $fmt($feeMax) . ' / session';
+        }
+        if ($feeMin !== null && $feeMin !== '') {
+            return 'From ' . $symbol . $fmt($feeMin) . ' / session';
+        }
+        return null;
+    }
+
+    /** True when the provider's payment methods include a sliding-scale or free / low-cost option. */
+    public static function hasReducedCost($paymentMethods): bool
+    {
+        $methods = is_array($paymentMethods) ? $paymentMethods : (json_decode((string) $paymentMethods, true) ?: []);
+        return (bool) array_intersect($methods, self::PAYMENT_GROUPS['free_low_cost']);
+    }
+
     /* =====================================================================
      |  PUBLIC API
      * ===================================================================== */
@@ -471,7 +528,7 @@ class ProviderService extends BaseService
             'formatKey'     => $this->formatKey($formats),
 
             'specialties' => $this->cardSpecialties($p),
-            'populations' => array_slice($this->toArray($p->populations_served), 0, 4),
+            'populations' => $this->toArray($p->populations_served),
             'languages'   => array_slice($this->toArray($p->languages), 0, 3),
 
             // Payment (guide §4.2)
@@ -480,6 +537,8 @@ class ProviderService extends BaseService
             'slidingScale' => in_array('Sliding Scale', $payments, true),
             'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
             'fee'          => $p->fee_range ?: null,
+            'currency'     => $p->fee_currency ?: 'USD',
+            'reducedCostScope' => $p->reduced_cost_scope ?: null,
 
             // Availability — 3 states (guide §5.1): accepting | not_accepting | unknown
             'availability' => $this->availabilityState($p),
@@ -644,6 +703,8 @@ class ProviderService extends BaseService
                 'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : ($provider->lgbtq_affirming ? 'yes' : 'no'),
                 'culturally_affirming' => $provider->culturally_affirming === null ? '' : ($provider->culturally_affirming ? 'yes' : 'no'),
                 'fee_range'            => $provider->fee_range,
+                'fee_currency'         => $provider->fee_currency ?: 'USD',
+                'reduced_cost_scope'   => $provider->reduced_cost_scope ?? '',
 
                 // Availability (guide §5)
                 'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
@@ -676,22 +737,13 @@ class ProviderService extends BaseService
         $data['certifications']       = $request->input('certifications', []);
 
 
-        // Session fee range -> "$min–$max / session" (guide §4.2).
-        $feeMin = $request->input('fee_min');
-        $feeMax = $request->input('fee_max');
-        $fmt = static function ($v): string {
-            // Keep whole numbers clean (150 not 150.00) but preserve real decimals.
-            $n = (float) $v;
-            return $n == (int) $n ? (string) (int) $n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
-        };
-
-        if ($feeMin !== null && $feeMin !== '' && $feeMax !== null && $feeMax !== '') {
-            $data['fee_range'] = '$' . $fmt($feeMin) . '–$' . $fmt($feeMax) . ' / session';
-        } elseif ($feeMin !== null && $feeMin !== '') {
-            $data['fee_range'] = 'From $' . $fmt($feeMin) . ' / session';
-        } else {
-            $data['fee_range'] = null;
-        }
+        // Session fee range -> "$min–$max / session" (guide §4.2) + currency + reduced-cost scope.
+        $currency = strtoupper((string) $request->input('fee_currency', 'USD')) ?: 'USD';
+        $data['fee_currency'] = $currency;
+        $data['fee_range'] = self::buildFeeRange($request->input('fee_min'), $request->input('fee_max'), $currency);
+        $scope = $request->input('reduced_cost_scope');
+        $data['reduced_cost_scope'] = self::hasReducedCost($request->input('payment_methods', []))
+            && in_array($scope, self::REDUCED_COST_SCOPES, true) ? $scope : null;
         unset($data['fee_min'], $data['fee_max']);
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;

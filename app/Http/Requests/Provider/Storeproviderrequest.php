@@ -108,6 +108,8 @@ class StoreProviderRequest extends FormRequest
             'payment_methods' => ['required', 'array', 'min:1'],
             'payment_methods.*' => ['string', 'max:255'],
             'insurance_plans' => ['nullable', 'string', 'max:2000'],
+            'fee_currency'       => ['nullable', 'string', 'size:3'],
+            'reduced_cost_scope' => ['nullable', 'in:this_service,other_offerings'],
 
             // Step 11 — Contact
             'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{6,14}$/'],

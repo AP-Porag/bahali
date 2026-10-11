@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import PhoneInput from '@/components/PhoneInput';
 import { phoneError } from '@/lib/phone';
+import { CURRENCY_OPTIONS, REDUCED_COST_SCOPES, ReducedCostScope, currencySymbol, feePreview, hasReducedCost } from '@/constants/fees';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -60,6 +61,8 @@ interface ProviderFormData {
     insurance_plans: string;
     fee_min: string;
     fee_max: string;
+    fee_currency: string;
+    reduced_cost_scope: ReducedCostScope;
     phone: string;
     website: string;
     social_links: string;
@@ -141,7 +144,7 @@ const FIELD_STEP: Record<string, number> = {
     service_formats: 7, practice_settings: 7, practice_settings_other: 7,
     address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
-    fee_min: 10, fee_max: 10,
+    fee_min: 10, fee_max: 10, fee_currency: 10, reduced_cost_scope: 10,
     phone: 11, website: 11, social_links: 11,
     profile_photo: 12, additional_photos: 12,
     accessibility: 13, accessibility_other: 13,
@@ -221,13 +224,13 @@ function TextArea({ value, onChange, error, placeholder, rows = 5 }: { value: st
 }
 
 /* ---- money input (numbers + one dot only) ---- */
-function MoneyInput({ value, onChange, error, placeholder }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; }) {
+function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; prefix?: string; }) {
     return (
         <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">{prefix}</span>
             <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
-                className={`w-full rounded-lg border bg-white py-2.5 pl-7 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                className={`w-full rounded-lg border bg-white py-2.5 ${prefix.length > 1 ? 'pl-10' : 'pl-7'} pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
         </div>
     );
 }
@@ -466,6 +469,8 @@ export default function ProviderProfileEdit({
             insurance_plans: (p.insurance_plans as string) || '',
             fee_min: fee.min,
             fee_max: fee.max,
+            fee_currency: (p.fee_currency as string) || 'USD',
+            reduced_cost_scope: (p.reduced_cost_scope as ReducedCostScope) || '',
             phone: (p.phone as string) || '',
             website: (p.website as string) || '',
             social_links: (p.social_links as string) || '',
@@ -575,6 +580,9 @@ export default function ProviderProfileEdit({
                 const max = d.fee_max.trim();
                 if (max && !min) e.fee_min = 'Enter a minimum fee, or clear the maximum.';
                 if (min && max && Number(min) > Number(max)) e.fee_max = 'Maximum must be greater than or equal to the minimum.';
+                if ((min || max) && !d.fee_currency) e.fee_currency = 'Please select the currency for your fee.';
+                if (hasReducedCost(d.payment_methods) && !d.reduced_cost_scope)
+                    e.reduced_cost_scope = 'Please tell visitors whether your reduced-cost option applies to this fee.';
                 break;
             }
             case 11: {
@@ -659,6 +667,8 @@ export default function ProviderProfileEdit({
                 accepting_new_clients: data.accepting_new_clients ? 1 : 0,
                 fee_min: data.fee_min.trim() === '' ? '' : data.fee_min.trim(),
                 fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
+                fee_currency: data.fee_currency || 'USD',
+                reduced_cost_scope: hasReducedCost(data.payment_methods) ? data.reduced_cost_scope : '',
             } as unknown as ProviderFormData;
         });
 
@@ -1050,30 +1060,49 @@ function StepBody({
             );
         case 10:
             return (
-                <FieldShell
-                    label="Session fee range"
-                    hint="Optional. Shown on your public card and profile as, for example, “$100–$150 / session”. Leave blank if you'd rather not display a fee."
-                    error={fieldError('fee_min') || fieldError('fee_max')}
-                >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
-                            <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" />
+                <>
+                    <FieldShell
+                        label="Session fee range"
+                        hint="Optional. Shown on your public card and profile as, for example, “$100–$150 USD / session”. Leave blank if you'd rather not display a fee."
+                        error={fieldError('fee_min') || fieldError('fee_max')}
+                    >
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Currency</label>
+                                <SearchableSelect value={d.fee_currency} onChange={(v) => set('fee_currency', v)} options={CURRENCY_OPTIONS} error={!!fieldError('fee_currency')} placeholder="Select currency…" searchPlaceholder="Search currency…" />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
+                                <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" prefix={currencySymbol(d.fee_currency)} />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
+                                <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" prefix={currencySymbol(d.fee_currency)} />
+                            </div>
                         </div>
-                        <div>
-                            <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
-                            <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" />
-                        </div>
-                    </div>
-                    {(d.fee_min || d.fee_max) && (
-                        <p className="mt-2.5 text-sm text-[#5B6B6E]">
-                            Preview:{' '}
-                            <span className="font-semibold text-[#16302F]">
-                                {d.fee_min && d.fee_max ? `$${d.fee_min}–$${d.fee_max} / session` : d.fee_min ? `From $${d.fee_min} / session` : '—'}
-                            </span>
-                        </p>
+                        {fieldError('fee_currency') && (
+                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
+                        )}
+                        {(d.fee_min || d.fee_max) && (
+                            <p className="mt-2.5 text-sm text-[#5B6B6E]">
+                                Preview:{' '}
+                                <span className="font-semibold text-[#16302F]">
+                                    {feePreview(d.fee_min, d.fee_max, d.fee_currency)}
+                                </span>
+                            </p>
+                        )}
+                    </FieldShell>
+                    {hasReducedCost(d.payment_methods) && (
+                        <FieldShell
+                            label="Does your reduced-cost option apply to this session fee?"
+                            required
+                            hint="You selected a sliding scale or free / low-cost option. This tells visitors whether it applies to the fee shown above or to other services or programs you offer."
+                            error={fieldError('reduced_cost_scope')}
+                        >
+                            <RadioRow value={d.reduced_cost_scope} onChange={(v) => set('reduced_cost_scope', v as ReducedCostScope)} options={REDUCED_COST_SCOPES} />
+                        </FieldShell>
                     )}
-                </FieldShell>
+                </>
             );
         case 11:
             return (

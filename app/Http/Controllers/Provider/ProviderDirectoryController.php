@@ -463,6 +463,17 @@ class ProviderDirectoryController extends Controller
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
 
+
+        // Session fee range -> "$min–$max / session" + currency + reduced-cost scope.
+        $currency = strtoupper((string) $request->input('fee_currency', 'USD')) ?: 'USD';
+        $data['fee_currency'] = $currency;
+        $data['fee_range'] = ProviderService::buildFeeRange($request->input('fee_min'), $request->input('fee_max'), $currency);
+        $scope = $request->input('reduced_cost_scope');
+        $data['reduced_cost_scope'] = ProviderService::hasReducedCost($request->input('payment_methods', []))
+            && in_array($scope, ProviderService::REDUCED_COST_SCOPES, true) ? $scope : null;
+        unset($data['fee_min'], $data['fee_max']);
+
+        // Areas of Support -> provider_support_areas table (one row per area).
         // Areas of Support -> provider_support_areas table (one row per area).
         $supportAreas = $request->mappedAreasOfSupport();
 

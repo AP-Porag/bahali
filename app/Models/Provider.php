@@ -51,6 +51,8 @@ class Provider extends Model
         'practice_settings',
         'practice_settings_other',
 
+
+
         // Location
         'address',
         'city',
@@ -65,6 +67,8 @@ class Provider extends Model
         'payment_methods',
         'insurance_plans',
         'fee_range',
+        'fee_currency',
+        'reduced_cost_scope',
 
         // Contact
         'phone',
