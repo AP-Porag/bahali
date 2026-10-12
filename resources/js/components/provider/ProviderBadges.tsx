@@ -1,7 +1,11 @@
-// resources/js/components/provider/ProviderBadges.jsx
+// resources/js/components/provider/ProviderBadges.tsx
 // Shared by the results cards (web/provider/index) and the expanded profile (web/provider/show)
 // so badge wording, badge rules, names and initials stay identical in both places.
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+
+export type ProviderType = 'individual' | 'organization' | 'support_group' | 'faith_based' | 'community_program' | string;
+export type ReducedCostKind = 'sliding' | 'free';
+export type ReducedCostScope = 'this_service' | 'other_offerings' | null | undefined | '';
 
 /* ------------------------------------------------------------------ */
 /*  Copy                                                               */
@@ -14,17 +18,17 @@ export const CARIBBEAN_EXPERIENCE_STATEMENT =
     'Experience providing care or support to Caribbean individuals, families, or communities.';
 
 /* Credentials are verified only for individual providers once the Bahali team completes the licence check. */
-export function isCredentialsVerified(providerType, licenceVerified) {
+export function isCredentialsVerified(providerType?: ProviderType | null, licenceVerified?: boolean | null): boolean {
     return providerType === 'individual' && licenceVerified === true;
 }
 
 /* Explanation behind the "Profile Reviewed" info icon — reflects the provider's actual review status. */
-export function reviewExplanation(providerType, licenceVerified) {
+export function reviewExplanation(providerType?: ProviderType | null, licenceVerified?: boolean | null): string {
     const reviewed = providerType === 'individual'
         ? 'Bahali reviewed the information this provider submitted — including their professional details, credentials and contact information — before publishing this profile.'
         : 'Bahali reviewed the information this organization submitted — including its services, location and contact information — before publishing this profile.';
 
-    let licence;
+    let licence: string;
     if (isCredentialsVerified(providerType, licenceVerified)) {
         licence = "The provider's licence has also been independently verified with the relevant licensing authority.";
     } else if (providerType === 'individual') {
@@ -44,7 +48,7 @@ const KEEP_UPPER = /^(PhD|PsyD|EdD|MD|DO|MSW|MPH|MA|MS|MEd|LCSW|LMSW|LMHC|LPC|LM
 
 /* Provider name only — drops anything after a comma ("Dr. Jane Doe, PsyD" → "Dr. Jane Doe").
    Names typed in ALL CAPS or all lowercase are title-cased; mixed-case names (McKenzie, DeShawn) stay as entered. */
-export function displayName(name = '') {
+export function displayName(name: string | null | undefined = ''): string {
     const base = (String(name || '').split(',')[0] || '').trim().replace(/\s+/g, ' ');
     if (!base) return '';
     const needsCase = base === base.toUpperCase() || base === base.toLowerCase();
@@ -56,7 +60,7 @@ export function displayName(name = '') {
 }
 
 /* Placeholder initials from the provider's name — honorifics and credentials ignored ("Dr. Jane Doe, PsyD" → "JD"). */
-export function initials(name = '') {
+export function initials(name: string | null | undefined = ''): string {
     const words = displayName(name)
         .replace(/^(dr|mr|mrs|ms|miss|mx|prof|rev|pastor|fr|sr)\.?\s+/i, '')
         .split(/\s+/)
@@ -71,17 +75,23 @@ export function initials(name = '') {
 /*  Info tooltip — hover, keyboard focus and tap                       */
 /* ------------------------------------------------------------------ */
 
-export function InfoTip({ label, children }) {
+interface InfoTipProps {
+    label: string;
+    children: ReactNode;
+}
+
+export function InfoTip({ label, children }: InfoTipProps) {
     const [open, setOpen] = useState(false);
-    const [pos, setPos] = useState({ left: -8, width: 256 });
-    const wrapRef = useRef(null);
+    const [pos, setPos] = useState<{ left: number; width: number }>({ left: -8, width: 256 });
+    const wrapRef = useRef<HTMLSpanElement>(null);
     const tipId = useId();
 
     /* Keep the tooltip inside the viewport (badges can sit near either edge on mobile). */
     useEffect(() => {
         if (!open || !wrapRef.current || typeof window === 'undefined') return;
         const rect = wrapRef.current.getBoundingClientRect();
-        const vw = window.innerWidth;
+        // clientWidth = real screen width on mobile (innerWidth can grow when a page overflows)
+        const vw = document.documentElement.clientWidth || window.innerWidth;
         const width = Math.min(256, vw - 32);
         const desired = rect.left - 8;
         const clamped = Math.max(16, Math.min(desired, vw - 16 - width));
@@ -90,8 +100,8 @@ export function InfoTip({ label, children }) {
 
     useEffect(() => {
         if (!open) return undefined;
-        const onPointerDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
-        const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+        const onPointerDown = (e: PointerEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
         document.addEventListener('pointerdown', onPointerDown);
         document.addEventListener('keydown', onKey);
         return () => {
@@ -126,7 +136,7 @@ export function InfoTip({ label, children }) {
                 id={tipId}
                 role="tooltip"
                 style={{ left: pos.left, width: pos.width }}
-                className={`absolute top-full z-40 mt-2 rounded-xl border border-[#E7E0D2] bg-white p-3 text-left text-xs font-normal normal-case leading-relaxed tracking-normal text-[#3A4B49] shadow-lg transition-opacity ${open ? 'visible opacity-100' : 'invisible opacity-0'}`}
+                className={`absolute top-full z-40 mt-2 rounded-xl border border-[#E7E0D2] bg-white p-3 text-left text-xs font-normal normal-case leading-relaxed tracking-normal text-[#3A4B49] shadow-lg ${open ? 'block' : 'hidden'}`}
             >
                 {children}
             </span>
@@ -138,7 +148,12 @@ export function InfoTip({ label, children }) {
 /*  Badges                                                             */
 /* ------------------------------------------------------------------ */
 
-export function ProfileReviewedBadge({ providerType, licenceVerified }) {
+interface ReviewProps {
+    providerType?: ProviderType | null;
+    licenceVerified?: boolean | null;
+}
+
+export function ProfileReviewedBadge({ providerType, licenceVerified }: ReviewProps) {
     return (
         <span className="inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
             <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -196,7 +211,12 @@ export function CaribbeanExperienceBadge() {
 }
 
 /* The full badge row, used by both the results card and the profile header. */
-export function ProviderBadgeRow({ providerType, licenceVerified, caribbeanExperience, className = '' }) {
+interface ProviderBadgeRowProps extends ReviewProps {
+    caribbeanExperience?: boolean | null;
+    className?: string;
+}
+
+export function ProviderBadgeRow({ providerType, licenceVerified, caribbeanExperience, className = '' }: ProviderBadgeRowProps) {
     return (
         <div className={`flex flex-wrap items-center gap-2 ${className}`}>
             <ProfileReviewedBadge providerType={providerType} licenceVerified={licenceVerified} />
@@ -211,14 +231,14 @@ export function ProviderBadgeRow({ providerType, licenceVerified, caribbeanExper
 /* ------------------------------------------------------------------ */
 
 /* Fee with currency beside it (e.g. "$100–$150 / session" → "$100–$150 USD / session") */
-export function feeWithCurrency(fee = '', currency = 'USD') {
+export function feeWithCurrency(fee: string | null | undefined = '', currency: string = 'USD'): string {
     if (!fee) return '';
     if (/\b[A-Z]{3}\b/.test(fee)) return fee; // currency code already present
     return /\s\/\s/.test(fee) ? fee.replace(/\s\/\s/, ` ${currency} / `) : `${fee} ${currency}`;
 }
 
 /* Reduced-cost wording — says whether it applies to the displayed fee or to other offerings */
-export function reducedCostLabel(kind, scope) {
+export function reducedCostLabel(kind: ReducedCostKind, scope?: ReducedCostScope | string): string {
     const base = kind === 'sliding' ? 'Sliding scale' : 'Free / low-cost options';
     if (scope === 'this_service') return `${base} available for this service`;
     if (scope === 'other_offerings') return `${base} available for other offerings`;
@@ -227,8 +247,8 @@ export function reducedCostLabel(kind, scope) {
 
 /* Age groups are the populations with an age range, e.g. "Children (6–12)", "Older Adults (65+)". */
 const AGE_GROUP_RE = /\(\s*\d+\s*(?:[–-]\s*\d+|\+)\s*\)/;
-export function splitPopulations(list = []) {
-    const items = Array.isArray(list) ? list.filter(Boolean) : [];
+export function splitPopulations(list: string[] | null | undefined = []): { ageGroups: string[]; others: string[] } {
+    const items: string[] = Array.isArray(list) ? list.filter(Boolean) : [];
     return {
         ageGroups: items.filter((x) => AGE_GROUP_RE.test(x)),
         others: items.filter((x) => !AGE_GROUP_RE.test(x)),

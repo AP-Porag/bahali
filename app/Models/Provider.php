@@ -112,6 +112,13 @@ class Provider extends Model
         'contact_email',
         'licence_verified',
 
+        'additional_locations',
+        'show_phone',
+        'contact_person_name',
+        'contact_person_role',
+        'contact_person_email',
+        'review_reason',
+
 
     ];
 
@@ -144,6 +151,8 @@ class Provider extends Model
         'lgbtq_affirming'      => 'string',
         'culturally_affirming' => 'string',
         'licence_verified' => 'boolean',
+        'additional_locations' => 'array',
+        'show_phone' => 'boolean',
 
     ];
 
