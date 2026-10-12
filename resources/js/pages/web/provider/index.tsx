@@ -5,10 +5,12 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
 import { HelpCircle, Verified } from 'lucide-react';
+import { ProviderBadgeRow, displayName, initials, feeWithCurrency, reducedCostLabel } from '@/components/provider/ProviderBadges';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const PER_PAGE = 6;
 const STORAGE_KEY = 'bahali_directory_state_v1';
+const RETURN_KEY = 'bahali_directory_return'; // set by the profile page (web/provider/show) — "Back to results"
 
 /* Card rows-এ ব্যবহারের জন্য icons */
 const CardIco = {
@@ -52,37 +54,8 @@ const isCrisisQuery = (kw = '') => { const t = kw.toLowerCase(); return CRISIS_T
 
 const VIRTUAL_LABEL = 'Include providers offering virtual support in my location';
 
-/* Provider name only — drops anything after a comma (e.g. "Dr. Jane Doe, PsyD" → "Dr. Jane Doe") */
-function displayName(name = '') {
-    return (name.split(',')[0] || '').trim();
-}
-
-/* Initials from the provider's name — honorifics and credentials ignored (e.g. "Dr. Jane Doe, PsyD" → "JD") */
-function initials(name = '') {
-    const words = displayName(name)
-        .replace(/^(dr|mr|mrs|ms|miss|mx|prof|rev|pastor|fr|sr)\.?\s+/i, '')
-        .split(/\s+/)
-        .filter(Boolean);
-    if (!words.length) return 'B';
-    const first = words[0][0] || '';
-    const last = words.length > 1 ? words[words.length - 1][0] || '' : '';
-    return (first + last).toUpperCase() || 'B';
-}
-
-/* Fee with currency beside it (e.g. "$100–$150 / session" → "$100–$150 USD / session") */
-function feeWithCurrency(fee = '', currency = 'USD') {
-    if (!fee) return '';
-    if (/\b[A-Z]{3}\b/.test(fee)) return fee; // currency code already present
-    return /\s\/\s/.test(fee) ? fee.replace(/\s\/\s/, ` ${currency} / `) : `${fee} ${currency}`;
-}
-
-/* Reduced-cost wording — says whether it applies to the displayed fee or to other offerings */
-function reducedCostLabel(kind, scope) {
-    const base = kind === 'sliding' ? 'Sliding scale' : 'Free / low-cost options';
-    if (scope === 'this_service') return `${base} available for this service`;
-    if (scope === 'other_offerings') return `${base} available for other offerings`;
-    return `${base} offered — ask which services qualify`;
-}
+/* displayName, initials, feeWithCurrency and reducedCostLabel now come from
+   '@/components/provider/ProviderBadges' so the card and the expanded profile always match. */
 
 function getParentId(r) {
     return r?.parentId ?? r?.parent_id ?? null;
@@ -111,16 +84,32 @@ function filtersSignature(input = {}) {
     });
 }
 
-function readPersistedState(filters, minItems) {
+/* Filters as they appear in the current URL (works for the "Back to results" link and the browser back button). */
+function filtersFromSearch(search = '') {
+    const out = {};
+    new URLSearchParams(search).forEach((value, rawKey) => {
+        const key = rawKey.replace(/\[\d*\]$/, '');
+        if (key === 'areas' || key === 'language') {
+            out[key] = [...(out[key] || []), value].filter(Boolean);
+        } else {
+            out[key] = value;
+        }
+    });
+    const flag = (v) => v === '1' || v === 'true';
+    return { ...out, include_virtual: flag(out.include_virtual), accepting: flag(out.accepting) };
+}
+
+/* Saved results state — only restored when returning from a provider profile with the same filters. */
+function readReturnState() {
     if (typeof window === 'undefined') return null;
     try {
-        const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (!saved) return null;
-        const parsed = JSON.parse(saved);
-        if (!parsed || typeof parsed !== 'object') return null;
-        if (parsed.sig !== filtersSignature(filters)) return null;
-        if (!Array.isArray(parsed.items)) return null;
-        if (parsed.items.length <= (minItems ?? 0)) return null;
+        const returning = sessionStorage.getItem(RETURN_KEY);
+        sessionStorage.removeItem(RETURN_KEY);
+        if (!returning) return null;
+        const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+        if (!parsed || typeof parsed !== 'object' || !parsed.f) return null;
+        if (parsed.sig !== filtersSignature(filtersFromSearch(window.location.search))) return null;
+        if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
         return parsed;
     } catch {
         return null;
@@ -335,7 +324,9 @@ function AvailabilityBadge({ availability }) {
     if (availability === 'not_accepting') {
         return (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EFEAE0] px-3 py-1 text-xs font-semibold text-[#6B7A78] ring-1 ring-inset ring-[#D9CFBA]">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14" strokeLinecap="round" /></svg>
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#D9CFBA]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="M6 12h12" strokeLinecap="round" /></svg>
+                </span>
                 Not accepting new clients
             </span>
         );
@@ -356,6 +347,7 @@ function AvailabilityBadge({ availability }) {
 //     return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
 // }
 
+/* "+N more" — hover (or tap/focus on mobile) shows the hidden items */
 function MoreTip({ items = [], align = 'left' }) {
     if (!items.length) return null;
     return (
@@ -381,7 +373,7 @@ function ProviderRow({ icon, children, className = '' }) {
     );
 }
 
-function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
+function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
     const [imgError, setImgError] = useState(false);
     const specialties = useMemo(() => {
         const all = p.specialties || [];
@@ -412,41 +404,14 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
             )}
 
             <div className="min-w-0 flex-1">
-                <div className="mb-3.5">
-                    {p.providerType === 'individual' && p.licenceVerified === true ? (
-                        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
-                                <defs>
-                                    <mask id="award-cut">
-                                        <rect width="24" height="24" fill="#fff" />
-                                        <circle cx="12" cy="9.5" r="4.9" fill="none" stroke="#000" stroke-width="1.2" />
-                                        <path d="M9.7 9.7l1.6 1.6 3.1-3.3" fill="none" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                                    </mask>
-                                </defs>
-                                <path d="M8.2 14 5 21.5l2.4-.6 1.2 2.1L11 16.5zM15.8 14 19 21.5l-2.4-.6-1.2 2.1L13 16.5z" />
-                                <g mask="url(#award-cut)">
-                                    <circle cx="12" cy="9.5" r="7" />
-                                    <circle cx="12" cy="2.5" r="1.5" /><circle cx="15.5" cy="3.44" r="1.5" />
-                                    <circle cx="18.06" cy="6" r="1.5" /><circle cx="19" cy="9.5" r="1.5" />
-                                    <circle cx="18.06" cy="13" r="1.5" /><circle cx="15.5" cy="15.56" r="1.5" />
-                                    <circle cx="12" cy="16.5" r="1.5" /><circle cx="8.5" cy="15.56" r="1.5" />
-                                    <circle cx="5.94" cy="13" r="1.5" /><circle cx="5" cy="9.5" r="1.5" />
-                                    <circle cx="5.94" cy="6" r="1.5" /><circle cx="8.5" cy="3.44" r="1.5" />
-                                </g>
-                            </svg>
-                            Licence Verified
-                        </span>
-                    ) : (
-                        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
-                            <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
-                                <circle cx="10" cy="10" r="2.25" />
-                            </svg>
-                            Profile Reviewed
-                        </span>
-                    )}
-                </div>
-                <h3 className="text-[20px] leading-tight text-[#16302F]" style={SERIF}>
+                {/* Badges — same rules and wording as the expanded profile header */}
+                <ProviderBadgeRow
+                    className="mb-3.5"
+                    providerType={p.providerType}
+                    licenceVerified={p.licenceVerified}
+                    caribbeanExperience={p.caribbeanExperience}
+                />
+                <h3 className="break-words text-[20px] leading-tight text-[#16302F]" style={SERIF}>
                     {name}
                 </h3>
 
@@ -539,6 +504,7 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
 
                 <Link
                     href={`/provider/${p.id}${currentQuery ? `?${currentQuery}` : ''}`}
+                    onClick={() => onOpen?.(p.id)}
                     className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
                     aria-label={`View profile for ${p.name}`}
                 >
@@ -742,31 +708,26 @@ export default function Directory({
         keyword: filters.keyword || '',
     }), [filters]);
 
-    //const restored = useMemo(() => readPersistedState(initialF, providers.length), []); // eslint-disable-line react-hooks/exhaustive-deps
+    // "Back to results" from a provider profile → restore filters, loaded results, seed and scroll position.
+    const restored = useMemo(() => readReturnState(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const restored = useMemo(() => {
-        const r = readPersistedState(initialF, providers.length);
-        if (!r) return null;
-        // Version mismatch হলে ignore করুন
-        if (r.version !== dataVersion) {
-            sessionStorage.removeItem(STORAGE_KEY);
-            return null;
-        }
-        return r;
-    }, []);
-
-    const [items, setItems] = useState(restored?.items?.length ? restored.items : providers);
+    const [items, setItems] = useState(restored ? restored.items : providers);
     const [meta, setMeta] = useState(restored?.meta ? restored.meta : pagination);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [seed, setSeed] = useState(initialSeed);
+    const [seed, setSeed] = useState(restored?.seed ?? initialSeed);
     const [showRefine, setShowRefine] = useState(false);
     const [showAllAreas, setShowAllAreas] = useState(false);
     const resultsRef = useRef(null);
 
-    useEffect(() => { setSeed(initialSeed); }, [initialSeed]);
+    // Skip the first run so a restored seed (same order as before) is not overwritten.
+    const seedMounted = useRef(false);
+    useEffect(() => {
+        if (!seedMounted.current) { seedMounted.current = true; return; }
+        setSeed(initialSeed);
+    }, [initialSeed]);
 
-    const [f, setF] = useState(initialF);
+    const [f, setF] = useState(restored ? { ...initialF, ...restored.f } : initialF);
     const fRef = useRef(f); fRef.current = f;
 
     useEffect(() => {
@@ -774,11 +735,39 @@ export default function Directory({
         try {
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
                 sig: filtersSignature(fRef.current),
+                f: fRef.current,
                 items,
                 meta,
+                seed,
             }));
         } catch { /* ignore quota errors */ }
-    }, [items, meta]);
+    }, [items, meta, seed]);
+
+    // Return to the same place in the results list.
+    useEffect(() => {
+        if (!restored || typeof window === 'undefined' || typeof restored.scrollY !== 'number') return undefined;
+        const y = restored.scrollY;
+        const go = () => window.scrollTo(0, y);
+        const raf = requestAnimationFrame(go);
+        const t1 = setTimeout(go, 80);
+        const t2 = setTimeout(go, 250);
+        return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Called when "View profile" is clicked — remembers scroll position and which profile was opened.
+    const rememberPosition = (id) => {
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                sig: filtersSignature(fRef.current),
+                f: fRef.current,
+                items,
+                meta,
+                seed,
+                scrollY: window.scrollY,
+                openedId: id,
+            }));
+        } catch { /* ignore quota errors */ }
+    };
 
     /* ==== Countries / regions — proper hook order ==== */
     const selectedCountry = useMemo(() => countries.find((c) => c.name === f.location), [countries, f.location]);
@@ -1237,6 +1226,7 @@ export default function Directory({
                                                 p={p}
                                                 selectedAreas={f.areas}
                                                 currentQuery={currentQueryString}
+                                                onOpen={rememberPosition}
                                             />
                                         ))}
                                     </div>

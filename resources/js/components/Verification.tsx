@@ -56,6 +56,7 @@ interface ProviderData {
     // Culture
     caribbean_identity?: string;
     caribbean_experience?: string;
+    caribbean_experience_details?: string | null;
     languages?: string[];
     languages_other?: string;
     cultural_approach?: string;
@@ -97,8 +98,14 @@ interface ProviderData {
     verification_note?: string;
     licence_verified?: boolean | number | null;
 }
+/* Conflicting information found by ProviderService::reviewFlags() — check before publishing. */
+interface ReviewFlag {
+    field: string;
+    message: string;
+}
 interface PageProps {
     provider?: ProviderData;
+    reviewFlags?: ReviewFlag[];
     indexRoute?: string; // route name to return to (default admin.providers.index)
 }
 /* ------------------------------------------------------------------ */
@@ -208,6 +215,13 @@ const STEPS = [
     { key: 'decision', title: 'Verification Decision', subtitle: 'Approve or update' },
 ] as const;
 const TOTAL_STEPS = STEPS.length;
+/* Which review section each flagged field lives in (used to jump to it and mark the stepper). */
+const FLAG_STEP: Record<string, number> = { years_experience: 1, short_bio: 1 };
+/* Rows to highlight for each flag — a years conflict involves both the answer and the bio. */
+const FLAG_FIELDS: Record<string, string[]> = {
+    years_experience: ['years_experience', 'short_bio'],
+    short_bio: ['years_experience', 'short_bio'],
+};
 const DECISION_STEP = TOTAL_STEPS - 1;
 const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
     pending: { label: 'Pending', cls: 'bg-[#E8B84B]/18 text-[#9A6B12] ring-[#E8B84B]/40', dot: 'bg-[#E8B84B]' },
@@ -253,11 +267,16 @@ const DECISION_ACTIONS: { value: string; label: string; cls: string; ring: strin
 function Muted({ children = '—' }: { children?: React.ReactNode }) {
     return <span className="text-[#9AA6A4]">{children}</span>;
 }
-function Row({ label, children }: { label: string; children?: React.ReactNode }) {
+function Row({ label, children, highlight = false }: { label: string; children?: React.ReactNode; highlight?: boolean }) {
     const empty = children === undefined || children === null || children === '';
     return (
-        <div className="py-3.5">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#8A9795]">{label}</dt>
+        <div className={highlight ? '-mx-3 my-1 rounded-lg bg-[#E8B84B]/12 px-3 py-3.5 ring-1 ring-inset ring-[#E8B84B]/50' : 'py-3.5'}>
+            <dt className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
+                {label}
+                {highlight && (
+                    <span className="rounded-full bg-[#E8B84B]/25 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-[#9A6B12]">Needs review</span>
+                )}
+            </dt>
             <dd className="mt-1 text-[#26403F]">{empty ? <Muted /> : children}</dd>
         </div>
     );
@@ -399,13 +418,37 @@ function DocumentModal({ url, onClose }: { url: string; onClose: () => void }) {
         </div>
     );
 }
+/* Amber notice listing conflicting information — shown before the admin publishes the profile. */
+function ReviewFlagsNotice({ flags, onGo }: { flags: ReviewFlag[]; onGo?: (step: number) => void }) {
+    if (!flags.length) return null;
+    return (
+        <div role="alert" className="rounded-xl border border-[#E8B84B]/60 bg-[#E8B84B]/12 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-[#9A6B12]">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /></svg>
+                Check before publishing — conflicting information
+            </p>
+            <ul className="mt-2 space-y-1.5">
+                {flags.map((f, i) => (
+                    <li key={i} className="flex flex-wrap items-baseline gap-x-2 text-sm text-[#6B4E12]">
+                        <span>{f.message}</span>
+                        {onGo && FLAG_STEP[f.field] !== undefined && (
+                            <button type="button" onClick={() => onGo(FLAG_STEP[f.field])} className="font-semibold text-[#0E7C7B] hover:underline">
+                                View section →
+                            </button>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
 function DL({ children }: { children: React.ReactNode }) {
     return <dl className="divide-y divide-[#F0EBE0]">{children}</dl>;
 }
 /* ------------------------------------------------------------------ */
 /*  Read-only step body                                                */
 /* ------------------------------------------------------------------ */
-function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onViewDoc?: (url: string) => void }) {
+function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step: number; p: ProviderData; onViewDoc?: (url: string) => void; flagged?: Set<string> }) {
     switch (step) {
         case 0:
             return (
@@ -422,8 +465,8 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
             return (
                 <DL>
                     <Row label="Email address">{p.email}</Row>
-                    <Row label="Years of experience">{p.years_experience}</Row>
-                    <Row label="Short bio">
+                    <Row label="Years of experience" highlight={flagged.has('years_experience')}>{p.years_experience}</Row>
+                    <Row label="Short bio" highlight={flagged.has('short_bio')}>
                         {p.short_bio ? <p className="leading-relaxed text-[#3A4B49]">{p.short_bio}</p> : undefined}
                     </Row>
                 </DL>
@@ -459,7 +502,12 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
             return (
                 <DL>
                     <Row label="Identifies as part of the Caribbean community?">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
-                    <Row label="Experience working with Caribbean individuals and families?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
+                    <Row label="Experience providing care or support to Caribbean individuals, families, or communities?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
+                    {p.caribbean_experience === 'yes' && (
+                        <Row label="Caribbean experience — provider description">
+                            {p.caribbean_experience_details ? <p className="leading-relaxed text-[#3A4B49]">{p.caribbean_experience_details}</p> : undefined}
+                        </Row>
+                    )}
                     <Row label="Languages spoken"><Pills items={p.languages} /></Row>
                     <Row label="Cultural approach">
                         {p.cultural_approach ? <p className="leading-relaxed text-[#3A4B49]">{p.cultural_approach}</p> : undefined}
@@ -547,7 +595,7 @@ function ReviewBody({ step, p, onViewDoc }: { step: number; p: ProviderData; onV
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
-export default function ProviderVerificationShow({ provider, indexRoute = 'admin.providers.index' }: PageProps) {
+export default function ProviderVerificationShow({ provider, reviewFlags = [], indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider ?? SAMPLE;
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
@@ -566,7 +614,10 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
     const [docUrl, setDocUrl] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ value: string; label: string; cls: string; ring: string } | null>(null);
     const topRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const current = STATUS_META[p.verification_status] ?? STATUS_META.pending;
+    const flaggedSteps = new Set(reviewFlags.map((f) => FLAG_STEP[f.field]).filter((i) => i !== undefined));
+    const flaggedFields = new Set(reviewFlags.flatMap((f) => FLAG_FIELDS[f.field] ?? [f.field]));
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
     const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     const goTo = (i: number) => {
@@ -574,6 +625,13 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
         setVisited((v) => new Set(v).add(next));
         setStep(next);
         scrollTop();
+    };
+    /* "View section →" — open the flagged section and scroll to its content (the rows are highlighted there). */
+    const jumpToSection = (i: number) => {
+        const next = Math.max(0, Math.min(i, TOTAL_STEPS - 1));
+        setVisited((v) => new Set(v).add(next));
+        setStep(next);
+        requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     };
     const submit = (status: string) => {
         if (processing) return;
@@ -628,6 +686,11 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                             Current: {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
                         </span>
                     </div>
+                    {reviewFlags.length > 0 && (
+                        <div className="mb-6">
+                            <ReviewFlagsNotice flags={reviewFlags} onGo={jumpToSection} />
+                        </div>
+                    )}
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
                         {/* Stepper (all steps clickable; visited steps checked off) */}
                         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -674,7 +737,10 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                                         ) : (i + 1)}
                                                     </span>
                                                     <span className="min-w-0 pt-0.5">
-                                                        <span className={`block text-sm font-medium leading-tight ${isCurrent ? 'text-[#16302F]' : 'text-[#5B6B6E]'}`}>{s.title}</span>
+                                                        <span className={`flex items-center gap-1.5 text-sm font-medium leading-tight ${isCurrent ? 'text-[#16302F]' : 'text-[#5B6B6E]'}`}>
+                                                            {s.title}
+                                                            {flaggedSteps.has(i) && <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#E8B84B]" title="Needs review" />}
+                                                        </span>
                                                         <span className="block text-xs text-[#9AA6A4]">{s.subtitle}</span>
                                                     </span>
                                                 </button>
@@ -686,7 +752,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                         </aside>
                         {/* Content card */}
                         <main>
-                            <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
+                            <div ref={contentRef} className="scroll-mt-24 rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
                                 <div className="mb-6 border-b border-[#EFEAE0] pb-5">
                                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E7C7B]">
                                         {step === DECISION_STEP ? 'Final step' : `Section ${step + 1}`}
@@ -696,6 +762,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 {step === DECISION_STEP ? (
                                     /* -------- Decision -------- */
                                     <div className="space-y-6">
+                                        <ReviewFlagsNotice flags={reviewFlags} onGo={jumpToSection} />
                                         <div className="rounded-xl bg-[#FBF8F2] p-4">
                                             <p className="text-sm text-[#5B6B6E]">Current verification status</p>
                                             <span className={`mt-2 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${current.cls}`}>
@@ -779,7 +846,7 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                     </div>
                                 ) : (
                                     /* -------- Read-only data -------- */
-                                    <ReviewBody step={step} p={p} onViewDoc={setDocUrl} />
+                                    <ReviewBody step={step} p={p} onViewDoc={setDocUrl} flagged={flaggedFields} />
                                 )}
                                 {/* Navigation */}
                                 <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
@@ -824,6 +891,11 @@ export default function ProviderVerificationShow({ provider, indexRoute = 'admin
                                 <strong className="text-[#26403F]">{STATUS_META[confirmAction.value]?.label ?? confirmAction.label}</strong>?
                                 {' '}This updates {p.organization_name} and returns you to the providers list.
                             </p>
+                            {confirmAction.value === VERIFICATION_STATUS.APPROVED && reviewFlags.length > 0 && (
+                                <p className="mt-3 rounded-lg bg-[#E8B84B]/12 p-3 text-sm text-[#6B4E12]">
+                                    This profile has {reviewFlags.length} unresolved {reviewFlags.length === 1 ? 'conflict' : 'conflicts'}. Approving will publish it as submitted.
+                                </p>
+                            )}
                             <div className="mt-6 flex justify-end gap-2">
                                 <button
                                     type="button"

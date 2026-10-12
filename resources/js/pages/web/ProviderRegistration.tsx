@@ -53,6 +53,7 @@ interface ProviderFormData {
     // Step 7 — Cultural & Language Responsiveness
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
+    caribbean_experience_details: string;
     lgbtq_affirming: YesNo | '';              // ← NEW
     culturally_affirming: YesNo | '';         // ← NEW
     languages: string[];
@@ -466,7 +467,7 @@ const FIELD_STEP: Record<string, number> = {
     treatment_approaches: 6, treatment_approaches_other: 6,
     specialized_training: 6, specialized_training_other: 6,
     certifications: 6,
-    caribbean_identity: 7, caribbean_experience: 7,
+    caribbean_identity: 7, caribbean_experience: 7, caribbean_experience_details: 7,
     lgbtq_affirming: 7, culturally_affirming: 7,        // ← NEW
     languages: 7, languages_other: 7, cultural_approach: 7,
     service_formats: 8, practice_settings: 8,
@@ -1074,6 +1075,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         certifications: [],
         caribbean_identity: '',
         caribbean_experience: '',
+        caribbean_experience_details: '',
         lgbtq_affirming: '',              // ← NEW
         culturally_affirming: '',         // ← NEW
         languages: [],
@@ -1300,6 +1302,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             case 7:
                 if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150)
+                    e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
                 if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';         // ← NEW
                 if (!d.culturally_affirming) e.culturally_affirming = 'Please answer so people can find the right support.';  // ← NEW
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
@@ -1459,6 +1463,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
                 fee_currency: data.fee_currency || 'USD',
                 reduced_cost_scope: hasReducedCost(data.payment_methods) ? data.reduced_cost_scope : '',
+                caribbean_experience_details: data.caribbean_experience === 'yes' ? data.caribbean_experience_details.trim() : '',
             };
         });
 
@@ -2378,7 +2383,7 @@ function StepBody({
                     <FieldShell
                         label="Do you identify as part of the Caribbean community?"
                         required
-                        hint='Providers who select "Yes" receive a "Caribbean Community Member" badge on their public profile.'
+                        hint="Your answer is not shown on your public profile."
                         error={fieldError('caribbean_identity')}
                     >
                         <RadioRow
@@ -2393,9 +2398,9 @@ function StepBody({
                         />
                     </FieldShell>
                     <FieldShell
-                        label="Do you have experience working with Caribbean individuals and families?"
+                        label="Do you have experience providing care or support to Caribbean individuals, families, or communities?"
                         required
-                        hint='Providers who select "Yes" receive an "Experience supporting Caribbean individuals and families" badge on their public profile.'
+                        hint='Providers who answer "Yes" show a "Caribbean support experience" badge on their search result card and profile. This is provider-reported and separate from credential verification.'
                         error={fieldError('caribbean_experience')}
                     >
                         <RadioRow
@@ -2408,6 +2413,24 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
+                    {d.caribbean_experience === 'yes' && (
+                        <FieldShell
+                            label="Describe your experience (optional)"
+                            hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)'
+                            error={fieldError('caribbean_experience_details')}
+                        >
+                            <TextArea
+                                value={d.caribbean_experience_details}
+                                onChange={(v) => set('caribbean_experience_details', v)}
+                                error={!!fieldError('caribbean_experience_details')}
+                                rows={4}
+                                placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…"
+                            />
+                            <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">
+                                {wordCount(d.caribbean_experience_details)} / 150 words
+                            </p>
+                        </FieldShell>
+                    )}
                     {/* ==== NEW: Identity-Affirming Care ==== */}
                     <FieldShell
                         label="Do you offer LGBTQIA+ affirming care?"

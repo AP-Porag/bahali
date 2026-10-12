@@ -463,7 +463,6 @@ class ProviderDirectoryController extends Controller
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
 
-
         // Session fee range -> "$min–$max / session" + currency + reduced-cost scope.
         $currency = strtoupper((string) $request->input('fee_currency', 'USD')) ?: 'USD';
         $data['fee_currency'] = $currency;
@@ -473,7 +472,12 @@ class ProviderDirectoryController extends Controller
             && in_array($scope, ProviderService::REDUCED_COST_SCOPES, true) ? $scope : null;
         unset($data['fee_min'], $data['fee_max']);
 
-        // Areas of Support -> provider_support_areas table (one row per area).
+        // Caribbean experience description — kept only when the answer is yes.
+        $data['caribbean_experience_details'] = ProviderService::caribbeanExperienceDetails(
+            $request->input('caribbean_experience'),
+            $request->input('caribbean_experience_details')
+        );
+
         // Areas of Support -> provider_support_areas table (one row per area).
         $supportAreas = $request->mappedAreasOfSupport();
 
@@ -751,6 +755,7 @@ class ProviderDirectoryController extends Controller
     {
         $provider = Provider::with(['user', 'supportAreas'])->findOrFail($id);
 
+
         return Inertia::render('admin/provider/pending/show-for-verification', [
             'provider' => [
                 'id' => $provider->id,
@@ -792,6 +797,7 @@ class ProviderDirectoryController extends Controller
                 // Culture
                 'caribbean_identity' => $provider->caribbean_identity,
                 'caribbean_experience' => $provider->caribbean_experience,
+                'caribbean_experience_details' => $provider->caribbean_experience_details,
                 'languages' => $provider->languages,
                 'languages_other' => $provider->languages_other,
                 'cultural_approach' => $provider->cultural_approach,
@@ -854,6 +860,8 @@ class ProviderDirectoryController extends Controller
                 'submitted_at' => $provider->created_at?->format('F j, Y'),
                 'verification_note' => $provider->verification_note,
             ],
+            // Conflicting information to check before approving (e.g. bio years vs. "Years of experience").
+            'reviewFlags' => app(ProviderService::class)->reviewFlags($provider),
             'indexRoute' => 'admin.providers.index',
         ]);
     }

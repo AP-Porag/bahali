@@ -1,9 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout.js';
 import ProviderVerificationShow from '@/components/Verification'; // আপনার Verification কম্পোনেন্টের পাথ
 
-export default function ShowForVerification({ provider, indexRoute }) {
+export default function ShowForVerification({ provider, reviewFlags = [], indexRoute }) {
     return (
         <AppLayout breadcrumbs={[
             { title: 'Pending Provider', href: '/admin/pending/providers' },
@@ -14,6 +13,7 @@ export default function ShowForVerification({ provider, indexRoute }) {
             <div className="p-4">
                 <ProviderVerificationShow
                     provider={provider}
+                    reviewFlags={reviewFlags}
                     indexRoute={indexRoute}
                 />
             </div>

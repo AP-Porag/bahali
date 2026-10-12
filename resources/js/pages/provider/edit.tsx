@@ -41,6 +41,7 @@ interface ProviderFormData {
     certifications: string[];
     caribbean_identity: CaribbeanIdentity | '';
     caribbean_experience: YesNo | '';
+    caribbean_experience_details: string;
     lgbtq_affirming: YesNo | '';
     culturally_affirming: YesNo | '';
     languages: string[];
@@ -140,7 +141,7 @@ const FIELD_STEP: Record<string, number> = {
     areas_of_support: 3, areas_of_support_other: 3,
     populations_served: 4,
     treatment_approaches: 5, treatment_approaches_other: 5, specialized_training: 5, specialized_training_other: 5, certifications: 5,
-    caribbean_identity: 6, caribbean_experience: 6, lgbtq_affirming: 6, culturally_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
+    caribbean_identity: 6, caribbean_experience: 6, caribbean_experience_details: 6, lgbtq_affirming: 6, culturally_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
     service_formats: 7, practice_settings: 7, practice_settings_other: 7,
     address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
@@ -449,6 +450,7 @@ export default function ProviderProfileEdit({
             certifications: arr('certifications'),
             caribbean_identity: (p.caribbean_identity as CaribbeanIdentity) || '',
             caribbean_experience: (p.caribbean_experience as YesNo) || '',
+            caribbean_experience_details: (p.caribbean_experience_details as string) || '',
             lgbtq_affirming: (p.lgbtq_affirming as YesNo) || '',
             culturally_affirming: (p.culturally_affirming as YesNo) || '',
             languages: lang.values,
@@ -549,6 +551,7 @@ export default function ProviderProfileEdit({
             case 6:
                 if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150) e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
                 if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';
                 if (!d.culturally_affirming) e.culturally_affirming = 'Please answer so people can find the right support.';
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
@@ -669,6 +672,7 @@ export default function ProviderProfileEdit({
                 fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
                 fee_currency: data.fee_currency || 'USD',
                 reduced_cost_scope: hasReducedCost(data.payment_methods) ? data.reduced_cost_scope : '',
+                caribbean_experience_details: data.caribbean_experience === 'yes' ? data.caribbean_experience_details.trim() : '',
             } as unknown as ProviderFormData;
         });
 
@@ -972,12 +976,18 @@ function StepBody({
         case 6:
             return (
                 <>
-                    <FieldShell label="Do you identify as part of the Caribbean community?" required error={fieldError('caribbean_identity')}>
+                    <FieldShell label="Do you identify as part of the Caribbean community?" required hint="Your answer is not shown on your public profile." error={fieldError('caribbean_identity')}>
                         <RadioRow value={d.caribbean_identity} onChange={(v) => set('caribbean_identity', v as CaribbeanIdentity)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }, { value: 'prefer_not', label: 'Prefer not to say' }]} />
                     </FieldShell>
-                    <FieldShell label="Do you have experience working with Caribbean individuals and families?" required error={fieldError('caribbean_experience')}>
+                    <FieldShell label="Do you have experience providing care or support to Caribbean individuals, families, or communities?" required hint='Providers who answer "Yes" show a "Caribbean support experience" badge on their search result card and profile. This is provider-reported and separate from credential verification.' error={fieldError('caribbean_experience')}>
                         <RadioRow value={d.caribbean_experience} onChange={(v) => set('caribbean_experience', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
                     </FieldShell>
+                    {d.caribbean_experience === 'yes' && (
+                        <FieldShell label="Describe your experience (optional)" hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)' error={fieldError('caribbean_experience_details')}>
+                            <TextArea value={d.caribbean_experience_details} onChange={(v) => set('caribbean_experience_details', v)} error={!!fieldError('caribbean_experience_details')} rows={4} placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…" />
+                            <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">{wordCount(d.caribbean_experience_details)} / 150 words</p>
+                        </FieldShell>
+                    )}
                     <FieldShell label="Do you offer LGBTQIA+ affirming care?" required hint="This helps people find providers who understand and support their identity." error={fieldError('lgbtq_affirming')}>
                         <RadioRow value={d.lgbtq_affirming} onChange={(v) => set('lgbtq_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
                     </FieldShell>

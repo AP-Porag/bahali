@@ -189,12 +189,15 @@ export function formatNational(c: PhoneCountry, d: string): string {
  *  Other +1 islands  → +1 (876) 555-1234
  *  Everyone else     → +33 6 12 34 56 78
  * Unparseable legacy values are returned as-is.
+ *
+ * Pass { international: true } to always include the country code
+ * (expanded profile: +1 (305) 479-2993, +44 20 7946 0958).
  */
-export function formatPhoneDisplay(raw?: string | null): string {
+export function formatPhoneDisplay(raw?: string | null, opts: { international?: boolean } = {}): string {
     const p = parsePhone(raw);
     if (!p) return (raw ?? '').trim();
     const national = formatNational(p.country, p.national);
-    return DOMESTIC_KEYS.has(p.country.key) ? national : `+${p.country.dial} ${national}`;
+    return !opts.international && DOMESTIC_KEYS.has(p.country.key) ? national : `+${p.country.dial} ${national}`;
 }
 
 /** Full underlying number for the Call button. */

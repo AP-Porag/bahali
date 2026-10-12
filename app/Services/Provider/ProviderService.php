@@ -91,6 +91,145 @@ class ProviderService extends BaseService
         return (bool) array_intersect($methods, self::PAYMENT_GROUPS['free_low_cost']);
     }
 
+    /**
+     * True for an affirmative yes/no answer, whatever way it was stored ('yes', 1, true, '1', 'true').
+     * Used for "Do you have experience providing care or support to Caribbean individuals,
+     * families, or communities?" — the single question behind the "Caribbean support experience"
+     * badge (cards + profile) and the Approach tab section.
+     */
+    public static function isYes($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        return in_array(strtolower(trim((string) $value)), ['yes', '1', 'true'], true);
+    }
+
+    /** Provider-written Caribbean experience description — only kept when the answer is yes. */
+    public static function caribbeanExperienceDetails($answer, $details): ?string
+    {
+        if (! self::isYes($answer)) {
+            return null;
+        }
+        $text = trim((string) $details);
+        return $text === '' ? null : $text;
+    }
+
+    /**
+     * Conflicting information to review before the profile is published
+     * (shown to the admin on the verification page).
+     * Currently checks: years of experience mentioned in the biography vs. the
+     * "Years of experience" answer (e.g. bio says "more than 20 years", answer is "11–15 years").
+     */
+    public function reviewFlags(Provider $p): array
+    {
+        $flags = [];
+
+        $range = $this->yearsBucketRange((string) $p->years_experience);
+        $bio = (string) $p->short_bio;
+
+        if ($range && $bio !== '') {
+            // Digits ("20") or words ("twenty", "twenty-five", "fifteen").
+            $number = '\d{1,2}|(?:twenty|thirty|forty|fifty)(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?'
+                . '|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|ten'
+                . '|one|two|three|four|five|six|seven|eight|nine';
+            $pattern = '/\b(over|more than|nearly|almost|about|around|approximately|close to)?\s*(' . $number . ')\s*(\+)?\s*(?:years?|yrs?)\b(?=[^.!?]{0,60}\b(?:experience|practi[cs]|work|career|field|clinical|serv|support|counsel|therap|walk))/i';
+
+            if (preg_match_all($pattern, $bio, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $m) {
+                    $qualifier = strtolower(trim($m[1] ?? ''));
+                    $years = $this->yearsNumber($m[2]);
+                    if ($years === null) {
+                        continue;
+                    }
+                    $plus = ! empty($m[3]);
+
+                    // "more than 20" / "20+" → at least 20; "nearly 20" → just under 20.
+                    $low = $years;
+                    $high = $years;
+                    if ($plus || in_array($qualifier, ['over', 'more than'], true)) {
+                        $high = INF;
+                    } elseif (in_array($qualifier, ['nearly', 'almost', 'close to'], true)) {
+                        $low = $years - 1;
+                    } elseif (in_array($qualifier, ['about', 'around', 'approximately'], true)) {
+                        $low = $years - 1;
+                        $high = $years + 1;
+                    }
+
+                    [$min, $max] = $range;
+                    if ($high < $min || $low > $max) {
+                        $flags[] = [
+                            'field'   => 'years_experience',
+                            'message' => sprintf(
+                                'The biography mentions "%s", but Years of experience is set to "%s". Please confirm which is correct before publishing.',
+                                trim($m[0]),
+                                $p->years_experience
+                            ),
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $flags;
+    }
+
+    /** "20" → 20, "twenty-five" → 25, "fifteen" → 15. */
+    private function yearsNumber(string $raw): ?float
+    {
+        $raw = strtolower(trim($raw));
+        if (is_numeric($raw)) {
+            return (float) $raw;
+        }
+        $units = [
+            'one' => 1,
+            'two' => 2,
+            'three' => 3,
+            'four' => 4,
+            'five' => 5,
+            'six' => 6,
+            'seven' => 7,
+            'eight' => 8,
+            'nine' => 9,
+            'ten' => 10,
+            'eleven' => 11,
+            'twelve' => 12,
+            'thirteen' => 13,
+            'fourteen' => 14,
+            'fifteen' => 15,
+            'sixteen' => 16,
+            'seventeen' => 17,
+            'eighteen' => 18,
+            'nineteen' => 19,
+        ];
+        $tens = ['twenty' => 20, 'thirty' => 30, 'forty' => 40, 'fifty' => 50];
+        $parts = preg_split('/[- ]/', $raw);
+        if (isset($tens[$parts[0]])) {
+            return (float) ($tens[$parts[0]] + (isset($parts[1]) ? ($units[$parts[1]] ?? 0) : 0));
+        }
+        return isset($units[$raw]) ? (float) $units[$raw] : null;
+    }
+
+    /** "11–15 years" → [11, 15], "20+ years" → [20, INF], "Less than 2 years" → [0, 1.99]. */
+    private function yearsBucketRange(string $bucket): ?array
+    {
+        $b = strtolower(trim($bucket));
+        if ($b === '') {
+            return null;
+        }
+        if (str_starts_with($b, 'less than') && preg_match('/(\d+)/', $b, $m)) {
+            return [0, (float) $m[1] - 0.01];
+        }
+        if (preg_match('/(\d+)\s*\+/', $b, $m)) {
+            return [(float) $m[1], INF];
+        }
+        if (preg_match('/(\d+)\s*[–-]\s*(\d+)/u', $b, $m)) {
+            return [(float) $m[1], (float) $m[2]];
+        }
+        return null;
+    }
+
     /* =====================================================================
      |  PUBLIC API
      * ===================================================================== */
@@ -238,12 +377,9 @@ class ProviderService extends BaseService
             'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
             'providerType' => $p->provider_type,
             'licenceVerified' => (bool) $p->licence_verified,
-            'caribbeanIdentity'   => $p->caribbean_identity ?: null,
-            'caribbeanExperience' => match (strtolower(trim((string) $p->caribbean_experience))) {
-                'yes', '1', 'true'  => 'Yes',
-                'no',  '0', 'false' => 'No',
-                default             => null,
-            },
+            // One question drives the "Caribbean support experience" badge and the Approach tab section.
+            'caribbeanExperience'        => self::isYes($p->caribbean_experience),
+            'caribbeanExperienceDetails' => self::caribbeanExperienceDetails($p->caribbean_experience, $p->caribbean_experience_details),
             'supportAreas'    => $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
                 'category' => $cat,
                 'areas'    => $rows->pluck('area')->filter()->values(),
@@ -265,6 +401,8 @@ class ProviderService extends BaseService
                 'social'  => $this->toArray($p->social_links),
             ],
             'fee'             => $p->fee_range ?: null,
+            'currency'        => $p->fee_currency ?: 'USD',
+            'reducedCostScope' => $p->reduced_cost_scope ?: null,
             'availability'    => $this->availabilityState($p),
             'availabilityConfirmedAt' => $p->availability_confirmed_at?->format('F j, Y'),
             'acceptingNewClients' => $this->availabilityState($p) === 'accepting'
@@ -532,7 +670,11 @@ class ProviderService extends BaseService
             'languages'   => array_slice($this->toArray($p->languages), 0, 3),
 
             // Payment (guide §4.2)
-            'insurances'   => array_slice($this->toList($p->insurance_plans), 0, 6),
+            // Insurance plans + Medicaid / Medicare / EAP — same list as the profile's "Insurance accepted".
+            'insurances'   => array_slice(array_values(array_unique(array_merge(
+                $this->toList($p->insurance_plans),
+                array_values(array_intersect($payments, array_diff(self::PAYMENT_GROUPS['insurance'], ['Insurance Accepted'])))
+            ))), 0, 6),
             'selfPay'      => in_array('Self-Pay', $payments, true),
             'slidingScale' => in_array('Sliding Scale', $payments, true),
             'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
@@ -547,7 +689,7 @@ class ProviderService extends BaseService
             'verified'     => true,
             'licenceVerified' => (bool) $p->licence_verified,
 
-            'caribbeanExperience' => (bool) $p->caribbean_experience,
+            'caribbeanExperience' => self::isYes($p->caribbean_experience),
         ];
     }
 
@@ -674,6 +816,7 @@ class ProviderService extends BaseService
                 'populations_served'   => $this->toArray($provider->populations_served),
                 'caribbean_identity'   => $provider->caribbean_identity,
                 'caribbean_experience' => $provider->caribbean_experience,
+                'caribbean_experience_details' => $provider->caribbean_experience_details ?? '',
                 'languages'            => $this->toArray($provider->languages),
                 'cultural_approach'    => $provider->cultural_approach,
                 'treatment_approaches' => $this->toArray($provider->treatment_approaches),
@@ -745,6 +888,12 @@ class ProviderService extends BaseService
         $data['reduced_cost_scope'] = self::hasReducedCost($request->input('payment_methods', []))
             && in_array($scope, self::REDUCED_COST_SCOPES, true) ? $scope : null;
         unset($data['fee_min'], $data['fee_max']);
+
+        // Caribbean experience description — kept only when the answer is yes.
+        $data['caribbean_experience_details'] = self::caribbeanExperienceDetails(
+            $request->input('caribbean_experience'),
+            $request->input('caribbean_experience_details')
+        );
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
         // Availability (guide §5) — stamp confirmation time so the 60-day
