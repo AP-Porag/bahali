@@ -34,30 +34,122 @@ class ProviderService extends BaseService
     /** Availability freshness window (guide §5.3). */
     private const AVAILABILITY_FRESH_DAYS = 60;
 
-    /** Fee currency symbols — keep in sync with resources/js/constants/fees.ts. */
+    /** Fee currency symbols (unambiguous: US$, JA$, TT$ …) — keep in sync with resources/js/constants/fees.ts. */
     private const CURRENCY_SYMBOLS = [
-        'USD' => '$',
-        'CAD' => '$',
-        'GBP' => '£',
-        'EUR' => '€',
-        'XCD' => '$',
-        'JMD' => '$',
-        'TTD' => '$',
-        'BBD' => '$',
-        'BSD' => '$',
-        'BZD' => '$',
-        'BMD' => '$',
-        'KYD' => '$',
-        'GYD' => '$',
-        'SRD' => '$',
-        'DOP' => '$',
-        'CUP' => '$',
-        'HTG' => 'G',
-        'ANG' => 'ƒ',
-        'AWG' => 'ƒ',
-        'CRC' => '₡',
-        'PAB' => 'B/.',
+        'USD' => 'US$', 'CAD' => 'CA$', 'GBP' => '£', 'EUR' => '€', 'XCD' => 'EC$', 'JMD' => 'JA$',
+        'TTD' => 'TT$', 'BBD' => 'Bds$', 'BSD' => 'B$', 'BZD' => 'BZ$', 'BMD' => 'BD$', 'KYD' => 'CI$',
+        'GYD' => 'G$', 'SRD' => 'SR$', 'DOP' => 'RD$', 'CUP' => 'CUP ', 'HTG' => 'HTG ', 'XCG' => 'Cg ',
+        'ANG' => 'NAƒ', 'AWG' => 'Afl. ', 'CRC' => '₡', 'PAB' => 'B/.',
     ];
+
+    /*
+     * Review workflow (client: initial screening → verification → final approval).
+     *   pending              = Submitted (new or resubmitted after edits)
+     *   needs_correction     = Returned to the provider with instructions
+     *   pending_verification = Passed screening, being verified — still unpublished
+     *   approved             = Verified + final approval → published
+     *   rejected / suspended / inactive as before
+     */
+    public const STATUS_NEEDS_CORRECTION     = 'needs_correction';
+    public const STATUS_PENDING_VERIFICATION = 'pending_verification';
+
+    /** Statuses still in review — all listed on the admin "Pending" page. */
+    public const IN_REVIEW_STATUSES = [
+        GlobalConstant::VERIFICATION_STATUS_PENDING,
+        self::STATUS_NEEDS_CORRECTION,
+        self::STATUS_PENDING_VERIFICATION,
+    ];
+
+    /** Initial-screening rejection criteria (the only valid reasons to reject). */
+    public const REJECTION_REASONS = [
+        'spam'         => 'Spam, scams, or unrelated advertising',
+        'out_of_scope' => "Services outside the directory's mental health, emotional wellness, or community support purpose",
+        'abusive'      => 'Hateful, threatening, or abusive content',
+        'harmful'      => 'Promotes harmful, coercive, or exploitative practices',
+        'fraudulent'   => 'Confirmed impersonation or fraudulent information',
+    ];
+
+    /** Service formats that mean clients visit the provider — the address must stay public. */
+    public const IN_PERSON_FORMATS = ['In-Person', 'Hybrid'];
+
+    /**
+     * Validation for the fields added after the original Store/UpdateProviderRequest
+     * (registration + provider edit). Called in the controller alongside the FormRequest.
+     */
+    public static function extraRules(): array
+    {
+        return [
+            'additional_locations'                  => ['nullable', 'array', 'max:10'],
+            'additional_locations.*.country'        => ['required', 'string', 'max:120'],
+            'additional_locations.*.state_province' => ['nullable', 'string', 'max:120'],
+            'additional_locations.*.city'           => ['nullable', 'string', 'max:120'],
+            'show_phone'                            => ['nullable', 'boolean'],
+            'contact_person_name'                   => ['nullable', 'required_unless:provider_type,individual', 'string', 'max:255'],
+            'contact_person_role'                   => ['nullable', 'string', 'max:255'],
+            'contact_person_email'                  => ['nullable', 'email', 'max:255'],
+            'caribbean_experience'                  => ['required', 'in:yes,no'],
+            'caribbean_experience_details'          => ['nullable', 'string', 'max:1500'],
+            'fee_currency'                          => ['nullable', 'string', 'size:3'],
+            'reduced_cost_scope'                    => ['nullable', 'in:this_service,other_offerings'],
+            'accessibility'                         => ['nullable', 'array'],
+        ];
+    }
+
+    /**
+     * Columns filled from the extra fields above (+ the rules the client gave):
+     * address can't be hidden for in-person care, contact person only for organizations,
+     * extra locations only when "multiple locations" is yes.
+     */
+    public static function extraColumns($request): array
+    {
+        $formats = (array) $request->input('service_formats', []);
+        $isOrg   = $request->input('provider_type') !== 'individual';
+        $multi   = $request->input('multiple_locations') === 'yes';
+
+        $locations = collect((array) $request->input('additional_locations', []))
+            ->map(fn($l) => [
+                'country'        => trim((string) ($l['country'] ?? '')),
+                'state_province' => trim((string) ($l['state_province'] ?? '')),
+                'city'           => trim((string) ($l['city'] ?? '')),
+            ])
+            ->filter(fn($l) => $l['country'] !== '')
+            ->unique(fn($l) => strtolower(implode('|', $l)))
+            ->take(10)
+            ->values()
+            ->all();
+
+        $columns = [
+            'additional_locations'         => $multi ? $locations : [],
+            'show_phone'                   => $request->has('show_phone') ? $request->boolean('show_phone') : true,
+            'contact_person_name'          => $isOrg ? (trim((string) $request->input('contact_person_name')) ?: null) : null,
+            'contact_person_role'          => $isOrg ? (trim((string) $request->input('contact_person_role')) ?: null) : null,
+            'contact_person_email'         => $isOrg ? (trim((string) $request->input('contact_person_email')) ?: null) : null,
+            'caribbean_experience'         => $request->input('caribbean_experience') === 'yes' ? 'yes' : 'no',
+            'caribbean_experience_details' => self::caribbeanExperienceDetails(
+                $request->input('caribbean_experience'),
+                $request->input('caribbean_experience_details')
+            ),
+            'accessibility'                => (array) $request->input('accessibility', []),
+        ];
+
+        if (array_intersect($formats, self::IN_PERSON_FORMATS)) {
+            $columns['hide_address'] = false;
+        }
+
+        return $columns;
+    }
+
+    /** "Kingston, Jamaica" style labels for the extra locations. */
+    private function locationLabels($locations): array
+    {
+        return collect($this->toArray($locations))
+            ->map(fn($l) => implode(', ', array_filter([
+                $l['city'] ?? null, $l['state_province'] ?? null, $l['country'] ?? null,
+            ])))
+            ->filter()
+            ->values()
+            ->all();
+    }
 
     /** Reduced-cost scope values (card wording: "for this service" / "for other offerings"). */
     public const REDUCED_COST_SCOPES = ['this_service', 'other_offerings'];
@@ -183,25 +275,9 @@ class ProviderService extends BaseService
             return (float) $raw;
         }
         $units = [
-            'one' => 1,
-            'two' => 2,
-            'three' => 3,
-            'four' => 4,
-            'five' => 5,
-            'six' => 6,
-            'seven' => 7,
-            'eight' => 8,
-            'nine' => 9,
-            'ten' => 10,
-            'eleven' => 11,
-            'twelve' => 12,
-            'thirteen' => 13,
-            'fourteen' => 14,
-            'fifteen' => 15,
-            'sixteen' => 16,
-            'seventeen' => 17,
-            'eighteen' => 18,
-            'nineteen' => 19,
+            'one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5, 'six' => 6, 'seven' => 7,
+            'eight' => 8, 'nine' => 9, 'ten' => 10, 'eleven' => 11, 'twelve' => 12, 'thirteen' => 13,
+            'fourteen' => 14, 'fifteen' => 15, 'sixteen' => 16, 'seventeen' => 17, 'eighteen' => 18, 'nineteen' => 19,
         ];
         $tens = ['twenty' => 20, 'thirty' => 30, 'forty' => 40, 'fifty' => 50];
         $parts = preg_split('/[- ]/', $raw);
@@ -367,7 +443,13 @@ class ProviderService extends BaseService
             'bio'             => $p->short_bio,
             'yearsExperience' => $p->years_experience,
             'location'        => $this->displayLocation($p),
+            // Street address only when public (in-person care can't hide it).
+            'address'         => (! $p->hide_address && $p->address) ? $p->address : null,
             'servesMultiple'  => (bool) $p->multiple_locations,
+            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations) : [],
+            'contactPerson'   => $p->provider_type !== 'individual' && $p->contact_person_name
+                ? ['name' => $p->contact_person_name, 'role' => $p->contact_person_role]
+                : null,
             'telehealthRegions' => $this->toArray($p->telehealth_regions),
             'sessionFormats' => $this->toArray($p->service_formats),
             'practiceSettings' => $this->toArray($p->practice_settings),
@@ -394,7 +476,8 @@ class ProviderService extends BaseService
                 'insurance' => $this->toArray($p->insurance_plans),
             ],
             'contact' => [
-                'phone'   => $p->phone,
+                // Provider chooses whether the phone number is public.
+                'phone'   => ($p->show_phone ?? true) ? $p->phone : null,
                 'email'   => $p->contact_email,
                 'website' => $p->website,
                 'booking' => $p->booking_url,
@@ -529,7 +612,9 @@ class ProviderService extends BaseService
             $query->where('lgbtq_affirming', $filters['lgbtq_affirming']);
         }
         if (! empty($filters['culturally_affirming'])) {
-            $query->where('culturally_affirming', $filters['culturally_affirming']);
+            // The old "culturally affirming" question was removed — this filter now means
+            // "Caribbean support experience" (same question as the badge).
+            $query->whereIn('caribbean_experience', ['yes', '1', 'true', 1]);
         }
 
         // 8) Availability
@@ -549,7 +634,9 @@ class ProviderService extends BaseService
                 $q2->where('country', $loc)
                     ->orWhere('state_province', $loc)
                     ->orWhere('city', $loc)
-                    ->orWhereJsonContains('telehealth_regions', $loc);
+                    ->orWhereJsonContains('telehealth_regions', $loc)
+                    // Extra locations (country / parish / city picked from the lists)
+                    ->orWhereRaw("JSON_SEARCH(additional_locations, 'one', ?) IS NOT NULL", [$loc]);
             });
 
             // ── Virtual filter (ANDed with geography) ──
@@ -565,7 +652,8 @@ class ProviderService extends BaseService
             $query->where(fn(Builder $q) => $q
                 ->where('state_province', $region)
                 ->orWhere('city', $region)
-                ->orWhereJsonContains('telehealth_regions', $region));
+                ->orWhereJsonContains('telehealth_regions', $region)
+                ->orWhereRaw("JSON_SEARCH(additional_locations, 'one', ?) IS NOT NULL", [$region]));
         }
     }
 
@@ -817,6 +905,11 @@ class ProviderService extends BaseService
                 'caribbean_identity'   => $provider->caribbean_identity,
                 'caribbean_experience' => $provider->caribbean_experience,
                 'caribbean_experience_details' => $provider->caribbean_experience_details ?? '',
+                'additional_locations' => $this->toArray($provider->additional_locations),
+                'show_phone'           => $provider->show_phone === null ? true : (bool) $provider->show_phone,
+                'contact_person_name'  => $provider->contact_person_name ?? '',
+                'contact_person_role'  => $provider->contact_person_role ?? '',
+                'contact_person_email' => $provider->contact_person_email ?? '',
                 'languages'            => $this->toArray($provider->languages),
                 'cultural_approach'    => $provider->cultural_approach,
                 'treatment_approaches' => $this->toArray($provider->treatment_approaches),
@@ -889,11 +982,8 @@ class ProviderService extends BaseService
             && in_array($scope, self::REDUCED_COST_SCOPES, true) ? $scope : null;
         unset($data['fee_min'], $data['fee_max']);
 
-        // Caribbean experience description — kept only when the answer is yes.
-        $data['caribbean_experience_details'] = self::caribbeanExperienceDetails(
-            $request->input('caribbean_experience'),
-            $request->input('caribbean_experience_details')
-        );
+        // New fields (locations, phone visibility, contact person, Caribbean question …).
+        $data = array_merge($data, self::extraColumns($request));
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
         // Availability (guide §5) — stamp confirmation time so the 60-day
@@ -1025,7 +1115,7 @@ class ProviderService extends BaseService
             ],
             'status' => [
                 'value'       => $status,
-                'label'       => ucfirst($status),
+                'label'       => ucfirst(str_replace('_', ' ', $status)),
                 'isPublic'    => $isPublic,
                 'description' => $this->statusDescription($status),
             ],
@@ -1048,8 +1138,10 @@ class ProviderService extends BaseService
     {
         return match ($status) {
             GlobalConstant::VERIFICATION_STATUS_APPROVED  => 'Your profile is approved and visible in the public directory.',
-            GlobalConstant::VERIFICATION_STATUS_PENDING   => 'Your profile is awaiting review. It will appear publicly once approved.',
-            GlobalConstant::VERIFICATION_STATUS_REJECTED  => 'Your profile needs changes before it can be published. Please review any notes and resubmit.',
+            GlobalConstant::VERIFICATION_STATUS_PENDING   => 'Your profile has been submitted and is awaiting an initial review. It will appear publicly once verified and approved.',
+            self::STATUS_NEEDS_CORRECTION                 => 'Bahali has asked for some changes. Check the instructions we emailed you, update your profile and resubmit.',
+            self::STATUS_PENDING_VERIFICATION             => 'Your profile passed the initial review and is being verified. It stays unpublished until verification and final approval are complete.',
+            GlobalConstant::VERIFICATION_STATUS_REJECTED  => 'Your profile was not accepted. Check the email we sent for the reason — you can reply to request reconsideration.',
             GlobalConstant::VERIFICATION_STATUS_SUSPENDED => 'Your listing is temporarily suspended. Contact Bahali for details.',
             GlobalConstant::VERIFICATION_STATUS_INACTIVE  => 'Your listing is inactive and not shown publicly.',
             default => 'Your profile status is being processed.',

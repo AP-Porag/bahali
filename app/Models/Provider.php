@@ -45,6 +45,7 @@ class Provider extends Model
         'languages',
         'languages_other',
         'cultural_approach',
+        'caribbean_experience_details',
 
         // Service
         'service_formats',

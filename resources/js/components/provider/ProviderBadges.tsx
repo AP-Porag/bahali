@@ -230,10 +230,15 @@ export function ProviderBadgeRow({ providerType, licenceVerified, caribbeanExper
 /*  Fees & populations — same wording on cards, header, tabs, sidebar  */
 /* ------------------------------------------------------------------ */
 
-/* Fee with currency beside it (e.g. "$100–$150 / session" → "$100–$150 USD / session") */
+/*
+ * Fee as shown on cards and profiles. New fees are saved with an unambiguous symbol
+ * ("JA$5,000–JA$8,000 / session", "US$100 …", "£80 …") and are shown as they are.
+ * Older fees saved with a bare "$" get the currency code added ("$100–$150 USD / session").
+ */
 export function feeWithCurrency(fee: string | null | undefined = '', currency: string = 'USD'): string {
     if (!fee) return '';
-    if (/\b[A-Z]{3}\b/.test(fee)) return fee; // currency code already present
+    if (/\b[A-Z]{3}\b/.test(fee)) return fee;           // currency code already present
+    if (!/(^|[^A-Za-z])\$/.test(fee)) return fee;        // symbol already says which currency (US$, JA$, £, €)
     return /\s\/\s/.test(fee) ? fee.replace(/\s\/\s/, ` ${currency} / `) : `${fee} ${currency}`;
 }
 

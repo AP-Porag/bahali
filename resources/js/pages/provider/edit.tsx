@@ -6,7 +6,11 @@ import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import PhoneInput from '@/components/PhoneInput';
 import { phoneError } from '@/lib/phone';
-import { CURRENCY_OPTIONS, REDUCED_COST_SCOPES, ReducedCostScope, currencySymbol, feePreview, hasReducedCost } from '@/constants/fees';
+import { CURRENCY_OPTIONS, REDUCED_COST_SCOPES, ReducedCostScope, currencyForCountry, currencySymbol, feePreview, hasReducedCost } from '@/constants/fees';
+import {
+    LocationSection, locationPayload, serviceFormatFlags, validateLocationStep,
+    type LocationValues, type ProviderLocation,
+} from '@/components/provider/LocationSection';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -15,7 +19,6 @@ type ProviderType =
     | 'individual' | 'organization' | 'support_group' | 'faith_based' | 'community_program';
 type LicenseStatus = 'active' | 'provisional' | 'not_applicable';
 type YesNo = 'yes' | 'no';
-type CaribbeanIdentity = 'yes' | 'no' | 'prefer_not';
 
 interface ProviderFormData {
     provider_type: ProviderType | '';
@@ -39,11 +42,9 @@ interface ProviderFormData {
     specialized_training: string[];
     specialized_training_other: string;
     certifications: string[];
-    caribbean_identity: CaribbeanIdentity | '';
-    caribbean_experience: YesNo | '';
+    caribbean_experience: YesNo | '';         // "Yes" / "Not yet" (stored as yes / no)
     caribbean_experience_details: string;
     lgbtq_affirming: YesNo | '';
-    culturally_affirming: YesNo | '';
     languages: string[];
     languages_other: string;
     cultural_approach: string;
@@ -55,6 +56,7 @@ interface ProviderFormData {
     state_province: string;
     country: string;
     multiple_locations: YesNo | '';
+    additional_locations: ProviderLocation[];
     hide_address: boolean;
     telehealth_regions: string[];
     telehealth_regions_other: string;
@@ -64,7 +66,11 @@ interface ProviderFormData {
     fee_max: string;
     fee_currency: string;
     reduced_cost_scope: ReducedCostScope;
+    contact_person_name: string;     // organizations only
+    contact_person_role: string;
+    contact_person_email: string;
     phone: string;
+    show_phone: boolean;
     website: string;
     social_links: string;
     profile_photo: File | null;
@@ -141,12 +147,13 @@ const FIELD_STEP: Record<string, number> = {
     areas_of_support: 3, areas_of_support_other: 3,
     populations_served: 4,
     treatment_approaches: 5, treatment_approaches_other: 5, specialized_training: 5, specialized_training_other: 5, certifications: 5,
-    caribbean_identity: 6, caribbean_experience: 6, caribbean_experience_details: 6, lgbtq_affirming: 6, culturally_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
+    caribbean_experience: 6, caribbean_experience_details: 6, lgbtq_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
     service_formats: 7, practice_settings: 7, practice_settings_other: 7,
-    address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
+    address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, additional_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
     payment_methods: 9, insurance_plans: 9,
     fee_min: 10, fee_max: 10, fee_currency: 10, reduced_cost_scope: 10,
-    phone: 11, website: 11, social_links: 11,
+    contact_person_name: 11, contact_person_role: 11, contact_person_email: 11,
+    phone: 11, show_phone: 11, website: 11, social_links: 11,
     profile_photo: 12, additional_photos: 12,
     accessibility: 13, accessibility_other: 13,
     accepting_new_clients: 14,
@@ -157,6 +164,7 @@ const FIELD_STEP: Record<string, number> = {
 /* ------------------------------------------------------------------ */
 const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim());
+const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 
 /* ---- parse a stored fee_range string back into min/max ---- */
 const parseFeeRange = (raw?: string): { min: string; max: string } => {
@@ -231,7 +239,8 @@ function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { val
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">{prefix}</span>
             <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
-                className={`w-full rounded-lg border bg-white py-2.5 ${prefix.length > 1 ? 'pl-10' : 'pl-7'} pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                style={{ paddingLeft: `${1.25 + prefix.trim().length * 0.5}rem` }}
+                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
         </div>
     );
 }
@@ -448,11 +457,9 @@ export default function ProviderProfileEdit({
             specialized_training: st.values,
             specialized_training_other: st.otherText,
             certifications: arr('certifications'),
-            caribbean_identity: (p.caribbean_identity as CaribbeanIdentity) || '',
             caribbean_experience: (p.caribbean_experience as YesNo) || '',
             caribbean_experience_details: (p.caribbean_experience_details as string) || '',
             lgbtq_affirming: (p.lgbtq_affirming as YesNo) || '',
-            culturally_affirming: (p.culturally_affirming as YesNo) || '',
             languages: lang.values,
             languages_other: lang.otherText,
             cultural_approach: (p.cultural_approach as string) || '',
@@ -464,6 +471,8 @@ export default function ProviderProfileEdit({
             state_province: (p.state_province as string) || '',
             country: (p.country as string) || '',
             multiple_locations: (p.multiple_locations as YesNo) || '',
+            additional_locations: (Array.isArray(p.additional_locations) ? (p.additional_locations as Partial<ProviderLocation>[]) : [])
+                .map((l) => ({ country: l.country || '', state_province: l.state_province || '', city: l.city || '' })),
             hide_address: !!p.hide_address,
             telehealth_regions: tr.values,
             telehealth_regions_other: tr.otherText,
@@ -473,7 +482,11 @@ export default function ProviderProfileEdit({
             fee_max: fee.max,
             fee_currency: (p.fee_currency as string) || 'USD',
             reduced_cost_scope: (p.reduced_cost_scope as ReducedCostScope) || '',
+            contact_person_name: (p.contact_person_name as string) || '',
+            contact_person_role: (p.contact_person_role as string) || '',
+            contact_person_email: (p.contact_person_email as string) || '',
             phone: (p.phone as string) || '',
+            show_phone: p.show_phone === undefined || p.show_phone === null ? true : !!p.show_phone,
             website: (p.website as string) || '',
             social_links: (p.social_links as string) || '',
             profile_photo: null,
@@ -506,6 +519,19 @@ export default function ProviderProfileEdit({
         set(key, next as ProviderFormData[typeof key]);
     };
     const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    /* ---- Address visibility follows the service formats --------------
+       In-person / hybrid care → address can't be hidden.
+       Virtual care only → hidden automatically when formats change (provider can switch it back on). */
+    const formatsKey = d.service_formats.join('|');
+    const prevFormatsKey = useRef(formatsKey);
+    useEffect(() => {
+        const { hasInPerson, virtualOnly } = serviceFormatFlags(d.service_formats);
+        if (hasInPerson && d.hide_address) set('hide_address', false);
+        else if (formatsKey !== prevFormatsKey.current && virtualOnly && !d.hide_address) set('hide_address', true);
+        prevFormatsKey.current = formatsKey;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formatsKey]);
 
     /* ---- Validation ----------------------------------------------- */
     const validateStep = (s: number, d: ProviderFormData): FormErrors => {
@@ -549,11 +575,9 @@ export default function ProviderProfileEdit({
                 if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim()) e.specialized_training_other = 'Please specify your other training.';
                 break;
             case 6:
-                if (!d.caribbean_identity) e.caribbean_identity = 'Please answer so the directory reflects you accurately.';
-                if (!d.caribbean_experience) e.caribbean_experience = 'Please let us know about your experience.';
+                if (!d.caribbean_experience) e.caribbean_experience = 'Please choose Yes or Not yet.';
                 if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150) e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
                 if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';
-                if (!d.culturally_affirming) e.culturally_affirming = 'Please answer so people can find the right support.';
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
                 if (d.languages.includes('Other') && !d.languages_other.trim()) e.languages_other = 'Please specify the other language(s).';
                 if (d.cultural_approach && wordCount(d.cultural_approach) > 250) e.cultural_approach = 'Please keep this to 250 words or fewer.';
@@ -563,11 +587,8 @@ export default function ProviderProfileEdit({
                 if (d.practice_settings.length === 0) e.practice_settings = 'Select at least one practice setting.';
                 break;
             case 8: {
-                if (!d.address.trim()) e.address = 'Address is required.';
-                if (!d.city.trim()) e.city = 'City is required.';
-                if (!d.state_province) e.state_province = 'State / Province is required.';
-                if (!d.country) e.country = 'Country is required.';
-                if (!d.multiple_locations) e.multiple_locations = 'Please let us know if you serve multiple locations.';
+                // Country → only that country's cities / parishes; extra locations follow the same rules.
+                Object.assign(e, validateLocationStep(countries, d as LocationValues));
                 const hasOther = d.telehealth_regions.includes('__other__');
                 const hasSel = d.telehealth_regions.length > 0 && !(d.telehealth_regions.length === 1 && hasOther);
                 if (!hasSel && !(hasOther && d.telehealth_regions_other.trim())) e.telehealth_regions = 'Select at least one telehealth region or specify "Other".';
@@ -589,6 +610,11 @@ export default function ProviderProfileEdit({
                 break;
             }
             case 11: {
+                if (d.provider_type && d.provider_type !== 'individual') {
+                    if (!d.contact_person_name.trim()) e.contact_person_name = 'Please name the contact person for this organization.';
+                    if (d.contact_person_email.trim() && !isEmail(d.contact_person_email))
+                        e.contact_person_email = 'Please enter a valid email address.';
+                }
                 if (!d.phone.trim()) e.phone = 'Phone number is required.';
                 else {
                     const pe = phoneError(d.phone);
@@ -601,10 +627,8 @@ export default function ProviderProfileEdit({
                 if (!d.profile_photo && !existingProfilePhoto) e.profile_photo = 'A professional photo or organization logo is required.';
                 break;
             case 13: {
-                const hasOther = d.accessibility.includes('__other__');
-                const hasSel = d.accessibility.length > 0 && !(d.accessibility.length === 1 && hasOther);
-                if (!hasSel && !(hasOther && d.accessibility_other.trim())) e.accessibility = 'Select at least one option, or specify an "Other" accommodation.';
-                if (hasOther && !d.accessibility_other.trim()) e.accessibility_other = 'Please describe the other accommodation.';
+                // Optional for everyone (and can be skipped entirely for virtual-only care).
+                if (d.accessibility.includes('__other__') && !d.accessibility_other.trim()) e.accessibility_other = 'Please describe the other accommodation, or untick "Other".';
                 break;
             }
             case 14:
@@ -654,8 +678,10 @@ export default function ProviderProfileEdit({
             for (const [category, custom] of Object.entries(customSupportAreas)) {
                 if (custom.checked && custom.text.trim() !== '') finalAreas.push(`${category}|${custom.text.trim()}`);
             }
+            const isOrg = data.provider_type !== 'individual';
             return {
                 ...data,
+                ...locationPayload(countries, data as LocationValues),
                 areas_of_support: finalAreas,
                 professional_title: mergeOther(data.professional_title, 'Other (specify)', data.professional_title_other),
                 languages: mergeOther(data.languages, 'Other', data.languages_other),
@@ -673,6 +699,10 @@ export default function ProviderProfileEdit({
                 fee_currency: data.fee_currency || 'USD',
                 reduced_cost_scope: hasReducedCost(data.payment_methods) ? data.reduced_cost_scope : '',
                 caribbean_experience_details: data.caribbean_experience === 'yes' ? data.caribbean_experience_details.trim() : '',
+                contact_person_name: isOrg ? data.contact_person_name.trim() : '',
+                contact_person_role: isOrg ? data.contact_person_role.trim() : '',
+                contact_person_email: isOrg ? data.contact_person_email.trim() : '',
+                show_phone: data.show_phone ? 1 : 0,
             } as unknown as ProviderFormData;
         });
 
@@ -836,10 +866,20 @@ function StepBody({
     keptPhotos: { path: string; url: string }[];
     onRemoveKept: (path: string) => void;
 }) {
-    const selectedCountry = countries.find(c => c.name === d.country);
-    const availableRegions = selectedCountry?.regions ?? [];
-    const regionTypeLabel = selectedCountry?.regions[0]?.regionTypeLabel || 'State / Province';
     const [openCat, setOpenCat] = useState<string>(AREAS_OF_SUPPORT_GROUPS[0]?.category ?? '');
+    const { virtualOnly } = serviceFormatFlags(d.service_formats);
+    const isOrg = !!d.provider_type && d.provider_type !== 'individual';
+
+    // Location step → form fields. Picking a country also loads its currency for the fee step.
+    const onLocationChange = (patch: Partial<LocationValues>) => {
+        (Object.keys(patch) as (keyof LocationValues)[]).forEach((k) => {
+            set(k as FieldName, patch[k] as never);
+        });
+        if (patch.country !== undefined && patch.country !== d.country) {
+            const currency = currencyForCountry(patch.country);
+            if (currency) set('fee_currency', currency);
+        }
+    };
 
     switch (step) {
         case 0:
@@ -976,11 +1016,8 @@ function StepBody({
         case 6:
             return (
                 <>
-                    <FieldShell label="Do you identify as part of the Caribbean community?" required hint="Your answer is not shown on your public profile." error={fieldError('caribbean_identity')}>
-                        <RadioRow value={d.caribbean_identity} onChange={(v) => set('caribbean_identity', v as CaribbeanIdentity)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }, { value: 'prefer_not', label: 'Prefer not to say' }]} />
-                    </FieldShell>
-                    <FieldShell label="Do you have experience providing care or support to Caribbean individuals, families, or communities?" required hint='Providers who answer "Yes" show a "Caribbean support experience" badge on their search result card and profile. This is provider-reported and separate from credential verification.' error={fieldError('caribbean_experience')}>
-                        <RadioRow value={d.caribbean_experience} onChange={(v) => set('caribbean_experience', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
+                    <FieldShell label="Do you have experience supporting Caribbean individuals, families, or communities?" required hint="Providers from all backgrounds are welcome. Your response helps people find providers with experience supporting Caribbean individuals, families, and communities, both in the Caribbean and abroad." error={fieldError('caribbean_experience')}>
+                        <RadioRow value={d.caribbean_experience} onChange={(v) => set('caribbean_experience', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'Not yet' }]} />
                     </FieldShell>
                     {d.caribbean_experience === 'yes' && (
                         <FieldShell label="Describe your experience (optional)" hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)' error={fieldError('caribbean_experience_details')}>
@@ -990,9 +1027,6 @@ function StepBody({
                     )}
                     <FieldShell label="Do you offer LGBTQIA+ affirming care?" required hint="This helps people find providers who understand and support their identity." error={fieldError('lgbtq_affirming')}>
                         <RadioRow value={d.lgbtq_affirming} onChange={(v) => set('lgbtq_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
-                    </FieldShell>
-                    <FieldShell label="Do you offer culturally affirming care (Caribbean-informed)?" required hint="This means integrating Caribbean cultural context, family dynamics, and community experience into your care." error={fieldError('culturally_affirming')}>
-                        <RadioRow value={d.culturally_affirming} onChange={(v) => set('culturally_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
                     </FieldShell>
                     <FieldShell label="Languages spoken" required hint="Select all that apply." error={fieldError('languages')}>
                         <CheckGrid options={LANGUAGES} selected={d.languages} onToggle={(v) => toggle('languages', v)} columns={2} />
@@ -1025,30 +1059,20 @@ function StepBody({
         case 8:
             return (
                 <>
-                    <FieldShell label="Address" required error={fieldError('address')}>
-                        <TextInput value={d.address} onChange={(v) => set('address', v)} error={!!fieldError('address')} placeholder="Street address" />
-                    </FieldShell>
-                    <ConsentItem checked={d.hide_address} onChange={(v) => set('hide_address', v)}>Hide the address from public view</ConsentItem>
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <FieldShell label="City" required error={fieldError('city')}>
-                            <TextInput value={d.city} onChange={(v) => set('city', v)} error={!!fieldError('city')} placeholder="City" />
-                        </FieldShell>
-                        <FieldShell label="Country" required error={fieldError('country')}>
-                            <SearchableSelect value={d.country} onChange={(v) => { set('country', v); set('state_province', ''); }} options={countries.map(c => ({ value: c.name, label: c.name }))} error={!!fieldError('country')} placeholder="Select country…" searchPlaceholder="Search countries…" />
-                        </FieldShell>
-                    </div>
-                    <FieldShell label={regionTypeLabel} required error={fieldError('state_province')} hint={!d.country ? 'Please select a country first' : undefined}>
-                        {d.country && availableRegions.length > 0 ? (
-                            <SearchableSelect value={d.state_province} onChange={(v) => set('state_province', v)} options={availableRegions.map(r => ({ value: r.name, label: r.name }))} error={!!fieldError('state_province')} placeholder={`Select ${regionTypeLabel.toLowerCase()}…`} searchPlaceholder={`Search ${regionTypeLabel.toLowerCase()}…`} />
-                        ) : d.country && availableRegions.length === 0 ? (
-                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">No regions available for this country</div>
-                        ) : (
-                            <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">Select a country to see available regions</div>
-                        )}
-                    </FieldShell>
-                    <FieldShell label="Do you provide services across multiple locations?" required error={fieldError('multiple_locations')}>
-                        <RadioRow value={d.multiple_locations} onChange={(v) => set('multiple_locations', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
-                    </FieldShell>
+                    <LocationSection
+                        ui={{ FieldShell, TextInput, SearchableSelect, RadioRow, ConsentItem }}
+                        countries={countries}
+                        value={d as LocationValues}
+                        onChange={onLocationChange}
+                        errors={{
+                            address: fieldError('address'),
+                            country: fieldError('country'),
+                            state_province: fieldError('state_province'),
+                            city: fieldError('city'),
+                            multiple_locations: fieldError('multiple_locations'),
+                            additional_locations: fieldError('additional_locations'),
+                        }}
+                    />
                     <FieldShell label="Telehealth regions served" hint="Optional. Select every region where you can offer telehealth." error={fieldError('telehealth_regions')}>
                         <CheckGrid options={REGIONS} selected={d.telehealth_regions} onToggle={(v) => toggle('telehealth_regions', v)} columns={2} />
                         <OtherCheckboxField checked={d.telehealth_regions.includes('__other__')} text={d.telehealth_regions_other}
@@ -1073,7 +1097,7 @@ function StepBody({
                 <>
                     <FieldShell
                         label="Session fee range"
-                        hint="Optional. Shown on your public card and profile as, for example, “$100–$150 USD / session”. Leave blank if you'd rather not display a fee."
+                        hint="Optional. The currency is set from the country you chose on the Location step — change it if you charge in another currency. Shown on your public card and profile as, for example, “JA$5,000–JA$8,000 / session”. Leave blank if you'd rather not display a fee."
                         error={fieldError('fee_min') || fieldError('fee_max')}
                     >
                         <div className="grid gap-4 sm:grid-cols-3">
@@ -1117,6 +1141,25 @@ function StepBody({
         case 11:
             return (
                 <>
+                    {isOrg && (
+                        <div className="space-y-4 rounded-xl border border-[#E7E0D2] bg-[#FBF8F2] p-4 sm:p-5">
+                            <div>
+                                <p className="text-sm font-semibold text-[#16302F]">Contact person</p>
+                                <p className="mt-0.5 text-xs text-[#6B7A78]">Organizations need a named person Bahali and visitors can reach about this listing.</p>
+                            </div>
+                            <FieldShell label="Full name" required error={fieldError('contact_person_name')}>
+                                <TextInput value={d.contact_person_name} onChange={(v) => set('contact_person_name', v)} error={!!fieldError('contact_person_name')} placeholder="e.g. Rev. Marcia Brown" />
+                            </FieldShell>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <FieldShell label="Role / title" hint="Optional." error={fieldError('contact_person_role')}>
+                                    <TextInput value={d.contact_person_role} onChange={(v) => set('contact_person_role', v)} placeholder="e.g. Pastoral Care Coordinator" />
+                                </FieldShell>
+                                <FieldShell label="Email" hint="Optional. Only Bahali sees this." error={fieldError('contact_person_email')}>
+                                    <TextInput value={d.contact_person_email} onChange={(v) => set('contact_person_email', v)} error={!!fieldError('contact_person_email')} type="email" placeholder="name@organization.org" />
+                                </FieldShell>
+                            </div>
+                        </div>
+                    )}
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
                         <PhoneInput
                             value={d.phone}
@@ -1125,6 +1168,10 @@ function StepBody({
                             defaultCountry={d.country}
                         />
                     </FieldShell>
+                    <div>
+                        <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>Show my phone number on my public profile</ConsentItem>
+                        <p className="mt-1.5 text-xs text-[#6B7A78]">Untick to keep your number private. Bahali will still use it to contact you about your listing.</p>
+                    </div>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
                         <TextInput value={d.website} onChange={(v) => set('website', v)} error={!!fieldError('website')} placeholder="yourpractice.com" />
                     </FieldShell>
@@ -1165,7 +1212,7 @@ function StepBody({
             );
         case 13:
             return (
-                <FieldShell label="Accessibility" required hint='Select all that apply. If you need an option not listed, check "Other".' error={fieldError('accessibility')}>
+                <FieldShell label="Accessibility" hint={virtualOnly ? 'Optional. You offer virtual care only, so you can skip this section.' : 'Optional. Select all that apply. If you need an option not listed, check "Other".'} error={fieldError('accessibility')}>
                     <CheckGrid options={ACCESSIBILITY_OPTIONS} selected={d.accessibility} onToggle={(v) => toggle('accessibility', v)} columns={2} />
                     <OtherCheckboxField checked={d.accessibility.includes('__other__')} text={d.accessibility_other}
                         onToggle={() => { const o = '__other__'; set('accessibility', d.accessibility.includes(o) ? d.accessibility.filter(v => v !== o) : [...d.accessibility, o]); }}

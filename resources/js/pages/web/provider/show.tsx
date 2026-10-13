@@ -51,6 +51,9 @@ interface PublicProvider {
     bio?: string | null;
     yearsExperience?: string | null;
     location?: string | null;
+    address?: string | null;              // only sent when the provider shows it (always for in-person care)
+    additionalLocations?: string[];       // "Kingston, Jamaica" …
+    contactPerson?: { name: string; role?: string | null } | null; // organizations
     servesMultiple?: boolean;
     telehealthRegions?: string[];
     sessionFormats?: string[];
@@ -301,10 +304,23 @@ function CrisisNote() {
     );
 }
 
+/* Named contact person for organizations, e.g. "Contact person: Rev. Marcia Brown · Pastoral Care Coordinator". */
+function ContactPersonLine({ provider }: { provider: PublicProvider }) {
+    const cp = provider.contactPerson;
+    if (!cp?.name) return null;
+    return (
+        <p className="mt-1 text-sm text-[#3A4B49]">
+            <span className="text-[#6B7A78]">Contact person:</span> <span className="font-medium">{cp.name}</span>
+            {cp.role && <span className="text-[#6B7A78]"> · {cp.role}</span>}
+        </p>
+    );
+}
+
 function ContactPanel({ provider, name }: { provider: PublicProvider; name: string }) {
     return (
         <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
             <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+            <ContactPersonLine provider={provider} />
             <p className="mt-1 text-[13px] leading-relaxed text-[#5B6B6E]">Bahali does not manage appointments or communications between you and the provider.</p>
             <div className="mt-3">
                 <ContactActions provider={provider} />
@@ -322,6 +338,7 @@ function ContactModal({ open, onClose, provider, name }: { open: boolean; onClos
                 <div className="flex items-start justify-between gap-3 border-b border-[#EFEAE0] p-5">
                     <div className="min-w-0">
                         <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+                        <ContactPersonLine provider={provider} />
                         <p className="mt-1 text-sm text-[#5B6B6E]">Reach the provider directly. Bahali does not manage appointments or communications between you and the provider.</p>
                     </div>
                     <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg></button>
@@ -632,7 +649,12 @@ export default function ProviderProfile({ provider }: { provider: PublicProvider
                             {credentialLine && <p className="mt-1 break-words text-[#5B6B6E]">{credentialLine}</p>}
 
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">
-                                {p.location && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.pin} /></span>{p.location}</span>}
+                                {(p.address || p.location) && (
+                                    <span className="inline-flex items-start gap-1.5">
+                                        <span className="mt-0.5 text-[#0E7C7B]"><Icon d={Ico.pin} /></span>
+                                        <span>{[p.address, p.location].filter(Boolean).join(', ')}</span>
+                                    </span>
+                                )}
                                 {has(p.sessionFormats) && (
                                     <span className="inline-flex items-center gap-1.5">
                                         <span className="text-[#0E7C7B]">
@@ -642,6 +664,11 @@ export default function ProviderProfile({ provider }: { provider: PublicProvider
                                     </span>
                                 )}
                             </div>
+                            {has(p.additionalLocations) && (
+                                <p className="mt-1.5 text-sm text-[#3A4B49]">
+                                    <span className="text-[#6B7A78]">Also serves:</span> {p.additionalLocations.join(' · ')}
+                                </p>
+                            )}
                             {has(p.languages) && (
                                 <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]">
                                     <span className="text-[#0E7C7B]"><Icon d={Ico.chat} /></span>

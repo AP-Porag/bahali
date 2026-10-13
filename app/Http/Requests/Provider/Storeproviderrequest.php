@@ -77,14 +77,15 @@ class StoreProviderRequest extends FormRequest
             'certifications.*' => ['string', 'max:255'],
 
             // Step 7 — Cultural & Language
-            'caribbean_identity' => ['required', Rule::in(['yes', 'no', 'prefer_not'])],
+            // Section 8 now has one question ("Yes" / "Not yet"); the identity question was removed.
+            'caribbean_identity' => ['nullable', Rule::in(['yes', 'no', 'prefer_not'])],
             'caribbean_experience' => ['required', Rule::in(['yes', 'no'])],
             'languages' => ['required', 'array', 'min:1'],
             'languages.*' => ['string', 'max:255'],
             'languages_other' => ['nullable', 'string', 'max:255'],
             'cultural_approach' => ['nullable', 'string', 'max:2500'],
             'lgbtq_affirming'       => ['required', 'in:yes,no'],           // ← NEW
-            'culturally_affirming'  => ['required', 'in:yes,no'],           // ← NEW
+            'culturally_affirming'  => ['nullable', 'in:yes,no'],           // question removed (Section 8)
 
             // Step 8 — Service Information
             'service_formats' => ['required', 'array', 'min:1'],
@@ -95,8 +96,10 @@ class StoreProviderRequest extends FormRequest
 
             // Step 9 — Location
             'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:120'],
-            'state_province' => ['required', 'string', 'max:120'],
+            // City / parish come from the selected country's list; city is only filled for
+            // countries with a second level (e.g. UK) or with no list at all.
+            'city' => ['nullable', 'string', 'max:120'],
+            'state_province' => ['nullable', 'string', 'max:120'],
             'country' => ['required', 'string', 'max:120'],
             'multiple_locations' => ['required', Rule::in(['yes', 'no'])],
             'hide_address' => ['boolean'],
@@ -122,7 +125,7 @@ class StoreProviderRequest extends FormRequest
             'additional_photos.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
 
             // Step 13 — Accessibility
-            'accessibility' => ['required', 'array', 'min:1'],
+            'accessibility' => ['nullable', 'array'],   // optional (not needed for virtual-only care)
             'accessibility.*' => ['string', 'max:255'],
             'accessibility_other' => ['nullable', 'string', 'max:255'], // ✅ added
 

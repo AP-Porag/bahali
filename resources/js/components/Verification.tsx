@@ -69,6 +69,7 @@ interface ProviderData {
     state_province?: string;
     country?: string;
     multiple_locations?: string;
+    additional_locations?: { country?: string; state_province?: string; city?: string }[];
     hide_address?: boolean;
     telehealth_regions?: string[];
     telehealth_regions_other?: string;
@@ -77,7 +78,11 @@ interface ProviderData {
     insurance_plans?: string;
     fee_range?: string | null;
     // Contact
+    contact_person_name?: string | null;
+    contact_person_role?: string | null;
+    contact_person_email?: string | null;
     phone?: string;
+    show_phone?: boolean;
     website?: string;
     social_links?: string;
     // Media
@@ -96,6 +101,8 @@ interface ProviderData {
     // Review meta (optional)
     submitted_at?: string;
     verification_note?: string;
+    review_note?: string | null;
+    review_reason?: string | null;
     licence_verified?: boolean | number | null;
 }
 /* Conflicting information found by ProviderService::reviewFlags() — check before publishing. */
@@ -105,6 +112,7 @@ interface ReviewFlag {
 }
 interface PageProps {
     provider?: ProviderData;
+    rejectionReasons?: Record<string, string>;
     reviewFlags?: ReviewFlag[];
     indexRoute?: string; // route name to return to (default admin.providers.index)
 }
@@ -223,44 +231,116 @@ const FLAG_FIELDS: Record<string, string[]> = {
     short_bio: ['years_experience', 'short_bio'],
 };
 const DECISION_STEP = TOTAL_STEPS - 1;
+/* Review workflow: Submitted → Needs correction / Pending verification / Rejected → Approved (published). */
+const STATUS = {
+    PENDING: 'pending',
+    NEEDS_CORRECTION: 'needs_correction',
+    PENDING_VERIFICATION: 'pending_verification',
+    APPROVED: VERIFICATION_STATUS.APPROVED,
+    REJECTED: VERIFICATION_STATUS.REJECTED,
+    SUSPENDED: VERIFICATION_STATUS.SUSPENDED,
+    INACTIVE: VERIFICATION_STATUS.INACTIVE,
+} as const;
 const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
-    pending: { label: 'Pending', cls: 'bg-[#E8B84B]/18 text-[#9A6B12] ring-[#E8B84B]/40', dot: 'bg-[#E8B84B]' },
+    pending: { label: 'Submitted', cls: 'bg-[#E8B84B]/18 text-[#9A6B12] ring-[#E8B84B]/40', dot: 'bg-[#E8B84B]' },
+    needs_correction: { label: 'Needs correction', cls: 'bg-[#D97A2B]/14 text-[#9A5418] ring-[#D97A2B]/30', dot: 'bg-[#D97A2B]' },
+    pending_verification: { label: 'Pending verification', cls: 'bg-[#3B6FA8]/12 text-[#2F5C8F] ring-[#3B6FA8]/25', dot: 'bg-[#3B6FA8]' },
     approved: { label: 'Approved', cls: 'bg-[#0E7C7B]/12 text-[#0E6B6A] ring-[#0E7C7B]/25', dot: 'bg-[#0E7C7B]' },
     rejected: { label: 'Rejected', cls: 'bg-[#C2543B]/12 text-[#A8412B] ring-[#C2543B]/25', dot: 'bg-[#C2543B]' },
     suspended: { label: 'Suspended', cls: 'bg-[#B86B2B]/14 text-[#9A5418] ring-[#B86B2B]/30', dot: 'bg-[#B86B2B]' },
     inactive: { label: 'Inactive', cls: 'bg-[#8A9795]/15 text-[#5B6B6E] ring-[#8A9795]/30', dot: 'bg-[#8A9795]' },
 };
-/* The four decision actions (no "pending" — that's the incoming state). */
-const DECISION_ACTIONS: { value: string; label: string; cls: string; ring: string; icon: JSX.Element }[] = [
-    {
-        value: VERIFICATION_STATUS.APPROVED,
-        label: 'Approve',
+const statusLabel = (s?: string) => (s ? STATUS_META[s]?.label ?? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : 'Submitted');
+
+interface DecisionAction {
+    value: string;
+    label: string;
+    help: string;
+    cls: string;
+    ring: string;
+    icon: JSX.Element;
+    needsNote?: boolean;   // instructions / reason are sent to the provider
+    needsReason?: boolean; // one of the rejection criteria must be chosen
+}
+const ACTIONS: Record<string, DecisionAction> = {
+    [STATUS.PENDING_VERIFICATION]: {
+        value: STATUS.PENDING_VERIFICATION,
+        label: 'Proceed to verification',
+        help: 'Sufficiently complete, describes relevant services, no clear content concerns. Stays unpublished.',
+        cls: 'bg-[#3B6FA8] hover:bg-[#335f90]',
+        ring: 'focus:ring-[#3B6FA8]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />,
+    },
+    [STATUS.NEEDS_CORRECTION]: {
+        value: STATUS.NEEDS_CORRECTION,
+        label: 'Return for correction',
+        help: 'Required information missing, role or services unclear, or unsupported claims (e.g. guaranteed results).',
+        cls: 'bg-[#D97A2B] hover:bg-[#c06a22]',
+        ring: 'focus:ring-[#D97A2B]/30',
+        icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />,
+        needsNote: true,
+    },
+    [STATUS.APPROVED]: {
+        value: STATUS.APPROVED,
+        label: 'Approve & publish',
+        help: 'Verification and final approval complete — the profile goes live.',
         cls: 'bg-[#0E7C7B] hover:bg-[#0c6a69]',
         ring: 'focus:ring-[#0E7C7B]/30',
         icon: <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />,
     },
-    {
-        value: VERIFICATION_STATUS.REJECTED,
+    [STATUS.REJECTED]: {
+        value: STATUS.REJECTED,
         label: 'Reject',
+        help: 'Only for spam, unrelated advertising, abusive or hateful content, harmful practices, or fraud.',
         cls: 'bg-[#C2543B] hover:bg-[#aa482f]',
         ring: 'focus:ring-[#C2543B]/30',
         icon: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />,
+        needsNote: true,
+        needsReason: true,
     },
-    {
-        value: VERIFICATION_STATUS.SUSPENDED,
+    [STATUS.SUSPENDED]: {
+        value: STATUS.SUSPENDED,
         label: 'Suspend',
+        help: 'Temporarily remove a published listing.',
         cls: 'bg-[#B86B2B] hover:bg-[#a25c22]',
         ring: 'focus:ring-[#B86B2B]/30',
         icon: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />,
     },
-    {
-        value: VERIFICATION_STATUS.INACTIVE,
+    [STATUS.INACTIVE]: {
+        value: STATUS.INACTIVE,
         label: 'Inactive',
+        help: 'Listing no longer active (e.g. provider closed or stopped practising).',
         cls: 'bg-[#6E7B79] hover:bg-[#5d6968]',
         ring: 'focus:ring-[#6E7B79]/30',
         icon: <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />,
     },
-];
+};
+/* What can happen next from each status — publishing only after screening + verification. */
+const NEXT_ACTIONS: Record<string, string[]> = {
+    [STATUS.PENDING]: [STATUS.PENDING_VERIFICATION, STATUS.NEEDS_CORRECTION, STATUS.REJECTED],
+    [STATUS.NEEDS_CORRECTION]: [STATUS.PENDING_VERIFICATION, STATUS.REJECTED],
+    [STATUS.PENDING_VERIFICATION]: [STATUS.APPROVED, STATUS.NEEDS_CORRECTION, STATUS.REJECTED],
+    [STATUS.APPROVED]: [STATUS.SUSPENDED, STATUS.INACTIVE, STATUS.NEEDS_CORRECTION],
+    [STATUS.SUSPENDED]: [STATUS.APPROVED, STATUS.INACTIVE, STATUS.REJECTED],
+    [STATUS.INACTIVE]: [STATUS.APPROVED, STATUS.SUSPENDED, STATUS.REJECTED],
+    [STATUS.REJECTED]: [STATUS.PENDING_VERIFICATION, STATUS.NEEDS_CORRECTION],
+};
+const STAGE_TEXT: Record<string, string> = {
+    [STATUS.PENDING]: 'Initial screening — check completeness, relevance and appropriate content. Credential concerns go to verification, not rejection.',
+    [STATUS.NEEDS_CORRECTION]: 'Waiting for the provider to correct their profile. It returns to "Submitted" when they save their changes.',
+    [STATUS.PENDING_VERIFICATION]: 'Passed screening — verify credentials, then approve to publish. The profile stays unpublished until then.',
+    [STATUS.APPROVED]: 'Published in the directory.',
+    [STATUS.REJECTED]: 'Rejected — the provider was told the reason and can request reconsideration.',
+    [STATUS.SUSPENDED]: 'Temporarily hidden from the directory.',
+    [STATUS.INACTIVE]: 'Not shown in the directory.',
+};
+const DEFAULT_REJECTION_REASONS: Record<string, string> = {
+    spam: 'Spam, scams, or unrelated advertising',
+    out_of_scope: "Services outside the directory's mental health, emotional wellness, or community support purpose",
+    abusive: 'Hateful, threatening, or abusive content',
+    harmful: 'Promotes harmful, coercive, or exploitative practices',
+    fraudulent: 'Confirmed impersonation or fraudulent information',
+};
 /* ------------------------------------------------------------------ */
 /*  Read-only display primitives                                       */
 /* ------------------------------------------------------------------ */
@@ -501,8 +581,9 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
         case 6:
             return (
                 <DL>
-                    <Row label="Identifies as part of the Caribbean community?">{lbl(YESNO_LABELS, p.caribbean_identity)}</Row>
-                    <Row label="Experience providing care or support to Caribbean individuals, families, or communities?">{lbl(YESNO_LABELS, p.caribbean_experience)}</Row>
+                    <Row label="Experience supporting Caribbean individuals, families, or communities?">
+                        {p.caribbean_experience ? (p.caribbean_experience === 'yes' ? 'Yes' : 'Not yet') : undefined}
+                    </Row>
                     {p.caribbean_experience === 'yes' && (
                         <Row label="Caribbean experience — provider description">
                             {p.caribbean_experience_details ? <p className="leading-relaxed text-[#3A4B49]">{p.caribbean_experience_details}</p> : undefined}
@@ -524,14 +605,21 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
         case 8:
             return (
                 <DL>
+                    <Row label="Country">{p.country}</Row>
+                    <Row label="City / Parish / State">{p.state_province}</Row>
+                    {p.city && <Row label="City / Local area">{p.city}</Row>}
                     <Row label="Address">
                         {p.address}
-                        {p.hide_address && <span className="ml-2 rounded-full bg-[#E8B84B]/18 px-2 py-0.5 text-xs font-semibold text-[#9A6B12]">Hidden from public</span>}
+                        {p.hide_address
+                            ? <span className="ml-2 rounded-full bg-[#E8B84B]/18 px-2 py-0.5 text-xs font-semibold text-[#9A6B12]">Hidden from public</span>
+                            : <span className="ml-2 rounded-full bg-[#0E7C7B]/10 px-2 py-0.5 text-xs font-semibold text-[#0E6B6A]">Shown publicly</span>}
                     </Row>
-                    <Row label="City">{p.city}</Row>
-                    <Row label="State / Province / Region">{p.state_province}</Row>
-                    <Row label="Country">{p.country}</Row>
                     <Row label="Serves multiple locations">{lbl(YESNO_LABELS, p.multiple_locations)}</Row>
+                    {p.multiple_locations === 'yes' && (
+                        <Row label="Other locations">
+                            <Pills items={(p.additional_locations || []).map((l) => [l.city, l.state_province, l.country].filter(Boolean).join(', ')).filter(Boolean)} />
+                        </Row>
+                    )}
                     <Row label="Telehealth regions served"><Pills items={p.telehealth_regions} /></Row>
                 </DL>
             );
@@ -546,7 +634,23 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
         case 10:
             return (
                 <DL>
-                    <Row label="Phone number">{p.phone}</Row>
+                    {p.provider_type && p.provider_type !== 'individual' && (
+                        <Row label="Contact person">
+                            {p.contact_person_name ? (
+                                <span>
+                                    {p.contact_person_name}
+                                    {p.contact_person_role && <span className="text-[#5B6B6E]"> · {p.contact_person_role}</span>}
+                                    {p.contact_person_email && <span className="block text-sm text-[#5B6B6E]">{p.contact_person_email}</span>}
+                                </span>
+                            ) : <span className="font-semibold text-[#A8412B]">Missing — ask for a named contact person</span>}
+                        </Row>
+                    )}
+                    <Row label="Phone number">
+                        {p.phone}
+                        {p.phone && (p.show_phone === false
+                            ? <span className="ml-2 rounded-full bg-[#E8B84B]/18 px-2 py-0.5 text-xs font-semibold text-[#9A6B12]">Hidden from public</span>
+                            : <span className="ml-2 rounded-full bg-[#0E7C7B]/10 px-2 py-0.5 text-xs font-semibold text-[#0E6B6A]">Shown publicly</span>)}
+                    </Row>
                     <Row label="Website">
                         {p.website ? <a href={p.website} target="_blank" rel="noopener noreferrer" className="text-[#0E6B6A] hover:underline">{p.website}</a> : undefined}
                     </Row>
@@ -595,7 +699,7 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
-export default function ProviderVerificationShow({ provider, reviewFlags = [], indexRoute = 'admin.providers.index' }: PageProps) {
+export default function ProviderVerificationShow({ provider, reviewFlags = [], rejectionReasons = DEFAULT_REJECTION_REASONS, indexRoute = 'admin.providers.index' }: PageProps) {
     const p = provider ?? SAMPLE;
     const [step, setStep] = useState(0);
     const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
@@ -612,10 +716,15 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
         setLicenceVerified(Boolean(p?.licence_verified));
     }, [p?.id, p?.licence_verified]);
     const [docUrl, setDocUrl] = useState<string | null>(null);
-    const [confirmAction, setConfirmAction] = useState<{ value: string; label: string; cls: string; ring: string } | null>(null);
+    const [confirmAction, setConfirmAction] = useState<DecisionAction | null>(null);
+    const [reviewReason, setReviewReason] = useState('');
+    const [formError, setFormError] = useState('');
+    const isIndividual = p.provider_type === 'individual';
+    const currentStatus = p.status || STATUS.PENDING;
+    const nextActions = (NEXT_ACTIONS[currentStatus] ?? NEXT_ACTIONS[STATUS.PENDING]).map((v) => ACTIONS[v]).filter(Boolean);
     const topRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
-    const current = STATUS_META[p.verification_status] ?? STATUS_META.pending;
+    const current = STATUS_META[p.status ?? ''] ?? STATUS_META[p.verification_status] ?? STATUS_META.pending;
     const flaggedSteps = new Set(reviewFlags.map((f) => FLAG_STEP[f.field]).filter((i) => i !== undefined));
     const flaggedFields = new Set(reviewFlags.flatMap((f) => FLAG_FIELDS[f.field] ?? [f.field]));
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
@@ -633,26 +742,31 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
         setStep(next);
         requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     };
-    const submit = (status: string) => {
+    const submit = (status: string, action?: DecisionAction | null) => {
         if (processing) return;
+        if (action?.needsNote && !note.trim()) { setFormError('Please write the message the provider will receive.'); return; }
+        if (action?.needsReason && !reviewReason) { setFormError('Choose which rejection criterion applies.'); return; }
+        setFormError('');
         setProcessing(true);
         setActiveAction(status);
         router.post(
             route('providers.verification.update', p.id),
             {
                 status, note,
-                licence_verified: p.provider_type === 'individual' && status === 'approved'
-                    ? licenceVerified
-                    : false,
+                review_reason: status === STATUS.REJECTED ? reviewReason : null,
+                // Credential verification is saved at any stage; the public badge shows once approved.
+                licence_verified: isIndividual ? licenceVerified : false,
             },
 
             {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Verification status changed'),
-                onError: () => {
+                onError: (errs: Record<string, string>) => {
                     setProcessing(false);
                     setActiveAction(null);
-                    toast.error('Could not update the verification status.');
+                    const first = Object.values(errs)[0];
+                    if (first) setFormError(first);
+                    toast.error(first || 'Could not update the verification status.');
                 },
                 onFinish: () => setProcessing(false),
             },
@@ -683,7 +797,7 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
                         </div>
                         <span className={`inline-flex flex-shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${current.cls}`}>
                             <span className={`h-2 w-2 rounded-full ${current.dot}`} />
-                            Current: {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
+                            Current: {statusLabel(p.status)}
                         </span>
                     </div>
                     {reviewFlags.length > 0 && (
@@ -764,83 +878,109 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
                                     <div className="space-y-6">
                                         <ReviewFlagsNotice flags={reviewFlags} onGo={jumpToSection} />
                                         <div className="rounded-xl bg-[#FBF8F2] p-4">
-                                            <p className="text-sm text-[#5B6B6E]">Current verification status</p>
+                                            <p className="text-sm text-[#5B6B6E]">Current review status</p>
                                             <span className={`mt-2 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${current.cls}`}>
                                                 <span className={`h-2 w-2 rounded-full ${current.dot}`} />
-                                                Current:  {p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}
+                                                Current: {statusLabel(p.status)}
                                             </span>
+                                            {STAGE_TEXT[currentStatus] && <p className="mt-2 text-sm text-[#5B6B6E]">{STAGE_TEXT[currentStatus]}</p>}
                                         </div>
+
+                                        {/* Credential verification — verified / unverified, recorded at any stage */}
+                                        <div className="rounded-xl border border-[#DED7C9] bg-[#FBF8F2] p-4">
+                                            <p className="text-sm font-semibold text-[#26403F]">Credential verification</p>
+                                            {isIndividual ? (
+                                                <>
+                                                    <p className="mt-0.5 text-xs text-[#6B7A78]">
+                                                        Mark as verified only after confirming the licence number, status and issuing authority
+                                                        (e.g. Florida Board of Psychology, Jamaica Psychology Board). Unverified credentials alone are not a reason for rejection.
+                                                    </p>
+                                                    <div className="mt-3 flex flex-wrap gap-2.5" role="radiogroup" aria-label="Credential verification">
+                                                        {[
+                                                            { v: true, label: 'Verified', sub: 'Shows “Credentials verified” once approved' },
+                                                            { v: false, label: 'Unverified', sub: 'Shows “Profile Reviewed” only' },
+                                                        ].map((o) => (
+                                                            <button
+                                                                key={String(o.v)}
+                                                                type="button"
+                                                                role="radio"
+                                                                aria-checked={licenceVerified === o.v}
+                                                                onClick={() => setLicenceVerified(o.v)}
+                                                                className={`rounded-lg border px-4 py-2.5 text-left text-sm transition ${licenceVerified === o.v
+                                                                    ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white shadow-sm'
+                                                                    : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/60'}`}
+                                                            >
+                                                                <span className="block font-semibold">{o.label}</span>
+                                                                <span className={`block text-xs ${licenceVerified === o.v ? 'text-white/85' : 'text-[#6B7A78]'}`}>{o.sub}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    {Boolean(p.licence_verified) !== licenceVerified && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => submit(currentStatus)}
+                                                            disabled={processing}
+                                                            className="mt-3 text-sm font-semibold text-[#0E7C7B] hover:underline disabled:opacity-60"
+                                                        >
+                                                            Save credential status without changing the review status
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <p className="mt-0.5 text-sm text-[#5B6B6E]">
+                                                    Not applicable — {PROVIDER_TYPE_LABELS[p.provider_type ?? ''] ?? 'organization'} profiles show “Profile Reviewed” only.
+                                                </p>
+                                            )}
+                                        </div>
+
                                         <div>
                                             <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
-                                                Review note <span className="font-normal text-[#9AA6A4]">(optional, internal)</span>
+                                                Message to the provider{' '}
+                                                <span className="font-normal text-[#9AA6A4]">(required for Return for correction and Reject — included in the email)</span>
                                             </label>
                                             <textarea
                                                 value={note}
-                                                onChange={(e) => setNote(e.target.value)}
+                                                onChange={(e) => { setNote(e.target.value); setFormError(''); }}
                                                 rows={3}
-                                                placeholder="Add a note for the record — e.g. reason for rejection or items to follow up on…"
+                                                placeholder="Specific instructions (what to fix) or the reason for the decision…"
                                                 className="w-full resize-y rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
                                             />
                                         </div>
 
-                                        {/* Licence verification — only for licensed individual providers (client §5) */}
-                                        {p.provider_type === 'individual' && (
-                                            <div className="rounded-xl border border-[#DED7C9] bg-[#FBF8F2] p-4">
-                                                <label className="flex cursor-pointer items-start gap-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={licenceVerified}
-                                                        onChange={(e) => setLicenceVerified(e.target.checked)}
-                                                        className="mt-0.5 h-5 w-5 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]"
-                                                    />
-                                                    <span>
-                                                        <span className="block text-sm font-semibold text-[#26403F]">
-                                                            I have verified this provider's licence against the relevant licensing authority
-                                                        </span>
-                                                        <span className="mt-0.5 block text-xs text-[#6B7A78]">
-                                                            Check this only if you have confirmed the licence number, status, and issuing authority
-                                                            (e.g. via the Florida Board of Psychology, Jamaica Psychology Board). If unchecked,
-                                                            the public profile will read <strong>"Profile reviewed"</strong>
-                                                        </span>
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        )}
-                                        {/* Four action buttons — each posts the status directly */}
+                                        {/* Next step — only the outcomes that make sense from the current status */}
                                         <div>
-                                            <p className="mb-3 text-sm font-medium text-[#26403F]">Set verification status</p>
-                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                                {DECISION_ACTIONS.map((a) => {
-                                                    const isCurrentStatus = p.status === a.value;
-                                                    if (isCurrentStatus) return null;
+                                            <p className="mb-3 text-sm font-medium text-[#26403F]">Choose the outcome</p>
+                                            <div className="grid gap-3 sm:grid-cols-3">
+                                                {nextActions.map((a) => {
                                                     const loading = processing && activeAction === a.value;
                                                     return (
                                                         <button
                                                             key={a.value}
                                                             type="button"
-                                                            onClick={() => setConfirmAction(a)}
-                                                            disabled={processing || isCurrentStatus}
-                                                            className={`relative flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-4 disabled:opacity-60 ${a.cls} ${a.ring}`}
+                                                            onClick={() => { setFormError(''); setConfirmAction(a); }}
+                                                            disabled={processing}
+                                                            className="group flex h-full flex-col rounded-xl border border-[#E7E0D2] bg-white p-3 text-left transition hover:border-[#0E7C7B]/40 hover:shadow-sm disabled:opacity-60"
                                                         >
-                                                            {loading ? (
-                                                                <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.4}>
-                                                                    <path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" />
-                                                                </svg>
-                                                            ) : (
-                                                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>{a.icon}</svg>
-                                                            )}
-                                                            {loading ? 'Updating…' : a.label}
-                                                            {isCurrentStatus && !loading && (
-                                                                <span className="absolute -top-2 right-1.5 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#5B6B6E] shadow-sm ring-1 ring-black/5">
-                                                                    Current
-                                                                </span>
-                                                            )}
+                                                            <span className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-white shadow-sm ${a.cls}`}>
+                                                                {loading ? (
+                                                                    <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                                                                        <path strokeLinecap="round" d="M12 3a9 9 0 1 0 9 9" />
+                                                                    </svg>
+                                                                ) : (
+                                                                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>{a.icon}</svg>
+                                                                )}
+                                                                {loading ? 'Updating…' : a.label}
+                                                            </span>
+                                                            <span className="mt-2 text-xs leading-relaxed text-[#6B7A78]">{a.help}</span>
                                                         </button>
                                                     );
                                                 })}
                                             </div>
+                                            {formError && !confirmAction && (
+                                                <p className="mt-3 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{formError}</p>
+                                            )}
                                             <p className="mt-3 text-xs text-[#9AA6A4]">
-                                                Choosing an action updates the provider’s status immediately and returns you to the providers list.
+                                                The provider is emailed about each change. A profile stays unpublished until it is approved.
                                             </p>
                                         </div>
                                     </div>
@@ -885,13 +1025,46 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
                         onClick={() => { if (!processing) setConfirmAction(null); }}
                     >
                         <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                            <h2 className="font-serif text-xl text-[#16302F]">Change verification status?</h2>
+                            <h2 className="font-serif text-xl text-[#16302F]">{confirmAction.label}?</h2>
                             <p className="mt-2 text-sm leading-relaxed text-[#5B6B6E]">
-                                Do you want to change this provider’s verification status to{' '}
-                                <strong className="text-[#26403F]">{STATUS_META[confirmAction.value]?.label ?? confirmAction.label}</strong>?
-                                {' '}This updates {p.organization_name} and returns you to the providers list.
+                                This changes {p.organization_name}’s status to{' '}
+                                <strong className="text-[#26403F]">{statusLabel(confirmAction.value)}</strong>, emails the provider and returns you to the providers list.
                             </p>
-                            {confirmAction.value === VERIFICATION_STATUS.APPROVED && reviewFlags.length > 0 && (
+                            {confirmAction.needsReason && (
+                                <div className="mt-4">
+                                    <p className="mb-2 text-sm font-medium text-[#26403F]">Rejection reason <span className="text-[#C2543B]">*</span></p>
+                                    <div className="space-y-2">
+                                        {Object.entries(rejectionReasons).map(([key, label]) => (
+                                            <label key={key} className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-sm transition ${reviewReason === key ? 'border-[#C2543B] bg-[#C2543B]/5' : 'border-[#DED7C9] hover:border-[#C2543B]/50'}`}>
+                                                <input type="radio" name="review_reason" value={key} checked={reviewReason === key}
+                                                    onChange={() => { setReviewReason(key); setFormError(''); }} className="mt-0.5 text-[#C2543B] focus:ring-[#C2543B]" />
+                                                <span className="text-[#3A4B49]">{label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="mt-2 rounded-lg bg-[#F1EDE3] p-2.5 text-xs leading-relaxed text-[#6B7A78]">
+                                        Do not reject because the provider is not Caribbean, lacks Caribbean experience, is a community provider rather than a clinician, or has credentials that have not yet been checked.
+                                    </p>
+                                </div>
+                            )}
+                            {confirmAction.needsNote && (
+                                <div className="mt-4">
+                                    <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
+                                        {confirmAction.needsReason ? 'Explanation for the provider' : 'Instructions for the provider'} <span className="text-[#C2543B]">*</span>
+                                    </label>
+                                    <textarea
+                                        value={note}
+                                        onChange={(e) => { setNote(e.target.value); setFormError(''); }}
+                                        rows={4}
+                                        placeholder={confirmAction.needsReason ? 'Explain the decision. The email also tells them how to request reconsideration.' : 'List exactly what needs to be added or changed…'}
+                                        className="w-full resize-y rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-sm text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                                    />
+                                </div>
+                            )}
+                            {formError && (
+                                <p className="mt-3 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{formError}</p>
+                            )}
+                            {confirmAction.value === STATUS.APPROVED && reviewFlags.length > 0 && (
                                 <p className="mt-3 rounded-lg bg-[#E8B84B]/12 p-3 text-sm text-[#6B4E12]">
                                     This profile has {reviewFlags.length} unresolved {reviewFlags.length === 1 ? 'conflict' : 'conflicts'}. Approving will publish it as submitted.
                                 </p>
@@ -907,7 +1080,7 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], i
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => submit(confirmAction.value)}
+                                    onClick={() => submit(confirmAction.value, confirmAction)}
                                     disabled={processing}
                                     className={`inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-4 disabled:opacity-60 ${confirmAction.cls} ${confirmAction.ring}`}
                                 >
