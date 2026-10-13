@@ -52,6 +52,8 @@ interface DashboardProps {
         accepting_new_clients?: boolean | null;
         availability_confirmed_at?: string | null;
         availability_next_reminder?: string | null;
+        availability_state?: 'accepting' | 'not_accepting' | 'unknown';
+        availability_due?: boolean;
     };
     status: {
         value: string;
@@ -85,6 +87,8 @@ interface DashboardProps {
 const STATUS_STYLES: Record<string, string> = {
     approved: 'bg-[#0E7C7B]/10 text-[#0B6463]',
     pending: 'bg-[#F5A623]/10 text-[#B7791F]',
+    needs_correction: 'bg-[#F5A623]/10 text-[#B7791F]',
+    pending_verification: 'bg-[#0E7C7B]/10 text-[#0B6463]',
     rejected: 'bg-[#C2543B]/10 text-[#A33D29]',
     suspended: 'bg-[#D97706]/10 text-[#92400E]',
     inactive: 'bg-[#F1EDE3] text-[#6B7A78]',
@@ -157,21 +161,27 @@ function BadgeList({ items }: { items?: string[] }) {
 /* ------------------------------------------------------------------ */
 
 function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] }) {
-    // null on the server -> default the radio to "yes" so the provider makes an explicit choice.
-    const initial: 'yes' | 'no' =
-        provider.accepting_new_clients === false ? 'no' : 'yes';
-    const [choice, setChoice] = useState<'yes' | 'no'>(initial);
+    // Never set on the server -> nothing is pre-selected, so the provider makes an explicit choice.
+    const initial: 'yes' | 'no' | '' =
+        provider.accepting_new_clients === true ? 'yes' : provider.accepting_new_clients === false ? 'no' : '';
+    const [choice, setChoice] = useState<'yes' | 'no' | ''>(initial);
     const [saving, setSaving] = useState(false);
 
-    const currentStatusLabel =
-        provider.accepting_new_clients === true
-            ? 'Accepting new clients'
-            : provider.accepting_new_clients === false
-                ? 'Not accepting new clients'
-                : 'Not set yet';
+    const neverSet = provider.accepting_new_clients !== true && provider.accepting_new_clients !== false;
+    // Set before, but not reconfirmed within 60 days -> the public listing shows "Contact to confirm availability".
+    const expired = !neverSet && provider.availability_state === 'unknown';
+    const dueSoon = !neverSet && !expired && !!provider.availability_due;
+
+    const currentStatusLabel = neverSet
+        ? 'Not set yet'
+        : expired
+            ? 'Needs reconfirming'
+            : provider.accepting_new_clients
+                ? 'Accepting new clients'
+                : 'Not accepting new clients';
 
     const save = () => {
-        if (saving) return;
+        if (saving || !choice) return;
         setSaving(true);
         router.post(
             '/provider/availability',
@@ -205,6 +215,33 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
         <div className="mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm sm:p-6 lg:grid-cols-[1fr_1px_320px]">
             {/* left — question + save */}
             <div>
+                {(neverSet || expired || dueSoon) && (
+                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#F5A623]/40 bg-[#F5A623]/10 px-4 py-3 text-sm text-[#7A5410]">
+                        <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#B7791F]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                        </svg>
+                        <span>
+                            {neverSet && (
+                                <>
+                                    <span className="block font-semibold">Let visitors know if you're accepting new clients.</span>
+                                    Your listing shows “Contact to confirm availability” until you choose an answer below and save.
+                                </>
+                            )}
+                            {expired && (
+                                <>
+                                    <span className="block font-semibold">Please reconfirm your availability.</span>
+                                    It wasn't reconfirmed in the last 60 days, so your listing now shows “Contact to confirm availability”. Choose an answer below and save.
+                                </>
+                            )}
+                            {dueSoon && (
+                                <>
+                                    <span className="block font-semibold">Time to reconfirm your availability.</span>
+                                    Please save your answer by {provider.availability_next_reminder}, otherwise your listing will show “Contact to confirm availability”.
+                                </>
+                            )}
+                        </span>
+                    </div>
+                )}
                 <h2 className="font-serif text-base font-semibold text-[#16302F]">Are you currently accepting new clients?</h2>
                 <p className="mt-1 text-xs text-[#8A9795]">This shows on your public listing. Please reconfirm periodically so it stays accurate.</p>
                 <div className="mt-4 space-y-1">
@@ -214,7 +251,7 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                 <button
                     type="button"
                     onClick={save}
-                    disabled={saving}
+                    disabled={saving || !choice}
                     className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0d4a45] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c3f3b] disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
                 >
                     {saving ? (
@@ -242,7 +279,7 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                         <dd className="text-right text-[#16302F]">{provider.availability_confirmed_at || '—'}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                        <dt className="text-[#5B6B6E]">Next reminder:</dt>
+                        <dt className="text-[#5B6B6E]">Reconfirm by:</dt>
                         <dd className="text-right text-[#16302F]">{provider.availability_next_reminder || '—'}</dd>
                     </div>
                 </dl>

@@ -6,7 +6,10 @@
 //    country or in another country, with the same rules.
 //  • In-person care → the address must stay visible. Virtual care only → the address is
 //    hidden automatically, but the provider can switch it back on.
-import type { ComponentType, ReactNode } from 'react';
+//  • Street address suggestions come from the Google Maps JavaScript API (Places), limited to
+//    the selected country. Without VITE_GOOGLE_MAPS_API_KEY it stays a plain text field.
+import { useEffect, useRef, useState } from 'react';
+import type { ComponentType, KeyboardEvent, ReactNode } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -151,6 +154,236 @@ export function locationPayload(countries: CountryOption[], v: LocationValues) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Street address — Google Maps JavaScript API (Places) suggestions   */
+/* ------------------------------------------------------------------ */
+const GOOGLE_MAPS_KEY = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) || '';
+
+let mapsLoader: Promise<void> | null = null;
+
+/* Loads the Maps JavaScript API once per page. */
+function loadGoogleMaps(key: string): Promise<void> {
+    const w = window as any;
+    if (w.google?.maps?.importLibrary) return Promise.resolve();
+    if (mapsLoader) return mapsLoader;
+    mapsLoader = new Promise<void>((resolve, reject) => {
+        w.__bahaliMapsReady = () => resolve();
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&callback=__bahaliMapsReady`;
+        script.async = true;
+        script.onerror = () => {
+            mapsLoader = null;
+            reject(new Error('Google Maps could not load.'));
+        };
+        document.head.appendChild(script);
+    });
+    return mapsLoader;
+}
+
+interface AddressSuggestion {
+    main: string;
+    secondary: string;
+    prediction: any; // google.maps.places.PlacePrediction
+}
+
+/* "Unit 4, 12 Hope Road" from the place's address parts; falls back to Google's main text. */
+function streetLine(components: any[] | undefined, fallback: string): string {
+    const get = (type: string) => components?.find((c: any) => c.types?.includes(type))?.longText ?? '';
+    const street = [get('street_number'), get('route')].filter(Boolean).join(' ');
+    const unit = get('subpremise');
+    const line = [unit, street || get('premise')].filter(Boolean).join(', ');
+    return line || fallback;
+}
+
+const inputClass = (hasError: boolean) =>
+    `w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${hasError
+        ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
+        : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25'
+    }`;
+
+function AddressAutocomplete({
+    ui, value, onChange, error, countryCode,
+}: {
+    ui: LocationUi;
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    countryCode?: string;
+}) {
+    const [ready, setReady] = useState(false);
+    const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+    const [open, setOpen] = useState(false);
+    const [active, setActive] = useState(-1);
+    const placesRef = useRef<any>(null);       // google.maps.places library
+    const tokenRef = useRef<any>(null);        // one session token per address search (billing)
+    const timerRef = useRef<number | undefined>(undefined);
+    const requestRef = useRef(0);
+    const rootRef = useRef<HTMLDivElement>(null);
+
+    // Load the API + Places library once.
+    useEffect(() => {
+        if (!GOOGLE_MAPS_KEY) return;
+        let cancelled = false;
+        loadGoogleMaps(GOOGLE_MAPS_KEY)
+            .then(() => (window as any).google.maps.importLibrary('places'))
+            .then((lib: any) => {
+                if (cancelled) return;
+                placesRef.current = lib;
+                setReady(true);
+            })
+            .catch((err) => {
+                // Stays a plain text field. Check the key, billing and "Maps JavaScript API" in Google Cloud.
+                console.warn('[Bahali] Google Maps could not load:', err);
+            });
+        return () => { cancelled = true; };
+    }, []);
+
+    // New country → old suggestions no longer apply.
+    useEffect(() => {
+        setSuggestions([]);
+        setOpen(false);
+    }, [countryCode]);
+
+    // Close when clicking outside.
+    useEffect(() => {
+        if (!open) return;
+        const onClick = (e: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onClick);
+        return () => document.removeEventListener('mousedown', onClick);
+    }, [open]);
+
+    useEffect(() => () => window.clearTimeout(timerRef.current), []);
+
+    // No key (or the API failed to load) → same plain field as before.
+    if (!GOOGLE_MAPS_KEY || !ready) {
+        return <ui.TextInput value={value} onChange={onChange} error={error} placeholder="Street address" />;
+    }
+
+    const search = (text: string) => {
+        window.clearTimeout(timerRef.current);
+        const query = text.trim();
+        if (query.length < 3) {
+            setSuggestions([]);
+            setOpen(false);
+            return;
+        }
+        timerRef.current = window.setTimeout(async () => {
+            const lib = placesRef.current;
+            if (!tokenRef.current) tokenRef.current = new lib.AutocompleteSessionToken();
+            const requestId = ++requestRef.current;
+            try {
+                const { suggestions: found } = await lib.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                    input: query,
+                    sessionToken: tokenRef.current,
+                    // Google needs a 2-letter country code (JM, TT, GB …); anything else is skipped.
+                    ...(countryCode && /^[a-z]{2}$/i.test(countryCode.trim()) ? { includedRegionCodes: [countryCode.trim().toLowerCase()] } : {}),
+                });
+                if (requestId !== requestRef.current) return; // a newer search already started
+                const list: AddressSuggestion[] = (found || [])
+                    .filter((s: any) => s.placePrediction)
+                    .slice(0, 5)
+                    .map((s: any) => ({
+                        main: s.placePrediction.mainText?.text ?? s.placePrediction.text?.text ?? '',
+                        secondary: s.placePrediction.secondaryText?.text ?? '',
+                        prediction: s.placePrediction,
+                    }));
+                setSuggestions(list);
+                setActive(-1);
+                setOpen(list.length > 0);
+            } catch (err) {
+                // Usually: "Places API (New)" not enabled, billing off, or this domain not in the key's referrers.
+                console.warn('[Bahali] Google address suggestions failed:', err);
+                setSuggestions([]);
+                setOpen(false);
+            }
+        }, 250);
+    };
+
+    const choose = async (s: AddressSuggestion) => {
+        setOpen(false);
+        setSuggestions([]);
+        onChange(s.main);
+        try {
+            const place = s.prediction.toPlace();
+            await place.fetchFields({ fields: ['addressComponents'] });
+            onChange(streetLine(place.addressComponents, s.main));
+        } catch {
+            /* keep the suggestion's main text */
+        } finally {
+            tokenRef.current = null; // the search session ends after a place is picked
+        }
+    };
+
+    const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+        if (!open || suggestions.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActive((i) => (i + 1) % suggestions.length);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActive((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+        } else if (e.key === 'Enter' && active >= 0) {
+            e.preventDefault();
+            choose(suggestions[active]);
+        } else if (e.key === 'Escape') {
+            setOpen(false);
+        }
+    };
+
+    return (
+        <div ref={rootRef} className="relative">
+            <input
+                type="text"
+                value={value}
+                placeholder="Start typing your street address"
+                autoComplete="off"
+                role="combobox"
+                aria-expanded={open}
+                aria-autocomplete="list"
+                onChange={(e) => {
+                    onChange(e.target.value);
+                    search(e.target.value);
+                }}
+                onFocus={() => suggestions.length > 0 && setOpen(true)}
+                onKeyDown={onKeyDown}
+                className={inputClass(!!error)}
+            />
+            {open && (
+                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
+                    <ul role="listbox" className="max-h-64 overflow-y-auto p-1">
+                        {suggestions.map((s, i) => (
+                            <li key={`${s.main}-${s.secondary}-${i}`}>
+                                <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={i === active}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onMouseEnter={() => setActive(i)}
+                                    onClick={() => choose(s)}
+                                    className={`flex w-full items-start gap-2.5 rounded-md px-3 py-2 text-left text-sm transition ${i === active ? 'bg-[#0E7C7B]/10 text-[#16302F]' : 'text-[#26403F] hover:bg-[#F7F3EC]'}`}
+                                >
+                                    <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
+                                        <circle cx="12" cy="11" r="2" />
+                                    </svg>
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-medium">{s.main}</span>
+                                        {s.secondary && <span className="block truncate text-xs text-[#6B7A78]">{s.secondary}</span>}
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                    {/* Google requires this attribution when suggestions are shown without a map. */}
+                    <p className="border-t border-[#EFEAE0] px-3 py-1.5 text-right text-[11px] text-[#9AA6A4]">Powered by Google</p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
 /*  One location: country → parish/state → (city)                      */
 /* ------------------------------------------------------------------ */
 function LocationPicker({
@@ -234,9 +467,10 @@ export function LocationSection({
     onChange: (patch: Partial<LocationValues>) => void;
     errors: LocationErrors;
 }) {
-    const { FieldShell, TextInput, RadioRow, ConsentItem } = ui;
+    const { FieldShell, RadioRow, ConsentItem } = ui;
     const { hasInPerson, virtualOnly } = serviceFormatFlags(value.service_formats);
     const extra = value.additional_locations;
+    const countryCode = countries.find((c) => c.name === value.country)?.code;
 
     const updateExtra = (i: number, next: ProviderLocation) => onChange({ additional_locations: extra.map((l, idx) => (idx === i ? next : l)) });
     const removeExtra = (i: number) => onChange({ additional_locations: extra.filter((_, idx) => idx !== i) });
@@ -257,8 +491,19 @@ export function LocationSection({
             />
 
             {/* 2. Street address + who can see it */}
-            <FieldShell label="Street address" required error={errors.address}>
-                <TextInput value={value.address} onChange={(v) => onChange({ address: v })} error={!!errors.address} placeholder="Street address" />
+            <FieldShell
+                label="Street address"
+                required
+                hint={GOOGLE_MAPS_KEY ? 'Start typing and pick your address from the suggestions, or type it in full.' : undefined}
+                error={errors.address}
+            >
+                <AddressAutocomplete
+                    ui={ui}
+                    value={value.address}
+                    onChange={(v) => onChange({ address: v })}
+                    error={!!errors.address}
+                    countryCode={countryCode}
+                />
             </FieldShell>
 
             {hasInPerson ? (

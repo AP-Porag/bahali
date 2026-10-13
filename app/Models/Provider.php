@@ -45,7 +45,6 @@ class Provider extends Model
         'languages',
         'languages_other',
         'cultural_approach',
-        'caribbean_experience_details',
 
         // Service
         'service_formats',
@@ -119,6 +118,8 @@ class Provider extends Model
         'contact_person_role',
         'contact_person_email',
         'review_reason',
+        'caribbean_experience_details',
+        'availability_reminder_sent_at',
 
 
     ];
@@ -148,6 +149,7 @@ class Provider extends Model
 
         'accepting_new_clients'     => 'boolean',
         'availability_confirmed_at' => 'datetime',
+        'availability_reminder_sent_at' => 'datetime',
 
         'lgbtq_affirming'      => 'string',
         'culturally_affirming' => 'string',

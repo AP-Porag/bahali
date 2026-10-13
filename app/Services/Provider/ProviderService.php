@@ -34,12 +34,39 @@ class ProviderService extends BaseService
     /** Availability freshness window (guide §5.3). */
     private const AVAILABILITY_FRESH_DAYS = 60;
 
+    /** Reminder email goes out this many days before availability expires (day 53 of 60). */
+    public const AVAILABILITY_REMIND_BEFORE_DAYS = 7;
+
+    /** Confirmations older than this need a reminder (used by the dashboard + the daily reminder command). */
+    public static function availabilityRemindAfter(): \Illuminate\Support\Carbon
+    {
+        return now()->subDays(self::AVAILABILITY_FRESH_DAYS - self::AVAILABILITY_REMIND_BEFORE_DAYS);
+    }
+
     /** Fee currency symbols (unambiguous: US$, JA$, TT$ …) — keep in sync with resources/js/constants/fees.ts. */
     private const CURRENCY_SYMBOLS = [
-        'USD' => 'US$', 'CAD' => 'CA$', 'GBP' => '£', 'EUR' => '€', 'XCD' => 'EC$', 'JMD' => 'JA$',
-        'TTD' => 'TT$', 'BBD' => 'Bds$', 'BSD' => 'B$', 'BZD' => 'BZ$', 'BMD' => 'BD$', 'KYD' => 'CI$',
-        'GYD' => 'G$', 'SRD' => 'SR$', 'DOP' => 'RD$', 'CUP' => 'CUP ', 'HTG' => 'HTG ', 'XCG' => 'Cg ',
-        'ANG' => 'NAƒ', 'AWG' => 'Afl. ', 'CRC' => '₡', 'PAB' => 'B/.',
+        'USD' => 'US$',
+        'CAD' => 'CA$',
+        'GBP' => '£',
+        'EUR' => '€',
+        'XCD' => 'EC$',
+        'JMD' => 'JA$',
+        'TTD' => 'TT$',
+        'BBD' => 'Bds$',
+        'BSD' => 'B$',
+        'BZD' => 'BZ$',
+        'BMD' => 'BD$',
+        'KYD' => 'CI$',
+        'GYD' => 'G$',
+        'SRD' => 'SR$',
+        'DOP' => 'RD$',
+        'CUP' => 'CUP ',
+        'HTG' => 'HTG ',
+        'XCG' => 'Cg ',
+        'ANG' => 'NAƒ',
+        'AWG' => 'Afl. ',
+        'CRC' => '₡',
+        'PAB' => 'B/.',
     ];
 
     /*
@@ -79,10 +106,27 @@ class ProviderService extends BaseService
     public static function extraRules(): array
     {
         return [
-            'additional_locations'                  => ['nullable', 'array', 'max:10'],
+            // Every extra location follows the same rule as the main one, in the same or another country.
+            'additional_locations'                  => ['nullable', 'array', 'max:10', function ($attribute, $value, $fail) {
+                foreach (array_values(is_array($value) ? $value : []) as $i => $loc) {
+                    $loc = is_array($loc) ? $loc : [];
+                    $message = self::locationProblem($loc['country'] ?? '', $loc['state_province'] ?? '', $loc['city'] ?? '');
+                    if ($message) {
+                        $fail('Location ' . ($i + 2) . ': ' . $message);
+                        return;
+                    }
+                }
+            }],
             'additional_locations.*.country'        => ['required', 'string', 'max:120'],
             'additional_locations.*.state_province' => ['nullable', 'string', 'max:120'],
             'additional_locations.*.city'           => ['nullable', 'string', 'max:120'],
+            // Country first: the parish / state (and the UK city) must come from that country's list.
+            'country'                               => [function ($attribute, $value, $fail) {
+                $message = self::locationProblem($value, request()->input('state_province'), request()->input('city'));
+                if ($message) {
+                    $fail($message);
+                }
+            }],
             'show_phone'                            => ['nullable', 'boolean'],
             'contact_person_name'                   => ['nullable', 'required_unless:provider_type,individual', 'string', 'max:255'],
             'contact_person_role'                   => ['nullable', 'string', 'max:255'],
@@ -144,7 +188,9 @@ class ProviderService extends BaseService
     {
         return collect($this->toArray($locations))
             ->map(fn($l) => implode(', ', array_filter([
-                $l['city'] ?? null, $l['state_province'] ?? null, $l['country'] ?? null,
+                $l['city'] ?? null,
+                $l['state_province'] ?? null,
+                $l['country'] ?? null,
             ])))
             ->filter()
             ->values()
@@ -195,6 +241,57 @@ class ProviderService extends BaseService
             return $value;
         }
         return in_array(strtolower(trim((string) $value)), ['yes', '1', 'true'], true);
+    }
+
+    /**
+     * Server-side copy of the form's location rule (LocationSection.tsx → locationProblem):
+     * the country must be in the list, and the parish / state — plus the city for two-level
+     * countries such as the UK — must belong to that country. Countries without a list
+     * just need a city / town. Returns the error message, or null when the location is valid.
+     */
+    public static function locationProblem($country, $stateProvince, $city): ?string
+    {
+        static $regionsByCountry = [];
+
+        $country = trim((string) $country);
+        $state   = trim((string) $stateProvince);
+        $city    = trim((string) $city);
+
+        if ($country === '') {
+            return 'Please select a country.';
+        }
+
+        if (! array_key_exists($country, $regionsByCountry)) {
+            $model = Country::with(['regions' => fn($q) => $q->select('id', 'country_id', 'parent_id', 'name')->where('is_active', true)])
+                ->where('name', $country)
+                ->first();
+            $regionsByCountry[$country] = $model ? $model->regions : null;
+        }
+        $regions = $regionsByCountry[$country];
+
+        if ($regions === null) {
+            return 'Please select a country from the list.';
+        }
+        if ($regions->isEmpty()) {
+            return $city === '' ? 'Please enter the city or town.' : null;
+        }
+
+        $parents      = $regions->filter(fn($r) => empty($r->parent_id));
+        $hasHierarchy = $parents->isNotEmpty() && $regions->contains(fn($r) => ! empty($r->parent_id));
+        $level1       = $hasHierarchy ? $parents : $regions;
+        $parent       = $level1->firstWhere('name', $state);
+
+        if (! $parent) {
+            return "Please select a city / parish / state in {$country} from the list.";
+        }
+        if ($hasHierarchy) {
+            $level2 = $regions->where('parent_id', $parent->id);
+            if ($level2->isNotEmpty() && ! $level2->contains('name', $city)) {
+                return "Please select a city / local area in {$state} from the list.";
+            }
+        }
+
+        return null;
     }
 
     /** Provider-written Caribbean experience description — only kept when the answer is yes. */
@@ -275,9 +372,25 @@ class ProviderService extends BaseService
             return (float) $raw;
         }
         $units = [
-            'one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5, 'six' => 6, 'seven' => 7,
-            'eight' => 8, 'nine' => 9, 'ten' => 10, 'eleven' => 11, 'twelve' => 12, 'thirteen' => 13,
-            'fourteen' => 14, 'fifteen' => 15, 'sixteen' => 16, 'seventeen' => 17, 'eighteen' => 18, 'nineteen' => 19,
+            'one' => 1,
+            'two' => 2,
+            'three' => 3,
+            'four' => 4,
+            'five' => 5,
+            'six' => 6,
+            'seven' => 7,
+            'eight' => 8,
+            'nine' => 9,
+            'ten' => 10,
+            'eleven' => 11,
+            'twelve' => 12,
+            'thirteen' => 13,
+            'fourteen' => 14,
+            'fifteen' => 15,
+            'sixteen' => 16,
+            'seventeen' => 17,
+            'eighteen' => 18,
+            'nineteen' => 19,
         ];
         $tens = ['twenty' => 20, 'thirty' => 30, 'forty' => 40, 'fifty' => 50];
         $parts = preg_split('/[- ]/', $raw);
@@ -876,6 +989,7 @@ class ProviderService extends BaseService
             ->map(fn($c) => [
                 'id'   => $c->id,
                 'name' => $c->name,
+                'code' => $c->code,   // Google address suggestions are limited to this country
                 'regions' => $c->regions->map(fn($r) => [
                     'id'              => $r->id,
                     'name'            => $r->name,
@@ -1112,6 +1226,12 @@ class ProviderService extends BaseService
                 'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
                 'availability_confirmed_at'  => $provider->availability_confirmed_at?->format('M j, Y'),
                 'availability_next_reminder' => $provider->availability_confirmed_at?->copy()->addDays(60)->format('M j, Y'),
+                // accepting | not_accepting | unknown (never set, or not reconfirmed within 60 days)
+                'availability_state'         => $this->availabilityState($provider),
+                // true from day 53 → the dashboard asks the provider to reconfirm
+                'availability_due'           => ! is_null($provider->accepting_new_clients)
+                    && $provider->availability_confirmed_at
+                    && $provider->availability_confirmed_at->lte(self::availabilityRemindAfter()),
             ],
             'status' => [
                 'value'       => $status,
