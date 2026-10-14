@@ -1,91 +1,121 @@
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import { Head, Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
-import { Badge, HelpCircle, Verified, VerifiedIcon } from 'lucide-react';
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import { HelpCircle } from 'lucide-react';
 import { formatPhoneDisplay, phoneHref } from '@/lib/phone';
+import { REDUCED_COST_METHODS } from '@/constants/fees';
+import {
+    CARIBBEAN_EXPERIENCE_STATEMENT,
+    ProviderBadgeRow,
+    displayName as providerDisplayName,
+    feeWithCurrency,
+    initials,
+    reducedCostLabel,
+    splitPopulations,
+    type ProviderType,
+    type ReducedCostScope,
+} from '@/components/provider/ProviderBadges';
+
+/* ------------------------------------------------------------------ */
+/*  Types — shape returned by ProviderService::getPublicProfile()      */
+/* ------------------------------------------------------------------ */
+type Availability = 'accepting' | 'not_accepting' | 'unknown';
+
+interface SupportAreaGroup {
+    category: string;
+    areas: string[];
+}
+
+interface FeeByService {
+    service: string;
+    fee: string;
+    currency?: string;
+}
+
+interface ProviderContact {
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+    booking?: string | null;
+    social?: string[];
+}
+
+interface PublicProvider {
+    id: number;
+    name: string;
+    title?: string | null;
+    credentials?: string | null;
+    photo?: string | null;
+    additionalPhotos?: string[];
+    bio?: string | null;
+    yearsExperience?: string | null;
+    location?: string | null;
+    address?: string | null;              // only sent when the provider shows it (always for in-person care)
+    additionalLocations?: string[];       // "Kingston, Jamaica" …
+    contactPerson?: { name: string; role?: string | null } | null; // organizations
+    servesMultiple?: boolean;
+    telehealthRegions?: string[];
+    sessionFormats?: string[];
+    practiceSettings?: string[];
+    languages?: string[];
+    culturalApproach?: string | null;
+    culturallyAffirming?: string | boolean | null;
+    lgbtqAffirming?: string | boolean | null;
+    providerType?: ProviderType | null;
+    licenceVerified?: boolean;
+    caribbeanExperience?: boolean;
+    caribbeanExperienceDetails?: string | null;
+    supportAreas?: SupportAreaGroup[];
+    populations?: string[];
+    treatmentApproaches?: string[];
+    specializedTraining?: string[];
+    certifications?: string[];
+    accessibility?: string[];
+    servicesOffered?: string[];   // not sent yet — needs a "Services offered" signup field
+    feesByService?: FeeByService[]; // not sent yet — needs a fee-per-service signup field
+    payment?: { methods?: string[]; insurance?: string[] };
+    contact?: ProviderContact;
+    fee?: string | null;
+    currency?: string;
+    reducedCostScope?: ReducedCostScope;
+    availability?: Availability;
+    availabilityConfirmedAt?: string | null;
+    acceptingNewClients?: boolean | null;
+}
+
+interface Section {
+    key: string;
+    label: string | null;
+    show: boolean;
+    content: ReactNode;
+}
+
+interface ContactAction {
+    key: string;
+    icon: ReactNode;
+    label: string;
+    sub: string;
+    href: string;
+    external?: boolean;
+}
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
-const has = (a) => Array.isArray(a) && a.length > 0;
+const has = <T,>(a: T[] | null | undefined): a is T[] => Array.isArray(a) && a.length > 0;
+const uniq = (a: (string | null | undefined)[]): string[] => [...new Set(a.filter((x): x is string => Boolean(x)))];
 
-function initials(name = '') {
-    return name.replace(/^Dr\.?\s+/i, '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'B';
-}
-/* NEW: Verification badge (Licence Verified / Profile Reviewed) */
-function VerificationBadge({ providerType, isVerified }) {
-    const isIndividual = providerType === 'individual';
+/* Shared with web/provider/index (Directory) — lets "Back to results" restore filters, loaded results and scroll position. */
+const DIRECTORY_STATE_KEY = 'bahali_directory_state_v1';
+const DIRECTORY_RETURN_KEY = 'bahali_directory_return';
 
-    if (isIndividual && isVerified === true) {
-        return (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
-                    <defs>
-                        <mask id="award-cut">
-                            <rect width="24" height="24" fill="#fff" />
-                            <circle cx="12" cy="9.5" r="4.9" fill="none" stroke="#000" stroke-width="1.2" />
-                            <path d="M9.7 9.7l1.6 1.6 3.1-3.3" fill="none" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                        </mask>
-                    </defs>
-                    <path d="M8.2 14 5 21.5l2.4-.6 1.2 2.1L11 16.5zM15.8 14 19 21.5l-2.4-.6-1.2 2.1L13 16.5z" />
-                    <g mask="url(#award-cut)">
-                        <circle cx="12" cy="9.5" r="7" />
-                        <circle cx="12" cy="2.5" r="1.5" /><circle cx="15.5" cy="3.44" r="1.5" />
-                        <circle cx="18.06" cy="6" r="1.5" /><circle cx="19" cy="9.5" r="1.5" />
-                        <circle cx="18.06" cy="13" r="1.5" /><circle cx="15.5" cy="15.56" r="1.5" />
-                        <circle cx="12" cy="16.5" r="1.5" /><circle cx="8.5" cy="15.56" r="1.5" />
-                        <circle cx="5.94" cy="13" r="1.5" /><circle cx="5" cy="9.5" r="1.5" />
-                        <circle cx="5.94" cy="6" r="1.5" /><circle cx="8.5" cy="3.44" r="1.5" />
-                    </g>
-                </svg>
-                Licence Verified
-            </span>
-        );
-    }
+/* Payment methods that belong under "Insurance accepted" (matches ProviderService::PAYMENT_GROUPS['insurance']). */
+const INSURANCE_METHODS = ['Medicaid', 'Medicare', 'Employee Assistance Programs (EAP)'];
 
-    return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
-            <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
-                <circle cx="10" cy="10" r="2.25" />
-            </svg>
-            Profile Reviewed
-        </span>
-    );
-}
-
-/* NEW: Caribbean-Informed Care badge */
-function CaribbeanBadge() {
-    return (
-        <span
-            className="inline-flex items-center rounded-full border border-[#D9C89E] bg-[#F5EDDC] px-3.5 py-1 text-[13px] font-medium text-[#8A5A2B]"
-            style={{ letterSpacing: '0.01em' }}
-        >
-
-            Caribbean-informed care
-        </span>
-    );
-}
-
-function normHref(url) { return url ? (url.startsWith('http') ? url : `https://${url}`) : null; }
-
-/* Name + credential normalization (client §4 Provider Cards) */
-function normalizeName(name = '') {
-    if (!name) return '';
-    return name
-        .trim()
-        .split(/\s+/)
-        .map((w) => {
-            // Keep all-caps credentials like "PhD", "MD", "LCSW" intact
-            if (/^(PhD|PsyD|MD|DO|MSW|MPH|LCSW|LMSW|LMHC|LPC|LMFT|NP|RN|BCBA)$/i.test(w)) {
-                return w.toUpperCase();
-            }
-            return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-        })
-        .join(' ');
-}
+function normHref(url?: string | null): string { return url ? (url.startsWith('http') ? url : `https://${url}`) : ''; }
+function displayUrl(url: string = ''): string { return url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, ''); }
 
 /* Language list with wrapping / +N more treatment (client §4 Provider Cards) */
-function LanguageList({ languages = [], max = 4 }) {
+function LanguageList({ languages = [], max = 4 }: { languages?: string[]; max?: number }) {
     if (!languages.length) return null;
     const shown = languages.slice(0, max);
     const rest = languages.length - shown.length;
@@ -115,21 +145,16 @@ const Ico = {
     question: <path d="M12 17h.01M12 13a2 2 0 0 0 .5-3.94A2 2 0 1 0 10 7m2 14a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" />,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 16v-4M12 8h.01" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    users: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M16 4.5a3 3 0 0 1 0 6M18 14.5a5 5 0 0 1 3 4.5" /></>,
 };
-function Icon({ d, className = 'h-4 w-4' }) {
+function Icon({ d, className = 'h-4 w-4' }: { d: ReactNode; className?: string }) {
     return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>;
 }
 
-/* Chips as plain text (client §5 – remove pill background) */
-function ChipRow({ items }) {
-    if (!items || items.length === 0) return null;
-    return <p className="text-sm leading-relaxed text-[#3A4B49]">{items.join('  ·  ')}</p>;
-}
-
-function CategoryList({ items }) {
+function CategoryList({ items }: { items?: string[] | null }) {
     if (!items || items.length === 0) return null;
     return (
-        <ul className="mt-2 space-y-1.5">
+        <ul className="mt-1.5 space-y-1">
             {items.map((item) => (
                 <li
                     key={item}
@@ -139,14 +164,36 @@ function CategoryList({ items }) {
                         className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40"
                         aria-hidden
                     />
-                    <span>{item}</span>
+                    <span className="min-w-0 break-words">{item}</span>
                 </li>
             ))}
         </ul>
     );
 }
 
-function AvailabilityBox({ availability, confirmedAt }) {
+/* Renders only the sections that have content — empty headings are never shown. */
+function SectionStack({ sections }: { sections: Section[] }) {
+    const visible = sections.filter((s) => s.show);
+    if (visible.length === 0) return null;
+    return (
+        <div className="space-y-5">
+            {visible.map((s, idx) => (
+                <section key={s.key} className={idx > 0 ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                    {s.label && (
+                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">{s.label}</h3>
+                    )}
+                    {s.content}
+                </section>
+            ))}
+        </div>
+    );
+}
+
+function SubLabel({ children }: { children: ReactNode }) {
+    return <p className="text-sm font-semibold text-[#33302a]">{children}</p>;
+}
+
+function AvailabilityBox({ availability, confirmedAt }: { availability?: Availability; confirmedAt?: string | null }) {
     if (availability === 'accepting') {
         return (
             <div className="rounded-xl border border-[#0E7C7B]/20 bg-[#0E7C7B]/8 p-4">
@@ -180,70 +227,124 @@ function AvailabilityBox({ availability, confirmedAt }) {
     );
 }
 
-function contactMethods(provider) {
-    const c = provider.contact || {};
-    return [
-        c.booking && { icon: Ico.calendar, label: 'Book a consultation', sub: "Opens the provider's scheduling site", href: normHref(c.booking), external: true },
-        c.email && { icon: Ico.mail, label: 'Email provider', sub: 'Opens your email app', href: `mailto:${c.email}` },
-        c.phone && { icon: Ico.phone, label: 'Call', sub: formatPhoneDisplay(c.phone), href: phoneHref(c.phone) },
-        c.website && { icon: Ico.globe, label: 'Visit website', sub: 'Opens in a new tab', href: normHref(c.website), external: true },
-    ].filter(Boolean);
+/* Contact — "Call provider" is the primary (teal) action; website, email and booking are secondary. */
+function contactActions(provider: PublicProvider): { primary: ContactAction | null; secondary: ContactAction[]; hasAny: boolean } {
+    const c: ProviderContact = provider.contact || {};
+    const phone: ContactAction | null = c.phone ? {
+        key: 'phone', icon: Ico.phone, label: 'Call provider',
+        sub: formatPhoneDisplay(c.phone, { international: true }), href: phoneHref(c.phone),
+    } : null;
+    const booking: ContactAction | null = c.booking ? {
+        key: 'booking', icon: Ico.calendar, label: 'Book a consultation',
+        sub: "Opens the provider's scheduling site", href: normHref(c.booking), external: true,
+    } : null;
+    const website: ContactAction | null = c.website ? {
+        key: 'website', icon: Ico.globe, label: 'Visit website',
+        sub: displayUrl(c.website), href: normHref(c.website), external: true,
+    } : null;
+    const email: ContactAction | null = c.email ? {
+        key: 'email', icon: Ico.mail, label: 'Email provider',
+        sub: c.email, href: `mailto:${c.email}`,
+    } : null;
+    const primary = phone || booking || null;
+    const secondary = [website, email, phone ? booking : null].filter((m): m is ContactAction => m !== null);
+    return { primary, secondary, hasAny: !!primary || secondary.length > 0 };
 }
 
-function MethodRow({ m }) {
+function PrimaryAction({ m }: { m: ContactAction }) {
     return (
-        <a href={m.href} {...(m.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-            className="flex items-center gap-3 rounded-xl border border-[#DED7C9] bg-white px-4 py-3 transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#0E7C7B]/10 text-[#0E7C7B]"><Icon d={m.icon} className="h-5 w-5" /></span>
-            <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-[#16302F]">{m.label}</span>
-                <span className="block truncate text-xs text-[#8A9795]">{m.sub}</span>
+        <a
+            href={m.href}
+            {...(m.external ? { target: '_blank', rel: 'noreferrer' } : {})}
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#0E7C7B] px-4 py-3 text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-2"
+        >
+            <Icon d={m.icon} className="h-5 w-5 flex-shrink-0" />
+            <span className="min-w-0 text-left leading-tight">
+                <span className="block text-sm font-semibold">{m.label}</span>
+                <span className="block break-words text-xs text-white/85">{m.sub}</span>
+            </span>
+        </a>
+    );
+}
+
+function SecondaryAction({ m }: { m: ContactAction }) {
+    return (
+        <a
+            href={m.href}
+            {...(m.external ? { target: '_blank', rel: 'noreferrer' } : {})}
+            className="flex w-full items-center gap-3 rounded-xl border border-[#0E7C7B]/35 bg-white px-4 py-2 text-[#0E6B6A] transition hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/30"
+        >
+            <Icon d={m.icon} className="h-4 w-4 flex-shrink-0" />
+            <span className="min-w-0 flex-1 leading-tight">
+                <span className="block text-sm font-semibold">{m.label}</span>
+                <span className="block truncate text-xs text-[#6B7A78]" title={m.sub}>{m.sub}</span>
             </span>
             {m.external && <span className="text-[#9AA6A4]"><Icon d={Ico.external} className="h-4 w-4" /></span>}
         </a>
     );
 }
 
+function ContactActions({ provider }: { provider: PublicProvider }) {
+    const { primary, secondary, hasAny } = contactActions(provider);
+    if (!hasAny) return <p className="text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p>;
+    return (
+        <div className="space-y-2">
+            {primary && <PrimaryAction m={primary} />}
+            {secondary.map((m) => <SecondaryAction key={m.key} m={m} />)}
+        </div>
+    );
+}
+
 function CrisisNote() {
     return (
-        <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#F1EDE3] p-3 text-xs leading-relaxed text-[#6B7A78]">
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F1EDE3] p-3 text-xs leading-relaxed text-[#6B7A78]">
             <span className="mt-0.5 text-[#0E7C7B]"><Icon d={Ico.info} className="h-4 w-4" /></span>
             <span><span className="font-semibold text-[#3A4B49]">Please note.</span> If you are in crisis or need immediate support, contact your local emergency services or a crisis helpline. Bahali is not an emergency service.</span>
         </div>
     );
 }
 
-function ContactPanel({ provider }) {
-    const methods = contactMethods(provider);
+/* Named contact person for organizations, e.g. "Contact person: Rev. Marcia Brown · Pastoral Care Coordinator". */
+function ContactPersonLine({ provider }: { provider: PublicProvider }) {
+    const cp = provider.contactPerson;
+    if (!cp?.name) return null;
+    return (
+        <p className="mt-1 text-sm text-[#3A4B49]">
+            <span className="text-[#6B7A78]">Contact person:</span> <span className="font-medium">{cp.name}</span>
+            {cp.role && <span className="text-[#6B7A78]"> · {cp.role}</span>}
+        </p>
+    );
+}
+
+function ContactPanel({ provider, name }: { provider: PublicProvider; name: string }) {
     return (
         <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-            <h3 className="text-lg text-[#16302F]" style={SERIF}>Contact {provider.name}</h3>
-            <p className="mt-1 text-sm text-[#5B6B6E]">Reach the provider directly to ask about services, availability or scheduling. Bahali does not manage appointments or communications between you and the provider.</p>
-            <div className="mt-4 space-y-2.5">
-                {methods.length === 0
-                    ? <p className="text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p>
-                    : methods.map((m) => <MethodRow key={m.label} m={m} />)}
+            <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+            <ContactPersonLine provider={provider} />
+            <p className="mt-1 text-[13px] leading-relaxed text-[#5B6B6E]">Bahali does not manage appointments or communications between you and the provider.</p>
+            <div className="mt-3">
+                <ContactActions provider={provider} />
             </div>
             <CrisisNote />
         </div>
     );
 }
 
-function ContactModal({ open, onClose, provider }) {
+function ContactModal({ open, onClose, provider, name }: { open: boolean; onClose: () => void; provider: PublicProvider; name: string }) {
     if (!open) return null;
-    const methods = contactMethods(provider);
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`Contact ${provider.name}`}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`Contact ${name}`}>
             <div className="w-full max-w-md overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
                 <div className="flex items-start justify-between gap-3 border-b border-[#EFEAE0] p-5">
-                    <div>
-                        <h3 className="text-lg text-[#16302F]" style={SERIF}>Contact {provider.name}</h3>
+                    <div className="min-w-0">
+                        <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+                        <ContactPersonLine provider={provider} />
                         <p className="mt-1 text-sm text-[#5B6B6E]">Reach the provider directly. Bahali does not manage appointments or communications between you and the provider.</p>
                     </div>
                     <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </div>
-                <div className="space-y-2.5 p-5">
-                    {methods.length === 0 ? <p className="text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p> : methods.map((m) => <MethodRow key={m.label} m={m} />)}
+                <div className="p-5">
+                    <ContactActions provider={provider} />
                     <CrisisNote />
                 </div>
             </div>
@@ -251,115 +352,309 @@ function ContactModal({ open, onClose, provider }) {
     );
 }
 
-
-/* Verification language – client §5 */
-function VerificationNote({ providerType, isVerified }) {
-    const isIndividual = providerType === 'individual';
-    if (isIndividual && isVerified) {
-        return (
-            <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
-                This provider's licence has been verified by the Bahali team against the relevant licensing authority. This is not a guarantee of treatment quality, fit or outcome.
-            </p>
-        );
-    }
-    if (isIndividual) {
-        return (
-            <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
-                This profile has been reviewed by the Bahali team. Licence has not been independently verified. This is not a guarantee of treatment quality, fit or outcome.
-            </p>
-        );
-    }
+/* At a glance — compact: fees, populations, experience, accessibility. Languages and meeting formats stay in the header. */
+function GlanceRow({ d, children }: { d: ReactNode; children: ReactNode }) {
     return (
-        <p className="px-1 text-xs leading-relaxed text-[#8A9795]">
-            This profile has been reviewed by the Bahali team. This is not a guarantee of treatment quality, fit or outcome. Bahali is a directory and discovery resource, not a clinical endorsement.
-        </p>
+        <li className="flex items-start gap-2.5 py-2 text-sm text-[#33302a]">
+            <span className="mt-0.5 flex-shrink-0 text-[#0E7C7B]"><Icon d={d} className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1 break-words">{children}</span>
+        </li>
     );
 }
 
-export default function ProviderProfile({ provider }) {
-    const p = provider || {};
+interface AtAGlanceProps {
+    p: PublicProvider & { slidingScale: boolean; freeLowCost: boolean };
+    feeText: string;
+    insuranceItems: string[];
+    insuranceGeneric: boolean;
+}
+
+function AtAGlance({ p, feeText, insuranceItems, insuranceGeneric }: AtAGlanceProps) {
+    const populations = p.populations || [];
+    const shownPopulations = populations.slice(0, 3);
+    const extraPopulations = populations.length - shownPopulations.length;
+    const shownInsurers = insuranceItems.slice(0, 2);
+    const extraInsurers = insuranceItems.length - shownInsurers.length;
+    const reduced: 'sliding' | 'free' | null = p.slidingScale ? 'sliding' : (p.freeLowCost ? 'free' : null);
+
+    return (
+        <div className="rounded-2xl border border-[#E7E0D2] bg-white px-5 py-4 shadow-sm">
+            <h3 className="text-sm text-[#16302F]" style={SERIF}>At a glance</h3>
+            <ul className="mt-1 divide-y divide-[#F0EBE0]">
+                <GlanceRow d={feeText ? Ico.wallet : Ico.info}>
+                    {feeText
+                        ? <span className="font-semibold text-[#16302F]">{feeText}</span>
+                        : <span className="text-[#516865]">Contact provider for fee information</span>}
+                </GlanceRow>
+                {reduced && (
+                    <GlanceRow d={Ico.heart}>
+                        <span className="text-[#0E6B6A]">{reducedCostLabel(reduced, p.reducedCostScope)}</span>
+                    </GlanceRow>
+                )}
+                {(shownInsurers.length > 0 || insuranceGeneric) && (
+                    <GlanceRow d={Ico.shield}>
+                        <span className="font-medium text-[#16302F]">Insurance:</span>{' '}
+                        {shownInsurers.length > 0 ? shownInsurers.join(', ') : 'Accepted — confirm your plan'}
+                        {extraInsurers > 0 && <span className="whitespace-nowrap text-[#8A9795]"> +{extraInsurers} more</span>}
+                    </GlanceRow>
+                )}
+                {shownPopulations.length > 0 && (
+                    <GlanceRow d={Ico.users}>
+                        <span className="font-medium text-[#16302F]">Who I support:</span>{' '}
+                        {shownPopulations.join(', ')}
+                        {extraPopulations > 0 && <span className="whitespace-nowrap text-[#8A9795]"> +{extraPopulations} more</span>}
+                    </GlanceRow>
+                )}
+                {p.yearsExperience && (
+                    <GlanceRow d={Ico.clock}>{p.yearsExperience} of experience</GlanceRow>
+                )}
+                {(p.accessibility || []).map((a) => (
+                    <GlanceRow key={a} d={Ico.check}>{a}</GlanceRow>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+export default function ProviderProfile({ provider }: { provider: PublicProvider }) {
+    const p: PublicProvider = provider || ({} as PublicProvider);
     const [imgError, setImgError] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
 
+    const name = providerDisplayName(p.name);
+    const credentialLine = [p.providerType === 'individual' ? p.credentials : null, p.title].filter(Boolean).join(' · ');
     const showPhoto = p.photo && !imgError;
-    const slidingScale = (p.payment?.methods || []).includes('Sliding Scale');
-    const insuranceList = has(p.payment?.insurance) ? p.payment.insurance : [];
-    const hasContact = contactMethods(p).length > 0;
+    const hasContact = contactActions(p).hasAny;
 
-    const tabs = useMemo(() => {
-        const t = [];
-        if (p.bio || p.yearsExperience) t.push('About');
-        if (has(p.supportAreas)) t.push('Areas of Support');
-        if (has(p.treatmentApproaches) || has(p.specializedTraining) || has(p.certifications) || has(p.practiceSettings)) t.push('Services');
-        if (p.fee || has(p.payment?.methods) || insuranceList.length) t.push('Fees & Insurance');
-        if (p.culturalApproach || p.caribbeanExperience) t.push('Approach');
+    /* ---- Back to results: keep filters, loaded results and scroll position ---- */
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const backHref = `/provider${search}`;
 
-        return t;
+    useEffect(() => {
+        // Tells the results page that the next visit is a return from a profile (also covers the browser back button).
+        try { sessionStorage.setItem(DIRECTORY_RETURN_KEY, String(p.id ?? '1')); } catch { /* storage unavailable */ }
+    }, [p.id]);
+
+    const onBackToResults = (e: MouseEvent<HTMLAnchorElement>) => {
+        try {
+            const saved = JSON.parse(sessionStorage.getItem(DIRECTORY_STATE_KEY) || 'null');
+            if (saved?.openedId === p.id && window.history.length > 1) {
+                // Opened from the results list in this tab → step back to the exact same results page.
+                e.preventDefault();
+                window.history.back();
+            }
+        } catch { /* fall back to the link */ }
+    };
+
+    /* ---- Shared values (same wording as the results card) ---- */
+    const feeText = p.fee ? feeWithCurrency(p.fee, p.currency || 'USD') : '';
+    const methods = p.payment?.methods || [];
+    const insuranceItems = uniq([...(p.payment?.insurance || []), ...methods.filter((m) => INSURANCE_METHODS.includes(m))]);
+    const insuranceGeneric = methods.includes('Insurance Accepted');
+    const reducedItems = methods.filter((m) => REDUCED_COST_METHODS.includes(m));
+    const selfPay = methods.includes('Self-Pay');
+    const glance = {
+        ...p,
+        slidingScale: methods.includes('Sliding Scale'),
+        freeLowCost: reducedItems.length > 0,
+    };
+
+    const sectionsByTab = useMemo<[string, Section[]][]>(() => {
+        /* About */
+        const credentialItems = uniq([
+            ...(p.providerType === 'individual' && p.credentials ? String(p.credentials).split(/[,;]/).map((c) => c.trim()) : []),
+            ...(p.certifications || []),
+        ]);
+        const about: Section[] = [
+            {
+                key: 'bio', label: null, show: !!p.bio,
+                content: <p className="whitespace-pre-line text-[15px] leading-relaxed text-[#33302a]">{p.bio}</p>,
+            },
+            {
+                key: 'background', label: 'Professional background', show: !!(p.title || p.yearsExperience),
+                content: (
+                    <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
+                        {p.title && (<><dt className="text-[#8A9795]">Profession</dt><dd className="text-[#3A4B49]">{p.title}</dd></>)}
+                        {p.yearsExperience && (<><dt className="text-[#8A9795]">Years of experience</dt><dd className="text-[#3A4B49]">{p.yearsExperience}</dd></>)}
+                    </dl>
+                ),
+            },
+            { key: 'credentials', label: 'Credentials', show: credentialItems.length > 0, content: <CategoryList items={credentialItems} /> },
+            { key: 'training', label: 'Specialized Training', show: has(p.specializedTraining), content: <CategoryList items={p.specializedTraining} /> },
+            { key: 'setting', label: 'Practice setting', show: has(p.practiceSettings), content: <CategoryList items={p.practiceSettings} /> },
+        ];
+
+        /* Areas of Support — "Who I support" first, then grouped support areas */
+        const { ageGroups, others } = splitPopulations(p.populations);
+        const supportAreas = (p.supportAreas || []).filter((g) => has(g.areas));
+        const areaCount = supportAreas.reduce((n, g) => n + g.areas.length, 0);
+        const areas: Section[] = [
+            {
+                key: 'who', label: 'Who I support', show: ageGroups.length > 0 || others.length > 0,
+                content: (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        {ageGroups.length > 0 && <div><SubLabel>Age groups</SubLabel><CategoryList items={ageGroups} /></div>}
+                        {others.length > 0 && <div><SubLabel>Other populations</SubLabel><CategoryList items={others} /></div>}
+                    </div>
+                ),
+            },
+            {
+                key: 'areas', label: 'Areas of support', show: supportAreas.length > 0,
+                content: (
+                    <div className={supportAreas.length > 1 && areaCount > 6 ? 'md:columns-2 md:gap-x-8' : ''}>
+                        {supportAreas.map((g) => (
+                            <div key={g.category} className="mb-4 break-inside-avoid last:mb-0">
+                                <SubLabel>{g.category}</SubLabel>
+                                <CategoryList items={g.areas} />
+                            </div>
+                        ))}
+                    </div>
+                ),
+            },
+        ];
+
+        /* Services — only services the provider explicitly selected (no "Services offered" signup field yet) */
+        const services: Section[] = [
+            { key: 'services', label: 'Services offered', show: has(p.servicesOffered), content: <CategoryList items={p.servicesOffered} /> },
+        ];
+
+        /* Fees & Insurance */
+        const feeRows = has(p.feesByService)
+            ? p.feesByService.filter((r) => r && r.fee).map((r) => ({ label: r.service, value: feeWithCurrency(r.fee, r.currency || p.currency || 'USD') }))
+            : (feeText ? [{ label: 'Session fee', value: feeText }] : []);
+        const scopeNote = p.reducedCostScope === 'this_service'
+            ? 'These options apply to the session fee shown above.'
+            : p.reducedCostScope === 'other_offerings'
+                ? 'These options apply to other services or programs, not the session fee shown above.'
+                : 'Ask the provider which services qualify.';
+        const fees: Section[] = [
+            {
+                key: 'fees', label: 'Fees', show: feeRows.length > 0 || selfPay,
+                content: (
+                    <ul className="space-y-1.5">
+                        {feeRows.map((r) => (
+                            <li key={r.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                                <span className="text-sm text-[#3A4B49]">{r.label}</span>
+                                <span className="font-semibold text-[#16302F]">{r.value}</span>
+                            </li>
+                        ))}
+                        {selfPay && <li className="text-sm text-[#3A4B49]">Self-pay accepted</li>}
+                    </ul>
+                ),
+            },
+            {
+                key: 'insurance', label: 'Insurance accepted', show: insuranceItems.length > 0 || insuranceGeneric,
+                content: (
+                    <>
+                        {insuranceItems.length > 0
+                            ? <CategoryList items={insuranceItems} />
+                            : <p className="text-sm text-[#3A4B49]">Accepts insurance — contact the provider to confirm your plan.</p>}
+                        <p className="mt-2 text-xs text-[#8A9795]">Coverage varies by plan — confirm directly with the provider.</p>
+                    </>
+                ),
+            },
+            {
+                key: 'reduced', label: 'Reduced-cost options', show: reducedItems.length > 0,
+                content: (
+                    <>
+                        <CategoryList items={reducedItems} />
+                        <p className="mt-2 text-xs text-[#8A9795]">{scopeNote}</p>
+                    </>
+                ),
+            },
+        ];
+
+        /* Approach */
+        const approach: Section[] = [
+            {
+                key: 'approach', label: 'About my approach', show: !!p.culturalApproach,
+                content: <p className="whitespace-pre-line text-[15px] leading-relaxed text-[#33302a]">{p.culturalApproach}</p>,
+            },
+            { key: 'treatment', label: 'Treatment / Support Approaches', show: has(p.treatmentApproaches), content: <CategoryList items={p.treatmentApproaches} /> },
+            {
+                key: 'caribbean', label: 'Experience with Caribbean communities', show: p.caribbeanExperience === true,
+                content: (
+                    <>
+                        <p className="flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
+                            <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40" aria-hidden />
+                            <span>{CARIBBEAN_EXPERIENCE_STATEMENT}</span>
+                        </p>
+                        {p.caribbeanExperienceDetails && (
+                            <div className="mt-3 rounded-xl border border-[#EFE6D2] bg-[#FBF8F2] p-3.5">
+                                <span className="inline-flex rounded-full bg-[#F5EDDC] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A5A2B]">Provider-reported</span>
+                                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[#33302a]">{p.caribbeanExperienceDetails}</p>
+                            </div>
+                        )}
+                    </>
+                ),
+            },
+        ];
+
+        const all: [string, Section[]][] = [
+            ['About', about],
+            ['Areas of Support', areas],
+            ['Services', services],
+            ['Fees & Insurance', fees],
+            ['Approach', approach],
+        ];
+        return all.filter(([, sections]) => sections.some((s) => s.show));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [p]);
-    const [tab, setTab] = useState(tabs[0] || 'About');
 
-    const Glance = ({ d, children }) => (
-        <p className="flex items-center gap-2.5 border-b border-[#F0EBE0] py-2.5 text-sm text-[#33302a] last:border-0">
-            <span className="text-[#0E7C7B]"><Icon d={d} className="h-4 w-4" /></span>{children}
-        </p>
-    );
-
-    const displayName = normalizeName(p.name);
+    const tabs = sectionsByTab.map(([t]) => t);
+    const [tab, setTab] = useState<string>(tabs[0] || 'About');
+    const activeSections: Section[] = (sectionsByTab.find(([t]) => t === tab) || sectionsByTab[0] || ['', []])[1];
 
     return (
         <div className="min-h-screen bg-[#F7F3EC] pb-24 text-[#1F2A2E] lg:pb-0">
-            <Head title={`${displayName} — Bahali`} />
+            <Head title={`${name} — Bahali`} />
             <Header />
-            <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} provider={p} />
+            <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} provider={p} name={name} />
 
-            <div className="border-b border-[#E7E0D2] bg-white/60">
-                <div className="mx-auto max-w-6xl px-5 py-3">
+            <div className="mx-auto max-w-6xl px-5 py-6 lg:py-8">
+                {/* Back to results — above the header card */}
+                <div className="mb-4 flex items-center justify-between gap-3">
                     <Link
-                        href={`/provider${typeof window !== 'undefined' && window.location.search ? window.location.search : ''}`}
-                        className="inline-flex items-center gap-1.5 text-sm text-[#0E7C7B] hover:underline"
+                        href={backHref}
+                        onClick={onBackToResults}
+                        className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-[#0E7C7B] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
                     >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                             <path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        Back to directory
+                        Back to results
                     </Link>
+                    <p className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B] sm:block">Provider profile</p>
                 </div>
-            </div>
-
-            <div className="mx-auto max-w-6xl px-5 py-8">
-                <p className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">Provider profile</p>
 
                 {/* header card */}
                 <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm">
                     <div className="flex flex-col gap-6 lg:flex-row">
                         {showPhoto ? (
-                            <img src={p.photo} alt={displayName} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-2xl object-cover ring-1 ring-black/5 lg:h-44 lg:w-40" />
+                            <img src={p.photo ?? undefined} alt={name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-2xl object-cover ring-1 ring-black/5 lg:h-44 lg:w-40" />
                         ) : (
-                            <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(displayName)}</div>
+                            <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(p.name)}</div>
                         )}
 
                         <div className="min-w-0 flex-1">
-                            {/* Badges row — Caribbean + Verification */}
-                            <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <VerificationBadge
-                                    providerType={p.providerType}
-                                    isVerified={p.licenceVerified}
-                                />
-                                {p.culturallyAffirming === 'yes' && <CaribbeanBadge />}
+                            {/* Badges row — Profile Reviewed (+ info), Credentials verified, Caribbean support experience (+ info) */}
+                            <ProviderBadgeRow
+                                providerType={p.providerType}
+                                licenceVerified={p.licenceVerified}
+                                caribbeanExperience={p.caribbeanExperience}
+                            />
 
+                            {/* 16px below the badge row; name on its own line, professions/credentials beneath */}
+                            <h1 className="mt-4 break-words text-2xl leading-tight text-[#16302F]" style={SERIF}>{name}</h1>
+                            {credentialLine && <p className="mt-1 break-words text-[#5B6B6E]">{credentialLine}</p>}
 
-                            </div>
-
-                            <h2 className="text-2xl text-[#16302F]" style={SERIF}>
-                                {displayName}
-                                {p.providerType === 'individual' && p.credentials ? (
-                                    <span className="text-lg font-normal text-[#5B6B6E]">, {p.credentials}</span>
-                                ) : null}
-                            </h2>
-                            {p.title && <p className="mt-0.5 text-[#5B6B6E]">{p.title}</p>}
                             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">
-                                {p.location && <span className="inline-flex items-center gap-1.5"><span className="text-[#0E7C7B]"><Icon d={Ico.pin} /></span>{p.location}</span>}
+                                {(p.address || p.location) && (
+                                    <span className="inline-flex items-start gap-1.5">
+                                        <span className="mt-0.5 text-[#0E7C7B]"><Icon d={Ico.pin} /></span>
+                                        <span>{[p.address, p.location].filter(Boolean).join(', ')}</span>
+                                    </span>
+                                )}
                                 {has(p.sessionFormats) && (
                                     <span className="inline-flex items-center gap-1.5">
                                         <span className="text-[#0E7C7B]">
@@ -369,6 +664,11 @@ export default function ProviderProfile({ provider }) {
                                     </span>
                                 )}
                             </div>
+                            {has(p.additionalLocations) && (
+                                <p className="mt-1.5 text-sm text-[#3A4B49]">
+                                    <span className="text-[#6B7A78]">Also serves:</span> {p.additionalLocations.join(' · ')}
+                                </p>
+                            )}
                             {has(p.languages) && (
                                 <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]">
                                     <span className="text-[#0E7C7B]"><Icon d={Ico.chat} /></span>
@@ -384,234 +684,27 @@ export default function ProviderProfile({ provider }) {
                 </div>
 
                 {/* body */}
-                <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
+                <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
                     {/* LEFT */}
                     <div className="rounded-2xl border border-[#E7E0D2] bg-white shadow-sm">
-                        <div className="flex flex-wrap gap-1 border-b border-[#EFEAE0] px-4 pt-3">
-                            {tabs.map((t) => (
-                                <button key={t} onClick={() => setTab(t)} className={`rounded-t-lg px-3 py-2 text-sm font-medium transition ${tab === t ? 'border-b-2 border-[#0E7C7B] text-[#16302F]' : 'text-[#5B6B6E] hover:text-[#0E7C7B]'}`}>{t}</button>
-                            ))}
-                        </div>
+                        {tabs.length > 0 && (
+                            <div role="tablist" className="flex flex-wrap gap-1 border-b border-[#EFEAE0] px-4 pt-3">
+                                {tabs.map((t) => (
+                                    <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`rounded-t-lg px-3 py-2 text-sm font-medium transition ${tab === t ? 'border-b-2 border-[#0E7C7B] text-[#16302F]' : 'text-[#5B6B6E] hover:text-[#0E7C7B]'}`}>{t}</button>
+                                ))}
+                            </div>
+                        )}
                         <div className="p-6">
-                            {tab === 'About' && (
-                                <div className="space-y-4">
-                                    {p.bio && <p className="whitespace-pre-line leading-relaxed text-[15px] text-[#33302a]">{p.bio}</p>}
-                                </div>
-                            )}
-                            {tab === 'Areas of Support' && (
-                                <div className="space-y-6">
-                                    {p.supportAreas.map((g) => (
-                                        <div key={g.category}>
-                                            <p className="text-sm font-semibold text-[#33302a]">
-                                                {g.category}
-                                            </p>
-                                            <CategoryList items={g.areas} />
-                                        </div>
-                                    ))}
-
-                                    {/* Populations subsection (আগের requirement অনুযায়ী) */}
-                                    {has(p.populations) && (
-                                        <div className="border-t border-[#EFEAE0] pt-5">
-                                            <p className="text-sm font-semibold text-[#33302a]">
-                                                Populations I Support
-                                            </p>
-                                            <CategoryList items={p.populations} />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {tab === 'Services' && (
-                                <div className="space-y-6">
-                                    {has(p.treatmentApproaches) && (
-                                        <div>
-                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                Treatment approaches
-                                            </p>
-                                            <CategoryList items={p.treatmentApproaches} />
-                                        </div>
-                                    )}
-
-                                    {has(p.specializedTraining) && (
-                                        <div className={has(p.treatmentApproaches) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
-                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                Specialized training
-                                            </p>
-                                            <CategoryList items={p.specializedTraining} />
-                                        </div>
-                                    )}
-
-                                    {has(p.certifications) && (
-                                        <div className={has(p.treatmentApproaches) || has(p.specializedTraining) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
-                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                Certifications
-                                            </p>
-                                            <CategoryList items={p.certifications} />
-                                        </div>
-                                    )}
-
-                                    {has(p.practiceSettings) && (
-                                        <div className={has(p.treatmentApproaches) || has(p.specializedTraining) || has(p.certifications) ? 'border-t border-[#EFEAE0] pt-5' : ''}>
-                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                Practice setting
-                                            </p>
-                                            <CategoryList items={p.practiceSettings} />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {tab === 'Fees & Insurance' && (() => {
-                                const sections = [
-                                    {
-                                        key: 'fee',
-                                        label: null,                          // fee-এর নিজের heading নেই, bold text
-                                        show: !!p.fee,
-                                        content: (
-                                            <p className="font-semibold text-[#16302F]">{p.fee}</p>
-                                        ),
-                                    },
-                                    {
-                                        key: 'sliding',
-                                        label: null,
-                                        show: slidingScale,
-                                        content: (
-                                            <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#9A6B12]">
-                                                <Icon d={Ico.heart} className="h-3.5 w-3.5" /> Sliding scale available
-                                            </p>
-                                        ),
-                                    },
-                                    {
-                                        key: 'methods',
-                                        label: 'Accepted methods',
-                                        show: has(p.payment?.methods),
-                                        content: <CategoryList items={p.payment.methods} />,
-                                    },
-                                    {
-                                        key: 'insurance',
-                                        label: 'Insurance plans accepted',
-                                        show: insuranceList.length > 0,
-                                        content: (
-                                            <>
-                                                <p className="text-[15px] text-[#33302a]">{insuranceList.join(', ')}</p>
-                                                <p className="mt-1.5 text-xs text-[#8A9795]">
-                                                    Coverage varies by plan — confirm directly with the provider.
-                                                </p>
-                                            </>
-                                        ),
-                                    },
-                                ].filter((s) => s.show);
-
-                                if (sections.length === 0) {
-                                    return (
-                                        <p className="text-sm text-[#8A9795]">
-                                            Contact provider for fee and insurance information.
-                                        </p>
-                                    );
-                                }
-
-                                return (
-                                    <div className="space-y-5">
-                                        {sections.map((s, idx) => (
-                                            <div key={s.key} className={idx > 0 ? 'border-t border-[#EFEAE0] pt-5' : ''}>
-                                                {s.label && (
-                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                        {s.label}
-                                                    </p>
-                                                )}
-                                                {s.content}
-                                            </div>
-                                        ))}
-                                    </div>
-                                );
-                            })()}
-                            {tab === 'Approach' && (
-                                <div className="space-y-6">
-                                    {/* ── 1. Provider's own description of how they work ── */}
-                                    {p.culturalApproach && (
-                                        <div>
-                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                About my approach
-                                            </p>
-                                            <p className="whitespace-pre-line leading-relaxed text-[15px] text-[#33302a]">
-                                                {p.culturalApproach}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* ── 2 & 3. Caribbean-specific info — separate subsection ── */}
-                                    {(p.caribbeanIdentity === 'yes' || p.caribbeanExperience) && (
-                                        <div className="border-t border-[#EFEAE0] pt-5 space-y-5">
-                                            {p.caribbeanIdentity === 'yes' && (
-                                                <div>
-                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                        Caribbean connection
-                                                    </p>
-                                                    <p className="inline-flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
-                                                        <span
-                                                            className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40"
-                                                            aria-hidden
-                                                        />
-                                                        <span>Identifies as part of the Caribbean community.</span>
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {p.caribbeanExperience && (
-                                                <div>
-                                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">
-                                                        Experience with Caribbean communities
-                                                    </p>
-                                                    <p className="inline-flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
-                                                        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40" aria-hidden />
-                                                        <span>{p.caribbeanExperience}</span>
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
+                            {activeSections.length > 0
+                                ? <SectionStack sections={activeSections} />
+                                : <p className="text-sm text-[#8A9795]">This provider hasn't added profile details yet.</p>}
                         </div>
                     </div>
 
-                    {/* RIGHT */}
-                    <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-                        {hasContact
-                            ? <ContactPanel provider={p} />
-                            : (
-                                <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                                    <h3 className="text-lg text-[#16302F]" style={SERIF}>Contact {displayName}</h3>
-                                    <p className="mt-1 text-sm text-[#8A9795]">This provider hasn't listed a contact method yet.</p>
-                                    <CrisisNote />
-                                </div>
-                            )}
-
-                        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                            <h3 className="mb-2 text-sm text-[#16302F]" style={SERIF}>At a glance</h3>
-                            <Glance d={p.fee ? Ico.wallet : Ico.mail}>{p.fee || "Contact provider for fee information"}</Glance>
-                            {p.yearsExperience && <Glance d={Ico.clock}>{p.yearsExperience} experience</Glance>}
-                            {insuranceList.length > 0 && <Glance d={Ico.shield}>{insuranceList.slice(0, 3).join(', ')}{insuranceList.length > 3 ? ` +${insuranceList.length - 3}` : ''} (insurance)</Glance>}
-                            {slidingScale && <Glance d={Ico.heart}>Sliding scale available</Glance>}
-                            {has(p.sessionFormats) && (
-                                <Glance d={Ico.monitor}>
-                                    {p.sessionFormats.join(' | ')}
-                                </Glance>
-                            )}
-                            {has(p.languages) && (
-                                <p className="flex items-center gap-2.5 border-b border-[#F0EBE0] py-2.5 text-sm text-[#33302a] last:border-0">
-                                    <span className="text-[#0E7C7B]"><Icon d={Ico.chat} className="h-4 w-4" /></span>
-                                    <LanguageList languages={p.languages} max={5} />
-                                </p>
-                            )}
-                            {has(p.accessibility) && (
-                                <Glance d={Ico.check}>
-                                    {p.accessibility.join(' · ')}
-                                </Glance>
-                            )}
-
-                        </div>
-
-                        <VerificationNote providerType={p.providerType} isVerified={p.licenceVerified} />
+                    {/* RIGHT — At a glance first, then Contact */}
+                    <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+                        <AtAGlance p={glance} feeText={feeText} insuranceItems={insuranceItems} insuranceGeneric={insuranceGeneric} />
+                        <ContactPanel provider={p} name={name} />
                     </aside>
                 </div>
             </div>
@@ -623,7 +716,7 @@ export default function ProviderProfile({ provider }) {
                 <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E7E0D2] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
                     <div className="mx-auto flex max-w-6xl items-center gap-3">
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm text-[#16302F]" style={SERIF}>{displayName}</p>
+                            <p className="truncate text-sm text-[#16302F]" style={SERIF}>{name}</p>
                             {p.availability === 'accepting' && <p className="text-xs text-[#0E7C7B]">Accepting new clients</p>}
                         </div>
                         <button onClick={() => setContactOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-[#C2543B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#b25a3d]">Contact provider</button>

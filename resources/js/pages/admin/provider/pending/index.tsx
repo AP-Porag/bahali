@@ -9,6 +9,54 @@ import { Eye, EyeIcon, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+type ReviewStatus = '' | 'pending' | 'needs_correction' | 'pending_verification';
+
+interface ProviderRow {
+    id: number;
+    organization_name?: string | null;
+    phone?: string | null;
+    status: string;
+    user?: { email?: string | null } | null;
+}
+
+interface PaginationMeta {
+    from: number | null;
+    to: number | null;
+    total: number;
+    current_page: number;
+    last_page: number;
+    searchPlaceholderText?: string;
+}
+
+interface PendingFilters {
+    search: string;
+    status: ReviewStatus;
+    perPage: number;
+    page: number;
+}
+
+interface PendingProps {
+    providers: ProviderRow[];
+    meta: PaginationMeta;
+    filters: Partial<Omit<PendingFilters, 'page'>>;
+}
+
+/* Review stages shown on this page (all still unpublished). '' = all of them. */
+const REVIEW_TABS: { value: ReviewStatus; label: string }[] = [
+    { value: '', label: 'All in review' },
+    { value: 'pending', label: 'Submitted' },
+    { value: 'needs_correction', label: 'Needs correction' },
+    { value: 'pending_verification', label: 'Pending verification' },
+];
+const REVIEW_BADGE: Record<string, { label: string; cls: string }> = {
+    pending: { label: 'Submitted', cls: 'border-[#E8B84B]/50 bg-[#E8B84B]/15 text-[#9A6B12]' },
+    needs_correction: { label: 'Needs correction', cls: 'border-[#D97A2B]/40 bg-[#D97A2B]/10 text-[#9A5418]' },
+    pending_verification: { label: 'Pending verification', cls: 'border-[#3B6FA8]/30 bg-[#3B6FA8]/10 text-[#2F5C8F]' },
+};
+
 const breadcrumbs = [
     {
         title: 'Pending Providers',
@@ -16,8 +64,8 @@ const breadcrumbs = [
     },
 ];
 
-export default function Pending({ providers, meta, filters: initialFilters }) {
-    const { flash } = usePage().props;
+export default function Pending({ providers, meta, filters: initialFilters }: PendingProps) {
+    const { flash } = usePage<{ flash?: { success?: string } }>().props;
 
     useEffect(() => {
         if (flash?.success) {
@@ -25,16 +73,16 @@ export default function Pending({ providers, meta, filters: initialFilters }) {
         }
     }, [flash]);
 
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<PendingFilters>({
         search: initialFilters.search || '',
-        status: initialFilters.status || 'pending', // ডিফল্ট pending
+        status: initialFilters.status || '', // '' = Submitted + Needs correction + Pending verification
         perPage: initialFilters.perPage || 5,
         page: meta.current_page || 1,
     });
 
     useEffect(() => {
         // Push new filters to URL and reload data
-        router.get(route('providers.pending'), filters, {
+        router.get(route('providers.pending'), { search: filters.search, status: filters.status, perPage: filters.perPage, page: filters.page }, {
             preserveState: true,
             replace: true,
             preserveScroll: true,
@@ -45,33 +93,40 @@ export default function Pending({ providers, meta, filters: initialFilters }) {
         {
             key: 'organization_name',
             label: 'Provider / Organization Name',
-            render: (row) => (
+            render: (row: ProviderRow) => (
                 <div className="font-medium">{row.organization_name || 'N/A'}</div>
             )
         },
         {
             key: 'email',
             label: 'Email',
-            render: (row) => (
+            render: (row: ProviderRow) => (
                 <div className="text-sm">{row.user?.email || 'N/A'}</div>
             )
         },
         {
             key: 'phone',
             label: 'Phone',
-            render: (row) => (
+            render: (row: ProviderRow) => (
                 <div className="text-sm">{row.phone || 'N/A'}</div>
             )
         },
-        // {
-        //     key: 'status',
-        //     label: 'Status',
-        //     render: (row) => (
-        //         <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadge(row.status)}`}>
-        //             {capitalize(row.status)}
-        //         </span>
-        //     ),
-        // },
+        {
+            key: 'status',
+            label: 'Review stage',
+            render: (row: ProviderRow) => {
+                const badge = REVIEW_BADGE[row.status];
+                return badge ? (
+                    <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${badge.cls}`}>
+                        {badge.label}
+                    </span>
+                ) : (
+                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusBadge(row.status)}`}>
+                        {capitalize(row.status)}
+                    </span>
+                );
+            },
+        },
     ];
 
     return (
@@ -83,6 +138,26 @@ export default function Pending({ providers, meta, filters: initialFilters }) {
                     {/* <Button onClick={() => router.visit(route('providers.create'))} className="cursor-pointer bg-black text-white hover:bg-gray-800">
                         <Plus className="mr-2" /> Create Provider
                     </Button> */}
+                </div>
+                {/* Review stage tabs */}
+                <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Review stage">
+                    {REVIEW_TABS.map((t) => {
+                        const active = filters.status === t.value;
+                        return (
+                            <button
+                                key={t.value || 'all'}
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                                onClick={() => setFilters((f) => ({ ...f, status: t.value, page: 1 }))}
+                                className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${active
+                                    ? 'border-black bg-black text-white'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                {t.label}
+                            </button>
+                        );
+                    })}
                 </div>
                 <DataTable
                     data={providers}
