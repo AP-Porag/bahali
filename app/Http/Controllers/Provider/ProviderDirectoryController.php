@@ -27,11 +27,15 @@ use App\Mail\ProviderStatusUpdateMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Services\Provider\ProviderService;
+use App\Notifications\ProviderReviewOutcome;
+use Illuminate\Support\Facades\Notification;
 
 class ProviderDirectoryController extends Controller
 {
     private const STATUSES = [
         GlobalConstant::VERIFICATION_STATUS_PENDING,
+        ProviderService::STATUS_NEEDS_CORRECTION,
+        ProviderService::STATUS_PENDING_VERIFICATION,
         GlobalConstant::VERIFICATION_STATUS_APPROVED,
         GlobalConstant::VERIFICATION_STATUS_REJECTED,
         GlobalConstant::VERIFICATION_STATUS_SUSPENDED,
@@ -276,6 +280,9 @@ class ProviderDirectoryController extends Controller
         $provider = $request->user()?->provider;
         abort_if(! $provider, 404, 'No provider profile found for this account.');
 
+        // Fields added after UpdateProviderRequest (locations, phone visibility, contact person …).
+        $request->validate(ProviderService::extraRules());
+
         $service->updateOwnProfile($provider, $request);
 
         return redirect()
@@ -447,6 +454,12 @@ class ProviderDirectoryController extends Controller
             return back()->withErrors(['email' => 'Please verify your email before submitting.']);
         }
 
+        // Fields added after StoreProviderRequest (locations, phone visibility, contact person,
+        // Caribbean question, availability).
+        $request->validate(ProviderService::extraRules() + [
+            'accepting_new_clients' => ['required', 'boolean'],
+        ]);
+
         $data = $request->validated();
         $data['user_id'] = $user->id;
         unset($data['email'], $data['password']);
@@ -462,6 +475,23 @@ class ProviderDirectoryController extends Controller
         $data['certifications']        = $request->input('certifications', []);
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+
+        // Session fee range -> "$min–$max / session" + currency + reduced-cost scope.
+        $currency = strtoupper((string) $request->input('fee_currency', 'USD')) ?: 'USD';
+        $data['fee_currency'] = $currency;
+        $data['fee_range'] = ProviderService::buildFeeRange($request->input('fee_min'), $request->input('fee_max'), $currency);
+        $scope = $request->input('reduced_cost_scope');
+        $data['reduced_cost_scope'] = ProviderService::hasReducedCost($request->input('payment_methods', []))
+            && in_array($scope, ProviderService::REDUCED_COST_SCOPES, true) ? $scope : null;
+        unset($data['fee_min'], $data['fee_max']);
+
+        // New fields: extra locations, phone visibility, contact person (organizations),
+        // Caribbean question, address rule (in-person care can't hide the address).
+        $data = array_merge($data, ProviderService::extraColumns($request));
+
+        // Availability chosen at sign-up — starts the 60-day reconfirmation window.
+        $data['accepting_new_clients']     = $request->boolean('accepting_new_clients');
+        $data['availability_confirmed_at'] = now();
 
         // Areas of Support -> provider_support_areas table (one row per area).
         $supportAreas = $request->mappedAreasOfSupport();
@@ -563,8 +593,13 @@ class ProviderDirectoryController extends Controller
         // সরাসরি query() ব্যবহার করুন
         $query = Provider::with('user');
 
-        // শুধুমাত্র pending status এর provider
-        $query->where('status', 'pending');
+        // Everything still in review: Submitted, Needs correction, Pending verification.
+        // ?status=needs_correction (etc.) narrows the list to one of them.
+        $reviewStatus = $request->input('status');
+        $query->whereIn(
+            'status',
+            in_array($reviewStatus, ProviderService::IN_REVIEW_STATUSES, true) ? [$reviewStatus] : ProviderService::IN_REVIEW_STATUSES
+        );
 
         // সার্চ ফিল্টার
         if ($search) {
@@ -584,7 +619,7 @@ class ProviderDirectoryController extends Controller
             'meta' => pagination_meta($providers, 'Search by name, email, or phone...'),
             'filters' => [
                 'search' => $search,
-                'status' => 'pending',
+                'status' => in_array($reviewStatus, ProviderService::IN_REVIEW_STATUSES, true) ? $reviewStatus : '', // '' = all in review
                 'perPage' => $perPage,
             ],
         ]);
@@ -781,6 +816,7 @@ class ProviderDirectoryController extends Controller
                 // Culture
                 'caribbean_identity' => $provider->caribbean_identity,
                 'caribbean_experience' => $provider->caribbean_experience,
+                'caribbean_experience_details' => $provider->caribbean_experience_details,
                 'languages' => $provider->languages,
                 'languages_other' => $provider->languages_other,
                 'cultural_approach' => $provider->cultural_approach,
@@ -800,6 +836,7 @@ class ProviderDirectoryController extends Controller
                 'state_province' => $provider->state_province,
                 'country' => $provider->country,
                 'multiple_locations' => $provider->multiple_locations,
+                'additional_locations' => $provider->additional_locations ?? [],
                 'hide_address' => (bool) $provider->hide_address,
                 'telehealth_regions' => $provider->telehealth_regions,
                 'telehealth_regions_other' => $provider->telehealth_regions_other,
@@ -810,7 +847,11 @@ class ProviderDirectoryController extends Controller
                 'fee_range' => $provider->fee_range,
 
                 // Contact
+                'contact_person_name' => $provider->contact_person_name,
+                'contact_person_role' => $provider->contact_person_role,
+                'contact_person_email' => $provider->contact_person_email,
                 'phone' => $provider->phone,
+                'show_phone' => $provider->show_phone === null ? true : (bool) $provider->show_phone,
                 'website' => $provider->website,
                 'social_links' => $provider->social_links,
 
@@ -842,7 +883,12 @@ class ProviderDirectoryController extends Controller
                 // Review meta
                 'submitted_at' => $provider->created_at?->format('F j, Y'),
                 'verification_note' => $provider->verification_note,
+                'review_note' => $provider->note,
+                'review_reason' => $provider->review_reason,
             ],
+            'rejectionReasons' => ProviderService::REJECTION_REASONS,
+            // Conflicting information to check before approving (e.g. bio years vs. "Years of experience").
+            'reviewFlags' => app(ProviderService::class)->reviewFlags($provider),
             'indexRoute' => 'admin.providers.index',
         ]);
     }
@@ -864,24 +910,59 @@ class ProviderDirectoryController extends Controller
         $provider = Provider::findOrFail($id);
 
         // ভ্যালিডেশন
+        // Return for correction → instructions are required. Reject → reason (one of the
+        // screening criteria) + explanation are required; both are sent to the provider.
         $validated = $request->validate([
             'status' => ['required', Rule::in(self::STATUSES)],
-            'note'   => ['nullable', 'string', 'max:2000'],
+            'note'   => [
+                'nullable', 'string', 'max:2000',
+                Rule::requiredIf(in_array($request->input('status'), [
+                    ProviderService::STATUS_NEEDS_CORRECTION,
+                    GlobalConstant::VERIFICATION_STATUS_REJECTED,
+                ], true)),
+            ],
+            'review_reason' => [
+                'nullable',
+                Rule::requiredIf($request->input('status') === GlobalConstant::VERIFICATION_STATUS_REJECTED),
+                Rule::in(array_keys(ProviderService::REJECTION_REASONS)),
+            ],
             'licence_verified' => ['nullable', 'boolean'],
+        ], [
+            'note.required' => 'Please write the instructions / reason the provider will receive.',
+            'review_reason.required' => 'Choose which rejection criterion applies.',
         ]);
 
-        // পুরানো স্ট্যাটাস সংরক্ষণ করুন
+        // A profile is only published from "Pending verification" (or reinstated after
+        // suspension / inactivity) — it must pass screening and verification first.
         $oldStatus = $provider->status;
         $newStatus = $validated['status'];
+        $publishableFrom = [
+            ProviderService::STATUS_PENDING_VERIFICATION,
+            GlobalConstant::VERIFICATION_STATUS_APPROVED,
+            GlobalConstant::VERIFICATION_STATUS_SUSPENDED,
+            GlobalConstant::VERIFICATION_STATUS_INACTIVE,
+        ];
+        if ($newStatus === GlobalConstant::VERIFICATION_STATUS_APPROVED && ! in_array($oldStatus, $publishableFrom, true)) {
+            return back()->withErrors([
+                'status' => 'Move the profile to "Pending verification" before approving it.',
+            ]);
+        }
+
         $note = $validated['note'] ?? null;
 
-        // শুধুমাত্র status এবং note আপডেট করুন
         $provider->status = $newStatus;
         $provider->note = $note;
+        $provider->review_reason = $newStatus === GlobalConstant::VERIFICATION_STATUS_REJECTED
+            ? $validated['review_reason']
+            : null;
         $provider->reviewed_at = now();
 
-        if ($provider->provider_type === 'individual' && $newStatus === GlobalConstant::VERIFICATION_STATUS_APPROVED) {
-            $provider->licence_verified = !empty($validated['licence_verified']) ? 1 : 0;
+        // Credential verification is recorded at any stage (verified / unverified);
+        // the public "Credentials verified" badge only shows once the profile is approved.
+        if ($provider->provider_type === 'individual') {
+            if (array_key_exists('licence_verified', $validated) && $validated['licence_verified'] !== null) {
+                $provider->licence_verified = $validated['licence_verified'] ? 1 : 0;
+            }
         } else {
             $provider->licence_verified = 0;   // ✅ false (TINYINT 0), NULL নয়
         }
@@ -895,29 +976,28 @@ class ProviderDirectoryController extends Controller
             'has_note' => !empty($note),
         ]);
 
-        try {
-            // Provider এর user কে email পাঠান
-            if ($provider->user && $provider->user->email) {
-                Mail::to($provider->user->email)->send(
-                    new ProviderStatusUpdateMail($provider, $newStatus, $note)
-                );
-
-                \Log::info('[update] Status update email sent', [
+        // Tell the provider (reason + reconsideration option for rejections,
+        // instructions for corrections). Only when the status actually changed.
+        if ($oldStatus !== $newStatus) {
+            try {
+                $email = $provider->user?->email ?? $provider->email;
+                if ($email) {
+                    Notification::route('mail', $email)->notify(new ProviderReviewOutcome(
+                        $provider,
+                        $newStatus,
+                        $note,
+                        $provider->review_reason ? ProviderService::REJECTION_REASONS[$provider->review_reason] : null
+                    ));
+                } else {
+                    \Log::warning('[update] No email found for provider', ['provider_id' => $id]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('[update] Failed to send review outcome email', [
                     'provider_id' => $id,
-                    'email' => $provider->user->email,
-                    'status' => $newStatus,
+                    'error' => $e->getMessage(),
                 ]);
-            } else {
-                \Log::warning('[update] No email found for provider', [
-                    'provider_id' => $id,
-                ]);
+                // Mail failure must not undo the status change.
             }
-        } catch (\Exception $e) {
-            \Log::error('[update] Failed to send status update email', [
-                'provider_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-            // Mail failure को prevent করবেন না, update already done
         }
 
         return redirect()
@@ -929,7 +1009,8 @@ class ProviderDirectoryController extends Controller
 
     public function approveProvider(Request $request, $id)
     {
-        $provider = Provider::where('status', 'pending')->findOrFail($id);
+        // Publishing is only allowed after screening + verification (status "pending_verification").
+        $provider = Provider::where('status', ProviderService::STATUS_PENDING_VERIFICATION)->findOrFail($id);
 
         $provider->update([
             'status' => 'approved', // অথবা 'active'

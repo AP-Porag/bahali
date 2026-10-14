@@ -114,7 +114,7 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
         );
     }, [query]);
 
-    const preview = national.length >= country.min ? formatPhoneDisplay(toE164(country, national)) : '';
+    const preview = national.length >= country.min ? formatPhoneDisplay(toE164(country, national), { international: true }) : '';
 
     return (
         <div>

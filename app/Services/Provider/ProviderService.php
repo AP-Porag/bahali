@@ -34,6 +34,391 @@ class ProviderService extends BaseService
     /** Availability freshness window (guide §5.3). */
     private const AVAILABILITY_FRESH_DAYS = 60;
 
+    /** Reminder email goes out this many days before availability expires (day 53 of 60). */
+    public const AVAILABILITY_REMIND_BEFORE_DAYS = 7;
+
+    /** Confirmations older than this need a reminder (used by the dashboard + the daily reminder command). */
+    public static function availabilityRemindAfter(): \Illuminate\Support\Carbon
+    {
+        return now()->subDays(self::AVAILABILITY_FRESH_DAYS - self::AVAILABILITY_REMIND_BEFORE_DAYS);
+    }
+
+    /** Fee currency symbols (unambiguous: US$, JA$, TT$ …) — keep in sync with resources/js/constants/fees.ts. */
+    private const CURRENCY_SYMBOLS = [
+        'USD' => 'US$',
+        'CAD' => 'CA$',
+        'GBP' => '£',
+        'EUR' => '€',
+        'XCD' => 'EC$',
+        'JMD' => 'JA$',
+        'TTD' => 'TT$',
+        'BBD' => 'Bds$',
+        'BSD' => 'B$',
+        'BZD' => 'BZ$',
+        'BMD' => 'BD$',
+        'KYD' => 'CI$',
+        'GYD' => 'G$',
+        'SRD' => 'SR$',
+        'DOP' => 'RD$',
+        'CUP' => 'CUP ',
+        'HTG' => 'HTG ',
+        'XCG' => 'Cg ',
+        'ANG' => 'NAƒ',
+        'AWG' => 'Afl. ',
+        'CRC' => '₡',
+        'PAB' => 'B/.',
+    ];
+
+    /*
+     * Review workflow (client: initial screening → verification → final approval).
+     *   pending              = Submitted (new or resubmitted after edits)
+     *   needs_correction     = Returned to the provider with instructions
+     *   pending_verification = Passed screening, being verified — still unpublished
+     *   approved             = Verified + final approval → published
+     *   rejected / suspended / inactive as before
+     */
+    public const STATUS_NEEDS_CORRECTION     = 'needs_correction';
+    public const STATUS_PENDING_VERIFICATION = 'pending_verification';
+
+    /** Statuses still in review — all listed on the admin "Pending" page. */
+    public const IN_REVIEW_STATUSES = [
+        GlobalConstant::VERIFICATION_STATUS_PENDING,
+        self::STATUS_NEEDS_CORRECTION,
+        self::STATUS_PENDING_VERIFICATION,
+    ];
+
+    /** Initial-screening rejection criteria (the only valid reasons to reject). */
+    public const REJECTION_REASONS = [
+        'spam'         => 'Spam, scams, or unrelated advertising',
+        'out_of_scope' => "Services outside the directory's mental health, emotional wellness, or community support purpose",
+        'abusive'      => 'Hateful, threatening, or abusive content',
+        'harmful'      => 'Promotes harmful, coercive, or exploitative practices',
+        'fraudulent'   => 'Confirmed impersonation or fraudulent information',
+    ];
+
+    /** Service formats that mean clients visit the provider — the address must stay public. */
+    public const IN_PERSON_FORMATS = ['In-Person', 'Hybrid'];
+
+    /**
+     * Validation for the fields added after the original Store/UpdateProviderRequest
+     * (registration + provider edit). Called in the controller alongside the FormRequest.
+     */
+    public static function extraRules(): array
+    {
+        return [
+            // Every extra location follows the same rule as the main one, in the same or another country.
+            'additional_locations'                  => ['nullable', 'array', 'max:10', function ($attribute, $value, $fail) {
+                foreach (array_values(is_array($value) ? $value : []) as $i => $loc) {
+                    $loc = is_array($loc) ? $loc : [];
+                    $message = self::locationProblem($loc['country'] ?? '', $loc['state_province'] ?? '', $loc['city'] ?? '');
+                    if ($message) {
+                        $fail('Location ' . ($i + 2) . ': ' . $message);
+                        return;
+                    }
+                }
+            }],
+            'additional_locations.*.country'        => ['required', 'string', 'max:120'],
+            'additional_locations.*.state_province' => ['nullable', 'string', 'max:120'],
+            'additional_locations.*.city'           => ['nullable', 'string', 'max:120'],
+            // Country first: the parish / state (and the UK city) must come from that country's list.
+            'country'                               => [function ($attribute, $value, $fail) {
+                $message = self::locationProblem($value, request()->input('state_province'), request()->input('city'));
+                if ($message) {
+                    $fail($message);
+                }
+            }],
+            'show_phone'                            => ['nullable', 'boolean'],
+            'contact_person_name'                   => ['nullable', 'required_unless:provider_type,individual', 'string', 'max:255'],
+            'contact_person_role'                   => ['nullable', 'string', 'max:255'],
+            'contact_person_email'                  => ['nullable', 'email', 'max:255'],
+            'caribbean_experience'                  => ['required', 'in:yes,no'],
+            'caribbean_experience_details'          => ['nullable', 'string', 'max:1500'],
+            'fee_currency'                          => ['nullable', 'string', 'size:3'],
+            'reduced_cost_scope'                    => ['nullable', 'in:this_service,other_offerings'],
+            'accessibility'                         => ['nullable', 'array'],
+        ];
+    }
+
+    /**
+     * Columns filled from the extra fields above (+ the rules the client gave):
+     * address can't be hidden for in-person care, contact person only for organizations,
+     * extra locations only when "multiple locations" is yes.
+     */
+    public static function extraColumns($request): array
+    {
+        $formats = (array) $request->input('service_formats', []);
+        $isOrg   = $request->input('provider_type') !== 'individual';
+        $multi   = $request->input('multiple_locations') === 'yes';
+
+        $locations = collect((array) $request->input('additional_locations', []))
+            ->map(fn($l) => [
+                'country'        => trim((string) ($l['country'] ?? '')),
+                'state_province' => trim((string) ($l['state_province'] ?? '')),
+                'city'           => trim((string) ($l['city'] ?? '')),
+            ])
+            ->filter(fn($l) => $l['country'] !== '')
+            ->unique(fn($l) => strtolower(implode('|', $l)))
+            ->take(10)
+            ->values()
+            ->all();
+
+        $columns = [
+            'additional_locations'         => $multi ? $locations : [],
+            'show_phone'                   => $request->has('show_phone') ? $request->boolean('show_phone') : true,
+            'contact_person_name'          => $isOrg ? (trim((string) $request->input('contact_person_name')) ?: null) : null,
+            'contact_person_role'          => $isOrg ? (trim((string) $request->input('contact_person_role')) ?: null) : null,
+            'contact_person_email'         => $isOrg ? (trim((string) $request->input('contact_person_email')) ?: null) : null,
+            'caribbean_experience'         => $request->input('caribbean_experience') === 'yes' ? 'yes' : 'no',
+            'caribbean_experience_details' => self::caribbeanExperienceDetails(
+                $request->input('caribbean_experience'),
+                $request->input('caribbean_experience_details')
+            ),
+            'accessibility'                => (array) $request->input('accessibility', []),
+        ];
+
+        if (array_intersect($formats, self::IN_PERSON_FORMATS)) {
+            $columns['hide_address'] = false;
+        }
+
+        return $columns;
+    }
+
+    /** "Kingston, Jamaica" style labels for the extra locations. */
+    private function locationLabels($locations): array
+    {
+        return collect($this->toArray($locations))
+            ->map(fn($l) => implode(', ', array_filter([
+                $l['city'] ?? null,
+                $l['state_province'] ?? null,
+                $l['country'] ?? null,
+            ])))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /** Reduced-cost scope values (card wording: "for this service" / "for other offerings"). */
+    public const REDUCED_COST_SCOPES = ['this_service', 'other_offerings'];
+
+    /**
+     * Build the stored fee_range string, e.g. "$100–$150 / session".
+     * The currency code is stored separately in fee_currency and shown beside the fee on the card.
+     */
+    public static function buildFeeRange($feeMin, $feeMax, ?string $currency = 'USD'): ?string
+    {
+        $symbol = self::CURRENCY_SYMBOLS[strtoupper((string) $currency)] ?? '$';
+        $fmt = static function ($v): string {
+            // Keep whole numbers clean (150 not 150.00) but preserve real decimals.
+            $n = (float) $v;
+            return $n == (int) $n ? (string) (int) $n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+        };
+
+        if ($feeMin !== null && $feeMin !== '' && $feeMax !== null && $feeMax !== '') {
+            return $symbol . $fmt($feeMin) . '–' . $symbol . $fmt($feeMax) . ' / session';
+        }
+        if ($feeMin !== null && $feeMin !== '') {
+            return 'From ' . $symbol . $fmt($feeMin) . ' / session';
+        }
+        return null;
+    }
+
+    /** True when the provider's payment methods include a sliding-scale or free / low-cost option. */
+    public static function hasReducedCost($paymentMethods): bool
+    {
+        $methods = is_array($paymentMethods) ? $paymentMethods : (json_decode((string) $paymentMethods, true) ?: []);
+        return (bool) array_intersect($methods, self::PAYMENT_GROUPS['free_low_cost']);
+    }
+
+    /**
+     * True for an affirmative yes/no answer, whatever way it was stored ('yes', 1, true, '1', 'true').
+     * Used for "Do you have experience providing care or support to Caribbean individuals,
+     * families, or communities?" — the single question behind the "Caribbean support experience"
+     * badge (cards + profile) and the Approach tab section.
+     */
+    public static function isYes($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        return in_array(strtolower(trim((string) $value)), ['yes', '1', 'true'], true);
+    }
+
+    /**
+     * Server-side copy of the form's location rule (LocationSection.tsx → locationProblem):
+     * the country must be in the list, and the parish / state — plus the city for two-level
+     * countries such as the UK — must belong to that country. Countries without a list
+     * just need a city / town. Returns the error message, or null when the location is valid.
+     */
+    public static function locationProblem($country, $stateProvince, $city): ?string
+    {
+        static $regionsByCountry = [];
+
+        $country = trim((string) $country);
+        $state   = trim((string) $stateProvince);
+        $city    = trim((string) $city);
+
+        if ($country === '') {
+            return 'Please select a country.';
+        }
+
+        if (! array_key_exists($country, $regionsByCountry)) {
+            $model = Country::with(['regions' => fn($q) => $q->select('id', 'country_id', 'parent_id', 'name')->where('is_active', true)])
+                ->where('name', $country)
+                ->first();
+            $regionsByCountry[$country] = $model ? $model->regions : null;
+        }
+        $regions = $regionsByCountry[$country];
+
+        if ($regions === null) {
+            return 'Please select a country from the list.';
+        }
+        if ($regions->isEmpty()) {
+            return $city === '' ? 'Please enter the city or town.' : null;
+        }
+
+        $parents      = $regions->filter(fn($r) => empty($r->parent_id));
+        $hasHierarchy = $parents->isNotEmpty() && $regions->contains(fn($r) => ! empty($r->parent_id));
+        $level1       = $hasHierarchy ? $parents : $regions;
+        $parent       = $level1->firstWhere('name', $state);
+
+        if (! $parent) {
+            return "Please select a city / parish / state in {$country} from the list.";
+        }
+        if ($hasHierarchy) {
+            $level2 = $regions->where('parent_id', $parent->id);
+            if ($level2->isNotEmpty() && ! $level2->contains('name', $city)) {
+                return "Please select a city / local area in {$state} from the list.";
+            }
+        }
+
+        return null;
+    }
+
+    /** Provider-written Caribbean experience description — only kept when the answer is yes. */
+    public static function caribbeanExperienceDetails($answer, $details): ?string
+    {
+        if (! self::isYes($answer)) {
+            return null;
+        }
+        $text = trim((string) $details);
+        return $text === '' ? null : $text;
+    }
+
+    /**
+     * Conflicting information to review before the profile is published
+     * (shown to the admin on the verification page).
+     * Currently checks: years of experience mentioned in the biography vs. the
+     * "Years of experience" answer (e.g. bio says "more than 20 years", answer is "11–15 years").
+     */
+    public function reviewFlags(Provider $p): array
+    {
+        $flags = [];
+
+        $range = $this->yearsBucketRange((string) $p->years_experience);
+        $bio = (string) $p->short_bio;
+
+        if ($range && $bio !== '') {
+            // Digits ("20") or words ("twenty", "twenty-five", "fifteen").
+            $number = '\d{1,2}|(?:twenty|thirty|forty|fifty)(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?'
+                . '|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|ten'
+                . '|one|two|three|four|five|six|seven|eight|nine';
+            $pattern = '/\b(over|more than|nearly|almost|about|around|approximately|close to)?\s*(' . $number . ')\s*(\+)?\s*(?:years?|yrs?)\b(?=[^.!?]{0,60}\b(?:experience|practi[cs]|work|career|field|clinical|serv|support|counsel|therap|walk))/i';
+
+            if (preg_match_all($pattern, $bio, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $m) {
+                    $qualifier = strtolower(trim($m[1] ?? ''));
+                    $years = $this->yearsNumber($m[2]);
+                    if ($years === null) {
+                        continue;
+                    }
+                    $plus = ! empty($m[3]);
+
+                    // "more than 20" / "20+" → at least 20; "nearly 20" → just under 20.
+                    $low = $years;
+                    $high = $years;
+                    if ($plus || in_array($qualifier, ['over', 'more than'], true)) {
+                        $high = INF;
+                    } elseif (in_array($qualifier, ['nearly', 'almost', 'close to'], true)) {
+                        $low = $years - 1;
+                    } elseif (in_array($qualifier, ['about', 'around', 'approximately'], true)) {
+                        $low = $years - 1;
+                        $high = $years + 1;
+                    }
+
+                    [$min, $max] = $range;
+                    if ($high < $min || $low > $max) {
+                        $flags[] = [
+                            'field'   => 'years_experience',
+                            'message' => sprintf(
+                                'The biography mentions "%s", but Years of experience is set to "%s". Please confirm which is correct before publishing.',
+                                trim($m[0]),
+                                $p->years_experience
+                            ),
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $flags;
+    }
+
+    /** "20" → 20, "twenty-five" → 25, "fifteen" → 15. */
+    private function yearsNumber(string $raw): ?float
+    {
+        $raw = strtolower(trim($raw));
+        if (is_numeric($raw)) {
+            return (float) $raw;
+        }
+        $units = [
+            'one' => 1,
+            'two' => 2,
+            'three' => 3,
+            'four' => 4,
+            'five' => 5,
+            'six' => 6,
+            'seven' => 7,
+            'eight' => 8,
+            'nine' => 9,
+            'ten' => 10,
+            'eleven' => 11,
+            'twelve' => 12,
+            'thirteen' => 13,
+            'fourteen' => 14,
+            'fifteen' => 15,
+            'sixteen' => 16,
+            'seventeen' => 17,
+            'eighteen' => 18,
+            'nineteen' => 19,
+        ];
+        $tens = ['twenty' => 20, 'thirty' => 30, 'forty' => 40, 'fifty' => 50];
+        $parts = preg_split('/[- ]/', $raw);
+        if (isset($tens[$parts[0]])) {
+            return (float) ($tens[$parts[0]] + (isset($parts[1]) ? ($units[$parts[1]] ?? 0) : 0));
+        }
+        return isset($units[$raw]) ? (float) $units[$raw] : null;
+    }
+
+    /** "11–15 years" → [11, 15], "20+ years" → [20, INF], "Less than 2 years" → [0, 1.99]. */
+    private function yearsBucketRange(string $bucket): ?array
+    {
+        $b = strtolower(trim($bucket));
+        if ($b === '') {
+            return null;
+        }
+        if (str_starts_with($b, 'less than') && preg_match('/(\d+)/', $b, $m)) {
+            return [0, (float) $m[1] - 0.01];
+        }
+        if (preg_match('/(\d+)\s*\+/', $b, $m)) {
+            return [(float) $m[1], INF];
+        }
+        if (preg_match('/(\d+)\s*[–-]\s*(\d+)/u', $b, $m)) {
+            return [(float) $m[1], (float) $m[2]];
+        }
+        return null;
+    }
+
     /* =====================================================================
      |  PUBLIC API
      * ===================================================================== */
@@ -171,7 +556,13 @@ class ProviderService extends BaseService
             'bio'             => $p->short_bio,
             'yearsExperience' => $p->years_experience,
             'location'        => $this->displayLocation($p),
+            // Street address only when public (in-person care can't hide it).
+            'address'         => (! $p->hide_address && $p->address) ? $p->address : null,
             'servesMultiple'  => (bool) $p->multiple_locations,
+            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations) : [],
+            'contactPerson'   => $p->provider_type !== 'individual' && $p->contact_person_name
+                ? ['name' => $p->contact_person_name, 'role' => $p->contact_person_role]
+                : null,
             'telehealthRegions' => $this->toArray($p->telehealth_regions),
             'sessionFormats' => $this->toArray($p->service_formats),
             'practiceSettings' => $this->toArray($p->practice_settings),
@@ -181,12 +572,9 @@ class ProviderService extends BaseService
             'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
             'providerType' => $p->provider_type,
             'licenceVerified' => (bool) $p->licence_verified,
-            'caribbeanIdentity'   => $p->caribbean_identity ?: null,
-            'caribbeanExperience' => match (strtolower(trim((string) $p->caribbean_experience))) {
-                'yes', '1', 'true'  => 'Yes',
-                'no',  '0', 'false' => 'No',
-                default             => null,
-            },
+            // One question drives the "Caribbean support experience" badge and the Approach tab section.
+            'caribbeanExperience'        => self::isYes($p->caribbean_experience),
+            'caribbeanExperienceDetails' => self::caribbeanExperienceDetails($p->caribbean_experience, $p->caribbean_experience_details),
             'supportAreas'    => $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
                 'category' => $cat,
                 'areas'    => $rows->pluck('area')->filter()->values(),
@@ -201,13 +589,16 @@ class ProviderService extends BaseService
                 'insurance' => $this->toArray($p->insurance_plans),
             ],
             'contact' => [
-                'phone'   => $p->phone,
+                // Provider chooses whether the phone number is public.
+                'phone'   => ($p->show_phone ?? true) ? $p->phone : null,
                 'email'   => $p->contact_email,
                 'website' => $p->website,
                 'booking' => $p->booking_url,
                 'social'  => $this->toArray($p->social_links),
             ],
             'fee'             => $p->fee_range ?: null,
+            'currency'        => $p->fee_currency ?: 'USD',
+            'reducedCostScope' => $p->reduced_cost_scope ?: null,
             'availability'    => $this->availabilityState($p),
             'availabilityConfirmedAt' => $p->availability_confirmed_at?->format('F j, Y'),
             'acceptingNewClients' => $this->availabilityState($p) === 'accepting'
@@ -334,7 +725,9 @@ class ProviderService extends BaseService
             $query->where('lgbtq_affirming', $filters['lgbtq_affirming']);
         }
         if (! empty($filters['culturally_affirming'])) {
-            $query->where('culturally_affirming', $filters['culturally_affirming']);
+            // The old "culturally affirming" question was removed — this filter now means
+            // "Caribbean support experience" (same question as the badge).
+            $query->whereIn('caribbean_experience', ['yes', '1', 'true', 1]);
         }
 
         // 8) Availability
@@ -354,7 +747,9 @@ class ProviderService extends BaseService
                 $q2->where('country', $loc)
                     ->orWhere('state_province', $loc)
                     ->orWhere('city', $loc)
-                    ->orWhereJsonContains('telehealth_regions', $loc);
+                    ->orWhereJsonContains('telehealth_regions', $loc)
+                    // Extra locations (country / parish / city picked from the lists)
+                    ->orWhereRaw("JSON_SEARCH(additional_locations, 'one', ?) IS NOT NULL", [$loc]);
             });
 
             // ── Virtual filter (ANDed with geography) ──
@@ -370,7 +765,8 @@ class ProviderService extends BaseService
             $query->where(fn(Builder $q) => $q
                 ->where('state_province', $region)
                 ->orWhere('city', $region)
-                ->orWhereJsonContains('telehealth_regions', $region));
+                ->orWhereJsonContains('telehealth_regions', $region)
+                ->orWhereRaw("JSON_SEARCH(additional_locations, 'one', ?) IS NOT NULL", [$region]));
         }
     }
 
@@ -471,15 +867,21 @@ class ProviderService extends BaseService
             'formatKey'     => $this->formatKey($formats),
 
             'specialties' => $this->cardSpecialties($p),
-            'populations' => array_slice($this->toArray($p->populations_served), 0, 4),
+            'populations' => $this->toArray($p->populations_served),
             'languages'   => array_slice($this->toArray($p->languages), 0, 3),
 
             // Payment (guide §4.2)
-            'insurances'   => array_slice($this->toList($p->insurance_plans), 0, 6),
+            // Insurance plans + Medicaid / Medicare / EAP — same list as the profile's "Insurance accepted".
+            'insurances'   => array_slice(array_values(array_unique(array_merge(
+                $this->toList($p->insurance_plans),
+                array_values(array_intersect($payments, array_diff(self::PAYMENT_GROUPS['insurance'], ['Insurance Accepted'])))
+            ))), 0, 6),
             'selfPay'      => in_array('Self-Pay', $payments, true),
             'slidingScale' => in_array('Sliding Scale', $payments, true),
             'freeLowCost'  => (bool) array_intersect($payments, self::PAYMENT_GROUPS['free_low_cost']),
             'fee'          => $p->fee_range ?: null,
+            'currency'     => $p->fee_currency ?: 'USD',
+            'reducedCostScope' => $p->reduced_cost_scope ?: null,
 
             // Availability — 3 states (guide §5.1): accepting | not_accepting | unknown
             'availability' => $this->availabilityState($p),
@@ -488,7 +890,7 @@ class ProviderService extends BaseService
             'verified'     => true,
             'licenceVerified' => (bool) $p->licence_verified,
 
-            'caribbeanExperience' => (bool) $p->caribbean_experience,
+            'caribbeanExperience' => self::isYes($p->caribbean_experience),
         ];
     }
 
@@ -587,6 +989,7 @@ class ProviderService extends BaseService
             ->map(fn($c) => [
                 'id'   => $c->id,
                 'name' => $c->name,
+                'code' => $c->code,   // Google address suggestions are limited to this country
                 'regions' => $c->regions->map(fn($r) => [
                     'id'              => $r->id,
                     'name'            => $r->name,
@@ -615,6 +1018,12 @@ class ProviderService extends BaseService
                 'populations_served'   => $this->toArray($provider->populations_served),
                 'caribbean_identity'   => $provider->caribbean_identity,
                 'caribbean_experience' => $provider->caribbean_experience,
+                'caribbean_experience_details' => $provider->caribbean_experience_details ?? '',
+                'additional_locations' => $this->toArray($provider->additional_locations),
+                'show_phone'           => $provider->show_phone === null ? true : (bool) $provider->show_phone,
+                'contact_person_name'  => $provider->contact_person_name ?? '',
+                'contact_person_role'  => $provider->contact_person_role ?? '',
+                'contact_person_email' => $provider->contact_person_email ?? '',
                 'languages'            => $this->toArray($provider->languages),
                 'cultural_approach'    => $provider->cultural_approach,
                 'treatment_approaches' => $this->toArray($provider->treatment_approaches),
@@ -644,6 +1053,8 @@ class ProviderService extends BaseService
                 'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : ($provider->lgbtq_affirming ? 'yes' : 'no'),
                 'culturally_affirming' => $provider->culturally_affirming === null ? '' : ($provider->culturally_affirming ? 'yes' : 'no'),
                 'fee_range'            => $provider->fee_range,
+                'fee_currency'         => $provider->fee_currency ?: 'USD',
+                'reduced_cost_scope'   => $provider->reduced_cost_scope ?? '',
 
                 // Availability (guide §5)
                 'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
@@ -676,23 +1087,17 @@ class ProviderService extends BaseService
         $data['certifications']       = $request->input('certifications', []);
 
 
-        // Session fee range -> "$min–$max / session" (guide §4.2).
-        $feeMin = $request->input('fee_min');
-        $feeMax = $request->input('fee_max');
-        $fmt = static function ($v): string {
-            // Keep whole numbers clean (150 not 150.00) but preserve real decimals.
-            $n = (float) $v;
-            return $n == (int) $n ? (string) (int) $n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
-        };
-
-        if ($feeMin !== null && $feeMin !== '' && $feeMax !== null && $feeMax !== '') {
-            $data['fee_range'] = '$' . $fmt($feeMin) . '–$' . $fmt($feeMax) . ' / session';
-        } elseif ($feeMin !== null && $feeMin !== '') {
-            $data['fee_range'] = 'From $' . $fmt($feeMin) . ' / session';
-        } else {
-            $data['fee_range'] = null;
-        }
+        // Session fee range -> "$min–$max / session" (guide §4.2) + currency + reduced-cost scope.
+        $currency = strtoupper((string) $request->input('fee_currency', 'USD')) ?: 'USD';
+        $data['fee_currency'] = $currency;
+        $data['fee_range'] = self::buildFeeRange($request->input('fee_min'), $request->input('fee_max'), $currency);
+        $scope = $request->input('reduced_cost_scope');
+        $data['reduced_cost_scope'] = self::hasReducedCost($request->input('payment_methods', []))
+            && in_array($scope, self::REDUCED_COST_SCOPES, true) ? $scope : null;
         unset($data['fee_min'], $data['fee_max']);
+
+        // New fields (locations, phone visibility, contact person, Caribbean question …).
+        $data = array_merge($data, self::extraColumns($request));
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
         // Availability (guide §5) — stamp confirmation time so the 60-day
@@ -821,10 +1226,16 @@ class ProviderService extends BaseService
                 'accepting_new_clients'      => $provider->accepting_new_clients, // true|false|null
                 'availability_confirmed_at'  => $provider->availability_confirmed_at?->format('M j, Y'),
                 'availability_next_reminder' => $provider->availability_confirmed_at?->copy()->addDays(60)->format('M j, Y'),
+                // accepting | not_accepting | unknown (never set, or not reconfirmed within 60 days)
+                'availability_state'         => $this->availabilityState($provider),
+                // true from day 53 → the dashboard asks the provider to reconfirm
+                'availability_due'           => ! is_null($provider->accepting_new_clients)
+                    && $provider->availability_confirmed_at
+                    && $provider->availability_confirmed_at->lte(self::availabilityRemindAfter()),
             ],
             'status' => [
                 'value'       => $status,
-                'label'       => ucfirst($status),
+                'label'       => ucfirst(str_replace('_', ' ', $status)),
                 'isPublic'    => $isPublic,
                 'description' => $this->statusDescription($status),
             ],
@@ -847,8 +1258,10 @@ class ProviderService extends BaseService
     {
         return match ($status) {
             GlobalConstant::VERIFICATION_STATUS_APPROVED  => 'Your profile is approved and visible in the public directory.',
-            GlobalConstant::VERIFICATION_STATUS_PENDING   => 'Your profile is awaiting review. It will appear publicly once approved.',
-            GlobalConstant::VERIFICATION_STATUS_REJECTED  => 'Your profile needs changes before it can be published. Please review any notes and resubmit.',
+            GlobalConstant::VERIFICATION_STATUS_PENDING   => 'Your profile has been submitted and is awaiting an initial review. It will appear publicly once verified and approved.',
+            self::STATUS_NEEDS_CORRECTION                 => 'Bahali has asked for some changes. Check the instructions we emailed you, update your profile and resubmit.',
+            self::STATUS_PENDING_VERIFICATION             => 'Your profile passed the initial review and is being verified. It stays unpublished until verification and final approval are complete.',
+            GlobalConstant::VERIFICATION_STATUS_REJECTED  => 'Your profile was not accepted. Check the email we sent for the reason — you can reply to request reconsideration.',
             GlobalConstant::VERIFICATION_STATUS_SUSPENDED => 'Your listing is temporarily suspended. Contact Bahali for details.',
             GlobalConstant::VERIFICATION_STATUS_INACTIVE  => 'Your listing is inactive and not shown publicly.',
             default => 'Your profile status is being processed.',

@@ -51,6 +51,8 @@ class Provider extends Model
         'practice_settings',
         'practice_settings_other',
 
+
+
         // Location
         'address',
         'city',
@@ -65,6 +67,8 @@ class Provider extends Model
         'payment_methods',
         'insurance_plans',
         'fee_range',
+        'fee_currency',
+        'reduced_cost_scope',
 
         // Contact
         'phone',
@@ -108,6 +112,15 @@ class Provider extends Model
         'contact_email',
         'licence_verified',
 
+        'additional_locations',
+        'show_phone',
+        'contact_person_name',
+        'contact_person_role',
+        'contact_person_email',
+        'review_reason',
+        'caribbean_experience_details',
+        'availability_reminder_sent_at',
+
 
     ];
 
@@ -136,10 +149,13 @@ class Provider extends Model
 
         'accepting_new_clients'     => 'boolean',
         'availability_confirmed_at' => 'datetime',
+        'availability_reminder_sent_at' => 'datetime',
 
         'lgbtq_affirming'      => 'string',
         'culturally_affirming' => 'string',
         'licence_verified' => 'boolean',
+        'additional_locations' => 'array',
+        'show_phone' => 'boolean',
 
     ];
 

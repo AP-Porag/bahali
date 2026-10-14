@@ -1,4 +1,3 @@
-
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -6,10 +5,12 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
 import { HelpCircle, Verified } from 'lucide-react';
+import { ProviderBadgeRow, displayName, initials, feeWithCurrency, reducedCostLabel } from '@/components/provider/ProviderBadges';
 
 const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
 const PER_PAGE = 6;
 const STORAGE_KEY = 'bahali_directory_state_v1';
+const RETURN_KEY = 'bahali_directory_return'; // set by the profile page (web/provider/show) — "Back to results"
 
 /* Card rows-এ ব্যবহারের জন্য icons */
 const CardIco = {
@@ -51,9 +52,10 @@ const PAYMENT_LABEL = Object.fromEntries(PAYMENT_OPTIONS.map((o) => [o.key, o.la
 const CRISIS_TERMS = ['suicide', 'suicidal', 'kill myself', 'end my life', 'self harm', 'self-harm', 'hurt myself', 'emergency', 'crisis', 'overdose'];
 const isCrisisQuery = (kw = '') => { const t = kw.toLowerCase(); return CRISIS_TERMS.some((x) => t.includes(x)); };
 
-function initials(name = '') {
-    return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'B';
-}
+const VIRTUAL_LABEL = 'Include providers offering virtual support in my location';
+
+/* displayName, initials, feeWithCurrency and reducedCostLabel now come from
+   '@/components/provider/ProviderBadges' so the card and the expanded profile always match. */
 
 function getParentId(r) {
     return r?.parentId ?? r?.parent_id ?? null;
@@ -82,16 +84,32 @@ function filtersSignature(input = {}) {
     });
 }
 
-function readPersistedState(filters, minItems) {
+/* Filters as they appear in the current URL (works for the "Back to results" link and the browser back button). */
+function filtersFromSearch(search = '') {
+    const out = {};
+    new URLSearchParams(search).forEach((value, rawKey) => {
+        const key = rawKey.replace(/\[\d*\]$/, '');
+        if (key === 'areas' || key === 'language') {
+            out[key] = [...(out[key] || []), value].filter(Boolean);
+        } else {
+            out[key] = value;
+        }
+    });
+    const flag = (v) => v === '1' || v === 'true';
+    return { ...out, include_virtual: flag(out.include_virtual), accepting: flag(out.accepting) };
+}
+
+/* Saved results state — only restored when returning from a provider profile with the same filters. */
+function readReturnState() {
     if (typeof window === 'undefined') return null;
     try {
-        const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (!saved) return null;
-        const parsed = JSON.parse(saved);
-        if (!parsed || typeof parsed !== 'object') return null;
-        if (parsed.sig !== filtersSignature(filters)) return null;
-        if (!Array.isArray(parsed.items)) return null;
-        if (parsed.items.length <= (minItems ?? 0)) return null;
+        const returning = sessionStorage.getItem(RETURN_KEY);
+        sessionStorage.removeItem(RETURN_KEY);
+        if (!returning) return null;
+        const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+        if (!parsed || typeof parsed !== 'object' || !parsed.f) return null;
+        if (parsed.sig !== filtersSignature(filtersFromSearch(window.location.search))) return null;
+        if (!Array.isArray(parsed.items) || parsed.items.length === 0) return null;
         return parsed;
     } catch {
         return null;
@@ -177,7 +195,7 @@ function MultiSelect({ id, label, values = [], onChange, options = [], placehold
     );
 }
 
-/* ------------------------ See all areas modal ------------------------ */
+/* ------------------------ All areas (inline, expands beneath choices) ------------------------ */
 
 function AreaButton({ area, active, onToggle }) {
     return (
@@ -192,122 +210,101 @@ function AreaButton({ area, active, onToggle }) {
     );
 }
 
-function SeeAllAreasModal({ open, onClose, selected, onApply }) {
-    const [local, setLocal] = useState(selected);
+/* Selections are read from / written to the page filters directly,
+   so they are preserved when this panel opens or closes. */
+function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
     const [q, setQ] = useState('');
     const [activeCat, setActiveCat] = useState(AREAS_OF_SUPPORT_GROUPS[0]?.category ?? '');
     const [openMobileCat, setOpenMobileCat] = useState('');
-
-    useEffect(() => { if (open) { setLocal(selected); setQ(''); } }, [open, selected]);
-    useEffect(() => {
-        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-        if (open) document.addEventListener('keydown', onKey);
-        return () => document.removeEventListener('keydown', onKey);
-    }, [open, onClose]);
-    if (!open) return null;
 
     const query = q.trim().toLowerCase();
     const searching = query.length > 0;
     const searchResults = searching ? ALL_SUPPORT_AREAS.filter((a) => a.toLowerCase().includes(query)) : [];
     const activeItems = AREAS_OF_SUPPORT_GROUPS.find((g) => g.category === activeCat)?.items ?? [];
-    const toggle = (area) => { const s = new Set(local); s.has(area) ? s.delete(area) : s.add(area); setLocal(Array.from(s)); };
-    const countFor = (cat) => AREAS_OF_SUPPORT_GROUPS.find((g) => g.category === cat)?.items.filter((i) => local.includes(i)).length ?? 0;
+    const countFor = (cat) => AREAS_OF_SUPPORT_GROUPS.find((g) => g.category === cat)?.items.filter((i) => selected.includes(i)).length ?? 0;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="All areas of support">
-            <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
-                <div className="border-b border-[#EFEAE0] p-4 sm:p-5">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                            <h3 className="text-lg text-[#16302F]" style={SERIF}>See all areas of support</h3>
-                            <span aria-live="polite" className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${local.length > 0 ? 'bg-[#0E7C7B] text-white' : 'bg-[#EFEAE0] text-[#6B7A78]'}`}>
-                                {local.length} selected
-                            </span>
-                        </div>
-                        <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
-                        </button>
-                    </div>
-                    <p className="mt-1 text-sm text-[#8A9795]">Browse a category or search all support options. Select as many as you need.</p>
-                    <div className="relative mt-3">
-                        <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9AA6A4]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-                        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search areas of support"
-                            className="w-full rounded-xl border border-[#DED7C9] bg-[#FBF8F2] py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
-                    </div>
-
-                    {local.length > 0 && (
-                        <div className="mt-3">
-                            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Your selections</p>
-                            <div className="flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
-                                {local.map((a) => (
-                                    <button key={a} type="button" onClick={() => toggle(a)} aria-label={`Remove ${a}`}
-                                        className="inline-flex items-center gap-1 rounded-full bg-[#0E7C7B] px-2.5 py-1 text-xs font-medium text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
-                                        {a}
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+        <div id="all-areas-panel" className="mt-4 overflow-hidden rounded-xl border border-[#DED7C9] bg-white" aria-label="All areas of support">
+            <div className="border-b border-[#EFEAE0] p-4">
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-[15px] text-[#16302F]" style={SERIF}>All areas of support</p>
+                    <span aria-live="polite" className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${selected.length > 0 ? 'bg-[#0E7C7B] text-white' : 'bg-[#EFEAE0] text-[#6B7A78]'}`}>
+                        {selected.length} selected
+                    </span>
+                </div>
+                <div className="relative mt-3">
+                    <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9AA6A4]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search areas of support"
+                        className="w-full rounded-xl border border-[#DED7C9] bg-[#FBF8F2] py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
-                    {searching ? (
-                        <div className="p-4 sm:p-5">
-                            {searchResults.length === 0
-                                ? <p className="text-sm text-[#8A9795]">No areas match “{q}”.</p>
-                                : <div className="grid gap-2 sm:grid-cols-2">{searchResults.map((a) => <AreaButton key={a} area={a} active={local.includes(a)} onToggle={toggle} />)}</div>}
+                {selected.length > 0 && (
+                    <div className="mt-3">
+                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Your selections</p>
+                        <div className="flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
+                            {selected.map((a) => (
+                                <button key={a} type="button" onClick={() => onToggle(a)} aria-label={`Remove ${a}`}
+                                    className="inline-flex items-center gap-1 rounded-full bg-[#0E7C7B] px-2.5 py-1 text-xs font-medium text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
+                                    {a}
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
+                                </button>
+                            ))}
                         </div>
-                    ) : (
-                        <>
-                            <div className="hidden sm:flex">
-                                <ul className="w-64 flex-shrink-0 border-r border-[#EFEAE0] p-2">
-                                    {AREAS_OF_SUPPORT_GROUPS.map((g) => {
-                                        const c = countFor(g.category);
-                                        return (
-                                            <li key={g.category}>
-                                                <button type="button" onClick={() => setActiveCat(g.category)}
-                                                    className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${activeCat === g.category ? 'bg-[#0E7C7B]/10 font-medium text-[#15403F]' : 'text-[#3A4B49] hover:bg-[#F1EDE3]'}`}>
-                                                    <span className="leading-snug">{g.category}</span>
-                                                    {c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}
-                                                </button>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                                <div className="grid flex-1 content-start gap-2 p-4 sm:grid-cols-2">{activeItems.map((a) => <AreaButton key={a} area={a} active={local.includes(a)} onToggle={toggle} />)}</div>
-                            </div>
-                            <div className="sm:hidden">
+                    </div>
+                )}
+            </div>
+
+            <div className="max-h-[420px] overflow-y-auto">
+                {searching ? (
+                    <div className="p-4">
+                        {searchResults.length === 0
+                            ? <p className="text-sm text-[#8A9795]">No areas match “{q}”.</p>
+                            : <div className="grid gap-2 xl:grid-cols-2">{searchResults.map((a) => <AreaButton key={a} area={a} active={selected.includes(a)} onToggle={onToggle} />)}</div>}
+                    </div>
+                ) : (
+                    <>
+                        <div className="hidden lg:flex">
+                            <ul className="w-56 flex-shrink-0 border-r border-[#EFEAE0] p-2">
                                 {AREAS_OF_SUPPORT_GROUPS.map((g) => {
-                                    const isOpen = openMobileCat === g.category;
                                     const c = countFor(g.category);
                                     return (
-                                        <div key={g.category} className="border-b border-[#EFEAE0]">
-                                            <button type="button" onClick={() => setOpenMobileCat(isOpen ? '' : g.category)} className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left">
-                                                <span className="flex items-center gap-2 text-sm font-medium text-[#16302F]">{g.category}{c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}</span>
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
+                                        <li key={g.category}>
+                                            <button type="button" onClick={() => setActiveCat(g.category)}
+                                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${activeCat === g.category ? 'bg-[#0E7C7B]/10 font-medium text-[#15403F]' : 'text-[#3A4B49] hover:bg-[#F1EDE3]'}`}>
+                                                <span className="leading-snug">{g.category}</span>
+                                                {c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}
                                             </button>
-                                            {isOpen && <div className="grid gap-2 px-4 pb-4">{g.items.map((a) => <AreaButton key={a} area={a} active={local.includes(a)} onToggle={toggle} />)}</div>}
-                                        </div>
+                                        </li>
                                     );
                                 })}
-                            </div>
-                        </>
-                    )}
-                </div>
+                            </ul>
+                            <div className="grid flex-1 content-start gap-2 p-4 xl:grid-cols-2">{activeItems.map((a) => <AreaButton key={a} area={a} active={selected.includes(a)} onToggle={onToggle} />)}</div>
+                        </div>
+                        <div className="lg:hidden">
+                            {AREAS_OF_SUPPORT_GROUPS.map((g) => {
+                                const isOpen = openMobileCat === g.category;
+                                const c = countFor(g.category);
+                                return (
+                                    <div key={g.category} className="border-b border-[#EFEAE0] last:border-0">
+                                        <button type="button" onClick={() => setOpenMobileCat(isOpen ? '' : g.category)} aria-expanded={isOpen} className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left">
+                                            <span className="flex items-center gap-2 text-sm font-medium text-[#16302F]">{g.category}{c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
+                                        </button>
+                                        {isOpen && <div className="grid gap-2 px-4 pb-4">{g.items.map((a) => <AreaButton key={a} area={a} active={selected.includes(a)} onToggle={onToggle} />)}</div>}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </>
+                )}
+            </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-[#EFEAE0] p-4 sm:p-5">
-                    <div className="flex items-center gap-3 text-sm text-[#5B6B6E]">
-                        <span aria-live="polite"><span className="font-semibold text-[#16302F]">{local.length}</span> selected</span>
-                        {local.length > 0 && <button onClick={() => setLocal([])} className="text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear all</button>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button onClick={onClose} className="rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40">Cancel</button>
-                        <button onClick={() => onApply(local)} className="rounded-xl bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B6463]">
-                            Apply{local.length > 0 ? ` (${local.length})` : ''}
-                        </button>
-                    </div>
+            <div className="flex items-center justify-between gap-3 border-t border-[#EFEAE0] p-4">
+                <div className="flex items-center gap-3 text-sm text-[#5B6B6E]">
+                    <span aria-live="polite"><span className="font-semibold text-[#16302F]">{selected.length}</span> selected</span>
+                    {selected.length > 0 && <button type="button" onClick={onClear} className="text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear all</button>}
                 </div>
+                <button type="button" onClick={onClose} className="rounded-xl bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B6463]">Done</button>
             </div>
         </div>
     );
@@ -327,7 +324,9 @@ function AvailabilityBadge({ availability }) {
     if (availability === 'not_accepting') {
         return (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EFEAE0] px-3 py-1 text-xs font-semibold text-[#6B7A78] ring-1 ring-inset ring-[#D9CFBA]">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14" strokeLinecap="round" /></svg>
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#D9CFBA]">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="M6 12h12" strokeLinecap="round" /></svg>
+                </span>
                 Not accepting new clients
             </span>
         );
@@ -348,20 +347,33 @@ function AvailabilityBadge({ availability }) {
 //     return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
 // }
 
+/* "+N more" — hover (or tap/focus on mobile) shows the hidden items */
+function MoreTip({ items = [], align = 'left' }) {
+    if (!items.length) return null;
+    return (
+        <span tabIndex={0} className="group/more relative inline-block cursor-help whitespace-nowrap text-[#8A9795] underline decoration-dotted underline-offset-2 outline-none focus-visible:text-[#0E7C7B]">
+            +{items.length} more
+            <span role="tooltip" className={`pointer-events-none invisible absolute bottom-full z-20 mb-1.5 w-max max-w-[240px] whitespace-normal rounded-lg bg-[#16302F] px-3 py-2 text-xs font-normal leading-snug text-white opacity-0 shadow-lg transition group-hover/more:visible group-hover/more:opacity-100 group-focus/more:visible group-focus/more:opacity-100 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+                {items.join(', ')}
+            </span>
+        </span>
+    );
+}
+
 function ProviderRow({ icon, children, className = '' }) {
     return (
-        <p className={`flex items-center gap-2 text-sm text-[#3A4B49] ${className}`}>
+        <p className={`flex items-start gap-2 text-sm text-[#3A4B49] ${className}`}>
             {icon && (
-                <span className="flex-shrink-0 text-[#0E7C7B]">
+                <span className="mt-0.5 flex-shrink-0 text-[#0E7C7B]">
                     <CardIcon d={icon} />
                 </span>
             )}
-            <span className="min-w-0">{children}</span>
+            <span className="min-w-0 flex-1 break-words">{children}</span>
         </p>
     );
 }
 
-function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
+function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
     const [imgError, setImgError] = useState(false);
     const specialties = useMemo(() => {
         const all = p.specialties || [];
@@ -377,57 +389,33 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
     const extraInsurers = Math.max(0, insurers.length - shownInsurers.length);
     const languages = p.languages || [];
     const showPhoto = p.photo && !imgError;
+    const name = displayName(p.name);
+    const credentialLine = [p.providerType === 'individual' ? p.credentials : null, p.title].filter(Boolean).join(' · ');
+    const populations = p.populations || [];
+    const shownPopulations = populations.slice(0, 3);
+    const extraPopulations = Math.max(0, populations.length - shownPopulations.length);
 
     return (
         <article className="flex flex-col gap-5 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition hover:border-[#DCD0BA] hover:shadow-[0_10px_30px_-12px_rgba(14,124,123,0.2)] sm:flex-row">
             {showPhoto ? (
-                <img src={p.photo} alt={p.name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-xl object-cover ring-1 ring-black/5 sm:h-40 sm:w-36" />
+                <img src={p.photo} alt={name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-xl object-cover ring-1 ring-black/5 sm:h-40 sm:w-36" />
             ) : (
                 <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] font-serif text-3xl text-white/90 ring-1 ring-black/5 sm:h-40 sm:w-36" style={SERIF}>{initials(p.name)}</div>
             )}
 
             <div className="min-w-0 flex-1">
-                {p.providerType === 'individual' && p.licenceVerified === true ? (
-                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
-                            <defs>
-                                <mask id="award-cut">
-                                    <rect width="24" height="24" fill="#fff" />
-                                    <circle cx="12" cy="9.5" r="4.9" fill="none" stroke="#000" stroke-width="1.2" />
-                                    <path d="M9.7 9.7l1.6 1.6 3.1-3.3" fill="none" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                                </mask>
-                            </defs>
-                            <path d="M8.2 14 5 21.5l2.4-.6 1.2 2.1L11 16.5zM15.8 14 19 21.5l-2.4-.6-1.2 2.1L13 16.5z" />
-                            <g mask="url(#award-cut)">
-                                <circle cx="12" cy="9.5" r="7" />
-                                <circle cx="12" cy="2.5" r="1.5" /><circle cx="15.5" cy="3.44" r="1.5" />
-                                <circle cx="18.06" cy="6" r="1.5" /><circle cx="19" cy="9.5" r="1.5" />
-                                <circle cx="18.06" cy="13" r="1.5" /><circle cx="15.5" cy="15.56" r="1.5" />
-                                <circle cx="12" cy="16.5" r="1.5" /><circle cx="8.5" cy="15.56" r="1.5" />
-                                <circle cx="5.94" cy="13" r="1.5" /><circle cx="5" cy="9.5" r="1.5" />
-                                <circle cx="5.94" cy="6" r="1.5" /><circle cx="8.5" cy="3.44" r="1.5" />
-                            </g>
-                        </svg>
-                        Licence Verified
-                    </span>
-                ) : (
-                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
-                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                            <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
-                            <circle cx="10" cy="10" r="2.25" />
-                        </svg>
-                        Profile Reviewed
-                    </span>
-                )}
-                <h3 className="text-[20px] leading-tight text-[#16302F]" style={SERIF}>
-                    {p.name}
-                    {p.providerType === 'individual' && p.credentials ? (
-                        <span className="text-[16px] font-normal text-[#5B6B6E]">, {p.credentials}</span>
-                    ) : null}
+                {/* Badges — same rules and wording as the expanded profile header */}
+                <ProviderBadgeRow
+                    className="mb-3.5"
+                    providerType={p.providerType}
+                    licenceVerified={p.licenceVerified}
+                    caribbeanExperience={p.caribbeanExperience}
+                />
+                <h3 className="break-words text-[20px] leading-tight text-[#16302F]" style={SERIF}>
+                    {name}
                 </h3>
 
-
-                {p.title && <p className="mt-0.5 text-sm text-[#5B6B6E]">{p.title}</p>}
+                {credentialLine && <p className="mt-1 text-sm text-[#5B6B6E]">{credentialLine}</p>}
                 {(p.location || formatLabel) && (
                     <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-[#3A4B49]">
                         {p.location && (
@@ -438,6 +426,13 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
                         )}
                         {p.location && formatLabel && <span className="text-[#C9CFCE]">•</span>}
                         {formatLabel && <span>{formatLabel}</span>}
+                    </p>
+                )}
+                {shownPopulations.length > 0 && (
+                    <p className="mt-1.5 text-sm text-[#3A4B49]">
+                        <span className="font-semibold text-[#16302F]">Who I support:</span>{' '}
+                        {shownPopulations.join(', ')}
+                        {extraPopulations > 0 && <>{' '}<MoreTip items={populations.slice(3)} /></>}
                     </p>
                 )}
                 {specialties.length > 0 && (
@@ -461,33 +456,32 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
                 {/* Fee — wallet icon, না থাকলে mail icon */}
                 <ProviderRow icon={p.fee ? CardIco.wallet : CardIco.info}>
                     {p.fee ? (
-                        <span className="font-semibold text-[#16302F]">{p.fee}</span>
+                        <span className="font-semibold text-[#16302F]">{feeWithCurrency(p.fee, p.currency || 'USD')}</span>
                     ) : (
                         <span className="text-[#516865]">Contact provider for fee information</span>
                     )}
                 </ProviderRow>
 
-                {/* Insurance — shield icon */}
+                {/* Insurance — shield icon, explicitly labelled */}
                 {shownInsurers.length > 0 && (
                     <ProviderRow icon={CardIco.shield}>
-                        <span className="truncate">
-                            {shownInsurers.join(', ')}
-                            {extraInsurers > 0 ? ` + ${extraInsurers} more` : ''}
-                        </span>
+                        <span className="font-medium text-[#16302F]">Insurance:</span>{' '}
+                        {shownInsurers.join(', ')}
+                        {extraInsurers > 0 && <>{' '}<MoreTip items={insurers.slice(2)} align="right" /></>}
                     </ProviderRow>
                 )}
 
-                {/* Sliding scale — heart icon */}
+                {/* Sliding scale — heart icon, says which services it applies to */}
                 {p.slidingScale && (
                     <ProviderRow icon={CardIco.heart}>
-                        <span className="text-[#0E6B6A]">Sliding scale available</span>
+                        <span className="text-[#0E6B6A]">{reducedCostLabel('sliding', p.reducedCostScope)}</span>
                     </ProviderRow>
                 )}
 
-                {/* Free / low-cost — heart icon */}
+                {/* Free / low-cost — heart icon, says which services it applies to */}
                 {p.freeLowCost && !p.slidingScale && (
                     <ProviderRow icon={CardIco.heart}>
-                        <span className="text-[#0E6B6A]">Free / low-cost</span>
+                        <span className="text-[#0E6B6A]">{reducedCostLabel('free', p.reducedCostScope)}</span>
                     </ProviderRow>
                 )}
 
@@ -503,13 +497,14 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '' }) {
                     <ProviderRow icon={CardIco.chat}>
                         <span className="text-[#5B6B6E]">
                             {languages.slice(0, 2).join(', ')}
-                            {languages.length > 2 ? ` +${languages.length - 2} more` : ''}
+                            {languages.length > 2 && <>{' '}<MoreTip items={languages.slice(2)} align="right" /></>}
                         </span>
                     </ProviderRow>
                 )}
 
                 <Link
                     href={`/provider/${p.id}${currentQuery ? `?${currentQuery}` : ''}`}
+                    onClick={() => onOpen?.(p.id)}
                     className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
                     aria-label={`View profile for ${p.name}`}
                 >
@@ -713,31 +708,26 @@ export default function Directory({
         keyword: filters.keyword || '',
     }), [filters]);
 
-    //const restored = useMemo(() => readPersistedState(initialF, providers.length), []); // eslint-disable-line react-hooks/exhaustive-deps
+    // "Back to results" from a provider profile → restore filters, loaded results, seed and scroll position.
+    const restored = useMemo(() => readReturnState(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const restored = useMemo(() => {
-        const r = readPersistedState(initialF, providers.length);
-        if (!r) return null;
-        // Version mismatch হলে ignore করুন
-        if (r.version !== dataVersion) {
-            sessionStorage.removeItem(STORAGE_KEY);
-            return null;
-        }
-        return r;
-    }, []);
-
-    const [items, setItems] = useState(restored?.items?.length ? restored.items : providers);
+    const [items, setItems] = useState(restored ? restored.items : providers);
     const [meta, setMeta] = useState(restored?.meta ? restored.meta : pagination);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [seed, setSeed] = useState(initialSeed);
+    const [seed, setSeed] = useState(restored?.seed ?? initialSeed);
     const [showRefine, setShowRefine] = useState(false);
-    const [showAreasModal, setShowAreasModal] = useState(false);
+    const [showAllAreas, setShowAllAreas] = useState(false);
     const resultsRef = useRef(null);
 
-    useEffect(() => { setSeed(initialSeed); }, [initialSeed]);
+    // Skip the first run so a restored seed (same order as before) is not overwritten.
+    const seedMounted = useRef(false);
+    useEffect(() => {
+        if (!seedMounted.current) { seedMounted.current = true; return; }
+        setSeed(initialSeed);
+    }, [initialSeed]);
 
-    const [f, setF] = useState(initialF);
+    const [f, setF] = useState(restored ? { ...initialF, ...restored.f } : initialF);
     const fRef = useRef(f); fRef.current = f;
 
     useEffect(() => {
@@ -745,11 +735,39 @@ export default function Directory({
         try {
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
                 sig: filtersSignature(fRef.current),
+                f: fRef.current,
                 items,
                 meta,
+                seed,
             }));
         } catch { /* ignore quota errors */ }
-    }, [items, meta]);
+    }, [items, meta, seed]);
+
+    // Return to the same place in the results list.
+    useEffect(() => {
+        if (!restored || typeof window === 'undefined' || typeof restored.scrollY !== 'number') return undefined;
+        const y = restored.scrollY;
+        const go = () => window.scrollTo(0, y);
+        const raf = requestAnimationFrame(go);
+        const t1 = setTimeout(go, 80);
+        const t2 = setTimeout(go, 250);
+        return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Called when "View profile" is clicked — remembers scroll position and which profile was opened.
+    const rememberPosition = (id) => {
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+                sig: filtersSignature(fRef.current),
+                f: fRef.current,
+                items,
+                meta,
+                seed,
+                scrollY: window.scrollY,
+                openedId: id,
+            }));
+        } catch { /* ignore quota errors */ }
+    };
 
     /* ==== Countries / regions — proper hook order ==== */
     const selectedCountry = useMemo(() => countries.find((c) => c.name === f.location), [countries, f.location]);
@@ -913,8 +931,6 @@ export default function Directory({
             <Head title="Find the right support — Bahali" />
             <Header />
 
-            <SeeAllAreasModal open={showAreasModal} onClose={() => setShowAreasModal(false)} selected={f.areas} onApply={(next) => { setShowAreasModal(false); patch({ areas: next }); }} />
-
             {/* ===== HERO SECTION ===== */}
             <section className="relative bg-[#F7F3EC]">
                 {/* Hero image – absolute at top-right corner, only left + bottom edges fade */}
@@ -943,12 +959,15 @@ export default function Directory({
                     )}
 
                     {/* ============ FIND SUPPORT ============ */}
-                    <section aria-labelledby="find-support-heading" className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] sm:p-6">
+                    <section aria-labelledby="find-support-heading" className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] sm:p-6 md:p-8">
                         <h2 id="find-support-heading" className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C2543B]">Find support</h2>
-                        <div className="mt-5 space-y-6">
-                            <div>
+
+                        {/* Mobile: one stacked column. Desktop: 40% location / 60% support. */}
+                        <div className="mt-5 grid grid-cols-1 md:grid-cols-[2fr_3fr]">
+                            {/* ---- Left column — Location ---- */}
+                            <div className="pb-6 md:pb-0 md:pr-8">
                                 <h3 className="text-[15px] font-semibold text-[#16302F]">Where are you looking for support?</h3>
-                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div className="mt-3 grid gap-3">
                                     {/* Country / territory */}
                                     <LabeledSelect
                                         id="q-location"
@@ -1012,49 +1031,66 @@ export default function Directory({
                                         />
                                     )}
                                 </div>
-                                <label className="mt-3 inline-flex cursor-pointer items-center gap-2.5 text-sm text-[#3A4B49]">
-                                    <input type="checkbox" checked={f.include_virtual} onChange={(e) => patch({ include_virtual: e.target.checked })} className="h-4 w-4 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]" />
-                                    Also include virtual providers
+                                <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-[#3A4B49]">
+                                    <input type="checkbox" checked={f.include_virtual} onChange={(e) => patch({ include_virtual: e.target.checked })} className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]" />
+                                    {VIRTUAL_LABEL}
                                 </label>
                             </div>
 
-                            <div>
+                            {/* ---- Right column — Areas of support ---- */}
+                            <div className="border-t border-[#EFEAE0] pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
                                 <h3 className="text-[15px] font-semibold text-[#16302F]">What would you like help with?</h3>
                                 <p className="mt-0.5 text-sm text-[#6B7A78]">Select one or more.</p>
-                                <div role="group" aria-label="Common areas of support" className="mt-3 flex flex-wrap gap-2">
+                                <div role="group" aria-label="Common areas of support" className="mt-3 flex flex-col gap-2 md:flex-row md:flex-wrap">
                                     {COMMON_SUPPORT_AREAS.map((chip) => {
                                         const active = chip.areas.every((a) => f.areas.includes(a));
                                         return (
                                             <button key={chip.label} type="button" aria-pressed={active} onClick={() => toggleAreas(chip.areas)}
-                                                className={`inline-flex items-center gap-1.5 rounded-full border-[1.5px] px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-1 ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white shadow-[0_4px_12px_-4px_rgba(14,124,123,0.55)]' : 'border-[#CFC5B1] bg-[#FBF8F2] text-[#2F3F3D] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#0E7C7B] hover:bg-white hover:text-[#0E6B6A]'}`}>
-                                                {active ? (
-                                                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
-                                                ) : (
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-[#0E7C7B]" aria-hidden><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
-                                                )}
+                                                className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-1 md:inline-flex md:w-auto md:gap-1.5 md:rounded-full md:border-[1.5px] md:py-2 md:text-sm ${active ? 'border-[#0E7C7B] bg-[#E6F2F1] text-[#15403F] ring-1 ring-inset ring-[#0E7C7B] md:bg-[#0E7C7B] md:text-white md:shadow-[0_4px_12px_-4px_rgba(14,124,123,0.55)] md:ring-0' : 'border-[#CFC5B1] bg-[#FBF8F2] text-[#2F3F3D] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#0E7C7B] hover:bg-white hover:text-[#0E6B6A]'}`}>
+                                                {/* Mobile: checkbox-style indicator */}
+                                                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition md:hidden ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#B9AF9B] bg-white'}`} aria-hidden>
+                                                    {active && <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>}
+                                                </span>
+                                                {/* Desktop: plus / checkmark */}
+                                                <span className="hidden md:inline-flex" aria-hidden>
+                                                    {active ? (
+                                                        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
+                                                    ) : (
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-[#0E7C7B]"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
+                                                    )}
+                                                </span>
                                                 {chip.label}
                                             </button>
                                         );
                                     })}
                                 </div>
-                                <button type="button" onClick={() => setShowAreasModal(true)} aria-haspopup="dialog"
-                                    className="group mt-4 inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#C2543B]/50 bg-[#FBF0EB] px-4 py-2.5 text-sm font-semibold text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#F6E6DF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40">
+                                <button type="button" onClick={() => setShowAllAreas((s) => !s)} aria-expanded={showAllAreas} aria-controls="all-areas-panel"
+                                    className="group mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-[#C2543B]/50 bg-[#FBF0EB] px-4 py-3 text-sm font-semibold text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#F6E6DF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40 md:mt-4 md:inline-flex md:w-auto md:justify-start md:py-2.5">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
-                                    See all areas of support
+                                    {showAllAreas ? 'Hide all areas of support' : 'See all areas of support'}
                                     {selectedAreasCount > 0 && (
                                         <span className="rounded-full bg-[#C2543B] px-2 py-0.5 text-[11px] font-semibold text-white">{selectedAreasCount} selected</span>
                                     )}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="transition-transform group-hover:translate-x-0.5" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`transition-transform ${showAllAreas ? 'rotate-180' : ''}`} aria-hidden><path d="M12 5v14M6 13l6 6 6-6" /></svg>
                                 </button>
-                            </div>
 
-
-                            <div className="flex flex-wrap items-center gap-3 pt-1">
-                                <button type="button" onClick={onFind} className="inline-flex items-center gap-2 rounded-xl bg-[#0E7C7B] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
-                                    Find providers
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-                                </button>
+                                {showAllAreas && (
+                                    <AllAreasPanel
+                                        selected={f.areas}
+                                        onToggle={(area) => toggleAreas([area])}
+                                        onClear={() => patch({ areas: [] })}
+                                        onClose={() => setShowAllAreas(false)}
+                                    />
+                                )}
                             </div>
+                        </div>
+
+                        {/* Find providers — below both columns, aligned left */}
+                        <div className="mt-6 md:mt-8 md:border-t md:border-[#EFEAE0] md:pt-6">
+                            <button type="button" onClick={onFind} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 md:inline-flex md:w-auto md:py-3">
+                                Find providers
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                            </button>
                         </div>
                     </section>
 
@@ -1115,9 +1151,7 @@ export default function Directory({
                                         </p>
 
                                         <div className="mt-5 flex flex-col flex-wrap items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">
-                                            {/* ── Progressive geography expansion ── */}
-
-                                            {/* Level 1: Any sub-country filter → "Search all of {country}" */}
+                                            {/* ── Expand search area — keeps the selected country / territory ── */}
                                             {hasCountryFilter && (hasCityFilter || hasRegionFilter) && (
                                                 <button
                                                     onClick={() => patch({ region: '', city: '' })}
@@ -1127,21 +1161,7 @@ export default function Directory({
                                                         <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
                                                         <circle cx="12" cy="11" r="2" />
                                                     </svg>
-                                                    Search all of {f.location}
-                                                </button>
-                                            )}
-
-                                            {/* Level 2: Only country set → "View providers outside {country}" */}
-                                            {hasCountryFilter && !hasCityFilter && !hasRegionFilter && (
-                                                <button
-                                                    onClick={() => patch({ location: '', region: '', city: '' })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
-                                                >
-                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-                                                        <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
-                                                        <circle cx="12" cy="11" r="2" />
-                                                    </svg>
-                                                    View providers outside {f.location}
+                                                    Expand search area to all of {f.location}
                                                 </button>
                                             )}
 
@@ -1155,7 +1175,7 @@ export default function Directory({
                                                         <rect x="3" y="4" width="18" height="12" rx="2" />
                                                         <path d="M8 20h8M12 16v4" />
                                                     </svg>
-                                                    Also include virtual providers
+                                                    {VIRTUAL_LABEL}
                                                 </button>
                                             )}
 
@@ -1206,6 +1226,7 @@ export default function Directory({
                                                 p={p}
                                                 selectedAreas={f.areas}
                                                 currentQuery={currentQueryString}
+                                                onOpen={rememberPosition}
                                             />
                                         ))}
                                     </div>
