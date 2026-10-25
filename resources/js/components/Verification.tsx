@@ -1024,7 +1024,7 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], r
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                         onClick={() => { if (!processing) setConfirmAction(null); }}
                     >
-                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
                             <h2 className="font-serif text-xl text-[#16302F]">{confirmAction.label}?</h2>
                             <p className="mt-2 text-sm leading-relaxed text-[#5B6B6E]">
                                 This changes {p.organization_name}’s status to{' '}
