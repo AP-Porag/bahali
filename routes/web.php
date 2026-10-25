@@ -9,6 +9,8 @@ use App\Http\Controllers\Provider\ProviderDirectoryController;
 use App\Http\Controllers\Web\JoinController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Web\JoinTheCircleController as AdminJoinTheCircleController;
+use App\Http\Controllers\Web\JoinTheCircleController;
 use Inertia\Inertia;
 
 
@@ -26,8 +28,9 @@ Route::get('/execute-command', function () {
     ///opt/alt/php84/usr/bin/php artisan migrate:fresh --seed -vvv
 
 });
-Route::get('/', [JoinController::class, 'index'])->name('home');
-Route::get('/join', [JoinController::class, 'index'])->name('providers.join');
+Route::get('/', [JoinTheCircleController::class, 'index'])->name('home');
+Route::get('/join', [JoinTheCircleController::class, 'index'])->name('providers.join');
+Route::get('/join-the-circle', [JoinTheCircleController::class, 'index'])->name('join-the-circle');
 //->prefix('admin')->as('admin.')
 Route::get('/provider/directory/create', [ProviderDirectoryController::class, 'create'])
     ->name('providers.create');
@@ -110,6 +113,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     // Route::resource('provider-type', ProviderTypeController::class);
     // Route::resource('providers', ProviderController::class);
     Route::post('change/status/provider/{selectedRow}', [ProviderController::class, 'changeStatus']);
+
+    Route::get('/web/join-the-circle', [AdminJoinTheCircleController::class, 'index'])->name('join-the-circle.index');
+    Route::post('/web/join-the-circle', [AdminJoinTheCircleController::class, 'update'])->name('join-the-circle.update');
 });
 
 require __DIR__ . '/settings.php';
