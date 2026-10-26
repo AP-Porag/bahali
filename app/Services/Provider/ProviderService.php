@@ -120,6 +120,7 @@ class ProviderService extends BaseService
             'additional_locations.*.country'        => ['required', 'string', 'max:120'],
             'additional_locations.*.state_province' => ['nullable', 'string', 'max:120'],
             'additional_locations.*.city'           => ['nullable', 'string', 'max:120'],
+            'additional_locations.*.street'         => ['nullable', 'string', 'max:255'],
             // Country first: the parish / state (and the UK city) must come from that country's list.
             'country'                               => [function ($attribute, $value, $fail) {
                 $message = self::locationProblem($value, request()->input('state_province'), request()->input('city'));
@@ -155,6 +156,7 @@ class ProviderService extends BaseService
                 'country'        => trim((string) ($l['country'] ?? '')),
                 'state_province' => trim((string) ($l['state_province'] ?? '')),
                 'city'           => trim((string) ($l['city'] ?? '')),
+                'street'         => trim((string) ($l['street'] ?? '')),
             ])
             ->filter(fn($l) => $l['country'] !== '')
             ->unique(fn($l) => strtolower(implode('|', $l)))
@@ -183,11 +185,12 @@ class ProviderService extends BaseService
         return $columns;
     }
 
-    /** "Kingston, Jamaica" style labels for the extra locations. */
-    private function locationLabels($locations): array
+    /** "Kingston, Jamaica" style labels for the extra locations (street only when the address is public). */
+    private function locationLabels($locations, bool $withStreet = false): array
     {
         return collect($this->toArray($locations))
             ->map(fn($l) => implode(', ', array_filter([
+                $withStreet ? ($l['street'] ?? null) : null,
                 $l['city'] ?? null,
                 $l['state_province'] ?? null,
                 $l['country'] ?? null,
@@ -559,7 +562,7 @@ class ProviderService extends BaseService
             // Street address only when public (in-person care can't hide it).
             'address'         => (! $p->hide_address && $p->address) ? $p->address : null,
             'servesMultiple'  => (bool) $p->multiple_locations,
-            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations) : [],
+            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations, ! $p->hide_address) : [],
             'contactPerson'   => $p->provider_type !== 'individual' && $p->contact_person_name
                 ? ['name' => $p->contact_person_name, 'role' => $p->contact_person_role]
                 : null,

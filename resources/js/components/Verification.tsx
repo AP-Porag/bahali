@@ -69,7 +69,7 @@ interface ProviderData {
     state_province?: string;
     country?: string;
     multiple_locations?: string;
-    additional_locations?: { country?: string; state_province?: string; city?: string }[];
+    additional_locations?: { country?: string; state_province?: string; city?: string; street?: string }[];
     hide_address?: boolean;
     telehealth_regions?: string[];
     telehealth_regions_other?: string;
@@ -617,7 +617,7 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
                     <Row label="Serves multiple locations">{lbl(YESNO_LABELS, p.multiple_locations)}</Row>
                     {p.multiple_locations === 'yes' && (
                         <Row label="Other locations">
-                            <Pills items={(p.additional_locations || []).map((l) => [l.city, l.state_province, l.country].filter(Boolean).join(', ')).filter(Boolean)} />
+                            <Pills items={(p.additional_locations || []).map((l) => [l.street, l.city, l.state_province, l.country].filter(Boolean).join(', ')).filter(Boolean)} />
                         </Row>
                     )}
                     <Row label="Telehealth regions served"><Pills items={p.telehealth_regions} /></Row>

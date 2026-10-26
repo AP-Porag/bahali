@@ -31,6 +31,7 @@ export interface ProviderLocation {
     country: string;
     state_province: string;
     city: string;
+    street?: string; // optional street address — used for the extra locations
 }
 export type LocationErrors = Partial<Record<'address' | 'country' | 'state_province' | 'city' | 'multiple_locations' | 'additional_locations', string>>;
 
@@ -103,7 +104,7 @@ export function locationProblem(countries: CountryOption[], loc: ProviderLocatio
     return null;
 }
 
-const locationKey = (l: ProviderLocation) => [l.country, l.state_province, l.city].map((s) => s.trim().toLowerCase()).join('|');
+const locationKey = (l: ProviderLocation) => [l.country, l.state_province, l.city, l.street ?? ''].map((s) => s.trim().toLowerCase()).join('|');
 
 /* Validation for the whole Location step (same rules in both forms). */
 export function validateLocationStep(countries: CountryOption[], v: LocationValues): LocationErrors {
@@ -141,6 +142,7 @@ export function locationPayload(countries: CountryOption[], v: LocationValues) {
             country: l.country,
             state_province: lv.hasRegions ? l.state_province : '',
             city: lv.hasRegions && lv.level2.length === 0 ? '' : l.city.trim(),
+            street: (l.street ?? '').trim(),
         };
     };
     const main = clean(v);
@@ -263,7 +265,7 @@ function AddressAutocomplete({
     const search = (text: string) => {
         window.clearTimeout(timerRef.current);
         const query = text.trim();
-        if (query.length < 3) {
+        if (query.length < 1) {
             setSuggestions([]);
             setOpen(false);
             return;
@@ -566,6 +568,16 @@ export function LocationSection({
                                     </button>
                                 </div>
                                 <LocationPicker ui={ui} countries={countries} value={loc} onChange={(next) => updateExtra(i, next)} compact />
+                                <div className="mt-4">
+                                    <FieldShell label="Street address" hint="Optional.">
+                                        <AddressAutocomplete
+                                            ui={ui}
+                                            value={loc.street ?? ''}
+                                            onChange={(v) => updateExtra(i, { ...loc, street: v })}
+                                            countryCode={countries.find((c) => c.name === loc.country)?.code}
+                                        />
+                                    </FieldShell>
+                                </div>
                             </div>
                         ))}
                         {extra.length < MAX_ADDITIONAL_LOCATIONS && (
