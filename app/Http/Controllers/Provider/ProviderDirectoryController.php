@@ -130,6 +130,7 @@ class ProviderDirectoryController extends Controller
             ]),
             'dataVersion' => $result['pagination']['total'] . '-' . now()->timestamp,
             'seed' => $result['seed'],
+            'content' => app(\App\Services\Web\ProviderDirectoryPageService::class)->getContent(),
         ]);
     }
     public function publicShow(int $id, ProviderService $providerService)
@@ -915,7 +916,9 @@ class ProviderDirectoryController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(self::STATUSES)],
             'note'   => [
-                'nullable', 'string', 'max:2000',
+                'nullable',
+                'string',
+                'max:2000',
                 Rule::requiredIf(in_array($request->input('status'), [
                     ProviderService::STATUS_NEEDS_CORRECTION,
                     GlobalConstant::VERIFICATION_STATUS_REJECTED,

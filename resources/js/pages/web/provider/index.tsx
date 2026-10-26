@@ -656,9 +656,31 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
 
 /* --------------------------------- Page --------------------------------- */
 
+/* Default page text & image — shown until the admin changes them (keep in sync with ProviderDirectoryPageService::schema()). */
+const DEFAULT_CONTENT = {
+    'seo.title': 'Find the right support — Bahali',
+    'hero.image': '/images/hero-caribbean-adults.png',
+    'hero.eyebrow': 'Find culturally-grounded care',
+    'hero.title': 'Let’s help you find support',
+    'hero.description': 'Answer as much or as little as you like. You don’t need to know what kind of professional you’re looking for.',
+    'search.label': 'Find support',
+    'search.location_question': 'Where are you looking for support?',
+    'search.areas_question': 'What would you like help with?',
+    'search.areas_hint': 'Select one or more.',
+    'search.button': 'Find providers',
+    'crisis.title': 'If you’re in immediate danger, please contact your local emergency services or a crisis line right away.',
+    'crisis.body': 'Bahali is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.',
+    'empty.title': 'We didn’t find an exact match for your selections',
+    'empty.body': 'Try one of these adjustments — each keeps your other filters in place.',
+};
+
 export default function Directory({
-    providers = [], dataVersion = '', pagination = {}, filterOptions = {}, countries = [], filters = {}, seed: initialSeed = 0,
+    providers = [], dataVersion = '', pagination = {}, filterOptions = {}, countries = [], filters = {}, seed: initialSeed = 0, content = {},
 }) {
+    // Admin-editable page text & image (Admin → Website → Provider Directory).
+    // Falls back to the original default when the admin hasn't changed a field.
+    const txt = (key) => content?.[key] || DEFAULT_CONTENT[key] || '';
+
     // Country-specific "All X" default option text (guide §2/§3).
     // Only countries the guide calls out need an explicit override;
     // everything else falls back to generic "All".
@@ -928,7 +950,7 @@ export default function Directory({
 
     return (
         <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
-            <Head title="Find the right support — Bahali" />
+            <Head title={txt('seo.title')} />
             <Header />
 
             {/* ===== HERO SECTION ===== */}
@@ -936,7 +958,7 @@ export default function Directory({
                 {/* Hero image – absolute at top-right corner, only left + bottom edges fade */}
                 <div className="pointer-events-none absolute right-0 top-0 hidden h-[300px] w-[400px] lg:block lg:h-[340px] lg:w-[460px] xl:h-[380px] xl:w-[520px]">
                     <img
-                        src="/images/hero-caribbean-adults.png"
+                        src={txt('hero.image')}
                         alt="hero-caribbean-adults"
                         aria-hidden="true"
                         className="h-full w-full object-contain object-right-top"
@@ -946,27 +968,27 @@ export default function Directory({
                 {/* Content – sits above image */}
                 <div className="relative z-10 mx-auto max-w-6xl px-5 py-12 lg:py-14">
                     <div className="mb-6 max-w-xl">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">Find culturally-grounded care</p>
-                        <h1 className="mt-2 text-3xl leading-tight text-[#16302F] md:text-4xl" style={SERIF}>Let’s help you find support</h1>
-                        <p className="mt-2 max-w-md text-[15px] text-[#5B6B6E]">Answer as much or as little as you like. You don’t need to know what kind of professional you’re looking for.</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">{txt('hero.eyebrow')}</p>
+                        <h1 className="mt-2 text-3xl leading-tight text-[#16302F] md:text-4xl" style={SERIF}>{txt('hero.title')}</h1>
+                        <p className="mt-2 max-w-md text-[15px] text-[#5B6B6E]">{txt('hero.description')}</p>
                     </div>
 
                     {isCrisisQuery(f.keyword) && (
                         <div role="alert" className="mb-6 rounded-2xl border border-[#E7B7A6] bg-[#FBF0EB] p-4 text-sm text-[#8A3F27]">
-                            <p className="font-semibold">If you’re in immediate danger, please contact your local emergency services or a crisis line right away.</p>
-                            <p className="mt-1 text-[#9A5A44]">Bahali is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.</p>
+                            <p className="font-semibold">{txt('crisis.title')}</p>
+                            <p className="mt-1 text-[#9A5A44]">{txt('crisis.body')}</p>
                         </div>
                     )}
 
                     {/* ============ FIND SUPPORT ============ */}
                     <section aria-labelledby="find-support-heading" className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] sm:p-6 md:p-8">
-                        <h2 id="find-support-heading" className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C2543B]">Find support</h2>
+                        <h2 id="find-support-heading" className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C2543B]">{txt('search.label')}</h2>
 
                         {/* Mobile: one stacked column. Desktop: 40% location / 60% support. */}
                         <div className="mt-5 grid grid-cols-1 md:grid-cols-[2fr_3fr]">
                             {/* ---- Left column — Location ---- */}
                             <div className="pb-6 md:pb-0 md:pr-8">
-                                <h3 className="text-[15px] font-semibold text-[#16302F]">Where are you looking for support?</h3>
+                                <h3 className="text-[15px] font-semibold text-[#16302F]">{txt('search.location_question')}</h3>
                                 <div className="mt-3 grid gap-3">
                                     {/* Country / territory */}
                                     <LabeledSelect
@@ -1039,8 +1061,8 @@ export default function Directory({
 
                             {/* ---- Right column — Areas of support ---- */}
                             <div className="border-t border-[#EFEAE0] pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
-                                <h3 className="text-[15px] font-semibold text-[#16302F]">What would you like help with?</h3>
-                                <p className="mt-0.5 text-sm text-[#6B7A78]">Select one or more.</p>
+                                <h3 className="text-[15px] font-semibold text-[#16302F]">{txt('search.areas_question')}</h3>
+                                <p className="mt-0.5 text-sm text-[#6B7A78]">{txt('search.areas_hint')}</p>
                                 <div role="group" aria-label="Common areas of support" className="mt-3 flex flex-col gap-2 md:flex-row md:flex-wrap">
                                     {COMMON_SUPPORT_AREAS.map((chip) => {
                                         const active = chip.areas.every((a) => f.areas.includes(a));
@@ -1088,7 +1110,7 @@ export default function Directory({
                         {/* Find providers — below both columns, aligned left */}
                         <div className="mt-6 md:mt-8 md:border-t md:border-[#EFEAE0] md:pt-6">
                             <button type="button" onClick={onFind} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 md:inline-flex md:w-auto md:py-3">
-                                Find providers
+                                {txt('search.button')}
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                             </button>
                         </div>
@@ -1144,10 +1166,10 @@ export default function Directory({
                                         </div>
 
                                         <h3 className="text-lg text-[#16302F]" style={SERIF}>
-                                            We didn’t find an exact match for your selections
+                                            {txt('empty.title')}
                                         </h3>
                                         <p className="mx-auto mt-1 max-w-md text-sm text-[#5B6B6E]">
-                                            Try one of these adjustments — each keeps your other filters in place.
+                                            {txt('empty.body')}
                                         </p>
 
                                         <div className="mt-5 flex flex-col flex-wrap items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">

@@ -62,6 +62,7 @@ const mainNavItems: NavItem[] = [
         ],
     },
     { title: 'Join the Circle', href: '/admin/web/join-the-circle', icon: LayoutTemplate },
+    { title: 'Provider Directory', href: '/admin/web/provider-directory', icon: LayoutTemplate },
     // {
     //     title: 'Provider Create',
     //     href: '/admin/providers/create',
