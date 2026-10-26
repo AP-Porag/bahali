@@ -3,7 +3,7 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User } from 'lucide-react';
 import AppLogo from './app-logo';
 import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucide-react';
@@ -20,27 +20,27 @@ const mainNavItems: NavItem[] = [
         icon: User,
         children: [
             {
-                title: 'Approved Providers',
+                title: 'Approved',
                 href: '/admin/approved/providers',
                 icon: BadgeCheck,
             },
             {
-                title: 'Pending Providers',
+                title: 'Pending',
                 href: '/admin/pending/providers',
                 icon: Clock3,
             },
             {
-                title: 'Rejected Providers',
+                title: 'Rejected',
                 href: '/admin/rejected/providers',
                 icon: CircleX,
             },
             {
-                title: 'Suspended Providers',
+                title: 'Suspended',
                 href: '/admin/suspended/providers',
                 icon: Ban,
             },
             {
-                title: 'Inactive Providers',
+                title: 'Inactive',
                 href: '/admin/inactive/providers',
                 icon: ShieldAlert,
             },
@@ -84,6 +84,18 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    // Shared from HandleInertiaRequests (admin pages only).
+    const { providerCounts } = usePage<{
+        providerCounts?: { approved: number; pending: number; rejected: number; suspended: number; inactive: number } | null;
+    }>().props;
+    const navBadges = {
+        '/admin/approved/providers': { count: providerCounts?.approved, tone: 'teal' as const },
+        '/admin/pending/providers': { count: providerCounts?.pending, tone: 'amber' as const },
+        '/admin/rejected/providers': { count: providerCounts?.rejected, tone: 'coral' as const },
+        '/admin/suspended/providers': { count: providerCounts?.suspended, tone: 'rust' as const },
+        '/admin/inactive/providers': { count: providerCounts?.inactive, tone: 'gray' as const },
+    };
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -102,7 +114,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainNavItems} badges={navBadges} />
             </SidebarContent>
 
             <SidebarFooter>

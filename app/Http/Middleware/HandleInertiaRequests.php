@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Provider;
+use App\Services\Provider\ProviderService;
+use App\Utils\GlobalConstant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,7 +48,18 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'app_url' => config('app.url')
+            'app_url' => config('app.url'),
+            // Sidebar badges — only on admin pages for a logged-in user.
+            // "Pending" matches the Pending Providers page (Submitted + Needs correction + Pending verification).
+            'providerCounts' => fn() => $request->user() && $request->is('admin/*')
+                ? [
+                    'approved' => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_APPROVED)->count(),
+                    'pending'  => Provider::whereIn('status', ProviderService::IN_REVIEW_STATUSES)->count(),
+                    'rejected'  => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_REJECTED)->count(),
+                    'suspended' => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_SUSPENDED)->count(),
+                    'inactive'  => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_INACTIVE)->count(),
+                ]
+                : null,
         ]);
     }
 }
