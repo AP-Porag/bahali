@@ -1053,7 +1053,7 @@ class ProviderService extends BaseService
                     : $provider->social_links,
                 'status'               => $provider->status,
                 'email'                => $provider->user?->email ?? $provider->email,
-                'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : ($provider->lgbtq_affirming ? 'yes' : 'no'),
+                'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : (self::isYes($provider->lgbtq_affirming) ? 'yes' : 'no'),
                 'culturally_affirming' => $provider->culturally_affirming === null ? '' : ($provider->culturally_affirming ? 'yes' : 'no'),
                 'fee_range'            => $provider->fee_range,
                 'fee_currency'         => $provider->fee_currency ?: 'USD',
