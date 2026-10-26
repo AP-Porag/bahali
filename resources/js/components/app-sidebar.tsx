@@ -6,7 +6,7 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User } from 'lucide-react';
 import AppLogo from './app-logo';
-import { LayoutTemplate } from 'lucide-react';
+import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -14,11 +14,6 @@ const mainNavItems: NavItem[] = [
         href: '/admin/under-development',
         icon: LayoutGrid,
     },
-    // {
-    //     title: 'Provider Type',
-    //     href: '/admin/provider-type',
-    //     icon: StepBack,
-    // },
     {
         title: 'Providers',
         href: '/provider/directory/create',
@@ -49,57 +44,30 @@ const mainNavItems: NavItem[] = [
                 href: '/admin/inactive/providers',
                 icon: ShieldAlert,
             },
-            // {
-            //     title: 'Add Provider',
-            //     href: '/provider/directory/create',
-            //     icon: Plus,
-            // },
-            // {
-            //     title: 'Provider Types',
-            //     href: '/admin/provider-type',
-            //     icon: Tag,
-            // },
         ],
     },
-    { title: 'Join the Circle', href: '/admin/web/join-the-circle', icon: LayoutTemplate },
-    { title: 'Provider Directory', href: '/admin/web/provider-directory', icon: LayoutTemplate },
-    // {
-    //     title: 'Provider Create',
-    //     href: '/admin/providers/create',
-    //     icon: Plus,
-    // },
 
-    // {
-    //     title: 'Administration',
-    //     icon: Shield,
-    //     children: [
-    //         {
-    //             title: 'Users',
-    //             href: '/users',
-    //             icon: Users,
-    //         },
-    //         {
-    //             title: 'Industries',
-    //             href: '/industries',
-    //             icon: Factory,
-    //         },
-    //         {
-    //             title: 'Department',
-    //             href: '/departments',
-    //             icon: Network,
-    //         },
-    //         {
-    //             title: 'Contact Roles',
-    //             href: '/positions',
-    //             icon: UserCog2,
-    //         },
-    //         {
-    //             title: 'Lead Sources',
-    //             href: '/sources',
-    //             icon: Share2,
-    //         },
-    //     ],
-    // },
+    {
+        title: 'CMS',
+        icon: FileText,
+        children: [
+            {
+                title: 'Join the Circle',
+                href: '/admin/web/join-the-circle',
+                icon: HeartHandshake,
+            },
+            {
+                title: 'Provider Directory',
+                href: '/admin/web/provider-directory',
+                icon: Search,
+            },
+            {
+                title: 'Provider Profile',
+                href: '/admin/web/provider-profile',
+                icon: Contact,
+            },
+        ],
+    },
 ];
 
 const footerNavItems: NavItem[] = [

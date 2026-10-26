@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Web\JoinTheCircleController as AdminJoinTheCircleController;
 use App\Http\Controllers\Web\JoinTheCircleController;
 use App\Http\Controllers\Admin\Web\ProviderDirectoryPageController;
+use App\Http\Controllers\Admin\Web\ProviderProfilePageController;
 use Inertia\Inertia;
 
 
@@ -120,6 +121,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     Route::get('/web/provider-directory', [ProviderDirectoryPageController::class, 'index'])->name('provider-directory-page.index');
     Route::post('/web/provider-directory', [ProviderDirectoryPageController::class, 'update'])->name('provider-directory-page.update');
+
+    Route::get('/web/provider-profile', [ProviderProfilePageController::class, 'index'])->name('provider-profile-page.index');
+    Route::post('/web/provider-profile', [ProviderProfilePageController::class, 'update'])->name('provider-profile-page.update');
 });
 
 require __DIR__ . '/settings.php';

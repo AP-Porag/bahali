@@ -140,6 +140,7 @@ class ProviderDirectoryController extends Controller
 
         return Inertia::render('web/provider/show', [
             'provider' => $provider,
+            'content'  => app(\App\Services\Web\ProviderProfilePageService::class)->getContent(),
         ]);
     }
 
