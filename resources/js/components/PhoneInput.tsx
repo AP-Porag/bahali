@@ -125,7 +125,7 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                     aria-haspopup="listbox"
                     aria-expanded={open}
                     aria-label={`Country code: ${country.name} +${country.dial}`}
-                    className={`flex flex-shrink-0 items-center gap-1.5 rounded-l-lg border border-r-0 bg-[#FBF8F2] px-3 text-sm font-medium text-[#26403F] outline-none transition hover:bg-[#0E7C7B]/5 focus:ring-4 ${errClass(error)} ${open ? 'border-[#0E7C7B]' : ''}`}
+                    className={`flex min-w-[7.5rem] flex-shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-l-lg border border-r-0 bg-[#FBF8F2] px-3.5 text-sm font-medium text-[#26403F] outline-none transition hover:bg-[#0E7C7B]/5 focus:ring-4 ${errClass(error)} ${open ? 'border-[#0E7C7B]' : ''}`}
                 >
                     <span className="text-xs font-semibold text-[#6B7A78]">{country.iso}</span>
                     <span>+{country.dial}</span>
@@ -149,7 +149,7 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                 />
 
                 {open && (
-                    <div className="absolute left-0 top-full z-30 mt-1.5 w-full max-w-sm overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
+                    <div className="absolute left-0 top-full z-30 mt-1.5 w-full max-w-md overflow-hidden sm:min-w-[18rem] rounded-lg border border-[#DED7C9] bg-white shadow-lg">
                         <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
                             <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#9AA6A4]" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
@@ -180,7 +180,7 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                                         >
                                             <span className="w-7 flex-shrink-0 text-xs font-semibold text-[#9AA6A4]">{c.iso}</span>
                                             <span className="flex-1 truncate">{c.name}</span>
-                                            <span className="flex-shrink-0 text-[#6B7A78]">
+                                            <span className="flex-shrink-0 whitespace-nowrap text-right tabular-nums text-[#6B7A78]">
                                                 +{c.dial}{c.areaCodes ? ` ${c.areaCodes[0]}` : ''}
                                             </span>
                                         </button>
