@@ -3,10 +3,10 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User } from 'lucide-react';
 import AppLogo from './app-logo';
-import { LayoutTemplate } from 'lucide-react';
+import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -14,91 +14,60 @@ const mainNavItems: NavItem[] = [
         href: '/admin/under-development',
         icon: LayoutGrid,
     },
-    // {
-    //     title: 'Provider Type',
-    //     href: '/admin/provider-type',
-    //     icon: StepBack,
-    // },
     {
         title: 'Providers',
         href: '/provider/directory/create',
         icon: User,
         children: [
             {
-                title: 'Approved Providers',
+                title: 'Approved',
                 href: '/admin/approved/providers',
                 icon: BadgeCheck,
             },
             {
-                title: 'Pending Providers',
+                title: 'Pending',
                 href: '/admin/pending/providers',
                 icon: Clock3,
             },
             {
-                title: 'Rejected Providers',
+                title: 'Rejected',
                 href: '/admin/rejected/providers',
                 icon: CircleX,
             },
             {
-                title: 'Suspended Providers',
+                title: 'Suspended',
                 href: '/admin/suspended/providers',
                 icon: Ban,
             },
             {
-                title: 'Inactive Providers',
+                title: 'Inactive',
                 href: '/admin/inactive/providers',
                 icon: ShieldAlert,
             },
-            // {
-            //     title: 'Add Provider',
-            //     href: '/provider/directory/create',
-            //     icon: Plus,
-            // },
-            // {
-            //     title: 'Provider Types',
-            //     href: '/admin/provider-type',
-            //     icon: Tag,
-            // },
         ],
     },
-    { title: 'Join the Circle', href: '/admin/web/join-the-circle', icon: LayoutTemplate },
-    // {
-    //     title: 'Provider Create',
-    //     href: '/admin/providers/create',
-    //     icon: Plus,
-    // },
 
-    // {
-    //     title: 'Administration',
-    //     icon: Shield,
-    //     children: [
-    //         {
-    //             title: 'Users',
-    //             href: '/users',
-    //             icon: Users,
-    //         },
-    //         {
-    //             title: 'Industries',
-    //             href: '/industries',
-    //             icon: Factory,
-    //         },
-    //         {
-    //             title: 'Department',
-    //             href: '/departments',
-    //             icon: Network,
-    //         },
-    //         {
-    //             title: 'Contact Roles',
-    //             href: '/positions',
-    //             icon: UserCog2,
-    //         },
-    //         {
-    //             title: 'Lead Sources',
-    //             href: '/sources',
-    //             icon: Share2,
-    //         },
-    //     ],
-    // },
+    {
+        title: 'CMS',
+        icon: FileText,
+        children: [
+            {
+                title: 'Join the Circle',
+                href: '/admin/web/join-the-circle',
+                icon: HeartHandshake,
+            },
+            {
+                title: 'Provider Directory',
+                href: '/admin/web/provider-directory',
+                icon: Search,
+            },
+            {
+                title: 'Provider Profile',
+                href: '/admin/web/provider-profile',
+                icon: Contact,
+            },
+        ],
+    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -115,6 +84,18 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    // Shared from HandleInertiaRequests (admin pages only).
+    const { providerCounts } = usePage<{
+        providerCounts?: { approved: number; pending: number; rejected: number; suspended: number; inactive: number } | null;
+    }>().props;
+    const navBadges = {
+        '/admin/approved/providers': { count: providerCounts?.approved, tone: 'teal' as const },
+        '/admin/pending/providers': { count: providerCounts?.pending, tone: 'amber' as const },
+        '/admin/rejected/providers': { count: providerCounts?.rejected, tone: 'coral' as const },
+        '/admin/suspended/providers': { count: providerCounts?.suspended, tone: 'rust' as const },
+        '/admin/inactive/providers': { count: providerCounts?.inactive, tone: 'gray' as const },
+    };
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -133,7 +114,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainNavItems} badges={navBadges} />
             </SidebarContent>
 
             <SidebarFooter>

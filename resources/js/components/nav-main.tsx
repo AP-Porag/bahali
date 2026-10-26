@@ -14,7 +14,36 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+/* Small count pill (provider status counts). Hidden when the count is 0 or missing. */
+type BadgeTone = 'teal' | 'amber' | 'coral' | 'rust' | 'gray';
+const BADGE_TONES: Record<BadgeTone, string> = {
+    teal: 'bg-[#0E7C7B] text-white',      // approved
+    amber: 'bg-[#E8B84B] text-[#16302F]', // pending
+    coral: 'bg-[#C2543B] text-white',     // rejected
+    rust: 'bg-[#B86B2B] text-white',      // suspended
+    gray: 'bg-[#6E7B79] text-white',      // inactive
+};
+
+function CountBadge({ count, tone = 'teal' }: { count?: number; tone?: BadgeTone }) {
+    if (!count || count <= 0) return null;
+    const toneClass = BADGE_TONES[tone] ?? BADGE_TONES.teal;
+    return (
+        <span
+            className={`ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none tabular-nums ${toneClass}`}
+            aria-label={`${count} items`}
+        >
+            {count > 99 ? '99+' : count}
+        </span>
+    );
+}
+
+export function NavMain({
+    items = [],
+    badges = {},
+}: {
+    items: NavItem[];
+    badges?: Record<string, { count?: number; tone?: BadgeTone }>; // keyed by href
+}) {
     const { url } = usePage();
     const [openItems, setOpenItems] = useState<string[]>([]);
 
@@ -89,6 +118,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                                     <Link href={sub.href!} prefetch>
                                                         {sub.icon && <sub.icon />}
                                                         <span>{sub.title}</span>
+                                                        <CountBadge count={badges[sub.href!]?.count} tone={badges[sub.href!]?.tone} />
                                                     </Link>
                                                 </SidebarMenuSubButton>
                                             </SidebarMenuSubItem>
