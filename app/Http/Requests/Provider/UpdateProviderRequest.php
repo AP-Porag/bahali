@@ -51,6 +51,7 @@ class UpdateProviderRequest extends FormRequest
             'payment_methods.*' => ['string', 'max:255'],
             'insurance_plans'   => ['nullable', 'string'],
             'culturally_affirming' => ['nullable', 'string'],
+            'lgbtq_affirming'      => ['required', 'in:yes,no'],
 
             'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{6,14}$/'],
             'website'      => ['nullable', 'string', 'max:255'],

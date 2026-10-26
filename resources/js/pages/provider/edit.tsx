@@ -401,6 +401,8 @@ export default function ProviderProfileEdit({
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
+    // Server-side validation errors from the last submit (shown in a banner so none are hidden).
+    const [submitErrors, setSubmitErrors] = useState<string[]>([]);
     const topRef = useRef<HTMLDivElement>(null);
 
     const [keptPhotos, setKeptPhotos] = useState(existingAdditionalPhotos);
@@ -444,7 +446,7 @@ export default function ProviderProfileEdit({
             short_bio: (p.short_bio as string) || '',
             years_experience: (p.years_experience as string) || '',
             license_number: (p.license_number as string) || '',
-            license_not_applicable: !!p.license_not_applicable,
+            license_not_applicable: !!p.license_not_applicable || !String(p.license_number ?? '').trim(),
             license_states: ls.values,
             license_states_other: ls.otherText,
             license_status: (p.license_status as LicenseStatus) || '',
@@ -472,7 +474,7 @@ export default function ProviderProfileEdit({
             country: (p.country as string) || '',
             multiple_locations: (p.multiple_locations as YesNo) || '',
             additional_locations: (Array.isArray(p.additional_locations) ? (p.additional_locations as Partial<ProviderLocation>[]) : [])
-                .map((l) => ({ country: l.country || '', state_province: l.state_province || '', city: l.city || '' })),
+                .map((l) => ({ country: l.country || '', state_province: l.state_province || '', city: l.city || '', street: l.street || '' })),
             hide_address: !!p.hide_address,
             telehealth_regions: tr.values,
             telehealth_regions_other: tr.otherText,
@@ -651,6 +653,7 @@ export default function ProviderProfileEdit({
     const goBack = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)); scrollTop(); };
 
     const handleSubmit = () => {
+        setSubmitErrors([]);
         const stepErrors = validateStep(step, d);
         if (Object.keys(stepErrors).length > 0) { setErrors(stepErrors); return; }
         for (let i = 0; i < TOTAL_STEPS; i++) {
@@ -711,8 +714,11 @@ export default function ProviderProfileEdit({
             preserveScroll: true,
             onSuccess: () => setSubmitted(true),
             onError: (serverErrs: Record<string, string>) => {
+                // Show every server error — some belong to fields that are not on the form and would otherwise be invisible.
+                setSubmitErrors(Object.entries(serverErrs).map(([field, msg]) => `${msg} (${field})`));
                 const firstField = Object.keys(serverErrs)[0];
-                if (firstField && FIELD_STEP[firstField] !== undefined) { setStep(FIELD_STEP[firstField]); scrollTop(); }
+                if (firstField && FIELD_STEP[firstField] !== undefined) setStep(FIELD_STEP[firstField]);
+                scrollTop();
             },
         });
     };
@@ -763,7 +769,7 @@ export default function ProviderProfileEdit({
                         </p>
                         {provider?.status && (
                             <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1EDE3] px-3 py-1 text-xs font-medium text-[#6B7A78]">
-                                Current status: <span className="capitalize text-[#16302F]">{provider.status}</span>
+                                Current status: <span className="capitalize text-[#16302F]">{String(provider.status).replace(/_/g, ' ')}</span>
                             </span>
                         )}
                     </div>
@@ -807,6 +813,14 @@ export default function ProviderProfileEdit({
 
                         <main>
                             <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
+                                {submitErrors.length > 0 && (
+                                    <div role="alert" className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]">
+                                        <p className="font-semibold">We couldn't save your changes. Please fix the following:</p>
+                                        <ul className="mt-2 list-disc space-y-1 pl-5">
+                                            {submitErrors.map((m, i) => <li key={i}>{m}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
                                 <div className="mb-6 border-b border-[#EFEAE0] pb-5">
                                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E7C7B]">Section {step + 1}</p>
                                     <h2 className="mt-1 font-serif text-2xl text-[#16302F]">{STEPS[step].title}</h2>
