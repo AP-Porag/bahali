@@ -120,7 +120,6 @@ class ProviderService extends BaseService
             'additional_locations.*.country'        => ['required', 'string', 'max:120'],
             'additional_locations.*.state_province' => ['nullable', 'string', 'max:120'],
             'additional_locations.*.city'           => ['nullable', 'string', 'max:120'],
-            'additional_locations.*.street'         => ['nullable', 'string', 'max:255'],
             // Country first: the parish / state (and the UK city) must come from that country's list.
             'country'                               => [function ($attribute, $value, $fail) {
                 $message = self::locationProblem($value, request()->input('state_province'), request()->input('city'));
@@ -156,7 +155,6 @@ class ProviderService extends BaseService
                 'country'        => trim((string) ($l['country'] ?? '')),
                 'state_province' => trim((string) ($l['state_province'] ?? '')),
                 'city'           => trim((string) ($l['city'] ?? '')),
-                'street'         => trim((string) ($l['street'] ?? '')),
             ])
             ->filter(fn($l) => $l['country'] !== '')
             ->unique(fn($l) => strtolower(implode('|', $l)))
@@ -185,12 +183,11 @@ class ProviderService extends BaseService
         return $columns;
     }
 
-    /** "Kingston, Jamaica" style labels for the extra locations (street only when the address is public). */
-    private function locationLabels($locations, bool $withStreet = false): array
+    /** "Kingston, Jamaica" style labels for the extra locations. */
+    private function locationLabels($locations): array
     {
         return collect($this->toArray($locations))
             ->map(fn($l) => implode(', ', array_filter([
-                $withStreet ? ($l['street'] ?? null) : null,
                 $l['city'] ?? null,
                 $l['state_province'] ?? null,
                 $l['country'] ?? null,
@@ -562,7 +559,7 @@ class ProviderService extends BaseService
             // Street address only when public (in-person care can't hide it).
             'address'         => (! $p->hide_address && $p->address) ? $p->address : null,
             'servesMultiple'  => (bool) $p->multiple_locations,
-            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations, ! $p->hide_address) : [],
+            'additionalLocations' => $p->multiple_locations === 'yes' ? $this->locationLabels($p->additional_locations) : [],
             'contactPerson'   => $p->provider_type !== 'individual' && $p->contact_person_name
                 ? ['name' => $p->contact_person_name, 'role' => $p->contact_person_role]
                 : null,
@@ -1053,7 +1050,7 @@ class ProviderService extends BaseService
                     : $provider->social_links,
                 'status'               => $provider->status,
                 'email'                => $provider->user?->email ?? $provider->email,
-                'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : (self::isYes($provider->lgbtq_affirming) ? 'yes' : 'no'),
+                'lgbtq_affirming'      => $provider->lgbtq_affirming === null ? '' : ($provider->lgbtq_affirming ? 'yes' : 'no'),
                 'culturally_affirming' => $provider->culturally_affirming === null ? '' : ($provider->culturally_affirming ? 'yes' : 'no'),
                 'fee_range'            => $provider->fee_range,
                 'fee_currency'         => $provider->fee_currency ?: 'USD',
@@ -1271,7 +1268,7 @@ class ProviderService extends BaseService
         };
     }
 
-    private function profileCompleteness(Provider $provider): array
+    public function profileCompleteness(Provider $provider): array   // also used by the admin dashboard
     {
         $checks = [
             'Basic information'   => (bool) $provider->organization_name && count($this->toArray($provider->professional_title)) > 0,
@@ -1281,7 +1278,8 @@ class ProviderService extends BaseService
             'Populations served'  => count($this->toArray($provider->populations_served)) > 0,
             'Languages'           => count($this->toArray($provider->languages)) > 0,
             'Service information'  => count($this->toArray($provider->service_formats)) > 0,
-            'Location'            => (bool) $provider->city && (bool) $provider->country,
+            // Parish / state is enough — many countries have no separate city (e.g. Jamaica).
+            'Location'            => (bool) $provider->country && ((bool) $provider->state_province || (bool) $provider->city),
             'Payment methods'     => count($this->toArray($provider->payment_methods)) > 0,
             'Contact information' => (bool) $provider->phone,
             'Profile photo'       => (bool) $provider->profile_photo,

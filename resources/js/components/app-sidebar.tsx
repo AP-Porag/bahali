@@ -11,7 +11,7 @@ import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucid
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: '/admin/under-development',
+        href: '/admin/dashboard',
         icon: LayoutGrid,
     },
     {

@@ -1,23 +1,11 @@
-import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+//
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AuthLayout from '@/layouts/auth-layout';
-
-/* Bahali heading font — same as the public pages. */
-const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
-
-/* Bahali form styles (same as the registration form). */
-const INPUT_CLASS =
-    'h-auto rounded-lg border-[#DED7C9] bg-white py-2.5 text-[#1F2A2E] shadow-none placeholder:text-[#9AA6A4] transition focus-visible:border-[#0E7C7B] focus-visible:ring-4 focus-visible:ring-[#0E7C7B]/25';
-const INPUT_ERROR_CLASS = 'border-[#C2543B] focus-visible:border-[#C2543B] focus-visible:ring-[#C2543B]/30';
-const LABEL_CLASS = 'block text-sm font-medium text-[#26403F]';
 
 interface LoginForm {
     email: string;
@@ -30,8 +18,33 @@ interface LoginProps {
     canResetPassword: boolean;
 }
 
+const COLORS = {
+    ivory: '#FAFAF6',
+    teal: '#1E4D4A',
+    coral: '#E99E84',
+    sage: '#9CAEA9',
+    gold: '#C89B4B',
+    text: '#292F30',
+    muted: '#5D6265',
+    border: '#D9DAD5',
+};
+
+const SERIF = {
+    fontFamily: 'Fraunces, "Playfair Display", Georgia, serif',
+};
+
+const INPUT_CLASS =
+    'h-[54px] w-full rounded-lg border border-[#AEB7B3] bg-white px-[18px] text-[17px] text-[#292F30] shadow-none placeholder:text-[#777B7C] focus-visible:border-[#1E4D4A] focus-visible:ring-[3px] focus-visible:ring-[#1E4D4A]/15';
+
 export default function Login({ status, canResetPassword }: LoginProps) {
-    const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        reset,
+    } = useForm<LoginForm>({
         email: '',
         password: '',
         remember: false,
@@ -39,122 +52,286 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const submit: FormEventHandler = (e) => {
+    const submit: FormEventHandler<HTMLFormElement> = (e) => {
         e.preventDefault();
+
         post(route('login'), {
             onFinish: () => reset('password'),
         });
     };
 
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-[url('/images/bahali-background.jpg')] bg-cover bg-center px-4 py-10 text-[#1F2A2E]">
-            <Head title="Log in" />
+        <>
+            <Head title="Provider Sign In" />
 
-            {/* Form Container */}
-            <div className="w-full max-w-md rounded-2xl border border-[#E7E0D2] bg-white/95 shadow-[0_40px_80px_rgba(0,0,0,0.15)] backdrop-blur-sm">
-                <form className="flex w-full flex-col p-6 sm:p-10" onSubmit={submit}>
-                    <div className="mb-8 text-center">
-                        <h1 className="font-serif text-2xl font-semibold text-[#16302F] sm:text-3xl" style={SERIF}>
-                            Welcome back
-                        </h1>
-                        <p className="mt-2 text-sm text-[#5B6B6E]">Log in to manage your Bahali profile.</p>
-                    </div>
+            <main
+                className="flex min-h-screen w-full flex-col items-center justify-center px-5 py-10 sm:px-6 sm:py-12"
+                style={{ backgroundColor: COLORS.ivory }}
+            >
+                <div className="flex w-full max-w-[576px] flex-col items-center">
 
-                    {status && (
-                        <div className="mb-6 rounded-lg border border-[#0E7C7B]/25 bg-[#0E7C7B]/5 px-4 py-3 text-center text-sm font-medium text-[#0B6463]">
-                            {status}
-                        </div>
-                    )}
+                    {/* =================================
+                        BAHALI BRAND LOGO
+                    ================================== */}
 
-                    {/* <form className="flex flex-col gap-6" onSubmit={submit}> */}
-                    <div className="grid gap-6">
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="email" className={LABEL_CLASS}>Email address</Label>
+                    <Link
+                        href="/"
+                        aria-label="Bahali Home"
+                        className="mb-[38px] flex flex-col items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E4D4A]"
+                    >
+                        <img
+                            src="/images/Bahali%20_p.png"
+                            alt="Bahali Logo"
+                            className="h-auto w-[220px] max-w-full object-contain"
+                        />
 
-                            <div className="relative">
-                                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9AA6A4]" />
+                        {/* <span
+                            className="mt-[9px] text-[16px] font-medium uppercase leading-none tracking-[0.28em]"
+                            style={{ color: COLORS.teal }}
+                        >
+                            PROVIDER PORTAL
+                        </span> */}
+                    </Link>
+
+                    {/* =================================
+                        LOGIN CARD
+                    ================================== */}
+
+                    <section
+                        className="w-full rounded-[16px] border bg-white p-6 shadow-[0_5px_18px_rgba(35,45,40,0.07)] sm:p-10"
+                        style={{ borderColor: COLORS.border }}
+                    >
+                        <form onSubmit={submit} noValidate={false}>
+
+                            {/* Heading */}
+                            <div className="mb-[28px]">
+                                <h1
+                                    className="text-[34px] font-semibold leading-[1.2] tracking-[-0.8px] sm:text-[40px]"
+                                    style={{
+                                        ...SERIF,
+                                        color: COLORS.teal,
+                                    }}
+                                >
+                                    Provider sign-in
+                                </h1>
+
+                                <p
+                                    className="mt-[10px] text-[17px] leading-[1.5] sm:text-[20px]"
+                                    style={{ color: COLORS.muted }}
+                                >
+                                    Sign in to manage your directory profile.
+                                </p>
+                            </div>
+
+                            {/* Status Message */}
+                            {status && (
+                                <div
+                                    role="status"
+                                    className="mb-5 rounded-lg border px-4 py-3 text-sm"
+                                    style={{
+                                        borderColor: `${COLORS.sage}`,
+                                        backgroundColor: `${COLORS.sage}20`,
+                                        color: COLORS.teal,
+                                    }}
+                                >
+                                    {status}
+                                </div>
+                            )}
+
+                            {/* Email Address */}
+                            <div className="mb-[27px]">
+                                <Label
+                                    htmlFor="email"
+                                    className="mb-[9px] block text-[16px] font-semibold text-[#242829] sm:text-[18px]"
+                                >
+                                    Email address
+                                </Label>
 
                                 <Input
-                                    className={`pl-10 ${INPUT_CLASS} ${errors.email ? INPUT_ERROR_CLASS : ''}`}
                                     id="email"
+                                    name="email"
                                     type="email"
                                     required
                                     autoFocus
+                                    autoComplete="username"
                                     tabIndex={1}
-                                    autoComplete="email"
+                                    placeholder="Enter your email"
                                     value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    placeholder="email@example.com"
+                                    onChange={(e) =>
+                                        setData('email', e.target.value)
+                                    }
+                                    aria-invalid={!!errors.email}
+                                    className={`${INPUT_CLASS} ${errors.email
+                                        ? 'border-[#C2543B] focus-visible:ring-[#C2543B]/20'
+                                        : ''
+                                        }`}
+                                />
+
+                                <InputError
+                                    message={errors.email}
+                                    className="mt-1.5 text-sm text-[#C2543B]"
                                 />
                             </div>
-                            <InputError message={errors.email} className="text-[#C2543B]" />
-                        </div>
 
-                        <div className="grid gap-1.5">
-                            <Label htmlFor="password" className={LABEL_CLASS}>Password</Label>
+                            {/* Password */}
+                            <div className="mb-[32px]">
 
-                            <div className="relative">
-                                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9AA6A4]" />
+                                <div className="mb-[9px] flex items-center justify-between gap-3">
+                                    <Label
+                                        htmlFor="password"
+                                        className="text-[16px] font-semibold text-[#242829] sm:text-[18px]"
+                                    >
+                                        Password
+                                    </Label>
 
-                                <Input
-                                    className={`pl-10 pr-10 ${INPUT_CLASS} ${errors.password ? INPUT_ERROR_CLASS : ''}`}
-                                    id="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    placeholder="Password"
+                                    {canResetPassword && (
+                                        <Link
+                                            href={route('password.request')}
+                                            tabIndex={3}
+                                            className="text-[14px] font-medium underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[16px]"
+                                            style={{ color: COLORS.teal }}
+                                        >
+                                            Forgot your password?
+                                        </Link>
+                                    )}
+                                </div>
+
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        autoComplete="current-password"
+                                        tabIndex={2}
+                                        placeholder="Enter your password"
+                                        value={data.password}
+                                        onChange={(e) =>
+                                            setData('password', e.target.value)
+                                        }
+                                        aria-invalid={!!errors.password}
+                                        className={`${INPUT_CLASS} pr-12 ${errors.password
+                                            ? 'border-[#C2543B] focus-visible:ring-[#C2543B]/20'
+                                            : ''
+                                            }`}
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword((prev) => !prev)
+                                        }
+                                        tabIndex={4}
+                                        aria-label={
+                                            showPassword
+                                                ? 'Hide password'
+                                                : 'Show password'
+                                        }
+                                        aria-pressed={showPassword}
+                                        className="absolute right-[14px] top-1/2 -translate-y-1/2 rounded p-1 text-[#737A79] transition-colors hover:text-[#1E4D4A] focus-visible:outline-2 focus-visible:outline-[#1E4D4A]"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff size={21} strokeWidth={1.8} />
+                                        ) : (
+                                            <Eye size={21} strokeWidth={1.8} />
+                                        )}
+                                    </button>
+                                </div>
+
+                                <InputError
+                                    message={errors.password}
+                                    className="mt-1.5 text-sm text-[#C2543B]"
                                 />
+                            </div>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                    tabIndex={-1}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9AA6A4] transition-colors hover:text-[#0E7C7B]"
+                            {/* Sign In Button */}
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                tabIndex={5}
+                                className="flex h-[56px] w-full items-center justify-center gap-2 rounded-[9px] text-[18px] font-semibold text-white transition-colors hover:bg-[#163F3C] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#1E4D4A]/30 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[20px]"
+                                style={{
+                                    backgroundColor: COLORS.teal,
+                                }}
+                            >
+                                {processing ? (
+                                    <>
+                                        <LoaderCircle
+                                            size={21}
+                                            className="animate-spin"
+                                        />
+                                        Signing in...
+                                    </>
+                                ) : (
+                                    'Sign in'
+                                )}
+                            </button>
+
+                            {/* Account Support */}
+                            <div className="mt-[20px] text-center">
+                                <Link
+                                    href="/support"
+                                    tabIndex={6}
+                                    className="text-[16px] font-medium underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[18px]"
+                                    style={{ color: COLORS.teal }}
                                 >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
+                                    Need help signing in?
+                                </Link>
                             </div>
-                            <InputError message={errors.password} className="text-[#C2543B]" />
 
-                            {/* <div className="flex items-center justify-end">
-                            {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto font-medium no-underline text-sm text-[#3b7890]" tabIndex={5}>
-                                    Forgot password?
-                                </TextLink>
-                            )}
-                        </div> */}
-                        </div>
+                            {/* Divider */}
+                            <div
+                                className="my-[27px] border-t"
+                                style={{ borderColor: COLORS.border }}
+                            />
 
-                        {/* <div className="flex items-center space-x-3">
-                        <Checkbox id="remember" name="remember" tabIndex={3} />
-                        <Label htmlFor="remember">Remember me</Label>
-                    </div> */}
+                            {/* Provider Registration */}
+                            <div className="text-center">
+                                <p
+                                    className="text-[16px] sm:text-[18px]"
+                                    style={{ color: COLORS.muted }}
+                                >
+                                    New to the Bahali provider directory?
+                                </p>
 
-                        <Button
-                            type="submit"
-                            className="mt-2 h-auto w-full rounded-lg bg-[#0E7C7B] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus-visible:ring-4 focus-visible:ring-[#0E7C7B]/30 disabled:opacity-60"
-                            tabIndex={4}
-                            disabled={processing}
+                                <Link
+                                    href="/provider/apply"
+                                    tabIndex={7}
+                                    className="mt-[8px] inline-block text-[17px] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[19px]"
+                                    style={{ color: COLORS.teal }}
+                                >
+                                    Apply to join the directory →
+                                </Link>
+                            </div>
+
+                        </form>
+                    </section>
+
+                    {/* =================================
+                        PUBLIC DIRECTORY
+                        OUTSIDE LOGIN CARD
+                    ================================== */}
+
+                    <div className="mt-[30px] text-center">
+                        <p
+                            className="text-[16px] sm:text-[18px]"
+                            style={{ color: COLORS.muted }}
                         >
-                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Log in
-                        </Button>
+                            Looking for mental health support?
+                        </p>
+
+                        <Link
+                            href="/directory"
+                            tabIndex={8}
+                            className="mt-[5px] inline-block text-[17px] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[19px]"
+                            style={{ color: COLORS.teal }}
+                        >
+                            Browse the directory
+                        </Link>
                     </div>
 
-                    {/* <div className="text-muted-foreground text-center text-sm">
-                    Don't have an account?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
-                        Sign up
-                    </TextLink>
-                </div> */}
-                </form>
-            </div>
-
-            {/* </AuthLayout> */}
-        </div>
+                </div>
+            </main>
+        </>
     );
 }

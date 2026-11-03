@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\Provider\ProviderService;
 use App\Notifications\ProviderReviewOutcome;
 use Illuminate\Support\Facades\Notification;
+use App\Models\DirectorySearch;
 
 class ProviderDirectoryController extends Controller
 {
@@ -101,6 +102,12 @@ class ProviderDirectoryController extends Controller
         ];
 
         $result = $providerService->getPublicDirectory($filters);
+
+
+        // Admin dashboard: search demand, zero-result searches, coverage gaps (first page only).
+        if ($page <= 1) {
+            DirectorySearch::record($filters, (int) ($result['pagination']['total'] ?? 0), $request);
+        }
 
         return Inertia::render('web/provider/index', [
             'providers'     => $result['providers'],

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\Web\JoinTheCircleController as AdminJoinTheCircle
 use App\Http\Controllers\Web\JoinTheCircleController;
 use App\Http\Controllers\Admin\Web\ProviderDirectoryPageController;
 use App\Http\Controllers\Admin\Web\ProviderProfilePageController;
+use App\Http\Controllers\Admin\Dashboard\AdminDashboardController;
 use Inertia\Inertia;
 
 
@@ -75,8 +76,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
         ]);
     })->name('under-development');
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('admin.dashboard');
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::post('dashboard/availability-reminders', [AdminDashboardController::class, 'sendAvailabilityReminders'])
+        ->name('admin.dashboard.availability-reminders');
 
     // Route::resource('users', UserController::class);
 
