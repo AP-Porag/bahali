@@ -7,6 +7,7 @@ use App\Http\Requests\Provider\StoreProviderRequest;
 use App\Http\Requests\Provider\UpdateProviderRequest;
 use App\Mail\OtpVerificationMail;
 use App\Models\Country;
+use App\Models\DirectorySearch;
 use App\Models\Provider;
 use App\Models\User;
 use App\Utils\GlobalConstant;
@@ -29,7 +30,6 @@ use Illuminate\Support\Facades\DB;
 use App\Services\Provider\ProviderService;
 use App\Notifications\ProviderReviewOutcome;
 use Illuminate\Support\Facades\Notification;
-use App\Models\DirectorySearch;
 
 class ProviderDirectoryController extends Controller
 {
@@ -102,7 +102,6 @@ class ProviderDirectoryController extends Controller
         ];
 
         $result = $providerService->getPublicDirectory($filters);
-
 
         // Admin dashboard: search demand, zero-result searches, coverage gaps (first page only).
         if ($page <= 1) {

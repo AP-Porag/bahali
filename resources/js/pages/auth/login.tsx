@@ -85,12 +85,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             className="h-auto w-[220px] max-w-full object-contain"
                         />
 
-                        {/* <span
+                        <span
                             className="mt-[9px] text-[16px] font-medium uppercase leading-none tracking-[0.28em]"
                             style={{ color: COLORS.teal }}
                         >
                             PROVIDER PORTAL
-                        </span> */}
+                        </span>
                     </Link>
 
                     {/* =================================
