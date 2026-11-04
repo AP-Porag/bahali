@@ -1,10 +1,10 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User } from 'lucide-react';
+import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User, X } from 'lucide-react';
 import AppLogo from './app-logo';
 import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucide-react';
 
@@ -96,21 +96,36 @@ export function AppSidebar() {
         '/admin/inactive/providers': { count: providerCounts?.inactive, tone: 'gray' as const },
     };
 
+    // Mobile: the sidebar opens as a slide-in menu — this closes it.
+    const { isMobile, setOpenMobile } = useSidebar();
+
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+            <SidebarHeader className={isMobile ? 'relative pr-12' : undefined}>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             {/* <Link href="under-development" prefetch>
                                 <AppLogo />
                             </Link> */}
-                            <Link href={route('under-development')} prefetch>
+                            <Link href="/admin/dashboard" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+
+                {/* Close button on the mobile menu */}
+                {isMobile && (
+                    <button
+                        type="button"
+                        onClick={() => setOpenMobile(false)}
+                        aria-label="Close menu"
+                        className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                )}
             </SidebarHeader>
 
             <SidebarContent>

@@ -1,11 +1,11 @@
 import AppLayout from '@/layouts/app-layout.js';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    AlertTriangle, ArrowDown, ArrowRight, ArrowUp, BarChart3, Building2, Calendar, CheckCircle2, ClipboardList,
+    AlertTriangle, ArrowDown, ArrowRight, ArrowUp, BarChart3, Building2, Calendar, Check, CheckCircle2, ChevronDown, ClipboardList,
     Clock, FileText, Info, Layers, MapPin, Pencil, RefreshCw, Search, SearchX, ShieldAlert, ShieldCheck, Target,
     UserPlus, Users, XCircle, History, type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
 /* ------------------------------------------------------------------ */
@@ -64,7 +64,7 @@ const C = {
     line: '#E7E0D2',
 };
 
-const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
+const breadcrumbs = [{ title: 'Dashboard', href: '/admin/dashboard' }];
 
 const nf = new Intl.NumberFormat('en-US');
 const days = (n: number | null) => (n === null ? '—' : n === 0 ? 'Today' : `${n} day${n === 1 ? '' : 's'}`);
@@ -175,6 +175,79 @@ function Empty({ children }: { children: ReactNode }) {
     return <p className="rounded-xl bg-[#FBF8F2] px-4 py-6 text-center text-sm text-[#6B7A78]">{children}</p>;
 }
 
+/* Bahali-styled dropdown (the browser's own <select> list can't be themed — it shows the OS blue). */
+function ThemedSelect({ value, onChange, options, label, size = 'sm', icon: Icon, align = 'left' }: {
+    value: string;
+    onChange: (v: string) => void;
+    options: { value: string; label: string }[];
+    label: string;
+    size?: 'sm' | 'md';
+    icon?: LucideIcon;
+    align?: 'left' | 'right';
+}) {
+    const [open, setOpen] = useState(false);
+    const [active, setActive] = useState(-1);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const selected = options.find((o) => o.value === value) ?? options[0];
+
+    useEffect(() => {
+        if (!open) return;
+        setActive(Math.max(0, options.findIndex((o) => o.value === value)));
+        const onClick = (e: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onClick);
+        return () => document.removeEventListener('mousedown', onClick);
+    }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const choose = (v: string) => {
+        onChange(v);
+        setOpen(false);
+    };
+
+    const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === 'Escape') return setOpen(false);
+        if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            return setOpen(true);
+        }
+        if (!open) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => (i + 1) % options.length); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => (i <= 0 ? options.length - 1 : i - 1)); }
+        if ((e.key === 'Enter' || e.key === ' ') && active >= 0) { e.preventDefault(); choose(options[active].value); }
+    };
+
+    return (
+        <div ref={rootRef} className="relative">
+            <button type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={label}
+                onClick={() => setOpen((o) => !o)} onKeyDown={onKeyDown}
+                className={`inline-flex max-w-[14rem] items-center rounded-lg border bg-white outline-none transition hover:bg-[#FBF8F2] ${size === 'md' ? 'gap-2 px-3 py-2 text-sm text-[#16302F]' : 'gap-1.5 px-2.5 py-1 text-xs text-[#3A4B49]'} ${open ? 'border-[#0E7C7B] ring-2 ring-[#0E7C7B]/20' : 'border-[#DED7C9] focus-visible:border-[#0E7C7B] focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/20'}`}>
+                {Icon && <Icon className={`flex-shrink-0 text-[#5B6B6E] ${size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />}
+                <span className="truncate">{selected?.label}</span>
+                <ChevronDown className={`h-3.5 w-3.5 flex-shrink-0 text-[#6B7A78] transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            {open && (
+                <ul role="listbox" aria-label={label}
+                    className={`absolute z-30 mt-1.5 max-h-60 w-max min-w-full max-w-[min(18rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border border-[#DED7C9] bg-white p-1 shadow-lg ${align === 'right' ? 'right-0' : 'left-0'}`}>
+                    {options.map((o, i) => {
+                        const isSelected = o.value === value;
+                        return (
+                            <li key={o.value || '__all'}>
+                                <button type="button" role="option" aria-selected={isSelected}
+                                    onMouseEnter={() => setActive(i)} onClick={() => choose(o.value)}
+                                    className={`flex w-full items-center justify-between gap-3 rounded-md text-left transition ${size === 'md' ? 'px-3 py-2 text-sm' : 'px-2.5 py-1.5 text-xs'} ${i === active ? 'bg-[#0E7C7B]/10' : ''} ${isSelected ? 'font-semibold text-[#0E7C7B]' : 'text-[#26403F]'}`}>
+                                    <span className="truncate">{o.label}</span>
+                                    {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0 text-[#0E7C7B]" />}
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Provider Coverage by Location — grouped bars (filtered here)        */
 /* ------------------------------------------------------------------ */
@@ -223,11 +296,12 @@ function CoverageChart({ rows }: { rows: CoverageRow[] }) {
     return (
         <>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-                <select value={category} onChange={(e) => setCategory(e.target.value)}
-                    className="max-w-full rounded-lg border border-[#DED7C9] bg-white px-2.5 py-1 text-xs text-[#3A4B49] outline-none focus:border-[#0E7C7B]">
-                    <option value="">All services</option>
-                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <ThemedSelect
+                    label="Service category"
+                    value={category}
+                    onChange={setCategory}
+                    options={[{ value: '', label: 'All services' }, ...categories.map((c) => ({ value: c, label: c }))]}
+                />
                 <div className="flex gap-1.5">
                     {pill('all', 'All')}
                     {pill('in_person', 'In-person')}
@@ -332,14 +406,15 @@ export default function AdminDashboard(props: DashboardProps) {
                             <span className="h-2 w-2 rounded-full bg-[#2E9E5B]" />
                             Directory live · {nf.format(kpis.published.count)} published
                         </span>
-                        <label className="relative inline-flex items-center">
-                            <Calendar className="pointer-events-none absolute left-3 h-4 w-4 text-[#5B6B6E]" />
-                            <select value={range} onChange={(e) => changeRange(Number(e.target.value))}
-                                className="appearance-none rounded-lg border border-[#DED7C9] bg-white py-2 pl-9 pr-8 text-sm text-[#16302F] outline-none focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/20">
-                                {ranges.map((r) => <option key={r} value={r}>{r === 365 ? 'Last 12 months' : `Last ${r} days`}</option>)}
-                            </select>
-                            <ArrowDown className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-[#5B6B6E]" />
-                        </label>
+                        <ThemedSelect
+                            label="Time period"
+                            size="md"
+                            icon={Calendar}
+                            align="right"
+                            value={String(range)}
+                            onChange={(v) => changeRange(Number(v))}
+                            options={ranges.map((r) => ({ value: String(r), label: r === 365 ? 'Last 12 months' : `Last ${r} days` }))}
+                        />
                     </div>
                 </div>
 
@@ -366,7 +441,7 @@ export default function AdminDashboard(props: DashboardProps) {
                             title={<>Action Required <span className="text-[#C2543B]">({actionTotal})</span></>}
                             hint="Work waiting on the Bahali team or on a provider's reply." />
                         {/* Phones: one block per task */}
-                        <ul className="divide-y divide-[#F1EDE3] sm:hidden">
+                        <ul className="divide-y divide-[#F1EDE3] xl:hidden">
                             {actions.map((row) => {
                                 const Icon = ACTION_ICON[row.icon];
                                 return (
@@ -389,8 +464,8 @@ export default function AdminDashboard(props: DashboardProps) {
                                 );
                             })}
                         </ul>
-                        <div className="-mx-1 hidden overflow-x-auto sm:block">
-                            <table className="w-full min-w-[400px] text-sm">
+                        <div className="-mx-1 hidden xl:block">
+                            <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-xs font-semibold text-[#3A4B49]">
                                         <th className="px-1 pb-2">Task</th>
@@ -539,7 +614,7 @@ export default function AdminDashboard(props: DashboardProps) {
                         ) : (
                             <>
                                 {/* Phones: one block per gap */}
-                                <ul className="divide-y divide-[#F1EDE3] sm:hidden">
+                                <ul className="divide-y divide-[#F1EDE3] lg:hidden">
                                     {gaps.map((g) => (
                                         <li key={`${g.location}-${g.area}`} className="py-3">
                                             <div className="flex items-start justify-between gap-3">
@@ -559,8 +634,8 @@ export default function AdminDashboard(props: DashboardProps) {
                                         </li>
                                     ))}
                                 </ul>
-                                <div className="-mx-1 hidden overflow-x-auto sm:block">
-                                    <table className="w-full min-w-[560px] text-sm">
+                                <div className="-mx-1 hidden lg:block">
+                                    <table className="w-full text-sm">
                                         <thead>
                                             <tr className="text-left text-xs font-semibold text-[#3A4B49]">
                                                 <th className="px-1 pb-2">Location</th>

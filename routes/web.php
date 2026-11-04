@@ -79,7 +79,6 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('dashboard/availability-reminders', [AdminDashboardController::class, 'sendAvailabilityReminders'])
         ->name('admin.dashboard.availability-reminders');
-
     // Route::resource('users', UserController::class);
 
 
