@@ -33,8 +33,12 @@ const SERIF = {
     fontFamily: 'Fraunces, "Playfair Display", Georgia, serif',
 };
 
+/*
+ * Sizes scale with the screen height (clamp + vh), so the whole page — logo, card and the
+ * directory link — fits inside 90vh on laptops and phones without scrolling.
+ */
 const INPUT_CLASS =
-    'h-[54px] w-full rounded-lg border border-[#AEB7B3] bg-white px-[18px] text-[17px] text-[#292F30] shadow-none placeholder:text-[#777B7C] focus-visible:border-[#1E4D4A] focus-visible:ring-[3px] focus-visible:ring-[#1E4D4A]/15';
+    'h-[clamp(36px,4.8vh,54px)] w-full rounded-lg border border-[#AEB7B3] bg-white px-[18px] text-[clamp(14px,1.8vh,17px)] text-[#292F30] shadow-none placeholder:text-[#777B7C] focus-visible:border-[#1E4D4A] focus-visible:ring-[3px] focus-visible:ring-[#1E4D4A]/15';
 
 export default function Login({ status, canResetPassword }: LoginProps) {
     const {
@@ -65,7 +69,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <Head title="Provider Sign In" />
 
             <main
-                className="flex min-h-screen w-full flex-col items-center justify-center px-5 py-10 sm:px-6 sm:py-12"
+                className="flex min-h-screen w-full flex-col items-center justify-center px-5 py-[4vh] sm:px-6"
                 style={{ backgroundColor: COLORS.ivory }}
             >
                 <div className="flex w-full max-w-[576px] flex-col items-center">
@@ -77,16 +81,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <Link
                         href="/"
                         aria-label="Bahali Home"
-                        className="mb-[38px] flex flex-col items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E4D4A]"
+                        className="mb-[clamp(8px,2vh,32px)] flex flex-col items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1E4D4A]"
                     >
                         <img
-                            src="/images/Bahali%20_p.png"
+                            src="/images/Bahali_p.png"
                             alt="Bahali Logo"
-                            className="h-auto w-[220px] max-w-full object-contain"
+                            className="h-[clamp(28px,calc(16vh_-_58px),124px)] w-auto max-w-[320px] object-contain"
                         />
 
                         <span
-                            className="mt-[9px] text-[16px] font-medium uppercase leading-none tracking-[0.28em]"
+                            className="mt-[clamp(4px,0.8vh,9px)] text-[clamp(10px,1.4vh,16px)] font-medium uppercase leading-none tracking-[0.28em]"
                             style={{ color: COLORS.teal }}
                         >
                             PROVIDER PORTAL
@@ -98,15 +102,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     ================================== */}
 
                     <section
-                        className="w-full rounded-[16px] border bg-white p-6 shadow-[0_5px_18px_rgba(35,45,40,0.07)] sm:p-10"
+                        className="w-full rounded-[16px] border bg-white px-6 py-[clamp(12px,2.8vh,40px)] shadow-[0_5px_18px_rgba(35,45,40,0.07)] sm:px-10"
                         style={{ borderColor: COLORS.border }}
                     >
                         <form onSubmit={submit} noValidate={false}>
 
                             {/* Heading */}
-                            <div className="mb-[28px]">
+                            <div className="mb-[clamp(10px,2vh,28px)]">
                                 <h1
-                                    className="text-[34px] font-semibold leading-[1.2] tracking-[-0.8px] sm:text-[40px]"
+                                    className="text-[clamp(22px,min(3.6vh,9vw),40px)] font-semibold leading-[1.2] tracking-[-0.8px]"
                                     style={{
                                         ...SERIF,
                                         color: COLORS.teal,
@@ -116,7 +120,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 </h1>
 
                                 <p
-                                    className="mt-[10px] text-[17px] leading-[1.5] sm:text-[20px]"
+                                    className="mt-[clamp(2px,0.7vh,10px)] text-[clamp(13px,min(1.8vh,4.4vw),20px)] leading-[1.5]"
                                     style={{ color: COLORS.muted }}
                                 >
                                     Sign in to manage your directory profile.
@@ -127,7 +131,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             {status && (
                                 <div
                                     role="status"
-                                    className="mb-5 rounded-lg border px-4 py-3 text-sm"
+                                    className="mb-[clamp(8px,1.6vh,20px)] rounded-lg border px-4 py-[clamp(6px,1.1vh,12px)] text-sm"
                                     style={{
                                         borderColor: `${COLORS.sage}`,
                                         backgroundColor: `${COLORS.sage}20`,
@@ -139,10 +143,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             )}
 
                             {/* Email Address */}
-                            <div className="mb-[27px]">
+                            <div className="mb-[clamp(10px,1.8vh,27px)]">
                                 <Label
                                     htmlFor="email"
-                                    className="mb-[9px] block text-[16px] font-semibold text-[#242829] sm:text-[18px]"
+                                    className="mb-[clamp(4px,0.7vh,9px)] block text-[clamp(13px,1.7vh,18px)] font-semibold text-[#242829]"
                                 >
                                     Email address
                                 </Label>
@@ -174,12 +178,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </div>
 
                             {/* Password */}
-                            <div className="mb-[32px]">
+                            <div className="mb-[clamp(12px,2.2vh,32px)]">
 
-                                <div className="mb-[9px] flex items-center justify-between gap-3">
+                                <div className="mb-[clamp(4px,0.7vh,9px)] flex items-center justify-between gap-3">
                                     <Label
                                         htmlFor="password"
-                                        className="text-[16px] font-semibold text-[#242829] sm:text-[18px]"
+                                        className="text-[clamp(13px,1.7vh,18px)] font-semibold text-[#242829]"
                                     >
                                         Password
                                     </Label>
@@ -188,7 +192,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         <Link
                                             href={route('password.request')}
                                             tabIndex={3}
-                                            className="text-[14px] font-medium underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[16px]"
+                                            className="text-[clamp(12px,1.5vh,16px)] font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
                                             style={{ color: COLORS.teal }}
                                         >
                                             Forgot your password?
@@ -249,7 +253,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 type="submit"
                                 disabled={processing}
                                 tabIndex={5}
-                                className="flex h-[56px] w-full items-center justify-center gap-2 rounded-[9px] text-[18px] font-semibold text-white transition-colors hover:bg-[#163F3C] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#1E4D4A]/30 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[20px]"
+                                className="flex h-[clamp(38px,5vh,56px)] w-full items-center justify-center gap-2 rounded-[9px] text-[clamp(15px,1.9vh,20px)] font-semibold text-white transition-colors hover:bg-[#163F3C] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#1E4D4A]/30 disabled:cursor-not-allowed disabled:opacity-60"
                                 style={{
                                     backgroundColor: COLORS.teal,
                                 }}
@@ -268,36 +272,36 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </button>
 
                             {/* Account Support */}
-                            <div className="mt-[20px] text-center">
+                            {/* <div className="mt-[clamp(8px,1.4vh,20px)] text-center">
                                 <Link
-                                    href="/support"
+                                    href={route('password.request')}
                                     tabIndex={6}
-                                    className="text-[16px] font-medium underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[18px]"
+                                    className="text-[clamp(13px,1.6vh,18px)] font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
                                     style={{ color: COLORS.teal }}
                                 >
                                     Need help signing in?
                                 </Link>
-                            </div>
+                            </div> */}
 
                             {/* Divider */}
                             <div
-                                className="my-[27px] border-t"
+                                className="my-[clamp(8px,1.8vh,27px)] border-t"
                                 style={{ borderColor: COLORS.border }}
                             />
 
                             {/* Provider Registration */}
                             <div className="text-center">
                                 <p
-                                    className="text-[16px] sm:text-[18px]"
+                                    className="text-[clamp(13px,1.6vh,18px)]"
                                     style={{ color: COLORS.muted }}
                                 >
                                     New to the Bahali provider directory?
                                 </p>
 
                                 <Link
-                                    href="/provider/apply"
+                                    href={route('providers.create')}
                                     tabIndex={7}
-                                    className="mt-[8px] inline-block text-[17px] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[19px]"
+                                    className="mt-[clamp(2px,0.4vh,8px)] inline-block text-[clamp(14px,1.7vh,19px)] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70"
                                     style={{ color: COLORS.teal }}
                                 >
                                     Apply to join the directory →
@@ -312,18 +316,18 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         OUTSIDE LOGIN CARD
                     ================================== */}
 
-                    <div className="mt-[30px] text-center">
+                    <div className="mt-[clamp(8px,2vh,30px)] text-center">
                         <p
-                            className="text-[16px] sm:text-[18px]"
+                            className="text-[clamp(13px,1.6vh,18px)]"
                             style={{ color: COLORS.muted }}
                         >
                             Looking for mental health support?
                         </p>
 
                         <Link
-                            href="/directory"
+                            href="/provider"
                             tabIndex={8}
-                            className="mt-[5px] inline-block text-[17px] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70 sm:text-[19px]"
+                            className="mt-[clamp(2px,0.4vh,5px)] inline-block text-[clamp(14px,1.7vh,19px)] font-semibold underline underline-offset-2 transition-opacity hover:opacity-70"
                             style={{ color: COLORS.teal }}
                         >
                             Browse the directory

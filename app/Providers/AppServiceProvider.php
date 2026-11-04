@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Notifications\BahaliResetPasswordMail;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // ... apnar ager code jemon ache temon thakbe ...
+
+        // Password reset email in the Bahali design.
+        ResetPassword::toMailUsing(
+            fn(object $notifiable, string $token) => BahaliResetPasswordMail::build($notifiable, $token)
+        );
     }
 }
