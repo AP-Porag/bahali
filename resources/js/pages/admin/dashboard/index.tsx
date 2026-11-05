@@ -248,6 +248,48 @@ function ThemedSelect({ value, onChange, options, label, size = 'sm', icon: Icon
     );
 }
 
+/* Bahali-styled confirm dialog (replaces the browser's own window.confirm alert). */
+function ConfirmModal({ open, message, onConfirm, onCancel }: { open: boolean; message: string; onConfirm: () => void; onCancel: () => void }) {
+    const okRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        requestAnimationFrame(() => okRef.current?.focus());
+        const onKey = (e: globalThis.KeyboardEvent) => {
+            if (e.key === 'Escape') onCancel();
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-[#16302F]/40" onClick={onCancel} aria-hidden />
+            <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-message"
+                className="relative w-full max-w-md rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-xl sm:p-6">
+                <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#0E7C7B]/10 text-[#0E7C7B]">
+                        <RefreshCw className="h-5 w-5" strokeWidth={1.8} />
+                    </span>
+                    <p id="confirm-modal-message" className="pt-2 text-sm leading-relaxed text-[#26403F]">{message}</p>
+                </div>
+                <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
+                    <button type="button" onClick={onCancel}
+                        className="rounded-lg border border-[#DED7C9] bg-white px-4 py-2 text-sm font-semibold text-[#3A4B49] transition hover:bg-[#FBF8F2] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/30">
+                        Cancel
+                    </button>
+                    <button ref={okRef} type="button" onClick={onConfirm}
+                        className="rounded-lg bg-[#0E7C7B] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-2">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Provider Coverage by Location — grouped bars (filtered here)        */
 /* ------------------------------------------------------------------ */
@@ -364,6 +406,7 @@ export default function AdminDashboard(props: DashboardProps) {
     const { range, ranges, kpis, actions, verification, health, searchDemand, searchOutcomes, coverage, gaps, activity, links } = props;
     const { flash } = usePage<{ flash?: { success?: string; error?: string } }>().props;
     const [sending, setSending] = useState(false);
+    const [confirmRow, setConfirmRow] = useState<ActionRow | null>(null);
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -377,12 +420,19 @@ export default function AdminDashboard(props: DashboardProps) {
     const runAction = (row: ActionRow) => {
         if (!row.href) return;
         if (row.method === 'post') {
-            if (!window.confirm(`Send an availability reminder email to the ${row.count} provider${row.count === 1 ? '' : 's'} due for reconfirmation?`)) return;
-            setSending(true);
-            router.post(row.href, {}, { preserveScroll: true, onFinish: () => setSending(false) });
+            setConfirmRow(row); // opens the confirm modal
             return;
         }
         router.visit(row.href);
+    };
+
+    // OK in the confirm modal -> send the reminders.
+    const confirmSend = () => {
+        const row = confirmRow;
+        setConfirmRow(null);
+        if (!row?.href) return;
+        setSending(true);
+        router.post(row.href, {}, { preserveScroll: true, onFinish: () => setSending(false) });
     };
 
     const actionTotal = actions.reduce((s, a) => s + a.count, 0);
@@ -698,6 +748,13 @@ export default function AdminDashboard(props: DashboardProps) {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmModal
+                open={confirmRow !== null}
+                message={confirmRow ? `Send an availability reminder email to the ${confirmRow.count} provider${confirmRow.count === 1 ? '' : 's'} due for reconfirmation?` : ''}
+                onConfirm={confirmSend}
+                onCancel={() => setConfirmRow(null)}
+            />
         </AppLayout>
     );
 }
