@@ -92,7 +92,7 @@ export default function DataTable({
     };
 
     return (
-        <div className="space-y-4 rounded-xl bg-white p-4 text-black shadow dark:text-white">
+        <div className="space-y-4 rounded-xl bg-white p-4 text-black shadow">
             {/* FILTERS */}
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 {globalActions.search_filter && (
@@ -102,13 +102,13 @@ export default function DataTable({
                         placeholder={meta.searchPlaceholderText}
                         value={filters.search}
                         onChange={handleFilterChange}
-                        className="px-3 py-2 md:w-1/3"
+                        className="bg-white px-3 py-2 text-black md:w-1/3"
                     />
                 )}
 
                 {globalActions.per_page_filter && (
                     <Select value={Number(filters.perPage)} onValueChange={(value) => handleFilterChange({ target: { name: 'perPage', value } })}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[180px] bg-white text-black">
                             <SelectValue placeholder="Per Page" />
                         </SelectTrigger>
                         <SelectContent>
@@ -122,87 +122,89 @@ export default function DataTable({
                 )}
             </div>
 
-            {/* TABLE */}
-            <table className="min-w-full table-auto">
-                <thead className="border-b text-left">
-                    <tr>
-                        {columns.map((col) => (
-                            <th key={col.key} className="px-4 py-2">
-                                {col.label}
-                            </th>
-                        ))}
-                        <th className="px-4 py-2 text-right">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {data.length === 0 ? (
+            {/* TABLE — scrolls sideways on its own on small screens (the page itself never scrolls sideways) */}
+            <div className="w-full overflow-x-auto [contain:inline-size]">
+                <table className="min-w-full table-auto whitespace-nowrap">
+                    <thead className="border-b text-left">
                         <tr>
-                            <td colSpan={columns.length + 1} className="py-4 text-center text-gray-500">
-                                No data found.
-                            </td>
+                            {columns.map((col) => (
+                                <th key={col.key} className="px-4 py-2">
+                                    {col.label}
+                                </th>
+                            ))}
+                            <th className="px-4 py-2 text-right">Actions</th>
                         </tr>
-                    ) : (
-                        data.map((row) => {
-                            const rowActions = resolveActions(row);
+                    </thead>
 
-                            return (
-                                <tr key={row.id} className="border-b hover:bg-gray-50">
-                                    {columns.map((col) => (
-                                        <td key={col.key} className="px-4 py-2">
-                                            {col.render ? col.render(row) : row[col.key]}
+                    <tbody>
+                        {data.length === 0 ? (
+                            <tr>
+                                <td colSpan={columns.length + 1} className="py-4 text-center text-gray-500">
+                                    No data found.
+                                </td>
+                            </tr>
+                        ) : (
+                            data.map((row) => {
+                                const rowActions = resolveActions(row);
+
+                                return (
+                                    <tr key={row.id} className="border-b hover:bg-gray-50">
+                                        {columns.map((col) => (
+                                            <td key={col.key} className="px-4 py-2">
+                                                {col.render ? col.render(row) : row[col.key]}
+                                            </td>
+                                        ))}
+
+                                        {/* ACTIONS */}
+                                        <td className="px-4 py-2 text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button size="action" className="cursor-pointer text-white">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+
+                                                <DropdownMenuContent align="end" className="bg-white text-black">
+                                                    {/* VIEW - কাস্টম রুট ব্যবহার */}
+                                                    {rowActions.view && (
+                                                        <DropdownMenuItem onClick={() => router.visit(getViewRoute(row.id))}>
+                                                            <EyeIcon className="mr-2 h-4 w-4" /> View
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {/* EDIT */}
+                                                    {rowActions.edit && (
+                                                        <DropdownMenuItem onClick={() => router.visit(route(`${baseRoute}.edit`, row.id))}>
+                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {/* DELETE */}
+                                                    {rowActions.delete && (
+                                                        <DropdownMenuItem onClick={() => setDeleteId(row.id)}>
+                                                            <Trash2 className="mr-2 h-4 w-4 text-red-600" /> Delete
+                                                        </DropdownMenuItem>
+                                                    )}
+
+                                                    {/* CHANGE VERIFICATION STATUS */}
+                                                    {rowActions.change_verification_status && (
+                                                        <DropdownMenuItem
+                                                            onClick={() => router.visit(route('providers.verification.show', row.id))}
+                                                        >
+                                                            <BadgeCheck className="mr-2 h-4 w-4 text-green-600" />
+                                                            Change Verification Status
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </td>
-                                    ))}
-
-                                    {/* ACTIONS */}
-                                    <td className="px-4 py-2 text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button size="action" className="cursor-pointer text-white">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-
-                                            <DropdownMenuContent align="end" className="bg-white text-black">
-                                                {/* VIEW - কাস্টম রুট ব্যবহার */}
-                                                {rowActions.view && (
-                                                    <DropdownMenuItem onClick={() => router.visit(getViewRoute(row.id))}>
-                                                        <EyeIcon className="mr-2 h-4 w-4" /> View
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {/* EDIT */}
-                                                {rowActions.edit && (
-                                                    <DropdownMenuItem onClick={() => router.visit(route(`${baseRoute}.edit`, row.id))}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {/* DELETE */}
-                                                {rowActions.delete && (
-                                                    <DropdownMenuItem onClick={() => setDeleteId(row.id)}>
-                                                        <Trash2 className="mr-2 h-4 w-4 text-red-600" /> Delete
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {/* CHANGE VERIFICATION STATUS */}
-                                                {rowActions.change_verification_status && (
-                                                    <DropdownMenuItem
-                                                        onClick={() => router.visit(route('providers.verification.show', row.id))}
-                                                    >
-                                                        <BadgeCheck className="mr-2 h-4 w-4 text-green-600" />
-                                                        Change Verification Status
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    )}
-                </tbody>
-            </table>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
             {/* PAGINATION */}
             {meta && (
