@@ -27,6 +27,10 @@
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    /* Bahali public pages (recruitment, registration, directory, profiles) — approved typography */
+    --font-display: "Cormorant Garamond", Georgia, serif;   /* H1–H3 + provider names only (24px+) */
+    --font-body: "DM Sans", system-ui, Arial, sans-serif;   /* everything else */
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);

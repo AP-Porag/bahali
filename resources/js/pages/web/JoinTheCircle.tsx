@@ -56,11 +56,11 @@ const STEPS: { n: string; title: string; body: string }[] = [
 /* ------------------------------------------------------------------ */
 
 const TONES: Record<string, string> = {
-    teal: 'from-[#0E4C4B] to-[#0E7C7B]',
-    deep: 'from-[#16302F] to-[#0E4C4B]',
-    amber: 'from-[#E8B84B] to-[#d6a236]',
-    coral: 'from-[#C2543B] to-[#a8472f]',
-    sand: 'from-[#E3D9C4] to-[#FBF8F2]',
+    teal: 'from-[#1E4D4A] to-[#1E4D4A]',
+    deep: 'from-[#1E4D4A] to-[#1E4D4A]',
+    amber: 'from-[#E8D9B8] to-[#E8D9B8]',
+    coral: 'from-[#1E4D4A] to-[#1E4D4A]',
+    sand: 'from-[#E8D9B8] to-[#FAFAF6]',
 };
 
 function Photo({
@@ -113,7 +113,7 @@ function Photo({
 /* ------------------------------------------------------------------ */
 
 function Eyebrow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-    return <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${className}`}>{children}</p>;
+    return <p className={`text-sm font-semibold uppercase tracking-[0.2em] ${className}`}>{children}</p>;
 }
 
 function CoralButton({ children = 'Join the circle', large = false }: { children?: React.ReactNode; large?: boolean }) {
@@ -121,7 +121,7 @@ function CoralButton({ children = 'Join the circle', large = false }: { children
         <a
             href={SIGNUP_ROUTE}
             target="_blank"
-            className={`group inline-flex items-center gap-2 rounded-full bg-[#C2543B] font-semibold text-white shadow-sm transition hover:bg-[#aa482f] focus:outline-none focus:ring-4 focus:ring-[#C2543B]/30 ${large ? 'px-8 py-4 text-base' : 'px-7 py-3.5 text-sm'
+            className={`group inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#1E4D4A] text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${large ? 'min-h-[52px] px-8' : 'min-h-[48px] px-7'
                 }`}
         >
             {children}
@@ -202,7 +202,7 @@ export default function JoinTheCircle({ content }: PageProps) {
             </Head>
 
 
-            <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E] antialiased">
+            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C] antialiased">
                 {/* ===================================================== */}
                 {/*  HERO — full-bleed photo                              */}
                 {/* ===================================================== */}
@@ -215,19 +215,19 @@ export default function JoinTheCircle({ content }: PageProps) {
                     {/* Background photo */}
                     {/* <img src={IMAGES.hero} className="absolute inset-0 bg-cover bg-center bg-no-repeat" /> */}
                     {/* Left scrim for legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#F2EAE1] via-[#F2EAE1]/20 to-transparent" />
-                    {/* <div className="absolute inset-0 bg-gradient-to-t from-[#F2EAE1]/70 via-transparent to-[#F2EAE1]/30" /> */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAF6] via-[#FAFAF6]/20 to-transparent" />
+                    {/* <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAF6]/70 via-transparent to-[#FAFAF6]/30" /> */}
 
 
 
 
                     {/* Hero copy */}
                     <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-10 sm:pt-20">
-                        <Eyebrow className="text-[#c49833] font-bold">{t('hero.eyebrow')}</Eyebrow>
-                        <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.07] text-[#184340] sm:text-5xl lg:text-[3.6rem]">
+                        <Eyebrow className="text-[#1E4D4A] font-semibold">{t('hero.eyebrow')}</Eyebrow>
+                        <h1 className="mt-5 max-w-2xl font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">
                             <Lines text={t('hero.title')} />
                         </h1>
-                        <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#184340] font-bold">
+                        <p className="mt-6 max-w-xl text-[17px] font-medium leading-[1.6] text-[#2C2C2C] md:text-[18px]">
                             <Lines text={t('hero.description')} />
                             <span className='pt-3 block'>
                                 <Lines text={t('hero.description_secondary')} />
@@ -240,7 +240,7 @@ export default function JoinTheCircle({ content }: PageProps) {
 
                             <button
                                 type="button"
-                                className="rounded-2xl cursor-pointer border border-[#356F79] bg-transparent px-7 py-3.5 text-base font-medium text-[#356F79] shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition hover:border-[#356F79] hover:shadow-[0_3px_12px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-1 active:translate-y-px"
+                                className="cursor-pointer border px-7 shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition hover:shadow-[0_3px_12px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-1 active:translate-y-px min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 {t('hero.cta_secondary')}
                             </button>
@@ -249,7 +249,7 @@ export default function JoinTheCircle({ content }: PageProps) {
                     </div>
 
                     {/* Corner caption like the reference */}
-                    {/* <p className="absolute bottom-4 right-5 z-10 text-xs text-white/70">
+                    {/* <p className="absolute bottom-4 right-5 z-10 text-sm text-white/70">
                         Marsha’s focus: Community Healing
                     </p> */}
                 </section>
@@ -257,11 +257,11 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  IT'S SIMPLE TO JOIN                                  */}
                 {/* ===================================================== */}
-                <section className="bg-[#FBF8F2]">
+                <section className="bg-[#FAFAF6]">
                     <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
                         <div>
-                            <h2 className="font-serif text-3xl text-[#16302F] sm:text-4xl">{t('simple.title')}</h2>
-                            <p className="mt-4 max-w-lg text-[#5B6B6E]">
+                            <h2 className="font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{t('simple.title')}</h2>
+                            <p className="mt-4 max-w-lg text-[#2C2C2C]">
                                 {t('simple.body')}
                             </p>
                             <div className="mt-7">
@@ -273,14 +273,14 @@ export default function JoinTheCircle({ content }: PageProps) {
                         <div className="relative mx-auto aspect-square w-full max-w-sm">
                             <svg viewBox="0 0 320 320" className="h-full w-full" fill="none" aria-hidden>
                                 {[150, 116, 82, 48].map((r, i) => (
-                                    <circle key={r} cx="160" cy="160" r={r} stroke="#0E7C7B" strokeWidth="1.5" strokeOpacity={0.25 + i * 0.12} />
+                                    <circle key={r} cx="160" cy="160" r={r} stroke="#1E4D4A" strokeWidth="1.5" strokeOpacity={0.25 + i * 0.12} />
                                 ))}
                                 {/* figures arranged around the circle */}
                                 {[0, 1, 2, 3, 4, 5].map((k) => {
                                     const a = (Math.PI * 2 * k) / 6 - Math.PI / 2;
                                     const cx = 160 + Math.cos(a) * 116;
                                     const cy = 160 + Math.sin(a) * 116;
-                                    const fills = ['#0E7C7B', '#E8B84B', '#C2543B', '#0E4C4B', '#0E7C7B', '#E8B84B'];
+                                    const fills = ['#1E4D4A', '#E8D9B8', '#E99E84', '#1E4D4A', '#1E4D4A', '#E8D9B8'];
                                     return (
                                         <g key={k} transform={`translate(${cx},${cy})`}>
                                             <circle cx="0" cy="-8" r="9" fill={fills[k]} />
@@ -288,8 +288,8 @@ export default function JoinTheCircle({ content }: PageProps) {
                                         </g>
                                     );
                                 })}
-                                <circle cx="160" cy="160" r="26" fill="#E8B84B" />
-                                <text x="160" y="168" textAnchor="middle" className="font-serif" fontSize="22" fill="#0E4C4B" fontWeight="700">B</text>
+                                <circle cx="160" cy="160" r="26" fill="#E8D9B8" />
+                                <text x="160" y="168" textAnchor="middle" className="font-display" fontSize="22" fill="#1E4D4A" fontWeight="600">B</text>
                             </svg>
                         </div>
                     </div>
@@ -301,21 +301,21 @@ export default function JoinTheCircle({ content }: PageProps) {
                 <section className="bg-white">
                     <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
                         <div className="mx-auto max-w-2xl text-center">
-                            <h2 className="font-serif text-3xl text-[#16302F] sm:text-4xl">{t('benefits.title')}</h2>
-                            <p className="mt-3 text-[#5B6B6E]">{t('benefits.subtitle')}</p>
+                            <h2 className="font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{t('benefits.title')}</h2>
+                            <p className="mt-3 text-[#2C2C2C]">{t('benefits.subtitle')}</p>
                         </div>
 
                         <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
                             {BENEFITS.map((b, i) => (
                                 <div key={i} className="flex gap-4">
-                                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#0E7C7B]/10">
-                                        <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
+                                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#1E4D4A]/10">
+                                        <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
                                             {b.icon}
                                         </svg>
                                     </span>
                                     <div>
-                                        <h3 className="font-serif text-lg text-[#16302F]">{b.title}</h3>
-                                        <p className="mt-1.5 text-sm leading-relaxed text-[#5B6B6E]">{b.body}</p>
+                                        <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{b.title}</h3>
+                                        <p className="mt-1.5 text-sm leading-relaxed text-[#2C2C2C]">{b.body}</p>
                                     </div>
                                 </div>
                             ))}
@@ -330,15 +330,15 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  REFERRALS SHOWCASE (curved)                          */}
                 {/* ===================================================== */}
-                <WaveTop color="#FBF8F2" />
-                <section className="bg-[#FBF8F2]">
+                <WaveTop color="#FAFAF6" />
+                <section className="bg-[#FAFAF6]">
                     <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-2 lg:py-24">
                         <div>
-                            <Eyebrow className="text-[#0E7C7B]">{t('referrals.eyebrow')}</Eyebrow>
-                            <h2 className="mt-3 font-serif text-3xl text-[#16302F] sm:text-4xl">
+                            <Eyebrow className="text-[#1E4D4A]">{t('referrals.eyebrow')}</Eyebrow>
+                            <h2 className="mt-3 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
                                 {t('referrals.title')}
                             </h2>
-                            <p className="mt-4 max-w-lg text-[#5B6B6E]">
+                            <p className="mt-4 max-w-lg text-[#2C2C2C]">
                                 {t('referrals.body')}
                             </p>
                             <div className="mt-7">
@@ -348,7 +348,7 @@ export default function JoinTheCircle({ content }: PageProps) {
 
                         {/* Referrals image */}
                         <div className="relative">
-                            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-[#E8B84B]/20 via-transparent to-[#0E7C7B]/15 blur-xl" />
+                            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-[#E8D9B8]/20 via-transparent to-[#1E4D4A]/15 blur-xl" />
                             <img
                                 src={IMAGES.referrals}
                                 className="w-full shadow-lg"
@@ -360,11 +360,11 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  STAT BAND (amber)                                    */}
                 {/* ===================================================== */}
-                <section className="bg-[#E8B84B]">
+                <section className="bg-[#E8D9B8]">
                     <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-12 md:grid-cols-[1fr_1.1fr] lg:py-14">
-                        <div className="text-[#0E4C4B]">
-                            <p className="font-serif text-6xl leading-none sm:text-7xl">{t('stat.number')}</p>
-                            <p className="mt-4 max-w-sm text-[15px] font-medium leading-relaxed text-[#0E4C4B]/90">
+                        <div className="text-[#1E4D4A]">
+                            <p className="font-display text-6xl font-semibold leading-none sm:text-7xl">{t('stat.number')}</p>
+                            <p className="mt-4 max-w-sm text-[15px] font-medium leading-relaxed text-[#1E4D4A]/90">
                                 {t('stat.description')}
                             </p>
                         </div>
@@ -385,9 +385,9 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  TESTIMONIALS                                         */}
                 {/* ===================================================== */}
-                <section className="bg-[#F7F3EC]">
+                <section className="bg-[#FAFAF6]">
                     <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
-                        <h2 className="text-center font-serif text-3xl text-[#16302F] sm:text-4xl">
+                        <h2 className="text-center font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
                             {t('testimonials.title')}
                         </h2>
 
@@ -405,18 +405,18 @@ export default function JoinTheCircle({ content }: PageProps) {
                                 {TESTIMONIALS.map((item, i) => (
                                     <figure
                                         key={i}
-                                        className={`flex flex-col rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm ${i === 2 ? 'sm:col-span-2' : ''
+                                        className={`flex flex-col rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm ${i === 2 ? 'sm:col-span-2' : ''
                                             }`}
                                     >
-                                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#E8B84B]" fill="currentColor" aria-hidden>
+                                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#1E4D4A]" fill="currentColor" aria-hidden>
                                             <path d="M9.5 6C6.5 6 4 8.6 4 12v6h6v-6H7c0-1.7 1.1-3 2.5-3V6Zm10 0c-3 0-5.5 2.6-5.5 6v6h6v-6h-3c0-1.7 1.1-3 2.5-3V6Z" />
                                         </svg>
-                                        <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-[#3A4B49]">
+                                        <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-[#2C2C2C]">
                                             “{item.quote}”
                                         </blockquote>
-                                        <figcaption className="mt-5 border-t border-[#EFEAE0] pt-4">
-                                            <p className="font-serif text-[#16302F]">{item.name}</p>
-                                            <p className="text-sm text-[#6B7A78]">{item.role}</p>
+                                        <figcaption className="mt-5 border-t border-[#E8D9B8] pt-4">
+                                            <p className="text-[16px] font-semibold text-[#2C2C2C]">{item.name}</p>
+                                            <p className="text-sm text-[#2C2C2C]">{item.role}</p>
                                         </figcaption>
                                     </figure>
                                 ))}
@@ -430,14 +430,14 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 <section className="bg-white">
                     <div className="mx-auto max-w-5xl px-5 py-16 lg:py-24">
-                        <h2 className="text-center font-serif text-3xl text-[#16302F] sm:text-4xl">
+                        <h2 className="text-center font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
                             {t('faq.title')}
                         </h2>
                         <div className="mt-12 grid gap-x-12 gap-y-9 sm:grid-cols-2">
                             {FAQS.map((f, i) => (
                                 <div key={i}>
-                                    <h3 className="font-serif text-lg text-[#16302F]">{f.q}</h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-[#5B6B6E]">{f.a}</p>
+                                    <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{f.q}</h3>
+                                    <p className="mt-2 text-sm leading-relaxed text-[#2C2C2C]">{f.a}</p>
                                 </div>
                             ))}
                         </div>
@@ -447,7 +447,7 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  PHOTO MOSAIC + EMBEDDED CTA                          */}
                 {/* ===================================================== */}
-                <section className="bg-[#F7F3EC]">
+                <section className="bg-[#FAFAF6]">
                     <div className="mx-auto max-w-6xl px-5 pb-16 lg:pb-24">
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                             {/* first 6 tiles */}
@@ -462,13 +462,13 @@ export default function JoinTheCircle({ content }: PageProps) {
                             ))}
 
                             {/* CTA tile spanning two columns */}
-                            <div className="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-[#0E4C4B] p-6 text-center">
-                                <p className="font-serif text-2xl text-white sm:text-3xl">{t('mosaic.cta_title')}</p>
-                                <p className="mt-2 text-sm text-[#A9C9C7]">{t('mosaic.cta_subtitle')}</p>
+                            <div className="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-[#1E4D4A] p-6 text-center">
+                                <p className="font-display text-2xl font-semibold leading-[1.15] text-white sm:text-3xl">{t('mosaic.cta_title')}</p>
+                                <p className="mt-2 text-[15px] text-[#FFFFFF]/85">{t('mosaic.cta_subtitle')}</p>
                                 <a
                                     href={SIGNUP_ROUTE}
                                     target='_blank'
-                                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#E8B84B] px-6 py-3 text-sm font-semibold text-[#0E4C4B] transition hover:bg-[#dca936]"
+                                    className="mt-4 inline-flex min-h-[48px] items-center gap-2 rounded-[10px] border border-white bg-[#FAFAF6] px-6 text-[15px] font-semibold text-[#1E4D4A] transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E4D4A]"
                                 >
                                     {t('mosaic.cta_button')} →
                                 </a>
@@ -491,10 +491,10 @@ export default function JoinTheCircle({ content }: PageProps) {
                 {/* ===================================================== */}
                 {/*  FOOTER                                               */}
                 {/* ===================================================== */}
-                {/* <footer className="bg-[#0a3a39] text-[#A9C9C7]">
+                {/* <footer className="bg-[#1E4D4A] text-[#FFFFFF]/85">
                     <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
                         <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8B84B] font-serif text-sm font-bold text-[#0E4C4B]">B</span>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8D9B8] font-display text-sm font-semibold text-[#1E4D4A]">B</span>
                             <span className="text-sm text-white/90">Bahali — rooted in culture, centered on emotional wellness.</span>
                         </div>
                         <div className="flex items-center gap-5 text-sm">
@@ -503,7 +503,7 @@ export default function JoinTheCircle({ content }: PageProps) {
                             <a href="https://bahali.org/legal/" className="transition hover:text-white">Privacy</a>
                         </div>
                     </div>
-                    <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
+                    <div className="border-t border-white/10 py-4 text-center text-sm text-white/50">
                         © {new Date().getFullYear()} Bahali. All rights reserved.
                     </div>
                 </footer> */}

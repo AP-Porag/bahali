@@ -125,7 +125,7 @@ export function InfoTip({ label, children }: InfoTipProps) {
                 onFocus={() => setOpen(true)}
                 onBlur={() => setOpen(false)}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
-                className="-m-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-current opacity-70 transition hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                className="-m-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-current opacity-70 transition hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40"
             >
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <circle cx="12" cy="12" r="9" />
@@ -136,7 +136,7 @@ export function InfoTip({ label, children }: InfoTipProps) {
                 id={tipId}
                 role="tooltip"
                 style={{ left: pos.left, width: pos.width }}
-                className={`absolute top-full z-40 mt-2 rounded-xl border border-[#E7E0D2] bg-white p-3 text-left text-xs font-normal normal-case leading-relaxed tracking-normal text-[#3A4B49] shadow-lg ${open ? 'block' : 'hidden'}`}
+                className={`absolute top-full z-40 mt-2 rounded-xl border border-[#E8D9B8] bg-white p-3 text-left text-sm font-normal normal-case leading-relaxed tracking-normal text-[#2C2C2C] shadow-lg ${open ? 'block' : 'hidden'}`}
             >
                 {children}
             </span>
@@ -155,7 +155,7 @@ interface ReviewProps {
 
 export function ProfileReviewedBadge({ providerType, licenceVerified }: ReviewProps) {
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#DED7C9] bg-[#FBF8F2] px-3 py-1 text-xs font-medium text-[#6B7A78]">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E4D4A]/65 bg-[#FAFAF6] px-3 py-1 text-sm font-medium text-[#2C2C2C]">
             <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
                 <circle cx="10" cy="10" r="2.25" />
@@ -171,7 +171,7 @@ export function ProfileReviewedBadge({ providerType, licenceVerified }: ReviewPr
 export function CredentialsVerifiedBadge() {
     const maskId = `award-cut-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0E7C7B]/25 bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#0E6B6A]">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E4D4A]/25 bg-[#1E4D4A]/10 px-3 py-1 text-sm font-semibold tracking-wide text-[#1E4D4A]">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0" fill="currentColor" aria-hidden="true">
                 <defs>
                     <mask id={maskId}>
@@ -199,7 +199,7 @@ export function CredentialsVerifiedBadge() {
 export function CaribbeanExperienceBadge() {
     return (
         <span
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#D9C89E] bg-[#F5EDDC] px-3 py-1 text-xs font-medium text-[#8A5A2B]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#E8D9B8] bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]"
             style={{ letterSpacing: '0.01em' }}
         >
             {CARIBBEAN_BADGE_LABEL}

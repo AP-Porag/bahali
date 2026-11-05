@@ -7,7 +7,7 @@ import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from
 import { HelpCircle, Verified } from 'lucide-react';
 import { ProviderBadgeRow, displayName, initials, feeWithCurrency, reducedCostLabel } from '@/components/provider/ProviderBadges';
 
-const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
+const SERIF = { fontFamily: '"Cormorant Garamond", Georgia, serif' };
 const PER_PAGE = 6;
 const STORAGE_KEY = 'bahali_directory_state_v1';
 const RETURN_KEY = 'bahali_directory_return'; // set by the profile page (web/provider/show) — "Back to results"
@@ -24,7 +24,7 @@ const CardIco = {
 };
 
 /* Icon render helper — inline SVG */
-function CardIcon({ d, className = 'h-4 w-4 text-[#0E7C7B]' }) {
+function CardIcon({ d, className = 'h-4 w-4 text-[#1E4D4A]' }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -136,7 +136,7 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
 
     return (
         <div>
-            <label htmlFor={id} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">
+            <label htmlFor={id} className="mb-1.5 block text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">
                 {label}
             </label>
             <Select
@@ -145,7 +145,7 @@ function LabeledSelect({ id, label, value, onChange, options = [], placeholder =
             >
                 <SelectTrigger
                     id={id}
-                    className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20 ${value ? 'border-[#0E7C7B]/40' : 'border-[#DED7C9]'}`}
+                    className={`h-12 w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[15px] text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20 ${value ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'}`}
                 >
                     <SelectValue />
                 </SelectTrigger>
@@ -174,18 +174,18 @@ function MultiSelect({ id, label, values = [], onChange, options = [], placehold
     const summary = values.length === 0 ? placeholder : values.length === 1 ? values[0] : `${values.length} selected`;
     return (
         <div ref={ref} className="relative">
-            <label htmlFor={id} className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">{label}</label>
+            <label htmlFor={id} className="mb-1.5 block text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">{label}</label>
             <button id={id} type="button" onClick={() => setOpen((o) => !o)} aria-haspopup="listbox" aria-expanded={open}
-                className={`flex w-full items-center justify-between rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20 ${values.length ? 'border-[#0E7C7B]/40 text-[#1F2A2E]' : 'border-[#DED7C9] text-[#5B6B6E]'}`}>
+                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left text-[15px] outline-none transition focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20 ${values.length ? 'border-[#1E4D4A] text-[#2C2C2C]' : 'border-[#1E4D4A]/65 text-[#2C2C2C]'}`}>
                 <span className="truncate">{summary}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
             </button>
             {open && (
-                <div role="listbox" aria-multiselectable="true" className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-[#DED7C9] bg-white p-1 shadow-lg">
-                    {options.length === 0 && <p className="px-3 py-2 text-sm text-[#8A9795]">No options</p>}
+                <div role="listbox" aria-multiselectable="true" className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-[#1E4D4A]/65 bg-white p-1 shadow-lg">
+                    {options.length === 0 && <p className="px-3 py-2 text-sm text-[#2C2C2C]/70">No options</p>}
                     {options.map((opt) => (
-                        <label key={opt} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-[#3A4B49] hover:bg-[#0E7C7B]/5">
-                            <input type="checkbox" checked={values.includes(opt)} onChange={() => toggle(opt)} className="h-4 w-4 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]" />
+                        <label key={opt} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-[#2C2C2C] hover:bg-[#1E4D4A]/5">
+                            <input type="checkbox" checked={values.includes(opt)} onChange={() => toggle(opt)} className="h-4 w-4 rounded border-[#9CAEA9] text-[#1E4D4A] focus:ring-[#1E4D4A]" />
                             {opt}
                         </label>
                     ))}
@@ -200,8 +200,8 @@ function MultiSelect({ id, label, values = [], onChange, options = [], placehold
 function AreaButton({ area, active, onToggle }) {
     return (
         <button type="button" onClick={() => onToggle(area)} aria-pressed={active}
-            className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 ${active ? 'border-[#0E7C7B] bg-[#E6F2F1] font-medium text-[#15403F] ring-1 ring-inset ring-[#0E7C7B]' : 'border-[#D4CBB8] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5'}`}>
-            <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#B9AF9B] bg-white'}`} aria-hidden>
+            className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 ${active ? 'border-[#1E4D4A] bg-[#9CAEA9]/15 font-medium text-[#1E4D4A] ring-1 ring-inset ring-[#1E4D4A]' : 'border-[#E8D9B8] bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}>
+            <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
                 {active && <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>}
             </span>
             <span className="flex-1 leading-snug">{area}</span>
@@ -224,27 +224,27 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
     const countFor = (cat) => AREAS_OF_SUPPORT_GROUPS.find((g) => g.category === cat)?.items.filter((i) => selected.includes(i)).length ?? 0;
 
     return (
-        <div id="all-areas-panel" className="mt-4 overflow-hidden rounded-xl border border-[#DED7C9] bg-white" aria-label="All areas of support">
-            <div className="border-b border-[#EFEAE0] p-4">
+        <div id="all-areas-panel" className="mt-4 overflow-hidden rounded-xl border border-[#1E4D4A]/65 bg-white" aria-label="All areas of support">
+            <div className="border-b border-[#E8D9B8] p-4">
                 <div className="flex items-center justify-between gap-3">
-                    <p className="text-[15px] text-[#16302F]" style={SERIF}>All areas of support</p>
-                    <span aria-live="polite" className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition ${selected.length > 0 ? 'bg-[#0E7C7B] text-white' : 'bg-[#EFEAE0] text-[#6B7A78]'}`}>
+                    <p className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">All areas of support</p>
+                    <span aria-live="polite" className={`rounded-full px-2.5 py-0.5 text-sm font-semibold transition ${selected.length > 0 ? 'bg-[#1E4D4A] text-white' : 'bg-[#E8D9B8] text-[#2C2C2C]'}`}>
                         {selected.length} selected
                     </span>
                 </div>
                 <div className="relative mt-3">
-                    <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9AA6A4]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#2C2C2C]/70" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search areas of support"
-                        className="w-full rounded-xl border border-[#DED7C9] bg-[#FBF8F2] py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                        className="w-full rounded-xl border border-[#1E4D4A]/65 bg-[#FAFAF6] py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20" />
                 </div>
 
                 {selected.length > 0 && (
                     <div className="mt-3">
-                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Your selections</p>
+                        <p className="mb-1.5 text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">Your selections</p>
                         <div className="flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
                             {selected.map((a) => (
                                 <button key={a} type="button" onClick={() => onToggle(a)} aria-label={`Remove ${a}`}
-                                    className="inline-flex items-center gap-1 rounded-full bg-[#0E7C7B] px-2.5 py-1 text-xs font-medium text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
+                                    className="inline-flex items-center gap-1 rounded-full bg-[#1E4D4A] px-2.5 py-1 text-sm font-medium text-white transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40">
                                     {a}
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
                                 </button>
@@ -258,21 +258,21 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
                 {searching ? (
                     <div className="p-4">
                         {searchResults.length === 0
-                            ? <p className="text-sm text-[#8A9795]">No areas match “{q}”.</p>
+                            ? <p className="text-sm text-[#2C2C2C]/70">No areas match “{q}”.</p>
                             : <div className="grid gap-2 xl:grid-cols-2">{searchResults.map((a) => <AreaButton key={a} area={a} active={selected.includes(a)} onToggle={onToggle} />)}</div>}
                     </div>
                 ) : (
                     <>
                         <div className="hidden lg:flex">
-                            <ul className="w-56 flex-shrink-0 border-r border-[#EFEAE0] p-2">
+                            <ul className="w-56 flex-shrink-0 border-r border-[#E8D9B8] p-2">
                                 {AREAS_OF_SUPPORT_GROUPS.map((g) => {
                                     const c = countFor(g.category);
                                     return (
                                         <li key={g.category}>
                                             <button type="button" onClick={() => setActiveCat(g.category)}
-                                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${activeCat === g.category ? 'bg-[#0E7C7B]/10 font-medium text-[#15403F]' : 'text-[#3A4B49] hover:bg-[#F1EDE3]'}`}>
+                                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${activeCat === g.category ? 'bg-[#1E4D4A]/10 font-medium text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#FAFAF6]'}`}>
                                                 <span className="leading-snug">{g.category}</span>
-                                                {c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}
+                                                {c > 0 && <span className="rounded-full bg-[#1E4D4A] px-1.5 py-0.5 text-[13px] font-semibold text-white">{c}</span>}
                                             </button>
                                         </li>
                                     );
@@ -285,10 +285,10 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
                                 const isOpen = openMobileCat === g.category;
                                 const c = countFor(g.category);
                                 return (
-                                    <div key={g.category} className="border-b border-[#EFEAE0] last:border-0">
+                                    <div key={g.category} className="border-b border-[#E8D9B8] last:border-0">
                                         <button type="button" onClick={() => setOpenMobileCat(isOpen ? '' : g.category)} aria-expanded={isOpen} className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left">
-                                            <span className="flex items-center gap-2 text-sm font-medium text-[#16302F]">{g.category}{c > 0 && <span className="rounded-full bg-[#0E7C7B] px-1.5 py-0.5 text-[10px] font-semibold text-white">{c}</span>}</span>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
+                                            <span className="flex items-center gap-2 text-sm font-medium text-[#2C2C2C]">{g.category}{c > 0 && <span className="rounded-full bg-[#1E4D4A] px-1.5 py-0.5 text-[13px] font-semibold text-white">{c}</span>}</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
                                         </button>
                                         {isOpen && <div className="grid gap-2 px-4 pb-4">{g.items.map((a) => <AreaButton key={a} area={a} active={selected.includes(a)} onToggle={onToggle} />)}</div>}
                                     </div>
@@ -299,12 +299,12 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
                 )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-[#EFEAE0] p-4">
-                <div className="flex items-center gap-3 text-sm text-[#5B6B6E]">
-                    <span aria-live="polite"><span className="font-semibold text-[#16302F]">{selected.length}</span> selected</span>
-                    {selected.length > 0 && <button type="button" onClick={onClear} className="text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear all</button>}
+            <div className="flex items-center justify-between gap-3 border-t border-[#E8D9B8] p-4">
+                <div className="flex items-center gap-3 text-sm text-[#2C2C2C]">
+                    <span aria-live="polite"><span className="font-semibold text-[#2C2C2C]">{selected.length}</span> selected</span>
+                    {selected.length > 0 && <button type="button" onClick={onClear} className="text-[#1E4D4A] underline underline-offset-2 hover:opacity-80">Clear all</button>}
                 </div>
-                <button type="button" onClick={onClose} className="rounded-xl bg-[#0E7C7B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0B6463]">Done</button>
+                <button type="button" onClick={onClose} className="bg-[#1E4D4A] px-5 text-white hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">Done</button>
             </div>
         </div>
     );
@@ -315,7 +315,7 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
 function AvailabilityBadge({ availability }) {
     if (availability === 'accepting') {
         return (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0E7C7B]/10 px-3 py-1 text-xs font-semibold text-[#0E6B6A] ring-1 ring-inset ring-[#0E7C7B]/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1E4D4A]/10 px-3 py-1 text-sm font-semibold text-[#1E4D4A] ring-1 ring-inset ring-[#1E4D4A]/20">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Accepting new clients
             </span>
@@ -323,8 +323,8 @@ function AvailabilityBadge({ availability }) {
     }
     if (availability === 'not_accepting') {
         return (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EFEAE0] px-3 py-1 text-xs font-semibold text-[#6B7A78] ring-1 ring-inset ring-[#D9CFBA]">
-                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#D9CFBA]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8D9B8] px-3 py-1 text-sm font-semibold text-[#2C2C2C] ring-1 ring-inset ring-[#E8D9B8]">
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#E8D9B8]">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="M6 12h12" strokeLinecap="round" /></svg>
                 </span>
                 Not accepting new clients
@@ -332,8 +332,8 @@ function AvailabilityBadge({ availability }) {
         );
     }
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8B84B]/15 px-3 py-1 text-xs font-semibold text-[#9A6B12] ring-1 ring-inset ring-[#E8B84B]/40">
-            <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#E8B84B]/40">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8D9B8]/15 px-3 py-1 text-sm font-semibold text-[#2C2C2C] ring-1 ring-inset ring-[#E8D9B8]/40">
+            <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#E8D9B8]/40">
                 <HelpCircle className="h-3 w-3" strokeWidth={2.4} aria-hidden />
             </span>
             Availability unknown
@@ -344,16 +344,16 @@ function AvailabilityBadge({ availability }) {
 /* ------------------------------ Provider card ------------------------------ */
 
 // function ProviderRow({ icon, children, className = '' }) {
-//     return <p className="flex items-center gap-2 text-sm text-[#3A4B49]">{children}</p>;
+//     return <p className="flex items-center gap-2 text-sm text-[#2C2C2C]">{children}</p>;
 // }
 
 /* "+N more" — hover (or tap/focus on mobile) shows the hidden items */
 function MoreTip({ items = [], align = 'left' }) {
     if (!items.length) return null;
     return (
-        <span tabIndex={0} className="group/more relative inline-block cursor-help whitespace-nowrap text-[#8A9795] underline decoration-dotted underline-offset-2 outline-none focus-visible:text-[#0E7C7B]">
+        <span tabIndex={0} className="group/more relative inline-block cursor-help whitespace-nowrap text-[#2C2C2C]/70 underline decoration-dotted underline-offset-2 outline-none focus-visible:text-[#1E4D4A]">
             +{items.length} more
-            <span role="tooltip" className={`pointer-events-none invisible absolute bottom-full z-20 mb-1.5 w-max max-w-[240px] whitespace-normal rounded-lg bg-[#16302F] px-3 py-2 text-xs font-normal leading-snug text-white opacity-0 shadow-lg transition group-hover/more:visible group-hover/more:opacity-100 group-focus/more:visible group-focus/more:opacity-100 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+            <span role="tooltip" className={`pointer-events-none invisible absolute bottom-full z-20 mb-1.5 w-max max-w-[240px] whitespace-normal rounded-lg bg-[#1E4D4A] px-3 py-2 text-sm font-normal leading-snug text-white opacity-0 shadow-lg transition group-hover/more:visible group-hover/more:opacity-100 group-focus/more:visible group-focus/more:opacity-100 ${align === 'right' ? 'right-0' : 'left-0'}`}>
                 {items.join(', ')}
             </span>
         </span>
@@ -362,9 +362,9 @@ function MoreTip({ items = [], align = 'left' }) {
 
 function ProviderRow({ icon, children, className = '' }) {
     return (
-        <p className={`flex items-start gap-2 text-sm text-[#3A4B49] ${className}`}>
+        <p className={`flex items-start gap-2 text-sm text-[#2C2C2C] ${className}`}>
             {icon && (
-                <span className="mt-0.5 flex-shrink-0 text-[#0E7C7B]">
+                <span className="mt-0.5 flex-shrink-0 text-[#1E4D4A]">
                     <CardIcon d={icon} />
                 </span>
             )}
@@ -396,11 +396,11 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
     const extraPopulations = Math.max(0, populations.length - shownPopulations.length);
 
     return (
-        <article className="flex flex-col gap-5 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition hover:border-[#DCD0BA] hover:shadow-[0_10px_30px_-12px_rgba(14,124,123,0.2)] sm:flex-row">
+        <article className="flex flex-col gap-5 rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition hover:border-[#E8D9B8] hover:shadow-[0_10px_30px_-12px_rgba(30,77,74,0.2)] sm:flex-row">
             {showPhoto ? (
                 <img src={p.photo} alt={name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-xl object-cover ring-1 ring-black/5 sm:h-40 sm:w-36" />
             ) : (
-                <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] font-serif text-3xl text-white/90 ring-1 ring-black/5 sm:h-40 sm:w-36" style={SERIF}>{initials(p.name)}</div>
+                <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1E4D4A] to-[#1E4D4A] font-display text-3xl font-semibold text-white/90 ring-1 ring-black/5 sm:h-40 sm:w-36" style={SERIF}>{initials(p.name)}</div>
             )}
 
             <div className="min-w-0 flex-1">
@@ -411,38 +411,38 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                     licenceVerified={p.licenceVerified}
                     caribbeanExperience={p.caribbeanExperience}
                 />
-                <h3 className="break-words text-[20px] leading-tight text-[#16302F]" style={SERIF}>
+                <h3 className="break-words text-[24px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[26px]" style={SERIF}>
                     {name}
                 </h3>
 
-                {credentialLine && <p className="mt-1 text-sm text-[#5B6B6E]">{credentialLine}</p>}
+                {credentialLine && <p className="mt-1 text-sm text-[#2C2C2C]">{credentialLine}</p>}
                 {(p.location || formatLabel) && (
-                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-[#3A4B49]">
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-[#2C2C2C]">
                         {p.location && (
                             <span className="inline-flex items-center gap-1">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" /><circle cx="12" cy="11" r="2" /></svg>
                                 {p.location}
                             </span>
                         )}
-                        {p.location && formatLabel && <span className="text-[#C9CFCE]">•</span>}
+                        {p.location && formatLabel && <span className="text-[#2C2C2C]/70">•</span>}
                         {formatLabel && <span>{formatLabel}</span>}
                     </p>
                 )}
                 {shownPopulations.length > 0 && (
-                    <p className="mt-1.5 text-sm text-[#3A4B49]">
-                        <span className="font-semibold text-[#16302F]">Who I support:</span>{' '}
+                    <p className="mt-1.5 text-sm text-[#2C2C2C]">
+                        <span className="font-semibold text-[#2C2C2C]">Who I support:</span>{' '}
                         {shownPopulations.join(', ')}
                         {extraPopulations > 0 && <>{' '}<MoreTip items={populations.slice(3)} /></>}
                     </p>
                 )}
                 {specialties.length > 0 && (
                     <>
-                        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[#8A9795]">Areas of support</p>
+                        <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/70">Areas of support</p>
                         <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {specialties.map((s) => {
                                 const matched = selectedAreas.includes(s);
                                 return (
-                                    <span key={s} className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${matched ? 'bg-[#0E7C7B] text-white' : 'bg-[#EFEAE0] text-[#5B6B6E]'}`}>{s}</span>
+                                    <span key={s} className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${matched ? 'bg-[#1E4D4A] text-white' : 'bg-[#E8D9B8] text-[#2C2C2C]'}`}>{s}</span>
                                 );
                             })}
                         </div>
@@ -450,22 +450,22 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                 )}
             </div>
 
-            <div className="flex w-full flex-shrink-0 flex-col gap-2.5 border-t border-[#EFEAE0] pt-4 sm:w-52 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
+            <div className="flex w-full flex-shrink-0 flex-col gap-2.5 border-t border-[#E8D9B8] pt-4 sm:w-52 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                 <AvailabilityBadge availability={p.availability} />
 
                 {/* Fee — wallet icon, না থাকলে mail icon */}
                 <ProviderRow icon={p.fee ? CardIco.wallet : CardIco.info}>
                     {p.fee ? (
-                        <span className="font-semibold text-[#16302F]">{feeWithCurrency(p.fee, p.currency || 'USD')}</span>
+                        <span className="font-semibold text-[#2C2C2C]">{feeWithCurrency(p.fee, p.currency || 'USD')}</span>
                     ) : (
-                        <span className="text-[#516865]">Contact provider for fee information</span>
+                        <span className="text-[#2C2C2C]">Contact provider for fee information</span>
                     )}
                 </ProviderRow>
 
                 {/* Insurance — shield icon, explicitly labelled */}
                 {shownInsurers.length > 0 && (
                     <ProviderRow icon={CardIco.shield}>
-                        <span className="font-medium text-[#16302F]">Insurance:</span>{' '}
+                        <span className="font-medium text-[#2C2C2C]">Insurance:</span>{' '}
                         {shownInsurers.join(', ')}
                         {extraInsurers > 0 && <>{' '}<MoreTip items={insurers.slice(2)} align="right" /></>}
                     </ProviderRow>
@@ -474,14 +474,14 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                 {/* Sliding scale — heart icon, says which services it applies to */}
                 {p.slidingScale && (
                     <ProviderRow icon={CardIco.heart}>
-                        <span className="text-[#0E6B6A]">{reducedCostLabel('sliding', p.reducedCostScope)}</span>
+                        <span className="text-[#1E4D4A]">{reducedCostLabel('sliding', p.reducedCostScope)}</span>
                     </ProviderRow>
                 )}
 
                 {/* Free / low-cost — heart icon, says which services it applies to */}
                 {p.freeLowCost && !p.slidingScale && (
                     <ProviderRow icon={CardIco.heart}>
-                        <span className="text-[#0E6B6A]">{reducedCostLabel('free', p.reducedCostScope)}</span>
+                        <span className="text-[#1E4D4A]">{reducedCostLabel('free', p.reducedCostScope)}</span>
                     </ProviderRow>
                 )}
 
@@ -495,7 +495,7 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                 {/* Languages — chat icon */}
                 {languages.length > 0 && (
                     <ProviderRow icon={CardIco.chat}>
-                        <span className="text-[#5B6B6E]">
+                        <span className="text-[#2C2C2C]">
                             {languages.slice(0, 2).join(', ')}
                             {languages.length > 2 && <>{' '}<MoreTip items={languages.slice(2)} align="right" /></>}
                         </span>
@@ -505,7 +505,7 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                 <Link
                     href={`/provider/${p.id}${currentQuery ? `?${currentQuery}` : ''}`}
                     onClick={() => onOpen?.(p.id)}
-                    className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                    className="mt-1 inline-flex items-center justify-center gap-1.5 bg-[#1E4D4A] px-4 text-white transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] text-[15px] font-semibold"
                     aria-label={`View profile for ${p.name}`}
                 >
                     View profile
@@ -520,12 +520,12 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
 
 function CardSkeleton() {
     return (
-        <div className="flex flex-col gap-5 rounded-2xl border border-[#E7E0D2] bg-white p-5 sm:flex-row">
-            <div className="h-40 w-full flex-shrink-0 animate-pulse rounded-xl bg-[#EFEAE0] sm:w-36" />
+        <div className="flex flex-col gap-5 rounded-2xl border border-[#E8D9B8] bg-white p-5 sm:flex-row">
+            <div className="h-40 w-full flex-shrink-0 animate-pulse rounded-xl bg-[#E8D9B8] sm:w-36" />
             <div className="flex-1 space-y-2">
-                <div className="h-5 w-2/3 animate-pulse rounded bg-[#EFEAE0]" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-[#F2EDE2]" />
-                <div className="mt-3 flex gap-2"><div className="h-6 w-24 animate-pulse rounded-full bg-[#F2EDE2]" /><div className="h-6 w-20 animate-pulse rounded-full bg-[#F2EDE2]" /></div>
+                <div className="h-5 w-2/3 animate-pulse rounded bg-[#E8D9B8]" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-[#FAFAF6]" />
+                <div className="mt-3 flex gap-2"><div className="h-6 w-24 animate-pulse rounded-full bg-[#FAFAF6]" /><div className="h-6 w-20 animate-pulse rounded-full bg-[#FAFAF6]" /></div>
             </div>
         </div>
     );
@@ -535,8 +535,8 @@ function CardSkeleton() {
 
 function RefineGroup({ title, children }) {
     return (
-        <div className="border-b border-[#EFEAE0] pb-4 last:border-0 last:pb-0">
-            <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">{title}</p>
+        <div className="border-b border-[#E8D9B8] pb-4 last:border-0 last:pb-0">
+            <p className="mb-2.5 text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/70">{title}</p>
             <div className="space-y-3">{children}</div>
         </div>
     );
@@ -544,8 +544,8 @@ function RefineGroup({ title, children }) {
 
 function RefineCheck({ checked, onChange, children }) {
     return (
-        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#3A4B49]">
-            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]" />
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#2C2C2C]">
+            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 rounded border-[#9CAEA9] text-[#1E4D4A] focus:ring-[#1E4D4A]" />
             {children}
         </label>
     );
@@ -576,37 +576,37 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
 
             <RefineGroup title="Practical considerations">
                 <div>
-                    <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Price range (per session)</span>
+                    <span className="mb-1.5 block text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">Price range (per session)</span>
                     <div className="flex items-center gap-2">
                         <div className="relative flex-1">
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">$</span>
                             <input inputMode="numeric" value={priceMin} onChange={(e) => setPriceMin(onlyNum(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && applyPrice()} placeholder="Min"
-                                className="w-full rounded-xl border border-[#DED7C9] bg-white py-2.5 pl-6 pr-2 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                                className="w-full rounded-xl border border-[#1E4D4A]/65 bg-white py-2.5 pl-6 pr-2 text-sm text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20" />
                         </div>
-                        <span className="text-[#9AA6A4]">–</span>
+                        <span className="text-[#2C2C2C]/70">–</span>
                         <div className="relative flex-1">
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">$</span>
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">$</span>
                             <input inputMode="numeric" value={priceMax} onChange={(e) => setPriceMax(onlyNum(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && applyPrice()} placeholder="Max"
-                                className="w-full rounded-xl border border-[#DED7C9] bg-white py-2.5 pl-6 pr-2 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                                className="w-full rounded-xl border border-[#1E4D4A]/65 bg-white py-2.5 pl-6 pr-2 text-sm text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20" />
                         </div>
                     </div>
                     <div className="mt-2 flex items-center gap-3">
-                        <button type="button" onClick={applyPrice} className="rounded-lg bg-[#0E7C7B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0B6463]">Apply</button>
-                        {(f.fee_min || f.fee_max) && <button type="button" onClick={clearPrice} className="text-xs font-medium text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear</button>}
+                        <button type="button" onClick={applyPrice} className="bg-[#1E4D4A] px-3 text-white hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">Apply</button>
+                        {(f.fee_min || f.fee_max) && <button type="button" onClick={clearPrice} className="text-sm font-medium text-[#1E4D4A] underline underline-offset-2 hover:opacity-80">Clear</button>}
                     </div>
                 </div>
 
                 <div>
-                    <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[#6B7A78]">Payment</span>
+                    <span className="mb-1.5 block text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">Payment</span>
                     <div role="radiogroup" aria-label="Payment" className="flex flex-wrap gap-2">
                         {PAYMENT_OPTIONS.map((opt) => {
                             const active = f.payment === opt.key;
                             return (
                                 <button key={opt.key} type="button" role="radio" aria-checked={active}
                                     onClick={() => patch({ payment: active ? '' : opt.key, insurer: active ? '' : f.insurer })}
-                                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? 'border-[#C2543B] bg-[#F6E6DF] text-[#C2543B]' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#C2543B]/40'}`}>
+                                    className={`min-h-[44px] rounded-[10px] border px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:text-[#1E4D4A]'}`}>
                                     {opt.label}
                                 </button>
                             );
@@ -643,9 +643,9 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
             <RefineGroup title="Keyword">
                 <div className="flex items-center gap-2">
                     <input value={kw} onChange={(e) => setKw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitKeyword()} placeholder="Name, specialty…"
-                        className="w-full rounded-xl border border-[#DED7C9] bg-white px-3.5 py-2.5 text-sm text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-2 focus:ring-[#0E7C7B]/20" />
+                        className="w-full rounded-xl border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-sm text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-2 focus:ring-[#1E4D4A]/20" />
                     <button type="button" onClick={submitKeyword} aria-label="Search"
-                        className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center rounded-xl bg-[#0E7C7B] text-white transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40">
+                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#1E4D4A] text-white transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
                     </button>
                 </div>
@@ -949,12 +949,12 @@ export default function Directory({
     }, [f]);
 
     return (
-        <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
+        <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
             <Head title={txt('seo.title')} />
             <Header />
 
             {/* ===== HERO SECTION ===== */}
-            <section className="relative bg-[#F7F3EC]">
+            <section className="relative bg-[#FAFAF6]">
                 {/* Hero image – absolute at top-right corner, only left + bottom edges fade */}
                 <div className="pointer-events-none absolute right-0 top-0 hidden h-[300px] w-[400px] lg:block lg:h-[340px] lg:w-[460px] xl:h-[380px] xl:w-[520px]">
                     <img
@@ -968,27 +968,27 @@ export default function Directory({
                 {/* Content – sits above image */}
                 <div className="relative z-10 mx-auto max-w-6xl px-5 py-12 lg:py-14">
                     <div className="mb-6 max-w-xl">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B]">{txt('hero.eyebrow')}</p>
-                        <h1 className="mt-2 text-3xl leading-tight text-[#16302F] md:text-4xl" style={SERIF}>{txt('hero.title')}</h1>
-                        <p className="mt-2 max-w-md text-[15px] text-[#5B6B6E]">{txt('hero.description')}</p>
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1E4D4A]">{txt('hero.eyebrow')}</p>
+                        <h1 className="mt-2 text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]" style={SERIF}>{txt('hero.title')}</h1>
+                        <p className="mt-2 max-w-md text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">{txt('hero.description')}</p>
                     </div>
 
                     {isCrisisQuery(f.keyword) && (
-                        <div role="alert" className="mb-6 rounded-2xl border border-[#E7B7A6] bg-[#FBF0EB] p-4 text-sm text-[#8A3F27]">
+                        <div role="alert" className="mb-6 rounded-2xl border border-[#E99E84] bg-[#E99E84]/15 p-4 text-sm text-[#A8472F]">
                             <p className="font-semibold">{txt('crisis.title')}</p>
-                            <p className="mt-1 text-[#9A5A44]">{txt('crisis.body')}</p>
+                            <p className="mt-1 text-[#A8472F]">{txt('crisis.body')}</p>
                         </div>
                     )}
 
                     {/* ============ FIND SUPPORT ============ */}
-                    <section aria-labelledby="find-support-heading" className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] sm:p-6 md:p-8">
-                        <h2 id="find-support-heading" className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C2543B]">{txt('search.label')}</h2>
+                    <section aria-labelledby="find-support-heading" className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] sm:p-6 md:p-8">
+                        <h2 id="find-support-heading" className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">{txt('search.label')}</h2>
 
                         {/* Mobile: one stacked column. Desktop: 40% location / 60% support. */}
                         <div className="mt-5 grid grid-cols-1 md:grid-cols-[2fr_3fr]">
                             {/* ---- Left column — Location ---- */}
                             <div className="pb-6 md:pb-0 md:pr-8">
-                                <h3 className="text-[15px] font-semibold text-[#16302F]">{txt('search.location_question')}</h3>
+                                <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{txt('search.location_question')}</h3>
                                 <div className="mt-3 grid gap-3">
                                     {/* Country / territory */}
                                     <LabeledSelect
@@ -1053,24 +1053,24 @@ export default function Directory({
                                         />
                                     )}
                                 </div>
-                                <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-[#3A4B49]">
-                                    <input type="checkbox" checked={f.include_virtual} onChange={(e) => patch({ include_virtual: e.target.checked })} className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-[#B9C2C0] text-[#0E7C7B] focus:ring-[#0E7C7B]" />
+                                <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-[#2C2C2C]">
+                                    <input type="checkbox" checked={f.include_virtual} onChange={(e) => patch({ include_virtual: e.target.checked })} className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-[#9CAEA9] text-[#1E4D4A] focus:ring-[#1E4D4A]" />
                                     {VIRTUAL_LABEL}
                                 </label>
                             </div>
 
                             {/* ---- Right column — Areas of support ---- */}
-                            <div className="border-t border-[#EFEAE0] pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
-                                <h3 className="text-[15px] font-semibold text-[#16302F]">{txt('search.areas_question')}</h3>
-                                <p className="mt-0.5 text-sm text-[#6B7A78]">{txt('search.areas_hint')}</p>
+                            <div className="border-t border-[#E8D9B8] pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                                <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{txt('search.areas_question')}</h3>
+                                <p className="mt-0.5 text-[15px] text-[#2C2C2C]">{txt('search.areas_hint')}</p>
                                 <div role="group" aria-label="Common areas of support" className="mt-3 flex flex-col gap-2 md:flex-row md:flex-wrap">
                                     {COMMON_SUPPORT_AREAS.map((chip) => {
                                         const active = chip.areas.every((a) => f.areas.includes(a));
                                         return (
                                             <button key={chip.label} type="button" aria-pressed={active} onClick={() => toggleAreas(chip.areas)}
-                                                className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-1 md:inline-flex md:w-auto md:gap-1.5 md:rounded-full md:border-[1.5px] md:py-2 md:text-sm ${active ? 'border-[#0E7C7B] bg-[#E6F2F1] text-[#15403F] ring-1 ring-inset ring-[#0E7C7B] md:bg-[#0E7C7B] md:text-white md:shadow-[0_4px_12px_-4px_rgba(14,124,123,0.55)] md:ring-0' : 'border-[#CFC5B1] bg-[#FBF8F2] text-[#2F3F3D] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#0E7C7B] hover:bg-white hover:text-[#0E6B6A]'}`}>
+                                                className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 md:inline-flex md:w-auto md:gap-1.5 md:rounded-full md:border-[1.5px] md:py-2 md:text-sm ${active ? 'border-[#1E4D4A] bg-[#9CAEA9]/15 text-[#1E4D4A] ring-1 ring-inset ring-[#1E4D4A] md:bg-[#1E4D4A] md:text-white md:shadow-[0_4px_12px_-4px_rgba(30,77,74,0.55)] md:ring-0' : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#1E4D4A] hover:bg-white hover:text-[#1E4D4A]'}`}>
                                                 {/* Mobile: checkbox-style indicator */}
-                                                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition md:hidden ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#B9AF9B] bg-white'}`} aria-hidden>
+                                                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition md:hidden ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
                                                     {active && <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>}
                                                 </span>
                                                 {/* Desktop: plus / checkmark */}
@@ -1078,7 +1078,7 @@ export default function Directory({
                                                     {active ? (
                                                         <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
                                                     ) : (
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-[#0E7C7B]"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="text-[#1E4D4A]"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
                                                     )}
                                                 </span>
                                                 {chip.label}
@@ -1087,11 +1087,11 @@ export default function Directory({
                                     })}
                                 </div>
                                 <button type="button" onClick={() => setShowAllAreas((s) => !s)} aria-expanded={showAllAreas} aria-controls="all-areas-panel"
-                                    className="group mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-[#C2543B]/50 bg-[#FBF0EB] px-4 py-3 text-sm font-semibold text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#F6E6DF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40 md:mt-4 md:inline-flex md:w-auto md:justify-start md:py-2.5">
+                                    className="group mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#1E4D4A] bg-white px-4 py-2 text-[15px] font-semibold text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 md:mt-4 md:inline-flex md:w-auto md:justify-start">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
                                     {showAllAreas ? 'Hide all areas of support' : 'See all areas of support'}
                                     {selectedAreasCount > 0 && (
-                                        <span className="rounded-full bg-[#C2543B] px-2 py-0.5 text-[11px] font-semibold text-white">{selectedAreasCount} selected</span>
+                                        <span className="whitespace-nowrap rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">{selectedAreasCount} selected</span>
                                     )}
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`transition-transform ${showAllAreas ? 'rotate-180' : ''}`} aria-hidden><path d="M12 5v14M6 13l6 6 6-6" /></svg>
                                 </button>
@@ -1108,8 +1108,8 @@ export default function Directory({
                         </div>
 
                         {/* Find providers — below both columns, aligned left */}
-                        <div className="mt-6 md:mt-8 md:border-t md:border-[#EFEAE0] md:pt-6">
-                            <button type="button" onClick={onFind} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 md:inline-flex md:w-auto md:py-3">
+                        <div className="mt-6 md:mt-8 md:border-t md:border-[#E8D9B8] md:pt-6">
+                            <button type="button" onClick={onFind} className="flex w-full items-center justify-center gap-2 bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 md:inline-flex md:w-auto min-h-[48px] rounded-[10px] text-[15px] font-semibold">
                                 {txt('search.button')}
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                             </button>
@@ -1119,10 +1119,10 @@ export default function Directory({
                     {/* ============ RESULTS + REFINE ============ */}
                     <div ref={resultsRef} className="mt-8 scroll-mt-24">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-lg text-[#16302F]" style={SERIF} aria-live="polite">
+                            <p className="text-[17px] text-[#2C2C2C] md:text-[18px]" aria-live="polite">
                                 {loading ? 'Searching…' : (<><span className="font-semibold">{total}</span> {'Provider' + (total === 1 ? '' : 's')}{hasAnySelection ? ' match your search' : ''}</>)}
                             </p>
-                            <button type="button" onClick={() => setShowRefine((s) => !s)} className="inline-flex items-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] hover:border-[#0E7C7B]/40" aria-expanded={showRefine} aria-controls="refine-panel">
+                            <button type="button" onClick={() => setShowRefine((s) => !s)} className="inline-flex items-center gap-2 border px-4 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2" aria-expanded={showRefine} aria-controls="refine-panel">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M4 6h16M7 12h10M10 18h4" /></svg>
                                 Refine your search
                             </button>
@@ -1131,22 +1131,22 @@ export default function Directory({
                         {hasAnySelection && (
                             <div className="mb-4 flex flex-wrap items-center gap-2">
                                 {activeChips.map((c) => (
-                                    <button key={c.key} onClick={c.clear} className="group inline-flex items-center gap-1.5 rounded-full border border-[#DFE9E6] bg-[#0E7C7B]/10 px-3 py-1 text-xs font-medium text-[#0E7C7B] transition hover:bg-[#0E7C7B]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40" aria-label={`Remove ${c.label}`}>
+                                    <button key={c.key} onClick={c.clear} className="group inline-flex items-center gap-1.5 rounded-full border border-[#9CAEA9] bg-[#1E4D4A]/10 px-3 py-1 text-sm font-medium text-[#1E4D4A] transition hover:bg-[#1E4D4A]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40" aria-label={`Remove ${c.label}`}>
                                         {c.label}
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
                                     </button>
                                 ))}
-                                <button onClick={clearAll} className="text-xs font-medium text-[#5B6B6E] underline underline-offset-2 hover:text-[#0E7C7B]">Clear all</button>
+                                <button onClick={clearAll} className="text-sm font-medium text-[#2C2C2C] underline underline-offset-2 hover:text-[#1E4D4A]">Clear all</button>
                             </div>
                         )}
 
                         <div className="flex flex-col gap-6 lg:flex-row">
                             {showRefine && (
                                 <aside id="refine-panel" className="w-full flex-shrink-0 lg:w-72">
-                                    <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 lg:sticky lg:top-24">
+                                    <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 lg:sticky lg:top-24">
                                         <div className="mb-4 flex items-center justify-between">
-                                            <h3 className="text-[15px] font-semibold text-[#16302F]">Refine your search</h3>
-                                            <button onClick={clearAll} className="text-xs font-medium text-[#C2543B] underline underline-offset-2 hover:opacity-80">Clear all</button>
+                                            <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">Refine your search</h3>
+                                            <button onClick={clearAll} className="text-sm font-medium text-[#1E4D4A] underline underline-offset-2 hover:opacity-80">Clear all</button>
                                         </div>
                                         <RefinePanel f={f} patch={patch} onKeyword={onKeyword} filterOptions={filterOptions} />
                                     </div>
@@ -1157,18 +1157,18 @@ export default function Directory({
                                 {loading ? (
                                     <div className="grid grid-cols-1 gap-5">{Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}</div>
                                 ) : items.length === 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-[#D9CFBA] bg-white/70 p-6 text-center sm:p-12">
-                                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#EFEAE0] text-[#9AA6A4]">
+                                    <div className="rounded-2xl border border-dashed border-[#E8D9B8] bg-white/70 p-6 text-center sm:p-12">
+                                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E8D9B8] text-[#2C2C2C]/70">
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                                                 <circle cx="11" cy="11" r="7" />
                                                 <path d="m21 21-4.3-4.3" />
                                             </svg>
                                         </div>
 
-                                        <h3 className="text-lg text-[#16302F]" style={SERIF}>
+                                        <h3 className="text-[26px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[30px]" style={SERIF}>
                                             {txt('empty.title')}
                                         </h3>
-                                        <p className="mx-auto mt-1 max-w-md text-sm text-[#5B6B6E]">
+                                        <p className="mx-auto mt-1 max-w-md text-sm text-[#2C2C2C]">
                                             {txt('empty.body')}
                                         </p>
 
@@ -1177,7 +1177,7 @@ export default function Directory({
                                             {hasCountryFilter && (hasCityFilter || hasRegionFilter) && (
                                                 <button
                                                     onClick={() => patch({ region: '', city: '' })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0E7C7B] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                    className="inline-flex items-center justify-center gap-2 bg-[#1E4D4A] px-4 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] text-[15px] font-semibold"
                                                 >
                                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                                                         <path d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
@@ -1191,7 +1191,7 @@ export default function Directory({
                                             {!hasVirtualSelected && (
                                                 <button
                                                     onClick={() => patch({ include_virtual: true })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                    className="inline-flex items-center justify-center gap-2 border px-4 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
                                                 >
                                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                                                         <rect x="3" y="4" width="18" height="12" rx="2" />
@@ -1205,7 +1205,7 @@ export default function Directory({
                                             {(f.fee_min || f.fee_max) && (
                                                 <button
                                                     onClick={() => patch({ fee_min: '', fee_max: '' })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                    className="inline-flex items-center justify-center gap-2 border px-4 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
                                                 >
                                                     Remove price range
                                                 </button>
@@ -1215,7 +1215,7 @@ export default function Directory({
                                             {f.payment && (
                                                 <button
                                                     onClick={() => patch({ payment: '', insurer: '' })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                    className="inline-flex items-center justify-center gap-2 border px-4 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
                                                 >
                                                     Remove payment preference
                                                 </button>
@@ -1225,7 +1225,7 @@ export default function Directory({
                                             {f.language.length > 0 && (
                                                 <button
                                                     onClick={() => patch({ language: [] })}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B]/40 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                                                    className="inline-flex items-center justify-center gap-2 border px-4 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
                                                 >
                                                     Remove language filter
                                                 </button>
@@ -1234,7 +1234,7 @@ export default function Directory({
                                             {/* ── Last resort: clear everything ── */}
                                             <button
                                                 onClick={clearAll}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#DED7C9] bg-white px-4 py-2.5 text-sm font-medium text-[#5B6B6E] transition hover:border-[#C2543B]/50 hover:bg-[#FBF0EB] hover:text-[#C2543B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40"
+                                                className="inline-flex items-center justify-center gap-2 border px-4 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C2543B]/40 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
                                             >
                                                 View all providers
                                             </button>
@@ -1256,10 +1256,10 @@ export default function Directory({
 
                                 {meta.hasMore && items.length > 0 && !loading && (
                                     <div className="mt-8 flex flex-col items-center gap-2">
-                                        <button onClick={loadMore} disabled={loadingMore} className="inline-flex items-center gap-2 rounded-xl bg-[#0E7C7B] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#0B6463] disabled:opacity-60">
+                                        <button onClick={loadMore} disabled={loadingMore} className="inline-flex items-center gap-2 bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                             {loadingMore ? (<><svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M21 12a9 9 0 1 1-6.2-8.5" /></svg>Loading…</>) : 'Load more providers'}
                                         </button>
-                                        <span className="text-xs text-[#6B7A78]">Showing {items.length} of {total}</span>
+                                        <span className="text-sm text-[#2C2C2C]">Showing {items.length} of {total}</span>
                                     </div>
                                 )}
                             </main>

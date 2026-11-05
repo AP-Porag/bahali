@@ -46,7 +46,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
     const navItems = ['About', 'Programs', 'Resources', 'Bahali Press', 'Contact', 'Get Involved'];
 
     return (
-        <header className="w-full border-b border-gray-200 bg-[#fafaf6]">
+        <header className="w-full border-b border-[#E8D9B8] bg-[#FAFAF6] font-body">
             <div className="mx-auto flex max-w-[1600px] justify-between px-3 min-[982px]:flex min-[982px]:justify-center min-[982px]:px-8 min-[982px]:pt-3 lg:flex lg:justify-between lg:px-6 lg:py-1">
                 {/* Logo */}
                 <div className="mb-2 min-[982px]:flex min-[982px]:items-start lg:flex lg:items-center">
@@ -66,7 +66,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             onMouseEnter={() => setActiveDropdown('About')}
                             onMouseLeave={() => setActiveDropdown(null)}
                         >
-                            <button className="font-open flex items-center gap-2 text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                            <button className="font-body flex items-center gap-2 text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4">
                                 <a href="https://bahali.org/about/" target="_blank">
                                     About
                                 </a>
@@ -90,11 +90,11 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                 className={`absolute top-full -left-6 z-50 origin-top transition-transform duration-300 ease-in-out ${activeDropdown === 'About' ? 'scale-y-100' : 'scale-y-0'
                                     }`}
                             >
-                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                <div className="mt-2 w-[210px] rounded-xl border border-[#E8D9B8] bg-white pb-2 shadow-xl">
                                     <a
                                         href="https://bahali.org/marsha-smith-bahali-founder/"
                                         target="_blank"
-                                        className="font-open block px-7 py-2.5 text-[16px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                        className="font-body block px-7 py-2.5 text-[16px] font-semibold text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                     >
                                         Founder
                                     </a>
@@ -102,7 +102,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     <a
                                         href="https://bahali.org/advisory-board/"
                                         target="_blank"
-                                        className="font-open block px-7 py-2.5 text-[16px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                        className="font-body block px-7 py-2.5 text-[16px] font-semibold text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                     >
                                         Advisory Board
                                     </a>
@@ -116,7 +116,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             onMouseEnter={() => setActiveDropdown('Programs')}
                             onMouseLeave={() => setActiveDropdown(null)}
                         >
-                            <button className="font-open flex items-center gap-2 text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                            <button className="font-body flex items-center gap-2 text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4">
                                 <a href="https://bahali.org/caribbean-wellness-programs/" target="_blank">
                                     Programs
                                 </a>
@@ -142,11 +142,11 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     : 'pointer-events-none scale-y-0 opacity-0'
                                     }`}
                             >
-                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                <div className="mt-2 w-[210px] rounded-xl border border-[#E8D9B8] bg-white pb-2 shadow-xl">
                                     <a
                                         href="https://bahali.org/disaster-recovery/"
                                         target="_blank"
-                                        className="font-open block px-7 py-2.5 text-[16px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                        className="font-body block px-7 py-2.5 text-[16px] font-semibold text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                     >
                                         Disaster Recovery
                                     </a>
@@ -160,7 +160,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             onMouseEnter={() => setActiveDropdown('Resources')}
                             onMouseLeave={() => setActiveDropdown(null)}
                         >
-                            <button className="font-open flex items-center gap-2 text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]">
+                            <button className="font-body flex items-center gap-2 text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4">
                                 <a href="https://bahali.org/resources/" target="_blank">
                                     Resources
                                 </a>
@@ -186,11 +186,11 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     : 'pointer-events-none scale-y-0 opacity-0'
                                     }`}
                             >
-                                <div className="mt-2 w-[210px] rounded-xl border border-gray-200 bg-white pb-2 shadow-xl">
+                                <div className="mt-2 w-[210px] rounded-xl border border-[#E8D9B8] bg-white pb-2 shadow-xl">
                                     <a
                                         href="https://bahali.org/kids-corner/"
                                         target="_blank"
-                                        className="font-open block px-7 py-2.5 text-[16px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                        className="font-body block px-7 py-2.5 text-[16px] font-semibold text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                     >
                                         Kidz Corner
                                     </a>
@@ -198,7 +198,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     <a
                                         href="https://bahali.org/bahali-resource-hub/"
                                         target="_blank"
-                                        className="font-open block px-7 py-2.5 text-[16px] font-semibold text-gray-700 hover:text-[#d8886c]"
+                                        className="font-body block px-7 py-2.5 text-[16px] font-semibold text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                     >
                                         Bahali Resources Hub
                                     </a>
@@ -210,7 +210,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <a
                             href="https://bahali.org/bahali-press/#coping"
                             target="_blank"
-                            className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                            className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Bahali Press
                         </a>
@@ -219,7 +219,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <a
                             href="https://bahali.org/contact/"
                             target="_blank"
-                            className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                            className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Contact
                         </a>
@@ -228,7 +228,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <a
                             href="https://bahali.org/get-involved/"
                             target="_blank"
-                            className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                            className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Get Involved
                         </a>
@@ -236,7 +236,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         {/* Provider Directory Link */}
                         <a
                             href={directoryUrl}
-                            className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                            className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Providers
                         </a>
@@ -245,14 +245,14 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             {user ? (
                                 <a
                                     href={dashboardUrl}
-                                    className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                 >
                                     Dashboard
                                 </a>
                             ) : (
                                 <a
                                     href={loginUrl}
-                                    className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                 >
                                     Login
                                 </a>
@@ -261,7 +261,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
                         <div className="hidden min-[982px]:block">
                             <a href="https://bahali.org/donate/" target="_blank">
-                                <button className="font-open cursor-pointer rounded-full bg-[#d8886c] px-7 py-3 text-[16px] text-white transition hover:text-[#1e4d4a]">
+                                <button className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                     Give Now
                                 </button>
                             </a>
@@ -275,9 +275,9 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                 <div className="flex items-center gap-4 min-[982px]:hidden">
                     <button onClick={() => setOpen(!open)}>
                         {open ? (
-                            <X size={34} className="text-[#1F5559]" />
+                            <X size={34} className="text-[#1E4D4A]" />
                         ) : (
-                            <Menu size={34} className="text-[#1F5559]" />
+                            <Menu size={34} className="text-[#1E4D4A]" />
                         )}
                     </button>
                 </div>
@@ -289,16 +289,16 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                 <div
                     onClick={() => setOpen(false)}
                     className={`fixed inset-0 z-40 transition-all duration-500 ${open
-                        ? 'bg-[#acb5b4]/70 opacity-100 backdrop-blur-md'
+                        ? 'bg-[#9CAEA9]/70 opacity-100 backdrop-blur-md'
                         : 'invisible opacity-0'
                         }`}
                 >
-                    <div className="h-[90px] w-full bg-[#fafaf6]"></div>
+                    <div className="h-[90px] w-full bg-[#FAFAF6]"></div>
                 </div>
 
                 {/* Drawer */}
                 <aside
-                    className={`fixed top-0 right-0 z-50 h-full w-[300px] bg-white text-gray-900 shadow-[-20px_0_60px_rgba(0,0,0,0.14)] transition-transform duration-500 ease-out ${open ? 'translate-x-0' : 'translate-x-full'
+                    className={`fixed top-0 right-0 z-50 h-full w-[300px] bg-white text-[#2C2C2C] shadow-[-20px_0_60px_rgba(0,0,0,0.14)] transition-transform duration-500 ease-out ${open ? 'translate-x-0' : 'translate-x-full'
                         }`}
                 >
                     <div className="h-full overflow-y-auto px-8 pb-20">
@@ -312,7 +312,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <button
                                 onClick={() => toggleMenu('About')}
-                                className="flex w-full items-center justify-between border-gray-100 pb-6 text-left text-[16px] hover:border hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between border-gray-100 pb-6 text-left text-[16px] hover:border hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <a href="https://bahali.org/about/" target="_blank">
                                     About
@@ -343,7 +343,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
                                     <X
                                         size={18}
-                                        className={`absolute text-[#d8886c] transition-all duration-300 ${activeMenu === 'About'
+                                        className={`absolute text-[#1E4D4A] transition-all duration-300 ${activeMenu === 'About'
                                             ? 'rotate-0 opacity-100'
                                             : '-rotate-90 opacity-0'
                                             }`}
@@ -379,7 +379,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <button
                                 onClick={() => toggleMenu('Programs')}
-                                className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <a
                                     href="https://bahali.org/caribbean-wellness-programs/#Programs"
@@ -413,7 +413,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
                                     <X
                                         size={20}
-                                        className={`absolute text-[#d8886c] transition-all duration-300 ${activeMenu === 'Programs'
+                                        className={`absolute text-[#1E4D4A] transition-all duration-300 ${activeMenu === 'Programs'
                                             ? 'rotate-0 opacity-100'
                                             : '-rotate-90 opacity-0'
                                             }`}
@@ -441,7 +441,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <button
                                 onClick={() => toggleMenu('Resources')}
-                                className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <a
                                     href="https://bahali.org/resources/"
@@ -475,7 +475,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
                                     <X
                                         size={20}
-                                        className={`absolute text-[#d8886c] transition-all duration-300 ${activeMenu === 'Resources'
+                                        className={`absolute text-[#1E4D4A] transition-all duration-300 ${activeMenu === 'Resources'
                                             ? 'rotate-0 opacity-100'
                                             : '-rotate-90 opacity-0'
                                             }`}
@@ -511,7 +511,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <a
                                 href="https://bahali.org/bahali-press/#coping"
-                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Bahali Press</span>
                             </a>
@@ -521,7 +521,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <a
                                 href="https://bahali.org/contact/"
-                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Contact</span>
                             </a>
@@ -531,7 +531,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <a
                                 href="https://bahali.org/get-involved/"
-                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Get Involved</span>
                             </a>
@@ -541,7 +541,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         <div>
                             <a
                                 href={directoryUrl}
-                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#d8886c]"
+                                className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Providers</span>
                             </a>
@@ -550,7 +550,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
 
 
                         <a href="https://bahali.org/donate/" target="_blank">
-                            <button className="font-open text-[16px] hover:text-[#d8886c]">
+                            <button className="font-body text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4">
                                 <span>Give Now</span>
                             </button>
                         </a>
@@ -560,14 +560,14 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             {user ? (
                                 <a
                                     href={dashboardUrl}
-                                    className="font-open text-[16px] font-medium text-[#1e4d4a] hover:text-[#e99e84]"
+                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                 >
                                     Dashboard
                                 </a>
                             ) : (
                                 <a
                                     href={loginUrl}
-                                    className="font-open text-[16px] font-medium text-gray-900 hover:text-[#e99e84]"
+                                    className="font-body text-[16px] font-medium text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                                 >
                                     Login
                                 </a>

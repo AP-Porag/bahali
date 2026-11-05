@@ -197,9 +197,9 @@ function streetLine(components: any[] | undefined, fallback: string): string {
 }
 
 const inputClass = (hasError: boolean) =>
-    `w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${hasError
+    `min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
-        : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25'
+        : 'border-[#1E4D4A]/65 focus:border-[#1E4D4A] focus:ring-[#1E4D4A]/25'
     }`;
 
 function AddressAutocomplete({
@@ -352,7 +352,7 @@ function AddressAutocomplete({
                 className={inputClass(!!error)}
             />
             {open && (
-                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
+                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
                     <ul role="listbox" className="max-h-64 overflow-y-auto p-1">
                         {suggestions.map((s, i) => (
                             <li key={`${s.main}-${s.secondary}-${i}`}>
@@ -363,22 +363,22 @@ function AddressAutocomplete({
                                     onMouseDown={(e) => e.preventDefault()}
                                     onMouseEnter={() => setActive(i)}
                                     onClick={() => choose(s)}
-                                    className={`flex w-full items-start gap-2.5 rounded-md px-3 py-2 text-left text-sm transition ${i === active ? 'bg-[#0E7C7B]/10 text-[#16302F]' : 'text-[#26403F] hover:bg-[#F7F3EC]'}`}
+                                    className={`flex w-full items-start gap-2.5 rounded-md px-3 py-2 text-left text-sm transition ${i === active ? 'bg-[#1E4D4A]/10 text-[#2C2C2C]' : 'text-[#2C2C2C] hover:bg-[#FAFAF6]'}`}
                                 >
-                                    <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                                    <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
                                         <circle cx="12" cy="11" r="2" />
                                     </svg>
                                     <span className="min-w-0">
                                         <span className="block truncate font-medium">{s.main}</span>
-                                        {s.secondary && <span className="block truncate text-xs text-[#6B7A78]">{s.secondary}</span>}
+                                        {s.secondary && <span className="block truncate text-sm text-[#2C2C2C]">{s.secondary}</span>}
                                     </span>
                                 </button>
                             </li>
                         ))}
                     </ul>
                     {/* Google requires this attribution when suggestions are shown without a map. */}
-                    <p className="border-t border-[#EFEAE0] px-3 py-1.5 text-right text-[11px] text-[#9AA6A4]">Powered by Google</p>
+                    <p className="border-t border-[#E8D9B8] px-3 py-1.5 text-right text-sm text-[#2C2C2C]/70">Powered by Google</p>
                 </div>
             )}
         </div>
@@ -402,7 +402,7 @@ function LocationPicker({
     const lv = locationLevels(countries, value.country, value.state_province);
     const countryOptions = countries.map((c) => ({ value: c.name, label: c.name }));
     const muted = (text: string) => (
-        <div className="rounded-lg border border-[#DED7C9] bg-[#FBF8F2] px-3.5 py-2.5 text-sm text-[#9AA6A4]">{text}</div>
+        <div className="flex min-h-[48px] items-center rounded-[10px] border border-[#1E4D4A]/65 bg-[#FAFAF6] px-3.5 py-2.5 text-sm text-[#2C2C2C]/70">{text}</div>
     );
 
     return (
@@ -509,14 +509,14 @@ export function LocationSection({
             </FieldShell>
 
             {hasInPerson ? (
-                <div className="flex items-start gap-3 rounded-lg border border-[#0E7C7B]/25 bg-[#0E7C7B]/5 px-4 py-3.5 text-sm text-[#26403F]">
-                    <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                <div className="flex items-start gap-3 rounded-lg border border-[#1E4D4A]/25 bg-[#1E4D4A]/5 px-4 py-3.5 text-sm text-[#2C2C2C]">
+                    <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.686-6-10a6 6 0 1 1 12 0c0 4.314-6 10-6 10Z" />
                         <circle cx="12" cy="11" r="2" />
                     </svg>
                     <span>
                         <span className="block font-medium">Your address will be shown on your profile.</span>
-                        <span className="block text-[#5B6B6E]">You offer in-person care, so clients need your address to find you. It can't be hidden.</span>
+                        <span className="block text-[#2C2C2C]">You offer in-person care, so clients need your address to find you. It can't be hidden.</span>
                     </span>
                 </div>
             ) : (
@@ -525,7 +525,7 @@ export function LocationSection({
                         Hide the address from public view
                     </ConsentItem>
                     {virtualOnly && (
-                        <p className="mt-1.5 text-xs text-[#6B7A78]">
+                        <p className="mt-1.5 text-sm text-[#2C2C2C]">
                             Hidden automatically because you offer virtual care only. Untick to show it on your profile.
                         </p>
                     )}
@@ -560,10 +560,10 @@ export function LocationSection({
                 >
                     <div className="space-y-3">
                         {extra.map((loc, i) => (
-                            <div key={i} className="rounded-xl border border-[#E7E0D2] bg-[#FBF8F2] p-4">
+                            <div key={i} className="rounded-xl border border-[#E8D9B8] bg-[#FAFAF6] p-4">
                                 <div className="mb-3 flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-[#16302F]">Location {i + 2}</span>
-                                    <button type="button" onClick={() => removeExtra(i)} className="text-sm text-[#C2543B] hover:underline">
+                                    <span className="text-sm font-semibold text-[#2C2C2C]">Location {i + 2}</span>
+                                    <button type="button" onClick={() => removeExtra(i)} className="text-sm text-[#A8472F] hover:underline">
                                         Remove
                                     </button>
                                 </div>
@@ -584,7 +584,7 @@ export function LocationSection({
                             <button
                                 type="button"
                                 onClick={addExtra}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-[#0E7C7B]/40 bg-[#0E7C7B]/5 px-3.5 py-2 text-sm font-medium text-[#0E7C7B] transition hover:bg-[#0E7C7B]/10"
+                                className="inline-flex min-h-[48px] items-center gap-1.5 rounded-[10px] border border-[#1E4D4A] bg-white px-4 text-[15px] font-semibold text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M12 5v14M5 12h14" /></svg>
                                 Add another location

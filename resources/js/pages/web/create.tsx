@@ -507,7 +507,7 @@ const isUrl = (s: string) => /^(https?:\/\/)?[^\s.]+\.[^\s]{2,}$/i.test(s.trim()
 const errClass = (hasError: boolean) =>
     hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
-        : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25';
+        : 'border-[#1E4D4A]/65 focus:border-[#1E4D4A] focus:ring-[#1E4D4A]/25';
 function FieldShell({
     label,
     required,
@@ -524,15 +524,15 @@ function FieldShell({
     return (
         <div>
             {label && (
-                <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
+                <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">
                     {label}
-                    {required && <span className="ml-1 text-[#C2543B]">*</span>}
+                    {required && <span className="ml-1 text-[#A8472F]">*</span>}
                 </label>
             )}
-            {hint && <p className="mb-2 text-xs text-[#6B7A78]">{hint}</p>}
+            {hint && <p className="mb-2 text-sm text-[#2C2C2C]">{hint}</p>}
             {children}
             {error && (
-                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]">
+                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
                     <span aria-hidden>⚠</span>
                     {error}
                 </p>
@@ -557,7 +557,7 @@ function TextInput({
             disabled={disabled}
             placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#F1EDE3] disabled:text-[#9AA6A4] ${errClass(!!error)}`}
+            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`}
         />
     );
 }
@@ -576,18 +576,18 @@ function TextArea({
             rows={rows}
             placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`}
+            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`}
         />
     );
 }
 function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; prefix?: string; }) {
     return (
         <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">{prefix}</span>
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
             <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
                 style={{ paddingLeft: `${1.25 + prefix.trim().length * 0.5}rem` }}
-                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
         </div>
     );
 }
@@ -608,13 +608,13 @@ function PasswordInput({
                 placeholder={placeholder}
                 autoComplete="new-password"
                 onChange={(ev) => onChange(ev.target.value)}
-                className={`w-full rounded-lg border bg-white px-3.5 py-2.5 pr-11 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`}
+                className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 pr-11 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`}
             />
             <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
                 aria-label={show ? 'Hide password' : 'Show password'}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#6B7A78] transition hover:text-[#0E7C7B]"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#2C2C2C] transition hover:text-[#1E4D4A]"
             >
                 {show ? (
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -687,23 +687,23 @@ function SearchableSelect({
                 role="combobox"
                 aria-expanded={open}
                 onClick={() => setOpen((o) => !o)}
-                className={`flex w-full items-center justify-between rounded-lg border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#0E7C7B] ring-4 ring-[#0E7C7B]/25' : ''}`}
+                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}
             >
-                <span className={`truncate ${selectedLabel ? 'text-[#1F2A2E]' : 'text-[#9AA6A4]'}`}>
+                <span className={`truncate ${selectedLabel ? 'text-[#2C2C2C]' : 'text-[#2C2C2C]/70'}`}>
                     {selectedLabel || placeholder}
                 </span>
                 <svg
                     viewBox="0 0 24 24"
-                    className={`ml-2 h-4 w-4 flex-shrink-0 text-[#6B7A78] transition-transform ${open ? 'rotate-180' : ''}`}
+                    className={`ml-2 h-4 w-4 flex-shrink-0 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`}
                     fill="none" stroke="currentColor" strokeWidth={2}
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                 </svg>
             </button>
             {open && (
-                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
-                    <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#9AA6A4]" fill="none" stroke="currentColor" strokeWidth={2}>
+                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
+                    <div className="flex items-center gap-2 border-b border-[#E8D9B8] px-3">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
                         </svg>
                         <input
@@ -712,12 +712,12 @@ function SearchableSelect({
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={searchPlaceholder}
-                            className="w-full bg-transparent py-2.5 text-sm text-[#1F2A2E] placeholder-[#9AA6A4] outline-none"
+                            className="w-full bg-transparent py-2.5 text-sm text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none"
                         />
                     </div>
                     <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
                         {filtered.length === 0 && (
-                            <li className="px-3 py-6 text-center text-sm text-[#9AA6A4]">{emptyText}</li>
+                            <li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>
                         )}
                         {filtered.map((o) => {
                             const active = o.value === value;
@@ -732,12 +732,12 @@ function SearchableSelect({
                                             setOpen(false);
                                         }}
                                         className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active
-                                            ? 'bg-[#0E7C7B]/10 text-[#15403F]'
-                                            : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'
+                                            ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]'
+                                            : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'
                                             }`}
                                     >
                                         <span
-                                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#0E7C7B] ${active ? 'opacity-100' : 'opacity-0'}`}
+                                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#1E4D4A] ${active ? 'opacity-100' : 'opacity-0'}`}
                                             aria-hidden
                                         >
                                             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
@@ -774,9 +774,9 @@ function RadioRow({
                         role="radio"
                         aria-checked={active}
                         onClick={() => onChange(o.value)}
-                        className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${active
-                            ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white shadow-sm'
-                            : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5'
+                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${active
+                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm'
+                            : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'
                             }`}
                     >
                         {o.label}
@@ -808,13 +808,13 @@ function CheckGrid({
                         role="checkbox"
                         aria-checked={active}
                         onClick={() => onToggle(o)}
-                        className={`flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${active
-                            ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]'
-                            : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'
+                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active
+                            ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
+                            : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
                             }`}
                     >
                         <span
-                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
+                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
                                 }`}
                             aria-hidden
                         >
@@ -824,7 +824,7 @@ function CheckGrid({
                                 </svg>
                             )}
                         </span>
-                        <span className="leading-snug">{o}</span>
+                        <span className="min-w-0 leading-snug [overflow-wrap:anywhere]">{o}</span>
                     </button>
                 );
             })}
@@ -852,13 +852,13 @@ function OtherCheckboxField({
                 role="checkbox"
                 aria-checked={checked}
                 onClick={onToggle}
-                className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${checked
-                    ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]'
-                    : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'
+                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${checked
+                    ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
+                    : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
                     }`}
             >
                 <span
-                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
                         }`}
                     aria-hidden
                 >
@@ -915,36 +915,36 @@ function AccordionCheckGroups({
                 return (
                     <div
                         key={g.category}
-                        className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'
+                        className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'
                             }`}
                     >
                         <button
                             type="button"
                             aria-expanded={isOpen}
                             onClick={() => toggleCat(g.category)}
-                            className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#0E7C7B]/5' : 'bg-[#FBF8F2] hover:bg-[#0E7C7B]/5'
+                            className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
                                 }`}
                         >
                             <span className="flex items-center gap-2.5">
-                                <span className="text-sm font-semibold text-[#16302F]">
+                                <span className="text-sm font-semibold text-[#2C2C2C]">
                                     {g.category}
                                 </span>
                                 {totalSelected > 0 && (
-                                    <span className="inline-flex items-center rounded-full bg-[#0E7C7B] px-2 py-0.5 text-xs font-semibold text-white">
+                                    <span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">
                                         {totalSelected} selected
                                     </span>
                                 )}
                             </span>
                             <svg
                                 viewBox="0 0 24 24"
-                                className={`h-4 w-4 flex-shrink-0 text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                                className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`}
                                 fill="none" stroke="currentColor" strokeWidth={2}
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
                         {isOpen && (
-                            <div className="border-t border-[#EFEAE0] bg-white p-3.5">
+                            <div className="border-t border-[#E8D9B8] bg-white p-3.5">
                                 <CheckGrid
                                     options={g.items}
                                     selected={selected}
@@ -997,7 +997,7 @@ function CertificationsInput({
                     <button
                         type="button"
                         onClick={() => remove(idx)}
-                        className="text-sm text-[#C2543B] hover:underline"
+                        className="text-sm text-[#A8472F] hover:underline"
                     >
                         Remove
                     </button>
@@ -1006,7 +1006,7 @@ function CertificationsInput({
             <button
                 type="button"
                 onClick={add}
-                className="inline-flex items-center gap-1 text-sm text-[#0E7C7B] hover:underline"
+                className="inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline"
             >
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
                     <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} />
@@ -1725,26 +1725,26 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             <>
                 <Header />
                 <Head title="Application Received — Bahali Provider Directory" />
-                <div className="min-h-screen bg-[#F7F3EC] px-4 py-16">
-                    <div className="mx-auto max-w-xl rounded-2xl border border-[#E7E0D2] bg-white p-10 text-center shadow-sm">
-                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#0E7C7B]/10">
-                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2.2}>
+                <div className="min-h-screen bg-[#FAFAF6] px-4 py-16 font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
+                    <div className="mx-auto max-w-xl rounded-2xl border border-[#E8D9B8] bg-white p-10 text-center shadow-sm">
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#1E4D4A]/10">
+                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2.2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
                             </svg>
                         </div>
-                        <h1 className="font-serif text-2xl text-[#1B2E2D]">Thank you for joining the circle</h1>
-                        <p className="mt-3 text-[#5B6B6E]">
+                        <h1 className="font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Thank you for joining the circle</h1>
+                        <p className="mt-3 text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
                             Your application has been received. Our team will review your details and
                             reach out about your listing in the Bahali Provider Directory.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <a href="https://bahali.org"
-                                className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]"
+                                className="inline-flex items-center justify-center bg-[#1E4D4A] px-5 text-white transition-colors hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 Back to home
                             </a>
                             <a href="https://bahali.org/contact"
-                                className="inline-flex items-center justify-center rounded-lg border border-[#E7E0D2] px-5 py-2.5 text-sm font-medium text-[#1B2E2D] transition-colors hover:bg-[#F7F3EC]"
+                                className="inline-flex min-h-[48px] items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white px-5 text-[15px] font-semibold text-[#1E4D4A] transition-colors hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 Contact
                             </a>
@@ -1759,17 +1759,17 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     return (
         <>
             <Head title="Provider Directory Registration — Bahali" />
-            <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
+            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
                 <Header />
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     <div className="mb-8">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0E7C7B]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">
                             Join the directory
                         </p>
-                        <h1 className="mt-2 font-serif text-3xl text-[#16302F] sm:text-4xl">
+                        <h1 className="mt-2 font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">
                             Become a Bahali wellness provider
                         </h1>
-                        <p className="mt-2 max-w-2xl text-[#5B6B6E]">
+                        <p className="mt-2 max-w-2xl text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
                             Your profile helps Caribbean individuals and families find care that understands their culture, experiences, and community. Complete each section below. Every step must be completed before you can continue.
                         </p>
                     </div>
@@ -1778,24 +1778,24 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         <aside className="lg:sticky lg:top-8 lg:self-start">
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
-                                    <span className="font-medium text-[#16302F]">
+                                    <span className="font-medium text-[#2C2C2C]">
                                         Step {step + 1} of {TOTAL_STEPS}
                                     </span>
-                                    <span className="text-[#6B7A78]">{progress}%</span>
+                                    <span className="text-[#2C2C2C]">{progress}%</span>
                                 </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-[#E2DACB]">
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-[#E8D9B8]">
                                     <div
-                                        className="h-full rounded-full bg-[#0E7C7B] transition-all duration-500"
+                                        className="h-full rounded-full bg-[#1E4D4A] transition-all duration-500"
                                         style={{ width: `${progress}%` }}
                                     />
                                 </div>
-                                <p className="mt-2 font-serif text-lg text-[#16302F]">
+                                <p className="mt-2 text-[18px] font-semibold leading-[1.2] text-[#1E4D4A]">
                                     {STEPS[step].title}
                                 </p>
                             </div>
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
-                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
+                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E8D9B8]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isDone = i < step;
                                         const isCurrent = i === step;
@@ -1811,15 +1811,15 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                                         }
                                                     }}
                                                     disabled={i > step}
-                                                    className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition ${i <= step ? 'cursor-pointer hover:bg-[#0E7C7B]/5' : 'cursor-default'
+                                                    className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition ${i <= step ? 'cursor-pointer hover:bg-[#1E4D4A]/5' : 'cursor-default'
                                                         }`}
                                                 >
                                                     <span
-                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition ${isDone
-                                                            ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
+                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${isDone
+                                                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
                                                             : isCurrent
-                                                                ? 'border-[#0E7C7B] bg-white text-[#0E7C7B]'
-                                                                : 'border-[#D8D0C0] bg-[#F7F3EC] text-[#A4AFAD]'
+                                                                ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]'
+                                                                : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'
                                                             }`}
                                                     >
                                                         {isDone ? (
@@ -1832,12 +1832,12 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                                     </span>
                                                     <span className="min-w-0 pt-0.5">
                                                         <span
-                                                            className={`block text-sm font-medium leading-tight ${isCurrent ? 'text-[#16302F]' : 'text-[#5B6B6E]'
+                                                            className={`block text-[15px] leading-tight ${isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'
                                                                 }`}
                                                         >
                                                             {s.title}
                                                         </span>
-                                                        <span className="block text-xs text-[#9AA6A4]">{s.subtitle}</span>
+                                                        <span className="block text-sm text-[#2C2C2C]/70">{s.subtitle}</span>
                                                     </span>
                                                 </button>
                                             </li>
@@ -1848,12 +1848,12 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         </aside>
                         {/* Form card */}
                         <main>
-                            <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
-                                <div className="mb-6 border-b border-[#EFEAE0] pb-5">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E7C7B]">
+                            <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm sm:p-8">
+                                <div className="mb-6 border-b border-[#E8D9B8] pb-5">
+                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1E4D4A]">
                                         Section {step + 1}
                                     </p>
-                                    <h2 className="mt-1 font-serif text-2xl text-[#16302F]">
+                                    <h2 className="mt-1 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
                                         {STEPS[step].title}
                                     </h2>
                                 </div>
@@ -1877,14 +1877,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     />
                                 </div>
                                 {/* Navigation */}
-                                <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
+                                <div className="mt-8 flex items-center justify-between border-t border-[#E8D9B8] pt-6">
                                     <button
                                         type="button"
                                         onClick={goBack}
                                         disabled={step === 0 || STEPS[step].key === 'verify'}
-                                        className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step === 0 || STEPS[step].key === 'verify'
-                                            ? 'cursor-not-allowed text-[#B7C0BE]'
-                                            : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'
+                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${step === 0 || STEPS[step].key === 'verify'
+                                            ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70'
+                                            : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'
                                             }`}
                                     >
                                         ← Back
@@ -1894,7 +1894,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={goNext}
                                             disabled={creatingAccount}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
+                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                         >
                                             {creatingAccount ? 'Creating account…' : 'Continue →'}
                                         </button>
@@ -1903,15 +1903,15 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={form.processing}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60"
+                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                         >
                                             {form.processing ? 'Submitting…' : 'Submit application'}
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            <p className="mt-4 text-center text-xs text-[#9AA6A4]">
-                                Fields marked <span className="text-[#C2543B]">*</span> are required.
+                            <p className="mt-4 text-center text-sm text-[#2C2C2C]/70">
+                                Fields marked <span className="text-[#A8472F]">*</span> are required.
                             </p>
                         </main>
                     </div>
@@ -2073,7 +2073,7 @@ function StepBody({
                             rows={7}
                             placeholder="Share your story, your values, and how you support healing…"
                         />
-                        <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
                             {wordCount(d.short_bio)} / 500 words
                         </p>
                     </FieldShell>
@@ -2092,12 +2092,12 @@ function StepBody({
         case 2:
             return (
                 <div className="space-y-5 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0E7C7B]/10">
-                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1E4D4A]/10">
+                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0h3.75v3.75M3.98 8.223A10.477 10.477 0 0 1 12 4.5" />
                         </svg>
                     </div>
-                    <p className="text-[#3A4B49]">
+                    <p className="text-[#2C2C2C]">
                         We sent a 6-digit verification code to <strong>{d.email}</strong>.
                         Enter it below to continue. If you don't see it in your inbox, please check your spam or junk folder.
                     </p>
@@ -2109,10 +2109,10 @@ function StepBody({
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                             placeholder="000000"
-                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-3 text-center text-2xl tracking-[0.4em] text-[#1F2A2E] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-3 text-center text-2xl tracking-[0.4em] text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         {otpError && (
-                            <p className="mt-1.5 flex items-center justify-center gap-1 text-sm text-[#C2543B]">
+                            <p className="mt-1.5 flex items-center justify-center gap-1 text-sm text-[#A8472F]">
                                 <span aria-hidden>⚠</span>{otpError}
                             </p>
                         )}
@@ -2121,17 +2121,17 @@ function StepBody({
                         type="button"
                         onClick={onVerifyOtp}
                         disabled={verifyingOtp || otpCode.length !== 6}
-                        className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] disabled:opacity-60"
+                        className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                     >
                         {verifyingOtp ? 'Verifying…' : 'Verify & Continue'}
                     </button>
-                    <p className="text-sm text-[#6B7A78]">
+                    <p className="text-sm text-[#2C2C2C]">
                         Didn't get a code?{' '}
                         <button
                             type="button"
                             onClick={onResendOtp}
                             disabled={resending}
-                            className="font-medium text-[#0E7C7B] hover:underline disabled:opacity-60"
+                            className="font-medium text-[#1E4D4A] hover:underline disabled:opacity-60"
                         >
                             {resending ? 'Resending…' : 'Resend code'}
                         </button>
@@ -2238,7 +2238,7 @@ function StepBody({
                             return (
                                 <div
                                     key={category}
-                                    className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'
+                                    className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'
                                         }`}
                                 >
                                     {/* Accordion header */}
@@ -2246,20 +2246,20 @@ function StepBody({
                                         type="button"
                                         aria-expanded={isOpen}
                                         onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
-                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#0E7C7B]/5' : 'bg-[#FBF8F2] hover:bg-[#0E7C7B]/5'
+                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
                                             }`}
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <span className="text-sm font-semibold text-[#16302F]">{category}</span>
+                                            <span className="text-sm font-semibold text-[#2C2C2C]">{category}</span>
                                             {totalSelected > 0 && (
-                                                <span className="inline-flex items-center rounded-full bg-[#0E7C7B] px-2 py-0.5 text-xs font-semibold text-white">
+                                                <span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">
                                                     {totalSelected} selected
                                                 </span>
                                             )}
                                         </span>
                                         <svg
                                             viewBox="0 0 24 24"
-                                            className={`h-4 w-4 flex-shrink-0 text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''
+                                            className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''
                                                 }`}
                                             fill="none"
                                             stroke="currentColor"
@@ -2271,7 +2271,7 @@ function StepBody({
 
                                     {/* Accordion body */}
                                     {isOpen && (
-                                        <div className="border-t border-[#EFEAE0] bg-white p-3.5">
+                                        <div className="border-t border-[#E8D9B8] bg-white p-3.5">
                                             <CheckGrid
                                                 options={group.items}
                                                 selected={d.areas_of_support}
@@ -2289,14 +2289,14 @@ function StepBody({
                                                         onCustomSupportChange(category, 'checked', !custom.checked)
                                                     }
                                                     className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${custom.checked
-                                                        ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]'
-                                                        : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'
+                                                        ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
+                                                        : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
                                                         }`}
                                                 >
                                                     <span
                                                         className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${custom.checked
-                                                            ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white'
-                                                            : 'border-[#C7BEAD] bg-white'
+                                                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
+                                                            : 'border-[#1E4D4A]/65 bg-white'
                                                             }`}
                                                         aria-hidden
                                                     >
@@ -2325,7 +2325,7 @@ function StepBody({
                     </div>
 
                     {d.areas_of_support.length > 0 && (
-                        <p className="mt-3 text-sm font-medium text-[#0E7C7B]">
+                        <p className="mt-3 text-sm font-medium text-[#1E4D4A]">
                             {d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected
                         </p>
                     )}
@@ -2441,7 +2441,7 @@ function StepBody({
                                 rows={4}
                                 placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…"
                             />
-                            <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">
+                            <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
                                 {wordCount(d.caribbean_experience_details)} / 150 words
                             </p>
                         </FieldShell>
@@ -2502,7 +2502,7 @@ function StepBody({
                             rows={5}
                             placeholder="Describe how culture, story, and lived experience shape your care…"
                         />
-                        <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
                             {wordCount(d.cultural_approach)} / 250 words
                         </p>
                     </FieldShell>
@@ -2644,7 +2644,7 @@ function StepBody({
                     >
                         <div className="grid gap-4 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Currency</label>
+                                <label className="mb-1.5 block text-sm font-medium text-[#2C2C2C]">Currency</label>
                                 <SearchableSelect
                                     value={d.fee_currency}
                                     onChange={(v) => set('fee_currency', v)}
@@ -2655,21 +2655,21 @@ function StepBody({
                                 />
                             </div>
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
+                                <label className="mb-1.5 block text-sm font-medium text-[#2C2C2C]">Minimum fee</label>
                                 <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" prefix={currencySymbol(d.fee_currency)} />
                             </div>
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
+                                <label className="mb-1.5 block text-sm font-medium text-[#2C2C2C]">Maximum fee</label>
                                 <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" prefix={currencySymbol(d.fee_currency)} />
                             </div>
                         </div>
                         {fieldError('fee_currency') && (
-                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
+                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
                         )}
                         {(d.fee_min || d.fee_max) && (
-                            <p className="mt-2.5 text-sm text-[#5B6B6E]">
+                            <p className="mt-2.5 text-sm text-[#2C2C2C]">
                                 Preview:{' '}
-                                <span className="font-semibold text-[#16302F]">
+                                <span className="font-semibold text-[#2C2C2C]">
                                     {feePreview(d.fee_min, d.fee_max, d.fee_currency)}
                                 </span>
                             </p>
@@ -2697,10 +2697,10 @@ function StepBody({
             return (
                 <>
                     {isOrg && (
-                        <div className="space-y-4 rounded-xl border border-[#E7E0D2] bg-[#FBF8F2] p-4 sm:p-5">
+                        <div className="space-y-4 rounded-xl border border-[#E8D9B8] bg-[#FAFAF6] p-4 sm:p-5">
                             <div>
-                                <p className="text-sm font-semibold text-[#16302F]">Contact person</p>
-                                <p className="mt-0.5 text-xs text-[#6B7A78]">
+                                <p className="text-sm font-semibold text-[#2C2C2C]">Contact person</p>
+                                <p className="mt-0.5 text-sm text-[#2C2C2C]">
                                     Organizations need a named person Bahali and visitors can reach about this listing.
                                 </p>
                             </div>
@@ -2744,7 +2744,7 @@ function StepBody({
                         <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>
                             Show my phone number on my public profile
                         </ConsentItem>
-                        <p className="mt-1.5 text-xs text-[#6B7A78]">
+                        <p className="mt-1.5 text-sm text-[#2C2C2C]">
                             Untick to keep your number private. Bahali will still use it to contact you about your listing.
                         </p>
                     </div>
@@ -2860,7 +2860,7 @@ function StepBody({
         case 16:
             return (
                 <div className="space-y-4">
-                    <p className="text-sm text-[#5B6B6E]">
+                    <p className="text-sm text-[#2C2C2C]">
                         Please review and agree to each statement below to complete your application.
                     </p>
                     <ConsentItem
@@ -2937,8 +2937,8 @@ function FileInput({
     return (
         <div>
             <div className="flex items-center gap-4">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
                     </svg>
                     {file ? 'Replace file' : 'Choose file'}
@@ -2965,16 +2965,16 @@ function FileInput({
                     <img
                         src={previewUrl}
                         alt="Preview"
-                        className="h-14 w-14 rounded-lg border border-[#E7E0D2] object-cover"
+                        className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover"
                     />
                 )}
                 {file && (
-                    <div className="flex items-center gap-2 text-sm text-[#5B6B6E]">
+                    <div className="flex items-center gap-2 text-sm text-[#2C2C2C]">
                         <span className="max-w-[180px] truncate">{file.name}</span>
                         <button
                             type="button"
                             onClick={() => onChange(null)}
-                            className="text-[#C2543B] hover:underline"
+                            className="text-[#A8472F] hover:underline"
                         >
                             Remove
                         </button>
@@ -2982,7 +2982,7 @@ function FileInput({
                 )}
             </div>
             {fileError && (
-                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]">
+                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
                     <span aria-hidden>⚠</span>
                     {fileError}
                 </p>
@@ -3014,8 +3014,8 @@ function MultiFileInput({
     };
     return (
         <div className="space-y-3">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 Add photos
@@ -3048,7 +3048,7 @@ function MultiFileInput({
             {Object.keys(fileErrors).length > 0 && (
                 <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
                     {Object.values(fileErrors).map((error, idx) => (
-                        <p key={idx} className="flex items-center gap-1 text-sm text-[#C2543B] mb-1">
+                        <p key={idx} className="flex items-center gap-1 text-sm text-[#A8472F] mb-1">
                             <span aria-hidden>⚠</span>
                             {error}
                         </p>
@@ -3060,13 +3060,13 @@ function MultiFileInput({
                     {files.map((f, i) => (
                         <li
                             key={`${f.name}-${i}-${f.lastModified}`}
-                            className="flex items-center justify-between rounded-lg border border-[#EFEAE0] bg-[#FBF8F2] px-3 py-2 text-sm text-[#5B6B6E]"
+                            className="flex items-center justify-between rounded-lg border border-[#E8D9B8] bg-[#FAFAF6] px-3 py-2 text-sm text-[#2C2C2C]"
                         >
                             <span className="max-w-[240px] truncate">{f.name}</span>
                             <button
                                 type="button"
                                 onClick={() => onChange(files.filter((_, idx) => idx !== i))}
-                                className="text-[#C2543B] hover:underline"
+                                className="text-[#A8472F] hover:underline"
                             >
                                 Remove
                             </button>
@@ -3112,21 +3112,21 @@ function SocialLinksInput({
                         <input
                             type="text"
                             placeholder="Enter Platform Name"
-                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         <input
                             type="url"
                             value={row.value}
                             onChange={(e) => updateAt(row.id, e.target.value)}
                             placeholder="https://www.example.com"
-                            className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         {isLast && rows.length < MAX && (
                             <button
                                 type="button"
                                 onClick={addField}
                                 aria-label="Add another link"
-                                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#0E7C7B]/40 bg-[#0E7C7B]/5 text-[#0E7C7B] transition hover:bg-[#0E7C7B]/10"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
                             </button>
@@ -3136,7 +3136,7 @@ function SocialLinksInput({
                                 type="button"
                                 onClick={() => removeAt(row.id)}
                                 aria-label="Remove this link"
-                                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#DED7C9] text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A]/65 text-[#A8472F] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5"
                             >
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                             </button>
@@ -3161,14 +3161,14 @@ function ConsentItem({
                 type="button"
                 onClick={() => onChange(!checked)}
                 className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked
-                    ? 'border-[#0E7C7B] bg-[#0E7C7B]/8'
+                    ? 'border-[#1E4D4A] bg-[#1E4D4A]/8'
                     : error
                         ? 'border-[#C2543B] bg-[#C2543B]/5'
-                        : 'border-[#DED7C9] bg-white hover:border-[#0E7C7B]/50'
+                        : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'
                     }`}
             >
                 <span
-                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'
+                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
                         }`}
                     aria-hidden
                 >
@@ -3178,10 +3178,10 @@ function ConsentItem({
                         </svg>
                     )}
                 </span>
-                <span className="text-sm leading-snug text-[#26403F]">{children}</span>
+                <span className="text-sm leading-snug text-[#2C2C2C]">{children}</span>
             </button>
             {error && (
-                <p className="mt-1 ml-1 text-sm text-[#C2543B]">{error}</p>
+                <p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>
             )}
         </div>
     );

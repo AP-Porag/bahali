@@ -85,13 +85,13 @@ interface DashboardProps {
 /* ------------------------------------------------------------------ */
 
 const STATUS_STYLES: Record<string, string> = {
-    approved: 'bg-[#0E7C7B]/10 text-[#0B6463]',
-    pending: 'bg-[#F5A623]/10 text-[#B7791F]',
-    needs_correction: 'bg-[#F5A623]/10 text-[#B7791F]',
-    pending_verification: 'bg-[#0E7C7B]/10 text-[#0B6463]',
+    approved: 'bg-[#1E4D4A]/10 text-[#1E4D4A]',
+    pending: 'bg-[#E8D9B8]/60 text-[#2C2C2C]',
+    needs_correction: 'bg-[#E8D9B8]/60 text-[#2C2C2C]',
+    pending_verification: 'bg-[#1E4D4A]/10 text-[#1E4D4A]',
     rejected: 'bg-[#C2543B]/10 text-[#A33D29]',
-    suspended: 'bg-[#D97706]/10 text-[#92400E]',
-    inactive: 'bg-[#F1EDE3] text-[#6B7A78]',
+    suspended: 'bg-[#E99E84]/20 text-[#2C2C2C]',
+    inactive: 'bg-[#9CAEA9]/20 text-[#2C2C2C]',
 };
 
 /* ------------------------------------------------------------------ */
@@ -109,7 +109,7 @@ function initials(name = '') {
 
 function Badge({ text }: { text: string }) {
     return (
-        <span className="inline-flex items-center rounded-full bg-[#F1EDE3] px-3 py-1 text-xs text-[#5B6B6E]">
+        <span className="inline-flex items-center rounded-full bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]">
             {text}
         </span>
     );
@@ -119,8 +119,8 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
     if (!value) return null;
     return (
         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4">
-            <dt className="text-sm font-medium text-[#5B6B6E]">{label}</dt>
-            <dd className="text-sm text-[#16302F] sm:text-right">{value}</dd>
+            <dt className="text-sm font-medium text-[#2C2C2C]/75">{label}</dt>
+            <dd className="text-sm text-[#2C2C2C] sm:text-right">{value}</dd>
         </div>
     );
 }
@@ -135,9 +135,9 @@ function SectionCard({
     action?: React.ReactNode;
 }) {
     return (
-        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-serif text-sm font-semibold text-[#16302F]">{title}</h2>
+                <h2 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{title}</h2>
                 {action}
             </div>
             {children}
@@ -146,7 +146,7 @@ function SectionCard({
 }
 
 function BadgeList({ items }: { items?: string[] }) {
-    if (!items || items.length === 0) return <p className="text-sm text-[#9AA6A4]">—</p>;
+    if (!items || items.length === 0) return <p className="text-sm text-[#2C2C2C]/70">—</p>;
     return (
         <div className="flex flex-wrap gap-2">
             {items.map((item, idx) => (
@@ -201,23 +201,23 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                 role="radio"
                 aria-checked={active}
                 onClick={() => setChoice(value)}
-                className="flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left transition hover:bg-white/50"
+                className="flex min-h-[48px] w-full items-center gap-3 rounded-[10px] px-2 py-1.5 text-left transition hover:bg-[#1E4D4A]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40"
             >
-                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition ${active ? 'border-[#0E7C7B]' : 'border-[#C7BEAD]'}`}>
-                    {active && <span className="h-2.5 w-2.5 rounded-full bg-[#0E7C7B]" />}
+                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition ${active ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'}`}>
+                    {active && <span className="h-2.5 w-2.5 rounded-full bg-[#1E4D4A]" />}
                 </span>
-                <span className="text-sm text-[#26403F]">{label}</span>
+                <span className={`text-[15px] text-[#2C2C2C] ${active ? 'font-semibold' : ''}`}>{label}</span>
             </button>
         );
     };
 
     return (
-        <div className="mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm sm:p-6 lg:grid-cols-[1fr_1px_320px]">
+        <div className="mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm sm:p-6 lg:grid-cols-[1fr_1px_320px]">
             {/* left — question + save */}
             <div>
                 {(neverSet || expired || dueSoon) && (
-                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#F5A623]/40 bg-[#F5A623]/10 px-4 py-3 text-sm text-[#7A5410]">
-                        <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#B7791F]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                    <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#E8D9B8] bg-[#E8D9B8]/40 px-4 py-3 text-sm text-[#2C2C2C]">
+                        <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
                         </svg>
                         <span>
@@ -242,8 +242,8 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                         </span>
                     </div>
                 )}
-                <h2 className="font-serif text-base font-semibold text-[#16302F]">Are you currently accepting new clients?</h2>
-                <p className="mt-1 text-xs text-[#8A9795]">This shows on your public listing. Please reconfirm periodically so it stays accurate.</p>
+                <h2 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">Are you currently accepting new clients?</h2>
+                <p className="mt-1 text-sm text-[#2C2C2C]/75">This shows on your public listing. Please reconfirm periodically so it stays accurate.</p>
                 <div className="mt-4 space-y-1">
                     <Radio value="yes" label="Yes, I am accepting new clients" />
                     <Radio value="no" label="No, I am not currently accepting new clients" />
@@ -252,7 +252,7 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                     type="button"
                     onClick={save}
                     disabled={saving || !choice}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0d4a45] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c3f3b] disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
+                    className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
                 >
                     {saving ? (
                         <>
@@ -264,26 +264,26 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
             </div>
 
             {/* divider */}
-            <div className="hidden bg-[#EFEAE0] lg:block" aria-hidden />
+            <div className="hidden bg-[#E8D9B8] lg:block" aria-hidden />
 
             {/* right — status information */}
-            <div className="rounded-xl bg-[#FBF8F2] p-4">
-                <p className="text-sm font-semibold text-[#16302F]">Status Information <span className="font-normal text-[#9AA6A4]">(shown to provider)</span></p>
+            <div className="rounded-xl bg-[#FAFAF6] p-4">
+                <p className="text-sm font-semibold text-[#2C2C2C]">Status Information <span className="font-normal text-[#2C2C2C]/70">(shown to provider)</span></p>
                 <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-3">
-                        <dt className="text-[#5B6B6E]">Current status:</dt>
-                        <dd className="text-right font-medium text-[#16302F]">{currentStatusLabel}</dd>
+                        <dt className="text-[#2C2C2C]/75">Current status:</dt>
+                        <dd className="text-right font-medium text-[#2C2C2C]">{currentStatusLabel}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                        <dt className="text-[#5B6B6E]">Last confirmed:</dt>
-                        <dd className="text-right text-[#16302F]">{provider.availability_confirmed_at || '—'}</dd>
+                        <dt className="text-[#2C2C2C]/75">Last confirmed:</dt>
+                        <dd className="text-right text-[#2C2C2C]">{provider.availability_confirmed_at || '—'}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                        <dt className="text-[#5B6B6E]">Reconfirm by:</dt>
-                        <dd className="text-right text-[#16302F]">{provider.availability_next_reminder || '—'}</dd>
+                        <dt className="text-[#2C2C2C]/75">Reconfirm by:</dt>
+                        <dd className="text-right text-[#2C2C2C]">{provider.availability_next_reminder || '—'}</dd>
                     </div>
                 </dl>
-                <p className="mt-3 text-xs leading-relaxed text-[#8A9795]">
+                <p className="mt-3 text-sm leading-relaxed text-[#2C2C2C]/75">
                     Please reconfirm your availability periodically so clients receive current information.
                 </p>
             </div>
@@ -317,14 +317,14 @@ export default function ProviderDashboard({ provider, status, completeness, stat
         <>
             <Head title="Provider Dashboard" />
 
-            <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
+            <div className="min-h-screen bg-[#FAFAF6] font-body text-[#2C2C2C]">
                 {/* Top navigation — আলাদা কম্পোনেন্ট */}
                 <ProviderMenu />
 
                 {/* Main content */}
                 <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                     {/* Welcome header */}
-                    <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm sm:p-6">
+                    <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm sm:p-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
                                 {provider.profile_photo ? (
@@ -341,29 +341,29 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                     />
                                 )}
                                 <div>
-                                    <h1 className="font-serif text-xl font-semibold text-[#16302F]">
+                                    <h1 className="font-display text-[24px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[28px]">
                                         Welcome back, {provider.organization_name}
                                     </h1>
-                                    <p className="text-sm text-[#5B6B6E]">
+                                    <p className="text-sm text-[#2C2C2C]/75">
                                         {[professionalTitles.join(', '), provider.city, provider.country]
                                             .filter(Boolean)
                                             .join(' · ') || 'Manage your provider profile'}
                                     </p>
                                 </div>
                             </div>
-                            <span className={`inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1 text-xs font-medium ${statusChip}`}>
+                            <span className={`inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1 text-sm font-semibold ${statusChip}`}>
                                 <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
                                 {status.label}
                             </span>
                         </div>
 
-                        <p className="mt-2 rounded-lg bg-[#FBF8F2] px-4 py-3 text-sm text-[#5B6B6E]">
+                        <p className="mt-2 rounded-lg bg-[#FAFAF6] px-4 py-3 text-[15px] text-[#2C2C2C]">
                             {status.description}
                         </p>
 
                         {provider.review_note && (
-                            <p className="mt-2 rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/10 px-4 py-3 text-sm text-[#B7791F]">
-                                <span className="font-medium">Reviewer note:</span> {provider.review_note}
+                            <p className="mt-2 rounded-lg border border-[#E8D9B8] bg-[#E8D9B8]/40 px-4 py-3 text-sm text-[#2C2C2C]">
+                                <span className="font-semibold">Reviewer note:</span> {provider.review_note}
                             </p>
                         )}
                     </div>
@@ -373,17 +373,17 @@ export default function ProviderDashboard({ provider, status, completeness, stat
 
                     {/* Stats cards */}
                     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                            <span className="text-2xl font-semibold text-[#16302F]">{stats.supportAreas}</span>
-                            <span className="block text-sm text-[#5B6B6E]">Areas of support</span>
+                        <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
+                            <span className="text-2xl font-semibold text-[#1E4D4A]">{stats.supportAreas}</span>
+                            <span className="block text-sm text-[#2C2C2C]/75">Areas of support</span>
                         </div>
-                        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                            <span className="text-2xl font-semibold text-[#16302F]">{stats.languages}</span>
-                            <span className="block text-sm text-[#5B6B6E]">Languages spoken</span>
+                        <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
+                            <span className="text-2xl font-semibold text-[#1E4D4A]">{stats.languages}</span>
+                            <span className="block text-sm text-[#2C2C2C]/75">Languages spoken</span>
                         </div>
-                        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-                            <span className="text-2xl font-semibold text-[#16302F]">{stats.populations}</span>
-                            <span className="block text-sm text-[#5B6B6E]">Populations served</span>
+                        <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
+                            <span className="text-2xl font-semibold text-[#1E4D4A]">{stats.populations}</span>
+                            <span className="block text-sm text-[#2C2C2C]/75">Populations served</span>
                         </div>
                     </div>
 
@@ -401,19 +401,19 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Professional Details">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Professional Titles</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Professional Titles</h3>
                                     <BadgeList items={professionalTitles} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Treatment Approaches</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Treatment Approaches</h3>
                                     <BadgeList items={treatmentApproaches} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Specialized Training</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Specialized Training</h3>
                                     <BadgeList items={specializedTraining} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Certifications</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Certifications</h3>
                                     <BadgeList items={certifications} />
                                 </div>
                             </div>
@@ -422,11 +422,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Areas of Support & Populations">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Areas of Support</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Areas of Support</h3>
                                     <BadgeList items={areasOfSupport} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Populations Served</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Populations Served</h3>
                                     <BadgeList items={populationsServed} />
                                 </div>
                             </div>
@@ -435,7 +435,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Languages & Cultural Identity">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Languages</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Languages</h3>
                                     <BadgeList items={languages} />
                                 </div>
                                 <InfoRow label="Caribbean Identity" value={provider.caribbean_identity} />
@@ -446,11 +446,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Service Information">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Service Formats</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Service Formats</h3>
                                     <BadgeList items={serviceFormats} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Practice Settings</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Practice Settings</h3>
                                     <BadgeList items={practiceSettings} />
                                 </div>
                                 <InfoRow label="Session Format" value={stats.sessionFormat} />
@@ -460,11 +460,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Location & Telehealth">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Address</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Address</h3>
                                     {provider.hide_address ? (
-                                        <p className="text-sm text-[#5B6B6E]">Hidden from public view</p>
+                                        <p className="text-sm text-[#2C2C2C]/75">Hidden from public view</p>
                                     ) : (
-                                        <p className="text-sm text-[#16302F]">
+                                        <p className="text-sm text-[#2C2C2C]">
                                             {[provider.address, provider.city, provider.state_province, provider.country]
                                                 .filter(Boolean)
                                                 .join(', ')}
@@ -473,7 +473,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                 </div>
                                 <InfoRow label="Multiple Locations" value={provider.multiple_locations} />
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Telehealth Regions</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Telehealth Regions</h3>
                                     <BadgeList items={telehealthRegions} />
                                 </div>
                             </div>
@@ -482,7 +482,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Payment & Insurance">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">Payment Methods</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Payment Methods</h3>
                                     <BadgeList items={paymentMethods} />
                                 </div>
                                 <InfoRow label="Insurance Plans" value={provider.insurance_plans} />
@@ -507,7 +507,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                 <InfoRow label="License Number" value={provider.license_number} />
                                 <InfoRow label="License Status" value={provider.license_status} />
                                 <div>
-                                    <h3 className="text-xs font-medium uppercase tracking-wide text-[#5B6B6E]">License States/Countries</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">License States/Countries</h3>
                                     <BadgeList items={licenseStates} />
                                 </div>
                             </dl>

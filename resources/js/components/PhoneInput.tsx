@@ -15,7 +15,7 @@ import {
 const errClass = (hasError: boolean) =>
     hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
-        : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25';
+        : 'border-[#1E4D4A]/65 focus:border-[#1E4D4A] focus:ring-[#1E4D4A]/25';
 
 interface PhoneInputProps {
     value: string;                 // E.164, e.g. +13054792993
@@ -125,13 +125,13 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                     aria-haspopup="listbox"
                     aria-expanded={open}
                     aria-label={`Country code: ${country.name} +${country.dial}`}
-                    className={`flex min-w-[7.5rem] flex-shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-l-lg border border-r-0 bg-[#FBF8F2] px-3.5 text-sm font-medium text-[#26403F] outline-none transition hover:bg-[#0E7C7B]/5 focus:ring-4 ${errClass(error)} ${open ? 'border-[#0E7C7B]' : ''}`}
+                    className={`flex min-w-[7.5rem] flex-shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-l-[10px] border border-r-0 bg-[#FAFAF6] px-3.5 text-sm font-medium text-[#2C2C2C] outline-none transition hover:bg-[#1E4D4A]/5 focus:ring-4 ${errClass(error)} ${open ? 'border-[#1E4D4A]' : ''}`}
                 >
-                    <span className="text-xs font-semibold text-[#6B7A78]">{country.iso}</span>
+                    <span className="text-sm font-semibold text-[#2C2C2C]">{country.iso}</span>
                     <span>+{country.dial}</span>
                     <svg
                         viewBox="0 0 24 24"
-                        className={`h-3.5 w-3.5 text-[#6B7A78] transition-transform ${open ? 'rotate-180' : ''}`}
+                        className={`h-3.5 w-3.5 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`}
                         fill="none" stroke="currentColor" strokeWidth={2} aria-hidden
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
@@ -145,13 +145,13 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                     value={formatNational(country, national)}
                     onChange={(e) => handleInput(e.target.value)}
                     placeholder={formatNational(country, country.example)}
-                    className={`min-w-0 flex-1 rounded-r-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(error)}`}
+                    className={`min-h-[48px] min-w-0 flex-1 rounded-r-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(error)}`}
                 />
 
                 {open && (
-                    <div className="absolute left-0 top-full z-30 mt-1.5 w-full max-w-md overflow-hidden sm:min-w-[18rem] rounded-lg border border-[#DED7C9] bg-white shadow-lg">
-                        <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
-                            <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#9AA6A4]" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                    <div className="absolute left-0 top-full z-30 mt-1.5 w-full max-w-md overflow-hidden sm:min-w-[18rem] rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
+                        <div className="flex items-center gap-2 border-b border-[#E8D9B8] px-3">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
                             </svg>
                             <input
@@ -160,12 +160,12 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Search country or code…"
-                                className="w-full bg-transparent py-2.5 text-sm text-[#1F2A2E] placeholder-[#9AA6A4] outline-none"
+                                className="w-full bg-transparent py-2.5 text-sm text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none"
                             />
                         </div>
                         <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
                             {filtered.length === 0 && (
-                                <li className="px-3 py-6 text-center text-sm text-[#9AA6A4]">No results found.</li>
+                                <li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">No results found.</li>
                             )}
                             {filtered.map((c) => {
                                 const active = c.key === country.key;
@@ -176,11 +176,11 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
                                             role="option"
                                             aria-selected={active}
                                             onClick={() => selectCountry(c)}
-                                            className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#0E7C7B]/10 text-[#15403F]' : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'}`}
+                                            className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'}`}
                                         >
-                                            <span className="w-7 flex-shrink-0 text-xs font-semibold text-[#9AA6A4]">{c.iso}</span>
+                                            <span className="w-7 flex-shrink-0 text-sm font-semibold text-[#2C2C2C]/70">{c.iso}</span>
                                             <span className="flex-1 truncate">{c.name}</span>
-                                            <span className="flex-shrink-0 whitespace-nowrap text-right tabular-nums text-[#6B7A78]">
+                                            <span className="flex-shrink-0 whitespace-nowrap text-right tabular-nums text-[#2C2C2C]">
                                                 +{c.dial}{c.areaCodes ? ` ${c.areaCodes[0]}` : ''}
                                             </span>
                                         </button>
@@ -193,8 +193,8 @@ export default function PhoneInput({ value, onChange, defaultCountry = '', error
             </div>
 
             {preview && (
-                <p className="mt-1.5 text-xs text-[#6B7A78]">
-                    Shown on your profile as <span className="font-medium text-[#26403F]">{preview}</span>
+                <p className="mt-1.5 text-sm text-[#2C2C2C]">
+                    Shown on your profile as <span className="font-medium text-[#2C2C2C]">{preview}</span>
                 </p>
             )}
         </div>

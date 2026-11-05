@@ -195,20 +195,20 @@ const splitStored = (stored: string[] | undefined, known: string[], sentinel: st
 const errClass = (hasError: boolean) =>
     hasError
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
-        : 'border-[#DED7C9] focus:border-[#0E7C7B] focus:ring-[#0E7C7B]/25';
+        : 'border-[#1E4D4A]/65 focus:border-[#1E4D4A] focus:ring-[#1E4D4A]/25';
 
 function FieldShell({ label, required, hint, error, children }: { label?: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode; }) {
     return (
         <div>
             {label && (
-                <label className="mb-1.5 block text-sm font-medium text-[#26403F]">
-                    {label}{required && <span className="ml-1 text-[#C2543B]">*</span>}
+                <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">
+                    {label}{required && <span className="ml-1 text-[#A8472F]">*</span>}
                 </label>
             )}
-            {hint && <p className="mb-2 text-xs text-[#6B7A78]">{hint}</p>}
+            {hint && <p className="mb-2 text-sm text-[#2C2C2C]">{hint}</p>}
             {children}
             {error && (
-                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]">
+                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
                     <span aria-hidden>⚠</span>{error}
                 </p>
             )}
@@ -220,7 +220,7 @@ function TextInput({ value, onChange, error, placeholder, type = 'text', disable
     return (
         <input type={type} value={value} disabled={disabled} placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#F1EDE3] disabled:text-[#9AA6A4] ${errClass(!!error)}`} />
+            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`} />
     );
 }
 
@@ -228,7 +228,7 @@ function TextArea({ value, onChange, error, placeholder, rows = 5 }: { value: st
     return (
         <textarea value={value} rows={rows} placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
     );
 }
 
@@ -236,11 +236,11 @@ function TextArea({ value, onChange, error, placeholder, rows = 5 }: { value: st
 function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; prefix?: string; }) {
     return (
         <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#9AA6A4]">{prefix}</span>
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
             <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
                 style={{ paddingLeft: `${1.25 + prefix.trim().length * 0.5}rem` }}
-                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                className={`min-h-[48px] w-full rounded-[10px] border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
         </div>
     );
 }
@@ -269,25 +269,25 @@ function SearchableSelect({ value, onChange, options, error, placeholder = 'Sele
     return (
         <div ref={rootRef} className="relative">
             <button type="button" role="combobox" aria-expanded={open} onClick={() => setOpen((o) => !o)}
-                className={`flex w-full items-center justify-between rounded-lg border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#0E7C7B] ring-4 ring-[#0E7C7B]/25' : ''}`}>
-                <span className={`truncate ${selectedLabel ? 'text-[#1F2A2E]' : 'text-[#9AA6A4]'}`}>{selectedLabel || placeholder}</span>
-                <svg viewBox="0 0 24 24" className={`ml-2 h-4 w-4 flex-shrink-0 text-[#6B7A78] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}>
+                <span className={`truncate ${selectedLabel ? 'text-[#2C2C2C]' : 'text-[#2C2C2C]/70'}`}>{selectedLabel || placeholder}</span>
+                <svg viewBox="0 0 24 24" className={`ml-2 h-4 w-4 flex-shrink-0 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
             </button>
             {open && (
-                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#DED7C9] bg-white shadow-lg">
-                    <div className="flex items-center gap-2 border-b border-[#EFEAE0] px-3">
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#9AA6A4]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
-                        <input ref={searchRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchPlaceholder} className="w-full bg-transparent py-2.5 text-sm text-[#1F2A2E] placeholder-[#9AA6A4] outline-none" />
+                <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
+                    <div className="flex items-center gap-2 border-b border-[#E8D9B8] px-3">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
+                        <input ref={searchRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchPlaceholder} className="w-full bg-transparent py-2.5 text-sm text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none" />
                     </div>
                     <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
-                        {filtered.length === 0 && (<li className="px-3 py-6 text-center text-sm text-[#9AA6A4]">{emptyText}</li>)}
+                        {filtered.length === 0 && (<li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>)}
                         {filtered.map((o) => {
                             const active = o.value === value;
                             return (
                                 <li key={o.value}>
                                     <button type="button" role="option" aria-selected={active} onClick={() => { onChange(o.value); setOpen(false); }}
-                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#0E7C7B]/10 text-[#15403F]' : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'}`}>
-                                        <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#0E7C7B] ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
+                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'}`}>
+                                        <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#1E4D4A] ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
                                             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
                                         </span>
                                         <span className="leading-snug">{o.label}</span>
@@ -309,7 +309,7 @@ function RadioRow({ options, value, onChange }: { options: { value: string; labe
                 const active = value === o.value;
                 return (
                     <button key={o.value} type="button" role="radio" aria-checked={active} onClick={() => onChange(o.value)}
-                        className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white shadow-sm' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5'}`}>
+                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}>
                         {o.label}
                     </button>
                 );
@@ -325,11 +325,11 @@ function CheckGrid({ options, selected, onToggle, columns = 2 }: { options: stri
                 const active = selected.includes(o);
                 return (
                     <button key={o} type="button" role="checkbox" aria-checked={active} onClick={() => onToggle(o)}
-                        className={`flex items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'}`}>
-                        <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'}`} aria-hidden>
+                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}>
+                        <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
                             {active && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
                         </span>
-                        <span className="leading-snug">{o}</span>
+                        <span className="min-w-0 leading-snug [overflow-wrap:anywhere]">{o}</span>
                     </button>
                 );
             })}
@@ -341,8 +341,8 @@ function OtherCheckboxField({ checked, text, onToggle, onTextChange, placeholder
     return (
         <div className="mt-2.5 space-y-2.5">
             <button type="button" role="checkbox" aria-checked={checked} onClick={onToggle}
-                className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B]/8 text-[#15403F]' : 'border-[#DED7C9] bg-white text-[#3A4B49] hover:border-[#0E7C7B]/50'}`}>
-                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'}`} aria-hidden>
+                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}>
+                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
                     {checked && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
                 </span>
                 <span className="leading-snug">Other (specify)</span>
@@ -361,10 +361,10 @@ function CertificationsInput({ values, onChange }: { values: string[]; onChange:
             {values.map((val, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                     <TextInput value={val} onChange={(v) => update(idx, v)} placeholder="e.g. PMH-C, CCTP, EMDR Certified Therapist" />
-                    <button type="button" onClick={() => remove(idx)} className="text-sm text-[#C2543B] hover:underline">Remove</button>
+                    <button type="button" onClick={() => remove(idx)} className="text-sm text-[#A8472F] hover:underline">Remove</button>
                 </div>
             ))}
-            <button type="button" onClick={add} className="inline-flex items-center gap-1 text-sm text-[#0E7C7B] hover:underline">
+            <button type="button" onClick={add} className="inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline">
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} /></svg>
                 Add credential
             </button>
@@ -732,18 +732,18 @@ export default function ProviderProfileEdit({
             <>
                 <ProviderMenu />
                 <Head title="Changes Submitted — Bahali Provider Directory" />
-                <div className="min-h-screen bg-[#F7F3EC] px-4 py-16">
-                    <div className="mx-auto max-w-xl rounded-2xl border border-[#E7E0D2] bg-white p-10 text-center shadow-sm">
-                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#0E7C7B]/10">
-                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>
+                <div className="min-h-screen bg-[#FAFAF6] px-4 py-16 font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
+                    <div className="mx-auto max-w-xl rounded-2xl border border-[#E8D9B8] bg-white p-10 text-center shadow-sm">
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#1E4D4A]/10">
+                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>
                         </div>
-                        <h1 className="font-serif text-2xl text-[#1B2E2D]">Changes submitted for review</h1>
-                        <p className="mt-3 text-[#5B6B6E]">
+                        <h1 className="font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Changes submitted for review</h1>
+                        <p className="mt-3 text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
                             Your updated profile has been saved and is now <strong>pending review</strong>. Your public
                             listing continues to show your previously approved details until an admin approves the changes.
                         </p>
                         <div className="mt-8">
-                            <a href="/provider/dashboard" className="inline-flex items-center justify-center rounded-lg bg-[#0E7C7B] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0B6463]">
+                            <a href="/provider/dashboard" className="inline-flex items-center justify-center bg-[#1E4D4A] px-5 text-white transition-colors hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                 Back to my profile
                             </a>
                         </div>
@@ -757,19 +757,19 @@ export default function ProviderProfileEdit({
     return (
         <>
             <Head title="Edit Profile — Bahali" />
-            <div className="min-h-screen bg-[#F7F3EC] text-[#1F2A2E]">
+            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
                 <Header />
                 <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
                     <div className="mb-6">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0E7C7B]">Provider portal</p>
-                        <h1 className="mt-2 font-serif text-3xl text-[#16302F] sm:text-4xl">Edit your profile</h1>
-                        <p className="mt-2 max-w-2xl text-[#5B6B6E]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">Provider portal</p>
+                        <h1 className="mt-2 font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Edit your profile</h1>
+                        <p className="mt-2 max-w-2xl text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
                             Update your information below. Saved changes are sent for review before they appear publicly —
                             your current approved listing stays live in the meantime.
                         </p>
                         {provider?.status && (
-                            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#F1EDE3] px-3 py-1 text-xs font-medium text-[#6B7A78]">
-                                Current status: <span className="capitalize text-[#16302F]">{String(provider.status).replace(/_/g, ' ')}</span>
+                            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]">
+                                Current status: <span className="font-semibold capitalize text-[#1E4D4A]">{String(provider.status).replace(/_/g, ' ')}</span>
                             </span>
                         )}
                     </div>
@@ -778,30 +778,30 @@ export default function ProviderProfileEdit({
                         <aside className="lg:sticky lg:top-8 lg:self-start">
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
-                                    <span className="font-medium text-[#16302F]">Step {step + 1} of {TOTAL_STEPS}</span>
-                                    <span className="text-[#6B7A78]">{progress}%</span>
+                                    <span className="font-medium text-[#2C2C2C]">Step {step + 1} of {TOTAL_STEPS}</span>
+                                    <span className="text-[#2C2C2C]">{progress}%</span>
                                 </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-[#E2DACB]">
-                                    <div className="h-full rounded-full bg-[#0E7C7B] transition-all duration-500" style={{ width: `${progress}%` }} />
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-[#E8D9B8]">
+                                    <div className="h-full rounded-full bg-[#1E4D4A] transition-all duration-500" style={{ width: `${progress}%` }} />
                                 </div>
-                                <p className="mt-2 font-serif text-lg text-[#16302F]">{STEPS[step].title}</p>
+                                <p className="mt-2 text-[18px] font-semibold leading-[1.2] text-[#1E4D4A]">{STEPS[step].title}</p>
                             </div>
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
-                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E2DACB]" aria-hidden />
+                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E8D9B8]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isDone = i < step; const isCurrent = i === step;
                                         return (
                                             <li key={s.key} className="relative mb-1 last:mb-0">
                                                 <button type="button"
                                                     onClick={() => { setErrors({}); setStep(i); scrollTop(); }}
-                                                    className="flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition cursor-pointer hover:bg-[#0E7C7B]/5">
-                                                    <span className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition ${isDone ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : isCurrent ? 'border-[#0E7C7B] bg-white text-[#0E7C7B]' : 'border-[#D8D0C0] bg-[#F7F3EC] text-[#A4AFAD]'}`}>
+                                                    className="flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition cursor-pointer hover:bg-[#1E4D4A]/5">
+                                                    <span className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${isDone ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : isCurrent ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]' : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'}`}>
                                                         {isDone ? (<svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>) : (i + 1)}
                                                     </span>
                                                     <span className="min-w-0 pt-0.5">
-                                                        <span className={`block text-sm font-medium leading-tight ${isCurrent ? 'text-[#16302F]' : 'text-[#5B6B6E]'}`}>{s.title}</span>
-                                                        <span className="block text-xs text-[#9AA6A4]">{s.subtitle}</span>
+                                                        <span className={`block text-[15px] leading-tight ${isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'}`}>{s.title}</span>
+                                                        <span className="block text-sm text-[#2C2C2C]/70">{s.subtitle}</span>
                                                     </span>
                                                 </button>
                                             </li>
@@ -812,7 +812,7 @@ export default function ProviderProfileEdit({
                         </aside>
 
                         <main>
-                            <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm sm:p-8">
+                            <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm sm:p-8">
                                 {submitErrors.length > 0 && (
                                     <div role="alert" className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]">
                                         <p className="font-semibold">We couldn't save your changes. Please fix the following:</p>
@@ -821,9 +821,9 @@ export default function ProviderProfileEdit({
                                         </ul>
                                     </div>
                                 )}
-                                <div className="mb-6 border-b border-[#EFEAE0] pb-5">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0E7C7B]">Section {step + 1}</p>
-                                    <h2 className="mt-1 font-serif text-2xl text-[#16302F]">{STEPS[step].title}</h2>
+                                <div className="mb-6 border-b border-[#E8D9B8] pb-5">
+                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1E4D4A]">Section {step + 1}</p>
+                                    <h2 className="mt-1 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{STEPS[step].title}</h2>
                                 </div>
                                 <div className="space-y-6">
                                     <StepBody
@@ -834,21 +834,21 @@ export default function ProviderProfileEdit({
                                         onRemoveKept={(path) => setKeptPhotos(prev => prev.filter(p => p.path !== path))}
                                     />
                                 </div>
-                                <div className="mt-8 flex items-center justify-between border-t border-[#EFEAE0] pt-6">
+                                <div className="mt-8 flex items-center justify-between border-t border-[#E8D9B8] pt-6">
                                     <button type="button" onClick={goBack} disabled={step === 0}
-                                        className={`rounded-lg px-5 py-2.5 text-sm font-medium transition ${step === 0 ? 'cursor-not-allowed text-[#B7C0BE]' : 'text-[#3A4B49] hover:bg-[#0E7C7B]/5'}`}>← Back</button>
+                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${step === 0 ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70' : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}>← Back</button>
                                     {step < TOTAL_STEPS - 1 ? (
                                         <button type="button" onClick={goNext}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30">Continue →</button>
+                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">Continue →</button>
                                     ) : (
                                         <button type="button" onClick={handleSubmit} disabled={form.processing}
-                                            className="rounded-lg bg-[#0E7C7B] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0c6a69] focus:outline-none focus:ring-4 focus:ring-[#0E7C7B]/30 disabled:opacity-60">
+                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                             {form.processing ? 'Saving…' : 'Save & submit for review'}
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            <p className="mt-4 text-center text-xs text-[#9AA6A4]">Fields marked <span className="text-[#C2543B]">*</span> are required.</p>
+                            <p className="mt-4 text-center text-sm text-[#2C2C2C]/70">Fields marked <span className="text-[#A8472F]">*</span> are required.</p>
                         </main>
                     </div>
                 </div>
@@ -928,7 +928,7 @@ function StepBody({
                     )}
                     <FieldShell label="Short bio" required hint="Tell community members about yourself and your approach. (Max 500 words)" error={fieldError('short_bio')}>
                         <TextArea value={d.short_bio} onChange={(v) => set('short_bio', v)} error={!!fieldError('short_bio')} rows={7} placeholder="Share your story, your values, and how you support healing…" />
-                        <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">{wordCount(d.short_bio)} / 500 words</p>
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.short_bio)} / 500 words</p>
                     </FieldShell>
                     <FieldShell label="Years of experience" error={fieldError('years_experience')}>
                         <SearchableSelect value={d.years_experience} onChange={(v) => set('years_experience', v)} options={YEARS_EXPERIENCE} placeholder="Select…" searchPlaceholder="Search experience…" />
@@ -953,7 +953,7 @@ function StepBody({
                     </FieldShell>
                     <FieldShell label="Verification document" hint="Optional — a license certificate or proof of credentials (PDF, JPG, PNG)." error={fieldError('verification_document')}>
                         {!d.verification_document && existingVerificationDoc && (
-                            <a href={existingVerificationDoc} target="_blank" rel="noreferrer" className="mb-2 inline-flex items-center gap-1 text-sm text-[#0E7C7B] hover:underline">
+                            <a href={existingVerificationDoc} target="_blank" rel="noreferrer" className="mb-2 inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline">
                                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" /></svg>
                                 View current document
                             </a>
@@ -974,17 +974,17 @@ function StepBody({
                             const totalSelected = count + (customSelected ? 1 : 0);
                             const isOpen = openCat === category;
                             return (
-                                <div key={category} className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#0E7C7B]/50' : 'border-[#DED7C9]'}`}>
+                                <div key={category} className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]/50' : 'border-[#1E4D4A]/65'}`}>
                                     <button type="button" aria-expanded={isOpen} onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
-                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#0E7C7B]/5' : 'bg-[#FBF8F2] hover:bg-[#0E7C7B]/5'}`}>
+                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'}`}>
                                         <span className="flex items-center gap-2.5">
-                                            <span className="text-sm font-semibold text-[#16302F]">{category}</span>
-                                            {totalSelected > 0 && (<span className="inline-flex items-center rounded-full bg-[#0E7C7B] px-2 py-0.5 text-xs font-semibold text-white">{totalSelected} selected</span>)}
+                                            <span className="text-sm font-semibold text-[#2C2C2C]">{category}</span>
+                                            {totalSelected > 0 && (<span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">{totalSelected} selected</span>)}
                                         </span>
-                                        <svg viewBox="0 0 24 24" className={`h-4 w-4 flex-shrink-0 text-[#0E7C7B] transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+                                        <svg viewBox="0 0 24 24" className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
                                     </button>
                                     {isOpen && (
-                                        <div className="border-t border-[#EFEAE0] bg-white p-3.5">
+                                        <div className="border-t border-[#E8D9B8] bg-white p-3.5">
                                             <CheckGrid options={group.items} selected={d.areas_of_support} onToggle={(v) => toggle('areas_of_support', v)} columns={2} />
                                             <OtherCheckboxField checked={custom.checked} text={custom.text}
                                                 onToggle={() => onCustomSupportChange(category, 'checked', !custom.checked)}
@@ -997,7 +997,7 @@ function StepBody({
                         })}
                     </div>
                     {d.areas_of_support.length > 0 && (
-                        <p className="mt-3 text-sm font-medium text-[#0E7C7B]">{d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected</p>
+                        <p className="mt-3 text-sm font-medium text-[#1E4D4A]">{d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected</p>
                     )}
                 </FieldShell>
             );
@@ -1036,7 +1036,7 @@ function StepBody({
                     {d.caribbean_experience === 'yes' && (
                         <FieldShell label="Describe your experience (optional)" hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)' error={fieldError('caribbean_experience_details')}>
                             <TextArea value={d.caribbean_experience_details} onChange={(v) => set('caribbean_experience_details', v)} error={!!fieldError('caribbean_experience_details')} rows={4} placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…" />
-                            <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">{wordCount(d.caribbean_experience_details)} / 150 words</p>
+                            <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.caribbean_experience_details)} / 150 words</p>
                         </FieldShell>
                     )}
                     <FieldShell label="Do you offer LGBTQIA+ affirming care?" required hint="This helps people find providers who understand and support their identity." error={fieldError('lgbtq_affirming')}>
@@ -1052,7 +1052,7 @@ function StepBody({
                     )}
                     <FieldShell label="How do you incorporate culture into your work?" hint="Optional. (Max 250 words)" error={fieldError('cultural_approach')}>
                         <TextArea value={d.cultural_approach} onChange={(v) => set('cultural_approach', v)} error={!!fieldError('cultural_approach')} rows={5} placeholder="Describe how culture, story, and lived experience shape your care…" />
-                        <p className="mt-1.5 text-right text-xs text-[#9AA6A4]">{wordCount(d.cultural_approach)} / 250 words</p>
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.cultural_approach)} / 250 words</p>
                     </FieldShell>
                 </>
             );
@@ -1116,25 +1116,25 @@ function StepBody({
                     >
                         <div className="grid gap-4 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Currency</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Currency</label>
                                 <SearchableSelect value={d.fee_currency} onChange={(v) => set('fee_currency', v)} options={CURRENCY_OPTIONS} error={!!fieldError('fee_currency')} placeholder="Select currency…" searchPlaceholder="Search currency…" />
                             </div>
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Minimum fee</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Minimum fee</label>
                                 <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" prefix={currencySymbol(d.fee_currency)} />
                             </div>
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium text-[#6B7A78]">Maximum fee</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Maximum fee</label>
                                 <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" prefix={currencySymbol(d.fee_currency)} />
                             </div>
                         </div>
                         {fieldError('fee_currency') && (
-                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
+                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
                         )}
                         {(d.fee_min || d.fee_max) && (
-                            <p className="mt-2.5 text-sm text-[#5B6B6E]">
+                            <p className="mt-2.5 text-sm text-[#2C2C2C]">
                                 Preview:{' '}
-                                <span className="font-semibold text-[#16302F]">
+                                <span className="font-semibold text-[#2C2C2C]">
                                     {feePreview(d.fee_min, d.fee_max, d.fee_currency)}
                                 </span>
                             </p>
@@ -1156,10 +1156,10 @@ function StepBody({
             return (
                 <>
                     {isOrg && (
-                        <div className="space-y-4 rounded-xl border border-[#E7E0D2] bg-[#FBF8F2] p-4 sm:p-5">
+                        <div className="space-y-4 rounded-xl border border-[#E8D9B8] bg-[#FAFAF6] p-4 sm:p-5">
                             <div>
-                                <p className="text-sm font-semibold text-[#16302F]">Contact person</p>
-                                <p className="mt-0.5 text-xs text-[#6B7A78]">Organizations need a named person Bahali and visitors can reach about this listing.</p>
+                                <p className="text-sm font-semibold text-[#2C2C2C]">Contact person</p>
+                                <p className="mt-0.5 text-sm text-[#2C2C2C]">Organizations need a named person Bahali and visitors can reach about this listing.</p>
                             </div>
                             <FieldShell label="Full name" required error={fieldError('contact_person_name')}>
                                 <TextInput value={d.contact_person_name} onChange={(v) => set('contact_person_name', v)} error={!!fieldError('contact_person_name')} placeholder="e.g. Rev. Marcia Brown" />
@@ -1184,7 +1184,7 @@ function StepBody({
                     </FieldShell>
                     <div>
                         <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>Show my phone number on my public profile</ConsentItem>
-                        <p className="mt-1.5 text-xs text-[#6B7A78]">Untick to keep your number private. Bahali will still use it to contact you about your listing.</p>
+                        <p className="mt-1.5 text-sm text-[#2C2C2C]">Untick to keep your number private. Bahali will still use it to contact you about your listing.</p>
                     </div>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
                         <TextInput value={d.website} onChange={(v) => set('website', v)} error={!!fieldError('website')} placeholder="yourpractice.com" />
@@ -1200,8 +1200,8 @@ function StepBody({
                     <FieldShell label="Professional photo or organization logo" required hint="A clear headshot or your logo. JPG or PNG." error={fieldError('profile_photo')}>
                         {!d.profile_photo && existingProfilePhoto && (
                             <div className="mb-3 flex items-center gap-3">
-                                <img src={existingProfilePhoto} alt="Current" className="h-16 w-16 rounded-lg border border-[#E7E0D2] object-cover" />
-                                <span className="text-sm text-[#5B6B6E]">Current photo — choose a file to replace it.</span>
+                                <img src={existingProfilePhoto} alt="Current" className="h-16 w-16 rounded-lg border border-[#E8D9B8] object-cover" />
+                                <span className="text-sm text-[#2C2C2C]">Current photo — choose a file to replace it.</span>
                             </div>
                         )}
                         <FileInput file={d.profile_photo} accept=".jpg,.jpeg,.png" preview allowedTypes={['jpg', 'jpeg', 'png']} onChange={(f) => set('profile_photo', (f && f instanceof File) ? f : null)} />
@@ -1211,9 +1211,9 @@ function StepBody({
                             <ul className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                                 {keptPhotos.map((p) => (
                                     <li key={p.path} className="relative">
-                                        <img src={p.url} alt="" className="h-24 w-full rounded-lg border border-[#E7E0D2] object-cover" />
+                                        <img src={p.url} alt="" className="h-24 w-full rounded-lg border border-[#E8D9B8] object-cover" />
                                         <button type="button" onClick={() => onRemoveKept(p.path)} aria-label="Remove photo"
-                                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#C2543B] shadow ring-1 ring-black/5 hover:bg-white">
+                                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#A8472F] shadow ring-1 ring-black/5 hover:bg-white">
                                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M6 6l12 12M18 6 6 18" /></svg>
                                         </button>
                                     </li>
@@ -1272,8 +1272,8 @@ function FileInput({ file, onChange, accept, preview = false, allowedTypes = [] 
     return (
         <div>
             <div className="flex items-center gap-4">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
                     {file ? 'Replace file' : 'Choose file'}
                     <input type="file" accept={accept} className="hidden" onChange={(e) => {
                         const selected = e.target.files?.[0] ?? null; e.target.value = '';
@@ -1281,15 +1281,15 @@ function FileInput({ file, onChange, accept, preview = false, allowedTypes = [] 
                         setFileError(''); onChange(selected);
                     }} />
                 </label>
-                {previewUrl && (<img src={previewUrl} alt="Preview" className="h-14 w-14 rounded-lg border border-[#E7E0D2] object-cover" />)}
+                {previewUrl && (<img src={previewUrl} alt="Preview" className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover" />)}
                 {file && (
-                    <div className="flex items-center gap-2 text-sm text-[#5B6B6E]">
+                    <div className="flex items-center gap-2 text-sm text-[#2C2C2C]">
                         <span className="max-w-[180px] truncate">{file.name}</span>
-                        <button type="button" onClick={() => onChange(null)} className="text-[#C2543B] hover:underline">Remove</button>
+                        <button type="button" onClick={() => onChange(null)} className="text-[#A8472F] hover:underline">Remove</button>
                     </div>
                 )}
             </div>
-            {fileError && (<p className="mt-1.5 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{fileError}</p>)}
+            {fileError && (<p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fileError}</p>)}
         </div>
     );
 }
@@ -1305,8 +1305,8 @@ function MultiFileInput({ files, onChange, accept, allowedTypes = [] }: { files:
     };
     return (
         <div className="space-y-3">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#C7BEAD] bg-[#FBF8F2] px-4 py-3 text-sm font-medium text-[#3A4B49] transition hover:border-[#0E7C7B] hover:bg-[#0E7C7B]/5">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#0E7C7B]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                 Add photos
                 <input ref={inputRef} type="file" accept={accept} multiple className="hidden" onChange={(e) => {
                     const newFiles = e.target.files ? Array.from(e.target.files) : [];
@@ -1319,15 +1319,15 @@ function MultiFileInput({ files, onChange, accept, allowedTypes = [] }: { files:
             </label>
             {Object.keys(fileErrors).length > 0 && (
                 <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
-                    {Object.values(fileErrors).map((err, idx) => (<p key={idx} className="mb-1 flex items-center gap-1 text-sm text-[#C2543B]"><span aria-hidden>⚠</span>{err}</p>))}
+                    {Object.values(fileErrors).map((err, idx) => (<p key={idx} className="mb-1 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{err}</p>))}
                 </div>
             )}
             {files.length > 0 && (
                 <ul className="space-y-1.5">
                     {files.map((f, i) => (
-                        <li key={`${f.name}-${i}-${f.lastModified}`} className="flex items-center justify-between rounded-lg border border-[#EFEAE0] bg-[#FBF8F2] px-3 py-2 text-sm text-[#5B6B6E]">
+                        <li key={`${f.name}-${i}-${f.lastModified}`} className="flex items-center justify-between rounded-lg border border-[#E8D9B8] bg-[#FAFAF6] px-3 py-2 text-sm text-[#2C2C2C]">
                             <span className="max-w-[240px] truncate">{f.name}</span>
-                            <button type="button" onClick={() => onChange(files.filter((_, idx) => idx !== i))} className="text-[#C2543B] hover:underline">Remove</button>
+                            <button type="button" onClick={() => onChange(files.filter((_, idx) => idx !== i))} className="text-[#A8472F] hover:underline">Remove</button>
                         </li>
                     ))}
                 </ul>
@@ -1355,15 +1355,15 @@ function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: st
                 const isFirst = i === 0; const isLast = i === rows.length - 1;
                 return (
                     <div key={row.id} className="flex items-center gap-2">
-                        <input type="text" placeholder="Enter Platform Name" className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25" />
-                        <input type="url" value={row.value} onChange={(e) => updateAt(row.id, e.target.value)} placeholder="https://www.example.com" className="w-full rounded-lg border border-[#DED7C9] bg-white px-3.5 py-2.5 text-[#1F2A2E] placeholder-[#9AA6A4] outline-none transition focus:border-[#0E7C7B] focus:ring-4 focus:ring-[#0E7C7B]/25" />
+                        <input type="text" placeholder="Enter Platform Name" className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25" />
+                        <input type="url" value={row.value} onChange={(e) => updateAt(row.id, e.target.value)} placeholder="https://www.example.com" className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25" />
                         {isLast && rows.length < MAX && (
-                            <button type="button" onClick={addField} aria-label="Add another link" className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#0E7C7B]/40 bg-[#0E7C7B]/5 text-[#0E7C7B] transition hover:bg-[#0E7C7B]/10">
+                            <button type="button" onClick={addField} aria-label="Add another link" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
                             </button>
                         )}
                         {!isFirst && (
-                            <button type="button" onClick={() => removeAt(row.id)} aria-label="Remove this link" className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg border border-[#DED7C9] text-[#C2543B] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5">
+                            <button type="button" onClick={() => removeAt(row.id)} aria-label="Remove this link" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A]/65 text-[#A8472F] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5">
                                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                             </button>
                         )}
@@ -1380,13 +1380,13 @@ function ConsentItem({ checked, onChange, error, children }: { checked: boolean;
     return (
         <div>
             <button type="button" onClick={() => onChange(!checked)}
-                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B]/8' : error ? 'border-[#C2543B] bg-[#C2543B]/5' : 'border-[#DED7C9] bg-white hover:border-[#0E7C7B]/50'}`}>
-                <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#0E7C7B] bg-[#0E7C7B] text-white' : 'border-[#C7BEAD] bg-white'}`} aria-hidden>
+                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8' : error ? 'border-[#C2543B] bg-[#C2543B]/5' : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'}`}>
+                <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
                     {checked && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
                 </span>
-                <span className="text-sm leading-snug text-[#26403F]">{children}</span>
+                <span className="text-[15px] leading-snug text-[#2C2C2C]">{children}</span>
             </button>
-            {error && (<p className="mt-1 ml-1 text-sm text-[#C2543B]">{error}</p>)}
+            {error && (<p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>)}
         </div>
     );
 }

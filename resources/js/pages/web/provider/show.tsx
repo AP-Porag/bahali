@@ -100,7 +100,7 @@ interface ContactAction {
     external?: boolean;
 }
 
-const SERIF = { fontFamily: 'Fraunces, "Playfair Display", Georgia, serif' };
+const SERIF = { fontFamily: '"Cormorant Garamond", Georgia, serif' };
 const has = <T,>(a: T[] | null | undefined): a is T[] => Array.isArray(a) && a.length > 0;
 const uniq = (a: (string | null | undefined)[]): string[] => [...new Set(a.filter((x): x is string => Boolean(x)))];
 
@@ -145,7 +145,7 @@ function LanguageList({ languages = [], max = 4 }: { languages?: string[]; max?:
     return (
         <span className="inline-flex flex-wrap items-center gap-x-1.5">
             {shown.join(', ')}
-            {rest > 0 && <span className="text-[#8A9795]"> +{rest} more</span>}
+            {rest > 0 && <span className="text-[#2C2C2C]/70"> +{rest} more</span>}
         </span>
     );
 }
@@ -181,10 +181,10 @@ function CategoryList({ items }: { items?: string[] | null }) {
             {items.map((item) => (
                 <li
                     key={item}
-                    className="flex items-start gap-2 text-sm leading-relaxed text-[#3A4B49]"
+                    className="flex items-start gap-2 text-[15px] leading-relaxed text-[#2C2C2C]"
                 >
                     <span
-                        className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40"
+                        className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#1E4D4A]/40"
                         aria-hidden
                     />
                     <span className="min-w-0 break-words">{item}</span>
@@ -201,9 +201,9 @@ function SectionStack({ sections }: { sections: Section[] }) {
     return (
         <div className="space-y-5">
             {visible.map((s, idx) => (
-                <section key={s.key} className={idx > 0 ? 'border-t border-[#EFEAE0] pt-5' : ''}>
+                <section key={s.key} className={idx > 0 ? 'border-t border-[#E8D9B8] pt-5' : ''}>
                     {s.label && (
-                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#8A9795]">{s.label}</h3>
+                        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[#1E4D4A]">{s.label}</h3>
                     )}
                     {s.content}
                 </section>
@@ -213,40 +213,40 @@ function SectionStack({ sections }: { sections: Section[] }) {
 }
 
 function SubLabel({ children }: { children: ReactNode }) {
-    return <p className="text-sm font-semibold text-[#33302a]">{children}</p>;
+    return <p className="text-sm font-semibold text-[#2C2C2C]">{children}</p>;
 }
 
 function AvailabilityBox({ availability, confirmedAt }: { availability?: Availability; confirmedAt?: string | null }) {
     const txt = useTxt();
     if (availability === 'accepting') {
         return (
-            <div className="rounded-xl border border-[#0E7C7B]/20 bg-[#0E7C7B]/8 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#0E6B6A]">Current availability</p>
-                <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#15403F]"><Icon d={Ico.check} className="h-5 w-5 text-[#0E7C7B]" /> Accepting new clients</p>
-                {confirmedAt && <p className="mt-0.5 text-sm text-[#5B6B6E]">Last confirmed: {confirmedAt}</p>}
-                <p className="mt-1 text-xs italic text-[#8A9795]">{txt('availability.accepting_note')}</p>
+            <div className="rounded-xl border border-[#1E4D4A]/20 bg-[#1E4D4A]/8 p-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-[#1E4D4A]">Current availability</p>
+                <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#1E4D4A]"><Icon d={Ico.check} className="h-5 w-5 text-[#1E4D4A]" /> Accepting new clients</p>
+                {confirmedAt && <p className="mt-0.5 text-sm text-[#2C2C2C]">Last confirmed: {confirmedAt}</p>}
+                <p className="mt-1 text-sm italic text-[#2C2C2C]/70">{txt('availability.accepting_note')}</p>
             </div>
         );
     }
     if (availability === 'not_accepting') {
         return (
-            <div className="rounded-xl border border-[#DED7C9] bg-[#FBF8F2] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#8A9795]">Current availability</p>
-                <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#5B6B6E]"><Icon d={Ico.minus} className="h-5 w-5" /> Not currently accepting new clients</p>
-                {confirmedAt && <p className="mt-0.5 text-sm text-[#8A9795]">Last confirmed: {confirmedAt}</p>}
+            <div className="rounded-xl border border-[#1E4D4A]/65 bg-[#FAFAF6] p-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/70">Current availability</p>
+                <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#2C2C2C]"><Icon d={Ico.minus} className="h-5 w-5" /> Not currently accepting new clients</p>
+                {confirmedAt && <p className="mt-0.5 text-sm text-[#2C2C2C]/70">Last confirmed: {confirmedAt}</p>}
             </div>
         );
     }
     return (
-        <div className="rounded-xl border border-[#E8B84B]/40 bg-[#E8B84B]/12 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#9A6B12]">Current availability</p>
-            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#9A6B12]">
-                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#9A6B12]">
+        <div className="rounded-xl border border-[#E8D9B8]/40 bg-[#E8D9B8]/12 p-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">Current availability</p>
+            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#2C2C2C]">
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#E8D9B8]">
                     <HelpCircle className="h-3 w-3 text-white" strokeWidth={2.6} aria-hidden />
                 </span>
                 Availability unknown
             </p>
-            <p className="mt-0.5 text-sm text-[#8A6D3B]">{txt('availability.unknown_note')}</p>
+            <p className="mt-0.5 text-sm text-[#2C2C2C]">{txt('availability.unknown_note')}</p>
         </div>
     );
 }
@@ -280,12 +280,12 @@ function PrimaryAction({ m }: { m: ContactAction }) {
         <a
             href={m.href}
             {...(m.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#0E7C7B] px-4 py-3 text-white shadow-sm transition hover:bg-[#0B6463] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40 focus-visible:ring-offset-2"
+            className="flex w-full items-center justify-center gap-3 bg-[#1E4D4A] px-4 py-2.5 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 min-h-[48px] rounded-[10px] text-[15px] font-semibold"
         >
             <Icon d={m.icon} className="h-5 w-5 flex-shrink-0" />
             <span className="min-w-0 text-left leading-tight">
-                <span className="block text-sm font-semibold">{m.label}</span>
-                <span className="block break-words text-xs text-white/85">{m.sub}</span>
+                <span className="block text-[15px] font-semibold">{m.label}</span>
+                <span className="block break-words text-sm text-white/85">{m.sub}</span>
             </span>
         </a>
     );
@@ -296,14 +296,14 @@ function SecondaryAction({ m }: { m: ContactAction }) {
         <a
             href={m.href}
             {...(m.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-            className="flex w-full items-center gap-3 rounded-xl border border-[#0E7C7B]/35 bg-white px-4 py-2 text-[#0E6B6A] transition hover:border-[#0E7C7B]/60 hover:bg-[#0E7C7B]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/30"
+            className="flex w-full items-center gap-3 border px-4 py-2.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/30 min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5"
         >
             <Icon d={m.icon} className="h-4 w-4 flex-shrink-0" />
             <span className="min-w-0 flex-1 leading-tight">
-                <span className="block text-sm font-semibold">{m.label}</span>
-                <span className="block truncate text-xs text-[#6B7A78]" title={m.sub}>{m.sub}</span>
+                <span className="block text-[15px] font-semibold">{m.label}</span>
+                <span className="block truncate text-sm text-[#2C2C2C]" title={m.sub}>{m.sub}</span>
             </span>
-            {m.external && <span className="text-[#9AA6A4]"><Icon d={Ico.external} className="h-4 w-4" /></span>}
+            {m.external && <span className="text-[#2C2C2C]/70"><Icon d={Ico.external} className="h-4 w-4" /></span>}
         </a>
     );
 }
@@ -311,7 +311,7 @@ function SecondaryAction({ m }: { m: ContactAction }) {
 function ContactActions({ provider }: { provider: PublicProvider }) {
     const txt = useTxt();
     const { primary, secondary, hasAny } = contactActions(provider);
-    if (!hasAny) return <p className="text-sm text-[#8A9795]">{txt('contact.empty')}</p>;
+    if (!hasAny) return <p className="text-sm text-[#2C2C2C]/70">{txt('contact.empty')}</p>;
     return (
         <div className="space-y-2">
             {primary && <PrimaryAction m={primary} />}
@@ -323,9 +323,9 @@ function ContactActions({ provider }: { provider: PublicProvider }) {
 function CrisisNote() {
     const txt = useTxt();
     return (
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F1EDE3] p-3 text-xs leading-relaxed text-[#6B7A78]">
-            <span className="mt-0.5 text-[#0E7C7B]"><Icon d={Ico.info} className="h-4 w-4" /></span>
-            <span><span className="font-semibold text-[#3A4B49]">{txt('crisis.label')}</span> {txt('crisis.body')}</span>
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#FAFAF6] p-3 text-sm leading-relaxed text-[#2C2C2C]">
+            <span className="mt-0.5 text-[#1E4D4A]"><Icon d={Ico.info} className="h-4 w-4" /></span>
+            <span><span className="font-semibold text-[#2C2C2C]">{txt('crisis.label')}</span> {txt('crisis.body')}</span>
         </div>
     );
 }
@@ -335,9 +335,9 @@ function ContactPersonLine({ provider }: { provider: PublicProvider }) {
     const cp = provider.contactPerson;
     if (!cp?.name) return null;
     return (
-        <p className="mt-1 text-sm text-[#3A4B49]">
-            <span className="text-[#6B7A78]">Contact person:</span> <span className="font-medium">{cp.name}</span>
-            {cp.role && <span className="text-[#6B7A78]"> · {cp.role}</span>}
+        <p className="mt-1 text-sm text-[#2C2C2C]">
+            <span className="text-[#2C2C2C]">Contact person:</span> <span className="font-medium">{cp.name}</span>
+            {cp.role && <span className="text-[#2C2C2C]"> · {cp.role}</span>}
         </p>
     );
 }
@@ -345,10 +345,10 @@ function ContactPersonLine({ provider }: { provider: PublicProvider }) {
 function ContactPanel({ provider, name }: { provider: PublicProvider; name: string }) {
     const txt = useTxt();
     return (
-        <div className="rounded-2xl border border-[#E7E0D2] bg-white p-5 shadow-sm">
-            <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+        <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
+            <h3 className="break-words text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">Contact {name}</h3>
             <ContactPersonLine provider={provider} />
-            <p className="mt-1 text-[13px] leading-relaxed text-[#5B6B6E]">{txt('contact.disclaimer')}</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#2C2C2C]">{txt('contact.disclaimer')}</p>
             <div className="mt-3">
                 <ContactActions provider={provider} />
             </div>
@@ -363,13 +363,13 @@ function ContactModal({ open, onClose, provider, name }: { open: boolean; onClos
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`Contact ${name}`}>
             <div className="w-full max-w-md overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
-                <div className="flex items-start justify-between gap-3 border-b border-[#EFEAE0] p-5">
+                <div className="flex items-start justify-between gap-3 border-b border-[#E8D9B8] p-5">
                     <div className="min-w-0">
-                        <h3 className="break-words text-lg text-[#16302F]" style={SERIF}>Contact {name}</h3>
+                        <h3 className="break-words text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">Contact {name}</h3>
                         <ContactPersonLine provider={provider} />
-                        <p className="mt-1 text-sm text-[#5B6B6E]">{txt('contact.modal_intro')}</p>
+                        <p className="mt-1 text-sm text-[#2C2C2C]">{txt('contact.modal_intro')}</p>
                     </div>
-                    <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#8A9795] hover:bg-[#F1EDE3]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+                    <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-[#2C2C2C]/70 hover:bg-[#FAFAF6]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                 </div>
                 <div className="p-5">
                     <ContactActions provider={provider} />
@@ -383,8 +383,8 @@ function ContactModal({ open, onClose, provider, name }: { open: boolean; onClos
 /* At a glance — compact: fees, populations, experience, accessibility. Languages and meeting formats stay in the header. */
 function GlanceRow({ d, children }: { d: ReactNode; children: ReactNode }) {
     return (
-        <li className="flex items-start gap-2.5 py-2 text-sm text-[#33302a]">
-            <span className="mt-0.5 flex-shrink-0 text-[#0E7C7B]"><Icon d={d} className="h-4 w-4" /></span>
+        <li className="flex items-start gap-2.5 py-2 text-sm text-[#2C2C2C]">
+            <span className="mt-0.5 flex-shrink-0 text-[#1E4D4A]"><Icon d={d} className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1 break-words">{children}</span>
         </li>
     );
@@ -407,31 +407,31 @@ function AtAGlance({ p, feeText, insuranceItems, insuranceGeneric }: AtAGlancePr
     const reduced: 'sliding' | 'free' | null = p.slidingScale ? 'sliding' : (p.freeLowCost ? 'free' : null);
 
     return (
-        <div className="rounded-2xl border border-[#E7E0D2] bg-white px-5 py-4 shadow-sm">
-            <h3 className="text-sm text-[#16302F]" style={SERIF}>At a glance</h3>
-            <ul className="mt-1 divide-y divide-[#F0EBE0]">
+        <div className="rounded-2xl border border-[#E8D9B8] bg-white px-5 py-4 shadow-sm">
+            <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">At a glance</h3>
+            <ul className="mt-1 divide-y divide-[#E8D9B8]">
                 <GlanceRow d={feeText ? Ico.wallet : Ico.info}>
                     {feeText
-                        ? <span className="font-semibold text-[#16302F]">{feeText}</span>
-                        : <span className="text-[#516865]">{txt('fees.no_fee')}</span>}
+                        ? <span className="font-semibold text-[#2C2C2C]">{feeText}</span>
+                        : <span className="text-[#2C2C2C]">{txt('fees.no_fee')}</span>}
                 </GlanceRow>
                 {reduced && (
                     <GlanceRow d={Ico.heart}>
-                        <span className="text-[#0E6B6A]">{reducedCostLabel(reduced, p.reducedCostScope)}</span>
+                        <span className="text-[#1E4D4A]">{reducedCostLabel(reduced, p.reducedCostScope)}</span>
                     </GlanceRow>
                 )}
                 {(shownInsurers.length > 0 || insuranceGeneric) && (
                     <GlanceRow d={Ico.shield}>
-                        <span className="font-medium text-[#16302F]">Insurance:</span>{' '}
+                        <span className="font-medium text-[#2C2C2C]">Insurance:</span>{' '}
                         {shownInsurers.length > 0 ? shownInsurers.join(', ') : 'Accepted — confirm your plan'}
-                        {extraInsurers > 0 && <span className="whitespace-nowrap text-[#8A9795]"> +{extraInsurers} more</span>}
+                        {extraInsurers > 0 && <span className="whitespace-nowrap text-[#2C2C2C]/70"> +{extraInsurers} more</span>}
                     </GlanceRow>
                 )}
                 {shownPopulations.length > 0 && (
                     <GlanceRow d={Ico.users}>
-                        <span className="font-medium text-[#16302F]">Who I support:</span>{' '}
+                        <span className="font-medium text-[#2C2C2C]">Who I support:</span>{' '}
                         {shownPopulations.join(', ')}
-                        {extraPopulations > 0 && <span className="whitespace-nowrap text-[#8A9795]"> +{extraPopulations} more</span>}
+                        {extraPopulations > 0 && <span className="whitespace-nowrap text-[#2C2C2C]/70"> +{extraPopulations} more</span>}
                     </GlanceRow>
                 )}
                 {p.yearsExperience && (
@@ -498,14 +498,14 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
         const about: Section[] = [
             {
                 key: 'bio', label: null, show: !!p.bio,
-                content: <p className="whitespace-pre-line text-[15px] leading-relaxed text-[#33302a]">{p.bio}</p>,
+                content: <p className="whitespace-pre-line text-[16px] leading-[1.6] text-[#2C2C2C]">{p.bio}</p>,
             },
             {
                 key: 'background', label: 'Professional background', show: !!(p.title || p.yearsExperience),
                 content: (
                     <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
-                        {p.title && (<><dt className="text-[#8A9795]">Profession</dt><dd className="text-[#3A4B49]">{p.title}</dd></>)}
-                        {p.yearsExperience && (<><dt className="text-[#8A9795]">Years of experience</dt><dd className="text-[#3A4B49]">{p.yearsExperience}</dd></>)}
+                        {p.title && (<><dt className="text-[#2C2C2C]/70">Profession</dt><dd className="text-[#2C2C2C]">{p.title}</dd></>)}
+                        {p.yearsExperience && (<><dt className="text-[#2C2C2C]/70">Years of experience</dt><dd className="text-[#2C2C2C]">{p.yearsExperience}</dd></>)}
                     </dl>
                 ),
             },
@@ -564,11 +564,11 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                     <ul className="space-y-1.5">
                         {feeRows.map((r) => (
                             <li key={r.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-                                <span className="text-sm text-[#3A4B49]">{r.label}</span>
-                                <span className="font-semibold text-[#16302F]">{r.value}</span>
+                                <span className="text-sm text-[#2C2C2C]">{r.label}</span>
+                                <span className="font-semibold text-[#2C2C2C]">{r.value}</span>
                             </li>
                         ))}
-                        {selfPay && <li className="text-sm text-[#3A4B49]">Self-pay accepted</li>}
+                        {selfPay && <li className="text-sm text-[#2C2C2C]">Self-pay accepted</li>}
                     </ul>
                 ),
             },
@@ -578,8 +578,8 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                     <>
                         {insuranceItems.length > 0
                             ? <CategoryList items={insuranceItems} />
-                            : <p className="text-sm text-[#3A4B49]">Accepts insurance — contact the provider to confirm your plan.</p>}
-                        <p className="mt-2 text-xs text-[#8A9795]">{txt('fees.insurance_note')}</p>
+                            : <p className="text-sm text-[#2C2C2C]">Accepts insurance — contact the provider to confirm your plan.</p>}
+                        <p className="mt-2 text-sm text-[#2C2C2C]/70">{txt('fees.insurance_note')}</p>
                     </>
                 ),
             },
@@ -588,7 +588,7 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                 content: (
                     <>
                         <CategoryList items={reducedItems} />
-                        <p className="mt-2 text-xs text-[#8A9795]">{scopeNote}</p>
+                        <p className="mt-2 text-sm text-[#2C2C2C]/70">{scopeNote}</p>
                     </>
                 ),
             },
@@ -598,21 +598,21 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
         const approach: Section[] = [
             {
                 key: 'approach', label: 'About my approach', show: !!p.culturalApproach,
-                content: <p className="whitespace-pre-line text-[15px] leading-relaxed text-[#33302a]">{p.culturalApproach}</p>,
+                content: <p className="whitespace-pre-line text-[16px] leading-[1.6] text-[#2C2C2C]">{p.culturalApproach}</p>,
             },
             { key: 'treatment', label: 'Treatment / Support Approaches', show: has(p.treatmentApproaches), content: <CategoryList items={p.treatmentApproaches} /> },
             {
                 key: 'caribbean', label: 'Experience with Caribbean communities', show: p.caribbeanExperience === true,
                 content: (
                     <>
-                        <p className="flex items-start gap-2 text-sm leading-relaxed text-[#33302a]">
-                            <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0E7C7B]/40" aria-hidden />
+                        <p className="flex items-start gap-2 text-[15px] leading-relaxed text-[#2C2C2C]">
+                            <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#1E4D4A]/40" aria-hidden />
                             <span>{CARIBBEAN_EXPERIENCE_STATEMENT}</span>
                         </p>
                         {p.caribbeanExperienceDetails && (
-                            <div className="mt-3 rounded-xl border border-[#EFE6D2] bg-[#FBF8F2] p-3.5">
-                                <span className="inline-flex rounded-full bg-[#F5EDDC] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A5A2B]">Provider-reported</span>
-                                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[#33302a]">{p.caribbeanExperienceDetails}</p>
+                            <div className="mt-3 rounded-xl border border-[#E8D9B8] bg-[#FAFAF6] p-3.5">
+                                <span className="inline-flex rounded-full bg-[#E8D9B8]/40 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]">Provider-reported</span>
+                                <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[#2C2C2C]">{p.caribbeanExperienceDetails}</p>
                             </div>
                         )}
                     </>
@@ -637,7 +637,7 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
 
     return (
         <PageContentContext.Provider value={content}>
-            <div className="min-h-screen bg-[#F7F3EC] pb-24 text-[#1F2A2E] lg:pb-0">
+            <div className="min-h-screen bg-[#FAFAF6] pb-24 font-body text-[16px] leading-[1.6] text-[#2C2C2C] lg:pb-0">
                 <Head title={`${name} — Bahali`} />
                 <Header />
                 <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} provider={p} name={name} />
@@ -648,23 +648,23 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                         <Link
                             href={backHref}
                             onClick={onBackToResults}
-                            className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-[#0E7C7B] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E7C7B]/40"
+                            className="inline-flex items-center gap-1.5 rounded-lg text-sm font-medium text-[#1E4D4A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40"
                         >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                                 <path d="M10.5 19.5 3 12l7.5-7.5M3 12h18" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             {txt('page.back')}
                         </Link>
-                        <p className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-[#C2543B] sm:block">{txt('page.eyebrow')}</p>
+                        <p className="hidden text-sm font-semibold uppercase tracking-[0.2em] text-[#1E4D4A] sm:block">{txt('page.eyebrow')}</p>
                     </div>
 
                     {/* header card */}
-                    <div className="rounded-2xl border border-[#E7E0D2] bg-white p-6 shadow-sm">
+                    <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm">
                         <div className="flex flex-col gap-6 lg:flex-row">
                             {showPhoto ? (
                                 <img src={p.photo ?? undefined} alt={name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-2xl object-cover ring-1 ring-black/5 lg:h-44 lg:w-40" />
                             ) : (
-                                <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0E4C4B] to-[#0E7C7B] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(p.name)}</div>
+                                <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E4D4A] to-[#1E4D4A] text-4xl font-semibold text-white/90 ring-1 ring-black/5 lg:w-40" style={SERIF}>{initials(p.name)}</div>
                             )}
 
                             <div className="min-w-0 flex-1">
@@ -676,19 +676,19 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                                 />
 
                                 {/* 16px below the badge row; name on its own line, professions/credentials beneath */}
-                                <h1 className="mt-4 break-words text-2xl leading-tight text-[#16302F]" style={SERIF}>{name}</h1>
-                                {credentialLine && <p className="mt-1 break-words text-[#5B6B6E]">{credentialLine}</p>}
+                                <h1 className="mt-4 break-words text-[26px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[28px]" style={SERIF}>{name}</h1>
+                                {credentialLine && <p className="mt-1 break-words text-[#2C2C2C]">{credentialLine}</p>}
 
-                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#3A4B49]">
+                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#2C2C2C]">
                                     {(p.address || p.location) && (
                                         <span className="inline-flex items-start gap-1.5">
-                                            <span className="mt-0.5 text-[#0E7C7B]"><Icon d={Ico.pin} /></span>
+                                            <span className="mt-0.5 text-[#1E4D4A]"><Icon d={Ico.pin} /></span>
                                             <span>{[p.address, p.location].filter(Boolean).join(', ')}</span>
                                         </span>
                                     )}
                                     {has(p.sessionFormats) && (
                                         <span className="inline-flex items-center gap-1.5">
-                                            <span className="text-[#0E7C7B]">
+                                            <span className="text-[#1E4D4A]">
                                                 <Icon d={Ico.monitor} />
                                             </span>
                                             {p.sessionFormats.join(' | ')}
@@ -696,13 +696,13 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                                     )}
                                 </div>
                                 {has(p.additionalLocations) && (
-                                    <p className="mt-1.5 text-sm text-[#3A4B49]">
-                                        <span className="text-[#6B7A78]">Also serves:</span> {p.additionalLocations.join(' · ')}
+                                    <p className="mt-1.5 text-sm text-[#2C2C2C]">
+                                        <span className="text-[#2C2C2C]">Also serves:</span> {p.additionalLocations.join(' · ')}
                                     </p>
                                 )}
                                 {has(p.languages) && (
-                                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#3A4B49]">
-                                        <span className="text-[#0E7C7B]"><Icon d={Ico.chat} /></span>
+                                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-[#2C2C2C]">
+                                        <span className="text-[#1E4D4A]"><Icon d={Ico.chat} /></span>
                                         <LanguageList languages={p.languages} max={4} />
                                     </p>
                                 )}
@@ -717,18 +717,18 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                     {/* body */}
                     <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
                         {/* LEFT */}
-                        <div className="rounded-2xl border border-[#E7E0D2] bg-white shadow-sm">
+                        <div className="rounded-2xl border border-[#E8D9B8] bg-white shadow-sm">
                             {tabs.length > 0 && (
-                                <div role="tablist" className="flex flex-wrap gap-1 border-b border-[#EFEAE0] px-4 pt-3">
+                                <div role="tablist" className="flex flex-wrap gap-1 border-b border-[#E8D9B8] px-4 pt-3">
                                     {tabs.map((t) => (
-                                        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`rounded-t-lg px-3 py-2 text-sm font-medium transition ${tab === t ? 'border-b-2 border-[#0E7C7B] text-[#16302F]' : 'text-[#5B6B6E] hover:text-[#0E7C7B]'}`}>{t}</button>
+                                        <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`min-h-[44px] rounded-t-lg px-3 py-2 text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 ${tab === t ? 'border-b-2 border-[#1E4D4A] font-semibold text-[#1E4D4A]' : 'border-b-2 border-transparent font-medium text-[#2C2C2C] hover:text-[#1E4D4A]'}`}>{t}</button>
                                     ))}
                                 </div>
                             )}
                             <div className="p-6">
                                 {activeSections.length > 0
                                     ? <SectionStack sections={activeSections} />
-                                    : <p className="text-sm text-[#8A9795]">This provider hasn't added profile details yet.</p>}
+                                    : <p className="text-sm text-[#2C2C2C]/70">This provider hasn't added profile details yet.</p>}
                             </div>
                         </div>
 
@@ -744,13 +744,13 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
 
                 {/* sticky mobile contact bar */}
                 {hasContact && (
-                    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E7E0D2] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+                    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#E8D9B8] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
                         <div className="mx-auto flex max-w-6xl items-center gap-3">
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm text-[#16302F]" style={SERIF}>{name}</p>
-                                {p.availability === 'accepting' && <p className="text-xs text-[#0E7C7B]">Accepting new clients</p>}
+                                <p className="truncate text-[15px] font-semibold text-[#1E4D4A]">{name}</p>
+                                {p.availability === 'accepting' && <p className="text-sm text-[#1E4D4A]">Accepting new clients</p>}
                             </div>
-                            <button onClick={() => setContactOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-[#C2543B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#b25a3d]">{txt('contact.mobile_button')}</button>
+                            <button onClick={() => setContactOpen(true)} className="inline-flex min-h-[48px] items-center gap-2 rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">{txt('contact.mobile_button')}</button>
                         </div>
                     </div>
                 )}
