@@ -171,6 +171,31 @@ a, button{
     --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
 }
 
+
+/*
+ * Admin sidebar panel — Bahali dark teal (#06494D) with white text.
+ * Scoped to the sidebar panel only (desktop panel + mobile slide-in menu both carry
+ * data-sidebar="sidebar"), so the page frame around the main content keeps its light colour.
+ */
+[data-sidebar='sidebar'] {
+    --color-sidebar: #06494D;
+    --color-sidebar-foreground: #FFFFFF;
+    --color-sidebar-primary: #FFFFFF;
+    --color-sidebar-primary-foreground: #06494D;
+    --color-sidebar-accent: rgba(255, 255, 255, 0.12);
+    --color-sidebar-accent-foreground: #FFFFFF;
+    --color-sidebar-border: rgba(255, 255, 255, 0.15);
+    --color-sidebar-ring: #E8D9B8;
+    color: #FFFFFF;
+}
+[data-sidebar='sidebar'] [data-sidebar='menu-button'],
+[data-sidebar='sidebar'] [data-sidebar='menu-sub-button'] {
+    font-size: 15px;
+}
+[data-sidebar='sidebar'] [data-sidebar='group-label'] {
+    font-size: 13px;
+}
+
 @layer base {
     * {
         @apply border-border;

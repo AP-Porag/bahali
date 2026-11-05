@@ -100,7 +100,7 @@ export function AppSidebar() {
     const { isMobile, setOpenMobile } = useSidebar();
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
+        <Sidebar collapsible="icon" variant="inset" className="p-0">
             <SidebarHeader className={isMobile ? 'relative pr-12' : undefined}>
                 <SidebarMenu>
                     <SidebarMenuItem>
