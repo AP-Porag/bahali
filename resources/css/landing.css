@@ -1,0 +1,664 @@
+/*
+ * Bahali Connect — landing page + footer pages (Version 3.7, approved package from Marsha).
+ * This is the client's styles.css, unchanged, with every rule scoped under `.bc-landing`
+ * so it cannot affect the rest of the app (search, profiles, admin).
+ * Used by: components/landing/LandingLayout.tsx (landing page, privacy, disclaimer, urgent support).
+ */
+
+.bc-landing {
+  --teal: #1e4d4a;
+  --ivory: #fafaf6;
+  --ink: #2c2c2c;
+  --body: #3f514b;
+  --sage: #edf2ed;
+  --coral: #e99e84;
+  --coral-dark: #a44e37;
+  --coral-light: #f0b29c;
+}
+.bc-landing * {
+  box-sizing: border-box;
+}
+.bc-landing {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: "DM Sans", Arial, sans-serif;
+}
+
+/* Keep the client's original look inside the app: Tailwind's base reset changes a few browser
+   defaults (line height, link underlines, list bullets) that the client's design relies on. */
+.bc-landing {
+  min-height: 100vh;
+  line-height: normal;
+}
+.bc-landing a {
+  text-decoration: underline;
+}
+.bc-landing .policy ul {
+  list-style: disc;
+}
+.bc-landing h1,
+.bc-landing h2,
+.bc-landing h3 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  color: var(--teal);
+  line-height: 1.12;
+  margin: 0;
+}
+.bc-landing h1 {
+  font-size: clamp(42px, 5.2vw, 66px);
+  letter-spacing: -0.025em;
+}
+.bc-landing h2 {
+  font-size: clamp(34px, 4vw, 47px);
+}
+.bc-landing h3 {
+  font-size: 28px;
+}
+.bc-landing p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--body);
+  margin: 16px 0;
+}
+.bc-landing .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.13em;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 16px;
+}
+.bc-landing .eyebrow.coral {
+  color: var(--coral-dark);
+}
+.bc-landing .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 13px 21px;
+  background: var(--teal);
+  border: 1px solid var(--teal);
+  border-radius: 6px;
+  color: white;
+  text-decoration: none;
+  font:
+    600 14px "DM Sans",
+    Arial,
+    sans-serif;
+  cursor: pointer;
+}
+.bc-landing .button:hover {
+  filter: brightness(1.12);
+}
+.bc-landing a:focus-visible,
+.bc-landing summary:focus-visible {
+  outline: 3px solid var(--coral-dark);
+  outline-offset: 4px;
+}
+.bc-landing .section {
+  padding: 74px 7%;
+}
+.bc-landing .inner {
+  max-width: 1150px;
+  margin: auto;
+}
+.bc-landing .white {
+  background: white;
+}
+.bc-landing .site-header {
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 19px 6%;
+}
+.bc-landing .logo {
+  font:
+    normal 34px Georgia,
+    serif;
+  color: var(--teal);
+  text-decoration: none;
+}
+.bc-landing .logo small {
+  display: block;
+  font:
+    700 10px "DM Sans",
+    Arial,
+    sans-serif;
+  letter-spacing: 0.15em;
+  margin-top: 2px;
+}
+.bc-landing .site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 14px;
+}
+.bc-landing .site-header nav a:not(.button) {
+  color: var(--teal);
+  text-decoration: none;
+}
+.bc-landing .hero {
+  display: grid;
+  grid-template-columns: 54% 46%;
+  min-height: 525px;
+}
+.bc-landing .hero-copy {
+  padding: 65px 10%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bc-landing .hero-copy p {
+  max-width: 530px;
+}
+.bc-landing .hero-emphasis {
+  font-weight: 600;
+  color: var(--teal);
+}
+.bc-landing .hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 17px;
+}
+.bc-landing .text-link {
+  font-size: 14px;
+  color: var(--teal);
+}
+.bc-landing .hero-photo {
+  min-height: 525px;
+  background: #dce5de;
+  overflow: hidden;
+}
+.bc-landing .hero-photo img {
+  width: 100%;
+  height: 100%;
+  min-height: 525px;
+  object-fit: cover;
+  display: block;
+}
+.bc-landing .purpose-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.bc-landing .purpose-photo {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  background: #dce5de;
+}
+.bc-landing .editorial-quote {
+  width: 94%;
+  margin: 43px auto 0;
+  border-left: 4px solid var(--coral);
+  padding: 18px 0 18px 35px;
+  color: var(--teal);
+  font:
+    500 clamp(30px, 3.4vw, 43px) / 1.24 "Cormorant Garamond",
+    Georgia,
+    serif;
+}
+.bc-landing .preview-grid {
+  display: grid;
+  grid-template-columns: 41% 59%;
+  gap: 38px;
+  align-items: center;
+}
+.bc-landing .search-preview {
+  background: white;
+  border: 1px solid #dce5de;
+  border-radius: 12px;
+  padding: 26px;
+  box-shadow: 0 15px 35px #1e4d4a0b;
+}
+.bc-landing .fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 21px 0 17px;
+}
+.bc-landing .field {
+  background: #f5f7f3;
+  border: 1px solid #dce5de;
+  border-radius: 7px;
+  padding: 15px;
+  color: var(--body);
+  font-size: 14px;
+  cursor: default;
+}
+.bc-landing .field small {
+  display: block;
+  color: #52685d;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.bc-landing .preview-label {
+  font-size: 13px;
+  color: #52685d;
+  margin-top: 8px;
+}
+.bc-landing .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+.bc-landing .chip {
+  border: 1px solid #dce5de;
+  background: #f5f7f3;
+  color: var(--body);
+  border-radius: 22px;
+  padding: 9px 13px;
+  font-size: 13px;
+  cursor: default;
+}
+.bc-landing .chip.selected {
+  border-color: var(--coral);
+  background: #fceae3;
+  color: #824734;
+}
+.bc-landing .delivery {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px 0 19px;
+  border-top: 1px solid #e3e9e4;
+  font-size: 13px;
+  color: var(--body);
+}
+.bc-landing .check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #7b9d90;
+  background: #e5efe8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  font-size: 11px;
+  margin-right: 6px;
+}
+.bc-landing .preview-action {
+  display: flex;
+  justify-content: flex-end;
+}
+.bc-landing .sage {
+  background: var(--sage);
+}
+.bc-landing .intro {
+  max-width: 790px;
+}
+.bc-landing .three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 35px;
+}
+.bc-landing .feature {
+  border-top: 1px solid #cddbd0;
+  padding-top: 20px;
+}
+.bc-landing .feature.accent {
+  border-top: 2px solid var(--coral);
+}
+.bc-landing .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 35px;
+}
+.bc-landing .step {
+  padding: 26px;
+  background: white;
+  border: 1px solid #dfe7e0;
+  border-radius: 8px;
+}
+.bc-landing .number {
+  font:
+    500 27px Georgia,
+    serif;
+  color: var(--coral-dark);
+  margin-bottom: 16px;
+}
+.bc-landing .faq {
+  max-width: 790px;
+  margin: auto;
+}
+.bc-landing .faq-items {
+  margin-top: 20px;
+}
+.bc-landing details {
+  border-bottom: 1px solid #d5dfd7;
+  padding: 20px 0;
+}
+.bc-landing summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--teal);
+}
+.bc-landing summary::-webkit-details-marker {
+  display: none;
+}
+.bc-landing summary:after {
+  content: "+";
+  font-size: 22px;
+  color: var(--coral-dark);
+  font-weight: 400;
+}
+.bc-landing details[open] summary:after {
+  content: "−";
+}
+.bc-landing .closing {
+  background: var(--teal);
+  text-align: center;
+  padding: 82px 9%;
+}
+.bc-landing .closing .eyebrow {
+  color: var(--coral-light);
+}
+.bc-landing .closing h2,
+.bc-landing .closing p {
+  color: white;
+}
+.bc-landing .closing p {
+  max-width: 650px;
+  margin: 20px auto 27px;
+}
+.bc-landing .closing .light-button {
+  background: white;
+  color: var(--teal);
+  border-color: white;
+}
+.bc-landing footer {
+  background: white;
+  padding: 27px 7%;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--body);
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .bc-landing .site-header nav {
+    gap: 12px;
+  }
+  .bc-landing .preview-grid {
+    gap: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .bc-landing .site-header nav .nav-link {
+    display: none;
+  }
+  .bc-landing .site-header nav .nav-button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .bc-landing .hero,
+  .bc-landing .purpose-grid,
+  .bc-landing .preview-grid {
+    grid-template-columns: 1fr;
+  }
+  .bc-landing .hero-copy {
+    padding: 55px 7%;
+  }
+  .bc-landing .hero-photo,
+  .bc-landing .hero-photo img {
+    min-height: 290px;
+    max-height: 370px;
+  }
+  .bc-landing .section {
+    padding: 56px 7%;
+  }
+  .bc-landing .purpose-grid {
+    gap: 28px;
+  }
+  .bc-landing .purpose-photo {
+    height: 280px;
+  }
+  .bc-landing .editorial-quote {
+    width: 100%;
+    margin-top: 32px;
+    padding-left: 19px;
+    font-size: 30px;
+  }
+  .bc-landing .three,
+  .bc-landing .steps,
+  .bc-landing .fields {
+    grid-template-columns: 1fr;
+  }
+  .bc-landing .search-preview {
+    padding: 20px;
+  }
+  .bc-landing footer {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 370px) {
+  .bc-landing .logo {
+    font-size: 28px;
+  }
+  .bc-landing .site-header {
+    padding: 16px 4%;
+  }
+  .bc-landing .site-header nav .nav-button {
+    padding: 9px;
+    font-size: 11px;
+  }
+}
+
+/* Version 3.7 additions */
+.bc-landing .fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .bc-landing .fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .bc-landing .fields {
+    grid-template-columns: 1fr;
+  }
+}
+.bc-landing .about {
+  background: white;
+  padding: 56px 7%;
+  text-align: center;
+}
+.bc-landing .about .inner {
+  max-width: 790px;
+}
+.bc-landing .about-statement {
+  font:
+    500 26px/1.4 "Cormorant Garamond",
+    Georgia,
+    serif;
+  color: var(--teal);
+  margin: 0;
+}
+.bc-landing footer {
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid #e3e9e4;
+}
+.bc-landing .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 26px;
+}
+.bc-landing .footer-links a {
+  color: var(--teal);
+}
+.bc-landing .pending {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bc-landing .pending strong {
+  color: var(--teal);
+  font-weight: 600;
+}
+.bc-landing .pending .note {
+  font-size: 12px;
+  color: #52685d;
+}
+.bc-landing .pending .flag {
+  font-size: 12px;
+  color: var(--coral-dark);
+  font-style: italic;
+}
+.bc-landing .draft-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #fceae3;
+  border: 1px solid var(--coral);
+  border-radius: 22px;
+  color: #824734;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.bc-landing .back-link {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #d5dfd7;
+  font-size: 14px;
+}
+
+/* Version 3.7 additional pages: urgent support, disclaimer, privacy */
+.bc-landing .safety-heading {
+  font-size: clamp(26px, 3vw, 32px);
+  margin-top: 40px;
+}
+.bc-landing .safety-callout {
+  margin: 24px 0;
+  padding: 20px 24px;
+  background: #fceae3;
+  border: 1px solid var(--coral);
+  border-radius: 8px;
+}
+.bc-landing .safety-callout p {
+  margin: 8px 0;
+  color: var(--ink);
+}
+.bc-landing .safety-callout strong {
+  color: var(--ink);
+}
+.bc-landing .table-wrap {
+  overflow-x: auto;
+  margin: 20px 0 8px;
+  border: 1px solid #dce5de;
+  border-radius: 8px;
+  background: white;
+}
+.bc-landing .safety-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--body);
+}
+.bc-landing .safety-table th,
+.bc-landing .safety-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e3e9e4;
+}
+.bc-landing .safety-table thead th {
+  background: var(--sage);
+  color: var(--teal);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bc-landing .safety-table tbody th {
+  color: var(--teal);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bc-landing .safety-table tbody tr:last-child th,
+.bc-landing .safety-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.bc-landing .table-note {
+  font-size: 14px;
+  color: #52685d;
+}
+.bc-landing .policy ul {
+  margin: 12px 0;
+  padding-left: 22px;
+  color: var(--body);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.bc-landing .policy li {
+  margin: 6px 0;
+}
+.bc-landing .policy-meta {
+  font-size: 14px;
+  color: #52685d;
+  margin-top: 12px;
+}
+.bc-landing .policy mark,
+.bc-landing mark {
+  background: #e8d9b8;
+  color: var(--ink);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+@media (max-width: 700px) {
+  .bc-landing .safety-table tbody th {
+    white-space: normal;
+  }
+  .bc-landing .safety-table th,
+  .bc-landing .safety-table td {
+    padding: 10px 12px;
+  }
+}
+.bc-landing .faq p a,
+.bc-landing .policy li a {
+  color: var(--teal);
+}
+
+/* Version 3.7 final refinements */
+.bc-landing footer {
+  flex-wrap: wrap;
+}
+.bc-landing .footer-bottom {
+  flex-basis: 100%;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #e3e9e4;
+  font-size: 12px;
+  color: #52685d;
+}
+.bc-landing .about .text-link {
+  display: inline-block;
+  margin-top: 16px;
+}
+
+/* Final hero photograph (Marsha, 8 Nov 2026): keep the provider in view */
+.bc-landing .hero-photo img {
+  object-position: 60% 40%;
+}

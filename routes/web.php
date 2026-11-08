@@ -127,5 +127,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::post('/web/provider-profile', [ProviderProfilePageController::class, 'update'])->name('provider-profile-page.update');
 });
 
+// Bahali Connect footer pages (landing page = existing Join the Circle route)
+Route::inertia('/privacy', 'web/Privacy')->name('landing.privacy');
+Route::inertia('/disclaimer', 'web/Disclaimer')->name('landing.disclaimer');
+Route::inertia('/urgent-support', 'web/UrgentSupport')->name('landing.urgent-support');
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

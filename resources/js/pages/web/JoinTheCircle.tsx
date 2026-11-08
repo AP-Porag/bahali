@@ -1,514 +1,344 @@
 import { Head, Link } from '@inertiajs/react';
-import { Fragment, useState } from 'react';
-import { PropsWithChildren } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+
+import LandingLayout, { DIRECTORY_URL, SIGNUP_URL } from '@/components/landing/LandingLayout';
 
 /**
- * Bahali — Join the Circle (Provider Acquisition Landing Page)
- * ------------------------------------------------------------------
- * Stack: Laravel 12 + Inertia.js + React + TypeScript + Tailwind CSS.
+ * Bahali Connect — provider recruitment landing page (Version 3.7, approved).
+ * Converted from Marsha's index.html; styles come from resources/css/landing.css.
  *
- * Layout follows the Psychology Today "Join" page structure — full-bleed
- * photo hero, "quick & easy" band, member-benefits grid, a referrals
- * showcase, a bold stat band, photo-led testimonials, a 2-column FAQ, and
- * a member photo mosaic with an embedded CTA — but every visual choice is
- * Bahali's: deep teal + coral + amber + warm sand, serif display type, and
- * the concentric "circle" community motif.
- *
- * Primary CTA target: the registration form route.
- * ------------------------------------------------------------------ */
-
-const SIGNUP_ROUTE = '/provider/directory/create';
-
-/* ------------------------------------------------------------------ */
-/*  Photography + text                                                 */
-/*  All text and images now come from the admin panel                 */
-/*  (Admin → Website → Join the Circle) via the `content` prop.        */
-/*  Defaults live in App\Services\Web\JoinTheCircleService::schema().  */
-/* ------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------ */
-/*  Content                                                            */
-/* ------------------------------------------------------------------ */
-
-/* Benefit icons — titles & descriptions come from the admin panel (same order). */
-const BENEFIT_ICONS: JSX.Element[] = [
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.5-2.4 4-5.7 4-9s-1.5-6.6-4-9c-2.5 2.4-4 5.7-4 9s1.5 6.6 4 9ZM3.6 9h16.8M3.6 15h16.8" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.5a7.5 7.5 0 0 1 15 0v.75H4.5v-.75Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6 9.75-3 3m0 0-3-3m3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h6M3.75 5.25h6m-3-1.5v1.5m-1.5 0a11.96 11.96 0 0 1-3.598 6.65m0 0A11.99 11.99 0 0 1 5.25 9.6m-2.348 5.15a11.96 11.96 0 0 0 5.448-3.6" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75 12 21l9.75-8.25M2.25 7.5 12 15.75 21.75 7.5 12 3 2.25 7.5Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />,
-    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />,
-];
-
-const STEPS: { n: string; title: string; body: string }[] = [
-    { n: '01', title: 'Tell your story', body: 'Share who you are, your credentials, the people you serve, and how culture shapes your care.' },
-    { n: '02', title: 'We verify your credentials', body: 'Our team confirms your license and details so families can trust every name in the circle.' },
-    { n: '03', title: 'Your listing goes live', body: 'Seekers discover you through language, identity, and area-of-support filters.' },
-];
-
-/* ------------------------------------------------------------------ */
-/*  Brand photo placeholder + image                                    */
-/* ------------------------------------------------------------------ */
-
-const TONES: Record<string, string> = {
-    teal: 'from-[#1E4D4A] to-[#1E4D4A]',
-    deep: 'from-[#1E4D4A] to-[#1E4D4A]',
-    amber: 'from-[#E8D9B8] to-[#E8D9B8]',
-    coral: 'from-[#1E4D4A] to-[#1E4D4A]',
-    sand: 'from-[#E8D9B8] to-[#FAFAF6]',
-};
-
-function Photo({
-    src,
-    alt = '',
-    className = '',
-    tone = 'teal',
-    rounded = '',
-}: {
-    src?: string;
-    alt?: string;
-    className?: string;
-    tone?: keyof typeof TONES | string;
-    rounded?: string;
-}) {
-    const [failed, setFailed] = useState(!src);
-    const toneClass = TONES[tone] ?? TONES.teal;
-
+ * Description, Open Graph and Twitter/X tags are printed by resources/views/app.blade.php
+ * (server side), so link previews on WhatsApp, Facebook and LinkedIn can read them.
+ */
+export default function JoinTheCircle() {
     return (
-        <div className={`relative overflow-hidden bg-gradient-to-br ${toneClass} ${rounded} ${className}`}>
-            {/* circle motif watermark */}
-            <svg viewBox="0 0 300 300" className="absolute -right-10 -top-10 h-3/4 w-3/4 text-white/10" fill="none" aria-hidden>
-                {[120, 92, 64, 36].map((r) => (
-                    <circle key={r} cx="150" cy="150" r={r} stroke="currentColor" strokeWidth="2" />
-                ))}
-            </svg>
+        <LandingLayout withNav>
+            <Head title="Join the Bahali Provider Directory | Bahali" />
 
-            {!failed && src && (
-                <img
-                    src={src}
-                    alt={alt}
-                    onError={() => setFailed(true)}
-                    className="absolute inset-0 h-full w-full object-cover"
-                />
-            )}
+            <main id="top">
+                {/* HERO */}
+                <section className="hero">
+                    <div className="hero-copy">
+                        <div className="eyebrow coral">JOIN THE BAHALI PROVIDER DIRECTORY</div>
 
-            {failed && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="h-1/3 w-1/3 text-white/25" fill="currentColor" aria-hidden>
-                        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6Z" />
-                    </svg>
-                </span>
-            )}
-        </div>
-    );
-}
+                        <h1>Make meaningful support easier to find.</h1>
 
-/* ------------------------------------------------------------------ */
-/*  Small UI helpers                                                   */
-/* ------------------------------------------------------------------ */
-
-function Eyebrow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-    return <p className={`text-sm font-semibold uppercase tracking-[0.2em] ${className}`}>{children}</p>;
-}
-
-function CoralButton({ children = 'Join the circle', large = false }: { children?: React.ReactNode; large?: boolean }) {
-    return (
-        <a
-            href={SIGNUP_ROUTE}
-            target="_blank"
-            className={`group inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#1E4D4A] text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${large ? 'min-h-[52px] px-8' : 'min-h-[48px] px-7'
-                }`}
-        >
-            {children}
-            <span className="transition-transform group-hover:translate-x-0.5" aria-hidden>→</span>
-        </a>
-    );
-}
-
-/** Renders "\n" in admin text as <br /> */
-function Lines({ text }: { text: string }) {
-    const parts = text.split('\n');
-    return (
-        <>
-            {parts.map((part, i) => (
-                <Fragment key={i}>
-                    {part}
-                    {i < parts.length - 1 && <br />}
-                </Fragment>
-            ))}
-        </>
-    );
-}
-
-function WaveTop({ color }: { color: string }) {
-    return (
-        <div className="pointer-events-none -mb-px overflow-hidden leading-none" aria-hidden>
-            <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="block h-[40px] w-full" fill={color}>
-                <path d="M0,60 C360,0 1080,0 1440,60 Z" />
-            </svg>
-        </div>
-    );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
-
-interface PageProps {
-    content: Record<string, string>;
-}
-
-export default function JoinTheCircle({ content }: PageProps) {
-    const t = (key: string): string => content?.[key] ?? '';
-
-    const IMAGES = {
-        hero: t('hero.image'),
-        referrals: t('referrals.image'),
-        testimonial: t('testimonials.image'),
-        stat: [1, 2, 3].map((n) => t(`stat.image_${n}`)),
-        mosaic: Array.from({ length: 10 }, (_, i) => t(`mosaic.image_${i + 1}`)),
-    };
-
-    const BENEFITS = BENEFIT_ICONS.map((icon, i) => ({
-        icon,
-        title: t(`benefits.item_${i + 1}.title`),
-        body: t(`benefits.item_${i + 1}.body`),
-    }));
-
-    const TESTIMONIALS = [1, 2, 3].map((n) => ({
-        quote: t(`testimonials.item_${n}.quote`),
-        name: t(`testimonials.item_${n}.name`),
-        role: t(`testimonials.item_${n}.role`),
-    }));
-
-    const FAQS = [1, 2, 3, 4].map((n) => ({
-        q: t(`faq.item_${n}.question`),
-        a: t(`faq.item_${n}.answer`),
-    }));
-
-    return (
-        <>
-            <Header />
-            <Head title={t('seo.title')}>
-                <meta
-                    name="description"
-                    content={t('seo.description')}
-                />
-            </Head>
-
-
-            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C] antialiased">
-                {/* ===================================================== */}
-                {/*  HERO — full-bleed photo                              */}
-                {/* ===================================================== */}
-                <section
-                    className="relative isolate overflow-hidden bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage: `url(${IMAGES.hero})`,
-                    }}
-                >
-                    {/* Background photo */}
-                    {/* <img src={IMAGES.hero} className="absolute inset-0 bg-cover bg-center bg-no-repeat" /> */}
-                    {/* Left scrim for legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAF6] via-[#FAFAF6]/20 to-transparent" />
-                    {/* <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAF6]/70 via-transparent to-[#FAFAF6]/30" /> */}
-
-
-
-
-                    {/* Hero copy */}
-                    <div className="relative z-10 mx-auto flex max-w-6xl flex-col px-5 pb-20 pt-10 sm:pt-20">
-                        <Eyebrow className="text-[#1E4D4A] font-semibold">{t('hero.eyebrow')}</Eyebrow>
-                        <h1 className="mt-5 max-w-2xl font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">
-                            <Lines text={t('hero.title')} />
-                        </h1>
-                        <p className="mt-6 max-w-xl text-[17px] font-medium leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            <Lines text={t('hero.description')} />
-                            <span className='pt-3 block'>
-                                <Lines text={t('hero.description_secondary')} />
-                            </span>
+                        <p>
+                            Across the Caribbean and its diaspora, finding emotional wellness support is not always straightforward. Bahali is
+                            building a directory that helps individuals and families discover the services you offer, in the locations where you
+                            provide support.
                         </p>
-                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                            <CoralButton large>
-                                {t('hero.cta_primary')}
-                            </CoralButton>
 
-                            <button
-                                type="button"
-                                className="cursor-pointer border px-7 shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition hover:shadow-[0_3px_12px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-1 active:translate-y-px min-h-[48px] rounded-[10px] border-[#1E4D4A] bg-white text-[15px] font-semibold text-[#1E4D4A] hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
-                            >
-                                {t('hero.cta_secondary')}
-                            </button>
+                        <p className="hero-emphasis">
+                            We welcome providers from diverse professional and community-based backgrounds with experience providing mental health
+                            or emotional wellness support.
+                        </p>
+
+                        <div className="hero-actions">
+                            {/* Provider application form */}
+                            <Link className="button" href={SIGNUP_URL}>
+                                Apply to join the directory →
+                            </Link>
+                            <a className="text-link" href="#purpose">
+                                Learn more
+                            </a>
                         </div>
-
                     </div>
 
-                    {/* Corner caption like the reference */}
-                    {/* <p className="absolute bottom-4 right-5 z-10 text-sm text-white/70">
-                        Marsha’s focus: Community Healing
-                    </p> */}
-                </section>
-
-                {/* ===================================================== */}
-                {/*  IT'S SIMPLE TO JOIN                                  */}
-                {/* ===================================================== */}
-                <section className="bg-[#FAFAF6]">
-                    <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-                        <div>
-                            <h2 className="font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{t('simple.title')}</h2>
-                            <p className="mt-4 max-w-lg text-[#2C2C2C]">
-                                {t('simple.body')}
-                            </p>
-                            <div className="mt-7">
-                                <CoralButton>{t('simple.cta')}</CoralButton>
-                            </div>
-                        </div>
-
-                        {/* Community illustration built from the circle motif */}
-                        <div className="relative mx-auto aspect-square w-full max-w-sm">
-                            <svg viewBox="0 0 320 320" className="h-full w-full" fill="none" aria-hidden>
-                                {[150, 116, 82, 48].map((r, i) => (
-                                    <circle key={r} cx="160" cy="160" r={r} stroke="#1E4D4A" strokeWidth="1.5" strokeOpacity={0.25 + i * 0.12} />
-                                ))}
-                                {/* figures arranged around the circle */}
-                                {[0, 1, 2, 3, 4, 5].map((k) => {
-                                    const a = (Math.PI * 2 * k) / 6 - Math.PI / 2;
-                                    const cx = 160 + Math.cos(a) * 116;
-                                    const cy = 160 + Math.sin(a) * 116;
-                                    const fills = ['#1E4D4A', '#E8D9B8', '#E99E84', '#1E4D4A', '#1E4D4A', '#E8D9B8'];
-                                    return (
-                                        <g key={k} transform={`translate(${cx},${cy})`}>
-                                            <circle cx="0" cy="-8" r="9" fill={fills[k]} />
-                                            <path d={`M-13 18 a13 13 0 0 1 26 0 Z`} fill={fills[k]} />
-                                        </g>
-                                    );
-                                })}
-                                <circle cx="160" cy="160" r="26" fill="#E8D9B8" />
-                                <text x="160" y="168" textAnchor="middle" className="font-display" fontSize="22" fill="#1E4D4A" fontWeight="600">B</text>
-                            </svg>
-                        </div>
+                    <div className="hero-photo">
+                        <img src="/images/landing/hero.jpg" alt="A provider listens attentively to a client during a conversation in a bright room." />
                     </div>
                 </section>
 
-                {/* ===================================================== */}
-                {/*  BENEFITS                                             */}
-                {/* ===================================================== */}
-                <section className="bg-white">
-                    <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
-                        <div className="mx-auto max-w-2xl text-center">
-                            <h2 className="font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{t('benefits.title')}</h2>
-                            <p className="mt-3 text-[#2C2C2C]">{t('benefits.subtitle')}</p>
-                        </div>
-
-                        <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                            {BENEFITS.map((b, i) => (
-                                <div key={i} className="flex gap-4">
-                                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#1E4D4A]/10">
-                                        <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
-                                            {b.icon}
-                                        </svg>
-                                    </span>
-                                    <div>
-                                        <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{b.title}</h3>
-                                        <p className="mt-1.5 text-sm leading-relaxed text-[#2C2C2C]">{b.body}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-14 text-center">
-                            <CoralButton>{t('benefits.cta')}</CoralButton>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ===================================================== */}
-                {/*  REFERRALS SHOWCASE (curved)                          */}
-                {/* ===================================================== */}
-                <WaveTop color="#FAFAF6" />
-                <section className="bg-[#FAFAF6]">
-                    <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-2 lg:py-24">
-                        <div>
-                            <Eyebrow className="text-[#1E4D4A]">{t('referrals.eyebrow')}</Eyebrow>
-                            <h2 className="mt-3 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
-                                {t('referrals.title')}
-                            </h2>
-                            <p className="mt-4 max-w-lg text-[#2C2C2C]">
-                                {t('referrals.body')}
-                            </p>
-                            <div className="mt-7">
-                                <CoralButton>{t('referrals.cta')}</CoralButton>
-                            </div>
-                        </div>
-
-                        {/* Referrals image */}
-                        <div className="relative">
-                            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-[#E8D9B8]/20 via-transparent to-[#1E4D4A]/15 blur-xl" />
+                {/* OUR PURPOSE */}
+                <section className="section white" id="purpose">
+                    <div className="inner">
+                        <div className="purpose-grid">
                             <img
-                                src={IMAGES.referrals}
-                                className="w-full shadow-lg"
+                                className="purpose-photo"
+                                src="/images/landing/community.jpg"
+                                alt="Two women laughing together on a park bench, one resting her arm along the bench beside the other."
                             />
+
+                            <div>
+                                <div className="eyebrow">WHY BAHALI EXISTS</div>
+
+                                <h2>Support should be easier to discover, wherever home may be.</h2>
+
+                                <p>
+                                    Across Caribbean communities and the diaspora, finding appropriate mental health and emotional wellness support can
+                                    be difficult. Distance, limited local options and uncertainty about where to turn can make that search even harder.
+                                    By bringing information about providers and their services into one place, Bahali helps individuals and families
+                                    discover available support while making the work of participating providers easier to find.
+                                </p>
+                            </div>
                         </div>
+
+                        <div className="editorial-quote">A directory designed around people's needs, locations and preferences—not around one profession.</div>
                     </div>
                 </section>
 
-                {/* ===================================================== */}
-                {/*  STAT BAND (amber)                                    */}
-                {/* ===================================================== */}
-                <section className="bg-[#E8D9B8]">
-                    <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-12 md:grid-cols-[1fr_1.1fr] lg:py-14">
-                        <div className="text-[#1E4D4A]">
-                            <p className="font-display text-6xl font-semibold leading-none sm:text-7xl">{t('stat.number')}</p>
-                            <p className="mt-4 max-w-sm text-[15px] font-medium leading-relaxed text-[#1E4D4A]/90">
-                                {t('stat.description')}
+                {/* HOW PEOPLE FIND SUPPORT */}
+                <section className="section" id="search">
+                    <div className="inner preview-grid">
+                        <div>
+                            <div className="eyebrow">HOW PEOPLE FIND SUPPORT</div>
+
+                            <h2>Help people discover the support you offer.</h2>
+
+                            <p>
+                                People can explore options by location, area of support, language and how services are delivered, including in
+                                person and virtually.
+                            </p>
+
+                            <p>
+                                The search experience begins with what someone needs—not with a requirement to know which type of provider to
+                                approach.
                             </p>
                         </div>
-                        <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                            {IMAGES.stat.map((src, i) => (
-                                <Photo
-                                    key={i}
-                                    src={src}
-                                    tone={['deep', 'coral', 'teal'][i]}
-                                    rounded="rounded-2xl"
-                                    className="aspect-[3/4] w-full shadow-md"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                </section>
 
-                {/* ===================================================== */}
-                {/*  TESTIMONIALS                                         */}
-                {/* ===================================================== */}
-                <section className="bg-[#FAFAF6]">
-                    <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
-                        <h2 className="text-center font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
-                            {t('testimonials.title')}
-                        </h2>
+                        <div className="search-preview">
+                            <h3>Find support</h3>
 
-                        <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-                            {/* Featured portrait */}
-                            <Photo
-                                src={IMAGES.testimonial}
-                                tone="deep"
-                                rounded="rounded-3xl"
-                                className="min-h-[320px] w-full"
-                            />
-
-                            {/* Quote cards */}
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                {TESTIMONIALS.map((item, i) => (
-                                    <figure
-                                        key={i}
-                                        className={`flex flex-col rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm ${i === 2 ? 'sm:col-span-2' : ''
-                                            }`}
-                                    >
-                                        <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#1E4D4A]" fill="currentColor" aria-hidden>
-                                            <path d="M9.5 6C6.5 6 4 8.6 4 12v6h6v-6H7c0-1.7 1.1-3 2.5-3V6Zm10 0c-3 0-5.5 2.6-5.5 6v6h6v-6h-3c0-1.7 1.1-3 2.5-3V6Z" />
-                                        </svg>
-                                        <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-[#2C2C2C]">
-                                            “{item.quote}”
-                                        </blockquote>
-                                        <figcaption className="mt-5 border-t border-[#E8D9B8] pt-4">
-                                            <p className="text-[16px] font-semibold text-[#2C2C2C]">{item.name}</p>
-                                            <p className="text-sm text-[#2C2C2C]">{item.role}</p>
-                                        </figcaption>
-                                    </figure>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ===================================================== */}
-                {/*  FAQ (2 columns)                                      */}
-                {/* ===================================================== */}
-                <section className="bg-white">
-                    <div className="mx-auto max-w-5xl px-5 py-16 lg:py-24">
-                        <h2 className="text-center font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
-                            {t('faq.title')}
-                        </h2>
-                        <div className="mt-12 grid gap-x-12 gap-y-9 sm:grid-cols-2">
-                            {FAQS.map((f, i) => (
-                                <div key={i}>
-                                    <h3 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{f.q}</h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-[#2C2C2C]">{f.a}</p>
+                            <div className="fields">
+                                <div className="field">
+                                    <small>Location</small>
+                                    Select your location
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
 
-                {/* ===================================================== */}
-                {/*  PHOTO MOSAIC + EMBEDDED CTA                          */}
-                {/* ===================================================== */}
-                <section className="bg-[#FAFAF6]">
-                    <div className="mx-auto max-w-6xl px-5 pb-16 lg:pb-24">
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            {/* first 6 tiles */}
-                            {IMAGES.mosaic.slice(0, 6).map((src, i) => (
-                                <Photo
-                                    key={`a${i}`}
-                                    src={src}
-                                    tone={['teal', 'amber', 'deep', 'coral', 'sand', 'teal'][i % 6]}
-                                    rounded="rounded-2xl"
-                                    className="aspect-square w-full"
-                                />
-                            ))}
+                                <div className="field">
+                                    <small>Area of support</small>
+                                    What would you like help with?
+                                </div>
 
-                            {/* CTA tile spanning two columns */}
-                            <div className="col-span-2 flex flex-col items-center justify-center rounded-2xl bg-[#1E4D4A] p-6 text-center">
-                                <p className="font-display text-2xl font-semibold leading-[1.15] text-white sm:text-3xl">{t('mosaic.cta_title')}</p>
-                                <p className="mt-2 text-[15px] text-[#FFFFFF]/85">{t('mosaic.cta_subtitle')}</p>
-                                <a
-                                    href={SIGNUP_ROUTE}
-                                    target='_blank'
-                                    className="mt-4 inline-flex min-h-[48px] items-center gap-2 rounded-[10px] border border-white bg-[#FAFAF6] px-6 text-[15px] font-semibold text-[#1E4D4A] transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E4D4A]"
-                                >
-                                    {t('mosaic.cta_button')} →
-                                </a>
+                                {/* Language spoken: single-select search filter, matched against the "Languages spoken"
+                                    set list that providers choose from on their profiles. */}
+                                <div className="field">
+                                    <small>Language spoken</small>
+                                    Select a language
+                                </div>
                             </div>
 
-                            {/* remaining tiles */}
-                            {IMAGES.mosaic.slice(6).map((src, i) => (
-                                <Photo
-                                    key={`b${i}`}
-                                    src={src}
-                                    tone={['coral', 'teal', 'amber', 'deep'][i % 4]}
-                                    rounded="rounded-2xl"
-                                    className="aspect-square w-full"
-                                />
-                            ))}
+                            <div className="preview-label">Example areas of support</div>
+
+                            <div className="chips">
+                                <span className="chip">Anxiety &amp; Worry</span>
+                                <span className="chip selected">Grief &amp; Loss</span>
+                                <span className="chip">Relationships &amp; Family</span>
+                            </div>
+
+                            <div className="delivery">
+                                <span>
+                                    <span className="check" aria-hidden="true">
+                                        ✓
+                                    </span>{' '}
+                                    In-person support
+                                </span>
+                                <span>
+                                    <span className="check" aria-hidden="true">
+                                        ✓
+                                    </span>{' '}
+                                    Virtual support
+                                </span>
+                            </div>
+
+                            <div className="preview-action">
+                                {/* Public directory search page */}
+                                <Link className="button" href={DIRECTORY_URL}>
+                                    Explore support →
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ===================================================== */}
-                {/*  FOOTER                                               */}
-                {/* ===================================================== */}
-                {/* <footer className="bg-[#1E4D4A] text-[#FFFFFF]/85">
-                    <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
-                        <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8D9B8] font-display text-sm font-semibold text-[#1E4D4A]">B</span>
-                            <span className="text-sm text-white/90">Bahali — rooted in culture, centered on emotional wellness.</span>
-                        </div>
-                        <div className="flex items-center gap-5 text-sm">
-                            <a href="https://bahali.org/about/" className="transition hover:text-white">About</a>
-                            <a href="https://bahali.org/contact/" className="transition hover:text-white">Contact</a>
-                            <a href="https://bahali.org/legal/" className="transition hover:text-white">Privacy</a>
+                {/* ONE SHARED PURPOSE */}
+                <section className="section sage">
+                    <div className="inner">
+                        <div className="eyebrow">ONE SHARED PURPOSE</div>
+
+                        <h2>Different forms of support. Equal respect.</h2>
+
+                        <p className="intro">
+                            Supporting emotional wellness requires different kinds of knowledge, experience and care. Bahali brings together eligible
+                            clinical, counselling, pastoral, peer, allied and community-based providers, recognising their distinct contributions
+                            while clearly presenting the roles, qualifications and services they describe in their profiles.
+                        </p>
+
+                        <div className="three">
+                            <div className="feature">
+                                <h3>Local relevance</h3>
+                                <p>Discover support available in the locations where people live.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Informed choice</h3>
+                                <p>Explore provider-reported roles, qualifications and services before reaching out.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Multiple pathways</h3>
+                                <p>Explore different forms of support based on individual needs and preferences.</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="border-t border-white/10 py-4 text-center text-sm text-white/50">
-                        © {new Date().getFullYear()} Bahali. All rights reserved.
+                </section>
+
+                {/* WHY JOIN BAHALI */}
+                <section className="section">
+                    <div className="inner">
+                        <div className="eyebrow">WHY JOIN BAHALI</div>
+
+                        <h2>Make what you offer easier to discover.</h2>
+
+                        <div className="three">
+                            <div className="feature">
+                                <h3>Be found by location</h3>
+                                <p>Help people discover your services where you are available.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Explain your services</h3>
+                                <p>Give individuals a clearer understanding of the support you provide.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Show service options</h3>
+                                <p>Make it easy to identify whether you offer in-person or virtual support.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Present your experience</h3>
+                                <p>Share your qualifications, background and relevant experience.</p>
+                            </div>
+
+                            <div className="feature">
+                                <h3>Keep information current</h3>
+                                <p>Maintain an accurate representation of your services and availability.</p>
+                            </div>
+
+                            <div className="feature accent">
+                                <h3>No directory listing fee</h3>
+                                <p>Join the directory and maintain an approved profile at no cost.</p>
+                            </div>
+                        </div>
                     </div>
-                </footer> */}
-                <Footer />
-            </div>
-        </>
+                </section>
+
+                {/* HOW TO JOIN */}
+                <section className="section white" id="steps">
+                    <div className="inner">
+                        <div className="eyebrow">HOW TO JOIN</div>
+
+                        <h2>A clear application process.</h2>
+
+                        <div className="steps">
+                            <div className="step">
+                                <div className="number">01</div>
+                                <h3>Share your information</h3>
+                                <p>Tell us about your role, services, experience and locations.</p>
+                            </div>
+
+                            <div className="step">
+                                <div className="number">02</div>
+                                <h3>Application review</h3>
+                                <p>Bahali reviews your application to determine whether your profile meets the directory's eligibility criteria and standards.</p>
+                            </div>
+
+                            <div className="step">
+                                <div className="number">03</div>
+                                <h3>Become discoverable</h3>
+                                <p>Once approved, your profile is published in the directory, making your services discoverable through relevant searches.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* FREQUENTLY ASKED QUESTIONS */}
+                <section className="section">
+                    <div className="faq">
+                        <div className="eyebrow">GOOD TO KNOW</div>
+
+                        <h2>Frequently asked questions.</h2>
+
+                        <div className="faq-items">
+                            <details open>
+                                <summary>Who can apply?</summary>
+                                <p>
+                                    Eligible providers across clinical, counselling, pastoral, peer, allied and community-based support may apply.
+                                    Requirements vary by role and services offered.
+                                </p>
+                            </details>
+
+                            <details>
+                                <summary>Do I need to be Caribbean to apply?</summary>
+                                <p>No. Bahali welcomes eligible providers from all backgrounds.</p>
+                            </details>
+
+                            <details>
+                                <summary>Do I need experience working with Caribbean communities?</summary>
+                                <p>
+                                    No. Experience supporting Caribbean individuals, families or communities is not required. Providers who have this
+                                    experience can indicate it in their profiles to help people make informed choices.
+                                </p>
+                            </details>
+
+                            <details>
+                                <summary>Must I offer virtual support?</summary>
+                                <p>
+                                    No. Providers may offer in-person services, virtual services or both, depending on their services and applicable
+                                    requirements.
+                                </p>
+                            </details>
+
+                            <details>
+                                <summary>How are applications reviewed?</summary>
+                                <p>
+                                    Bahali reviews applications to assess whether providers meet the directory's eligibility criteria and standards.
+                                    This includes reviewing the information submitted about their professional role, experience and services. Approval
+                                    allows a profile to be published but does not constitute independent credential verification.
+                                </p>
+                            </details>
+
+                            <details>
+                                <summary>Is there a listing fee?</summary>
+                                <p>No. Applying to join the directory and maintaining an approved listing are free.</p>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ABOUT BAHALI (credibility statement, placed directly above the final invitation) */}
+                <section className="about" aria-labelledby="about-bahali">
+                    <div className="inner">
+                        <div className="eyebrow" id="about-bahali">
+                            ABOUT BAHALI
+                        </div>
+                        <p className="about-statement">
+                            Bahali is a nonprofit organisation dedicated to emotional wellness across Caribbean communities and the diaspora. Founded
+                            and led by Dr. Marsha Smith, PsyD, LCSW, a clinical psychologist and clinical social worker, Bahali created the Provider
+                            Directory to help people find support and help providers be found.
+                        </p>
+                        {/* Confirm the bahali.org About page address */}
+                        <a className="text-link" href="https://bahali.org/about/">
+                            Learn more about Bahali →
+                        </a>
+                    </div>
+                </section>
+
+                {/* FINAL INVITATION */}
+                <section className="closing" id="join">
+                    <div className="eyebrow">AN INVITATION TO PARTICIPATE</div>
+
+                    <h2>Help make support easier to find, wherever people call home.</h2>
+
+                    <p>Join Bahali in making information about emotional wellness support more accessible across Caribbean communities and the diaspora.</p>
+
+                    {/* Provider application form */}
+                    <Link className="button light-button" href={SIGNUP_URL}>
+                        Apply to join the directory →
+                    </Link>
+                </section>
+            </main>
+        </LandingLayout>
     );
 }
