@@ -234,12 +234,12 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                         </a>
 
                         {/* Provider Directory Link */}
-                        <a
+                        {/* <a
                             href={directoryUrl}
                             className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Providers
-                        </a>
+                        </a> */}
                         {/* Login / Dashboard (Desktop) */}
                         <div className="hidden min-[982px]:block">
                             {user ? (
