@@ -1757,7 +1757,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         </div>
                     </div>
                 </div>
-                <Footer />
+                <LandingFooter />
             </>
         );
     }
@@ -1931,7 +1931,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     </div>
                 </div>
             </div>
-            <Footer />
+            <LandingFooter />
         </>
     );
 }
