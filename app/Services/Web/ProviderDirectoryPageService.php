@@ -41,7 +41,7 @@ class ProviderDirectoryPageService extends BaseService
                 'title' => 'Hero',
                 'description' => 'Intro text and image at the top of the directory.',
                 'fields' => [
-                    self::field('hero.image', 'Hero Image', 'image', '/images/hero-caribbean-adults.png', null, 'Transparent PNG works best — it sits in the top-right corner on desktop (about 1040×760).'),
+                    self::field('hero.image', 'Hero Image', 'image', '/images/bahali-provider-search.jpg', null, 'Transparent PNG works best — it sits in the top-right corner on desktop (about 1040×760).'),
                     self::field('hero.eyebrow', 'Eyebrow', 'text', 'Find culturally-grounded care'),
                     self::field('hero.title', 'Heading', 'text', 'Let’s help you find support'),
                     self::field('hero.description', 'Description', 'textarea', 'Answer as much or as little as you like. You don’t need to know what kind of professional you’re looking for.'),
