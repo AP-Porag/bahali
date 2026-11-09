@@ -14,25 +14,32 @@
     <link rel="canonical" href="{{ rtrim(config('app.url'), '/') . request()->getPathInfo() }}">
 
     @if (($page['component'] ?? '') === 'web/JoinTheCircle')
-        <!-- Landing page (Version 3.7): description + link-preview tags, printed on the server so
-             WhatsApp, Facebook, LinkedIn and X can read them. -->
-        <meta name="description" content="Join the Bahali Provider Directory and help individuals and families across Caribbean communities and the diaspora discover the mental health and emotional wellness support you offer.">
+        @php
+            /* Landing page (Version 3.7): text comes from Admin → Website → Join the Circle ("Page title & link previews"). */
+            $lp = $page['props']['content'] ?? [];
+            $lpText = fn (string $key, string $default) => ($lp[$key] ?? '') ?: $default;
+            $lpDescription = $lpText('landing.seo.description', 'Join the Bahali Provider Directory and help individuals and families across Caribbean communities and the diaspora discover the mental health and emotional wellness support you offer.');
+            $lpShareTitle = $lpText('landing.seo.share_title', 'Make meaningful support easier to find.');
+            $lpShareDescription = $lpText('landing.seo.share_description', 'Join a growing directory connecting individuals and families with mental health and emotional wellness providers across the Caribbean and its diaspora.');
+            $lpShareImage = url($lpText('landing.seo.share_image', '/images/landing/social-share.jpg'));
+        @endphp
+        <!-- Printed on the server so WhatsApp, Facebook, LinkedIn and X can read them. -->
+        <meta name="description" content="{{ $lpDescription }}">
 
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="Bahali Provider Directory">
-        <meta property="og:title" content="Make meaningful support easier to find.">
-        <meta property="og:description" content="Join a growing directory connecting individuals and families with mental health and emotional wellness providers across the Caribbean and its diaspora.">
+        <meta property="og:title" content="{{ $lpShareTitle }}">
+        <meta property="og:description" content="{{ $lpShareDescription }}">
         <meta property="og:url" content="{{ rtrim(config('app.url'), '/') . request()->getPathInfo() }}">
-        <!-- Social image: dedicated 1200 x 630 px branded graphic (add public/images/landing/social-share.jpg) -->
-        <meta property="og:image" content="{{ rtrim(config('app.url'), '/') }}/images/landing/social-share.jpg">
+        <meta property="og:image" content="{{ $lpShareImage }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" content="Bahali Provider Directory: Make meaningful support easier to find.">
+        <meta property="og:image:alt" content="Bahali Provider Directory: {{ $lpShareTitle }}">
 
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Make meaningful support easier to find.">
-        <meta name="twitter:description" content="Join a growing directory connecting individuals and families with mental health and emotional wellness providers across the Caribbean and its diaspora.">
-        <meta name="twitter:image" content="{{ rtrim(config('app.url'), '/') }}/images/landing/social-share.jpg">
+        <meta name="twitter:title" content="{{ $lpShareTitle }}">
+        <meta name="twitter:description" content="{{ $lpShareDescription }}">
+        <meta name="twitter:image" content="{{ $lpShareImage }}">
     @endif
 
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/bahali-icon.png') }}">

@@ -659,8 +659,9 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
 /* Default page text & image — shown until the admin changes them (keep in sync with ProviderDirectoryPageService::schema()). */
 const DEFAULT_CONTENT = {
     'seo.title': 'Find the right support — Bahali',
-    'hero.image': '/images/hero-caribbean-adults.png',
-    'hero.eyebrow': 'Find culturally-grounded care',
+    'hero.image': '/images/find-support-hero.jpg',
+    'hero.image_alt': 'A man talks calmly with a support provider in a bright room.',
+    'hero.eyebrow': 'Find culturally grounded care',
     'hero.title': 'Let’s help you find support',
     'hero.description': 'Answer as much or as little as you like. You don’t need to know what kind of professional you’re looking for.',
     'search.label': 'Find support',
@@ -955,22 +956,21 @@ export default function Directory({
 
             {/* ===== HERO SECTION ===== */}
             <section className="relative bg-[#FAFAF6]">
-                {/* Hero image – absolute at top-right corner, only left + bottom edges fade */}
-                <div className="pointer-events-none absolute right-0 top-0 hidden h-[300px] w-[400px] lg:block lg:h-[340px] lg:w-[460px] xl:h-[380px] xl:w-[520px]">
-                    <img
-                        src={txt('hero.image')}
-                        alt="hero-caribbean-adults"
-                        aria-hidden="true"
-                        className="h-full w-full object-contain object-right-top"
-                    />
-                </div>
-
-                {/* Content – sits above image */}
                 <div className="relative z-10 mx-auto max-w-6xl px-5 py-12 lg:py-14">
-                    <div className="mb-6 max-w-xl">
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1E4D4A]">{txt('hero.eyebrow')}</p>
-                        <h1 className="mt-2 text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]" style={SERIF}>{txt('hero.title')}</h1>
-                        <p className="mt-2 max-w-md text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">{txt('hero.description')}</p>
+                    {/* Heading + image. The image sits to the right of the heading (top aligned with the eyebrow,
+                        right edge aligned with the search card) on laptops/desktops only; below 1024px it is hidden
+                        so nothing but the heading and intro text appears above the search form. */}
+                    <div className="mb-6 flex items-start justify-between gap-5">
+                        <div className="max-w-xl">
+                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1E4D4A]">{txt('hero.eyebrow')}</p>
+                            <h1 className="mt-2 text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]" style={SERIF}>{txt('hero.title')}</h1>
+                            <p className="mt-2 max-w-md text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">{txt('hero.description')}</p>
+                        </div>
+                        <img
+                            src={txt('hero.image')}
+                            alt={txt('hero.image_alt')}
+                            className="hidden h-[190px] w-[355px] flex-shrink-0 rounded-2xl object-cover object-[50%_30%] lg:block xl:h-[200px] xl:w-[374px]"
+                        />
                     </div>
 
                     {isCrisisQuery(f.keyword) && (

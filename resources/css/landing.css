@@ -658,7 +658,37 @@
   margin-top: 16px;
 }
 
-/* Final hero photograph (Marsha, 8 Nov 2026): keep the provider in view */
+/* Final hero photograph (Marsha, 8 Nov 2026).
+   Marsha suggested 60% 40% and asked to adjust it so faces stay in view. 60% cut off the client's
+   face on laptops and tablets, so 27% 40% is used: it keeps both people's faces in view
+   from 360px phones to 1920px desktops (tested 360, 390, 700, 768, 900, 1024, 1280, 1366, 1440, 1920). */
 .bc-landing .hero-photo img {
-  object-position: 60% 40%;
+  object-position: 27% 40%;
+}
+/* Same position if the hero photo is set as a background image (uploaded from the admin panel). */
+.bc-landing .hero-photo {
+  background-size: cover;
+  background-position: 27% 40%;
+  background-repeat: no-repeat;
+}
+
+/* Bahali logo image in the header (replaces the "bahali / PROVIDER DIRECTORY" text logo) */
+.bc-landing .logo {
+  display: inline-block;
+  line-height: 0;
+}
+.bc-landing .logo img {
+  display: block;
+  height: 60px;
+  width: auto;
+}
+@media (max-width: 700px) {
+  .bc-landing .logo img {
+    height: 52px;
+  }
+}
+@media (max-width: 370px) {
+  .bc-landing .logo img {
+    height: 44px;
+  }
 }

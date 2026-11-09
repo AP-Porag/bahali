@@ -17,13 +17,30 @@ export const PRIVACY_URL = '/privacy';
 export const DISCLAIMER_URL = '/disclaimer';
 export const URGENT_SUPPORT_URL = '/urgent-support';
 
-function LandingHeader({ withNav }: { withNav: boolean }) {
+/* Bahali logo (replaces the "bahali / PROVIDER DIRECTORY" text logo in the header). */
+const LOGO_SRC = '/images/landing/bahali-logo.png';
+
+/* Header menu labels — the landing page passes the admin-panel text; other pages use these defaults. */
+export interface LandingNav {
+    link1: string;
+    link2: string;
+    link3: string;
+    button: string;
+}
+
+const DEFAULT_NAV: LandingNav = {
+    link1: 'Our purpose',
+    link2: 'How People Find Support',
+    link3: 'How to join',
+    button: 'Apply to join →',
+};
+
+function LandingHeader({ withNav, nav }: { withNav: boolean; nav: LandingNav }) {
     if (!withNav) {
         return (
             <header className="site-header">
                 <Link className="logo" href={LANDING_URL} aria-label="Bahali Provider Directory home">
-                    bahali
-                    <small>PROVIDER DIRECTORY</small>
+                    <img src={LOGO_SRC} alt="" />
                 </Link>
             </header>
         );
@@ -32,23 +49,22 @@ function LandingHeader({ withNav }: { withNav: boolean }) {
     return (
         <header className="site-header">
             <a className="logo" href="#top" aria-label="Bahali Provider Directory home">
-                bahali
-                <small>PROVIDER DIRECTORY</small>
+                <img src={LOGO_SRC} alt="" />
             </a>
 
             <nav aria-label="Main navigation">
                 <a className="nav-link" href="#purpose">
-                    Our purpose
+                    {nav.link1}
                 </a>
                 <a className="nav-link" href="#search">
-                    How People Find Support
+                    {nav.link2}
                 </a>
                 <a className="nav-link" href="#steps">
-                    How to join
+                    {nav.link3}
                 </a>
                 {/* Provider application form */}
                 <Link className="button nav-button" href={SIGNUP_URL}>
-                    Apply to join →
+                    {nav.button}
                 </Link>
             </nav>
         </header>
@@ -80,7 +96,7 @@ function LandingFooter() {
     );
 }
 
-export default function LandingLayout({ children, withNav = false }: { children: ReactNode; withNav?: boolean }) {
+export default function LandingLayout({ children, withNav = false, nav = DEFAULT_NAV }: { children: ReactNode; withNav?: boolean; nav?: LandingNav }) {
     // Smooth scrolling for the in-page links (#purpose, #search, #steps), only while these pages are open.
     useEffect(() => {
         const root = document.documentElement;
@@ -93,7 +109,7 @@ export default function LandingLayout({ children, withNav = false }: { children:
 
     return (
         <div className="bc-landing">
-            <LandingHeader withNav={withNav} />
+            <LandingHeader withNav={withNav} nav={nav} />
             {children}
             <LandingFooter />
         </div>

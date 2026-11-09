@@ -12,7 +12,7 @@ class JoinTheCircleService extends BaseService
 {
     public const PAGE = 'join-the-circle';
 
-    private const CACHE_KEY = 'page_content_join_the_circle';
+    private const CACHE_KEY = 'page_content_join_the_circle_v37'; // new key: the old cached content is never served
 
     private const UPLOAD_DIR = 'page-contents/join-the-circle';
 
@@ -24,163 +24,184 @@ class JoinTheCircleService extends BaseService
     /* ------------------------------------------------------------------ */
     /*  Schema — single source of truth for every editable field          */
     /*  type: text | textarea | image                                      */
-    /*  Multi-line text: "\n" = line break on the public page.            */
+    /*  Landing page Version 3.7 (Marsha's approved design). Keys start    */
+    /*  with "landing." so values saved for the old Join the Circle page   */
+    /*  are never shown on the new page. Defaults = the approved text.     */
+    /*  Keep in sync with DEFAULTS in resources/js/pages/web/JoinTheCircle.tsx */
     /* ------------------------------------------------------------------ */
     public static function schema(): array
     {
-        $benefits = [
-            ['Found by the diaspora', 'Families on the islands and abroad search for culturally grounded care. Your listing meets them where they look.'],
-            ['Culturally matched referrals', 'Seekers filter by language, identity, and lived experience, so the people best suited to your strengths find you.'],
-            ['A profile that holds your story', 'Bio, photo, languages, and how culture shapes your care — everything a family needs to feel safe choosing you.'],
-            ['Language-first search', 'English, Haitian Creole, Patois, French, Spanish and more — families find you in the language they heal in.'],
-            ['Telehealth across borders', 'Mark every region you can serve remotely. Reach clients across islands and time zones, not just your home parish.'],
-            ['Verified & trusted', 'Every provider is reviewed. Your license and credentials are confirmed, so families trust the circle they step into.'],
-            ['Free to be listed', 'No fees, no contracts. Bahali is a nonprofit — our aim is access to care, not gatekeeping it behind a paywall.'],
-            ['You control your listing', 'Update your bio, availability, and the regions you serve any time. Your profile grows as your practice does.'],
-            ['Community, not competition', 'Join a network built on care. We connect providers, programs, and faith leaders walking the same path with you.'],
-        ];
-
-        $testimonials = [
-            ['Being listed meant diaspora families searching in two languages could finally find someone who understood both their worlds.', 'Kulman Jamm', 'Clinical Psychologist'],
-            ['The referrals are people I’m actually equipped to help. The cultural filters do real work before a client reaches my inbox.', 'Joanne P.', 'Mental Health Counselor, LMHC'],
-            ['I don’t have the time or skill to market myself online. Bahali put me in front of the exact community I trained to serve.', 'David R.', 'Clinical Social Worker'],
-        ];
-
-        $faqs = [
-            ['How much does it cost to be listed?', 'Nothing. Bahali is a nonprofit and the directory is free for verified providers — no fees, no contracts. Our mission is widening access to culturally grounded care, not putting it behind a paywall.'],
-            ['Who can join the directory?', 'Licensed and credentialed providers, support groups, faith-based organizations, and community programs who serve Caribbean individuals and families, on the islands or in the diaspora.'],
-            ['Do I need to be Caribbean myself?', 'No. We welcome any provider with genuine experience supporting Caribbean communities. The form lets you share your background and cultural approach so seekers can decide what fits them.'],
-            ['Can I offer telehealth across islands?', 'Yes. Your profile lets you list every region you can serve remotely, so families across borders and time zones can reach you.'],
-        ];
-
-        $mosaicDefaults = ['mosaic10', 'mosaic2', 'mosaic3', 'mosaic4', 'mosaic8', 'mosaic6', 'mosaic7', 'mosaic5', 'mosaic9', 'mosaic1'];
-
-        /* ---------- Benefits fields ---------- */
-        $benefitFields = [
-            self::field('benefits.title', 'Section Heading', 'text', 'Bahali provider benefits'),
-            self::field('benefits.subtitle', 'Section Subheading', 'text', 'No fees, no contracts. Free for every verified provider.'),
-        ];
-        foreach ($benefits as $i => [$title, $body]) {
-            $n = $i + 1;
-            $benefitFields[] = self::field("benefits.item_{$n}.title", 'Title', 'text', $title, "Benefit {$n}");
-            $benefitFields[] = self::field("benefits.item_{$n}.body", 'Description', 'textarea', $body, "Benefit {$n}");
-        }
-        $benefitFields[] = self::field('benefits.cta', 'Button Text', 'text', 'Join the circle');
-
-        /* ---------- Testimonial fields ---------- */
-        $testimonialFields = [
-            self::field('testimonials.title', 'Section Heading', 'text', 'Voices from the circle'),
-            self::field('testimonials.image', 'Featured Portrait', 'image', '/images/join/testimonial.jpg', null, 'Portrait orientation works best (e.g. 800×1000).'),
-        ];
-        foreach ($testimonials as $i => [$quote, $name, $role]) {
-            $n = $i + 1;
-            $testimonialFields[] = self::field("testimonials.item_{$n}.quote", 'Quote', 'textarea', $quote, "Testimonial {$n}");
-            $testimonialFields[] = self::field("testimonials.item_{$n}.name", 'Name', 'text', $name, "Testimonial {$n}");
-            $testimonialFields[] = self::field("testimonials.item_{$n}.role", 'Role', 'text', $role, "Testimonial {$n}");
-        }
-
-        /* ---------- FAQ fields ---------- */
-        $faqFields = [
-            self::field('faq.title', 'Section Heading', 'text', 'Frequently asked questions'),
-        ];
-        foreach ($faqs as $i => [$q, $a]) {
-            $n = $i + 1;
-            $faqFields[] = self::field("faq.item_{$n}.question", 'Question', 'text', $q, "FAQ {$n}");
-            $faqFields[] = self::field("faq.item_{$n}.answer", 'Answer', 'textarea', $a, "FAQ {$n}");
-        }
-
-        /* ---------- Mosaic fields ---------- */
-        $mosaicFields = [
-            self::field('mosaic.cta_title', 'CTA Title', 'text', 'Add your name to the circle'),
-            self::field('mosaic.cta_subtitle', 'CTA Subtitle', 'text', 'Free for verified providers.'),
-            self::field('mosaic.cta_button', 'CTA Button Text', 'text', 'Join us'),
-        ];
-        foreach ($mosaicDefaults as $i => $file) {
-            $n = $i + 1;
-            $mosaicFields[] = self::field("mosaic.image_{$n}", "Photo {$n}", 'image', "/images/join/{$file}.jpeg", 'Photos', 'Square images work best (e.g. 600×600).');
-        }
-
         return [
             [
-                'key' => 'seo',
-                'title' => 'SEO & Meta',
-                'description' => 'Browser tab title and the description search engines show.',
+                'key' => 'landing_seo',
+                'title' => 'Page title & link previews',
+                'description' => 'Browser tab title, search description and the text/image shown when the page link is shared.',
                 'fields' => [
-                    self::field('seo.title', 'Page Title', 'text', 'Join the Circle — Become a Bahali Wellness Provider'),
-                    self::field('seo.description', 'Meta Description', 'textarea', 'Everything you need to be found by Caribbean families seeking culturally grounded care. Join the Bahali Provider Directory — free for verified providers, across the islands and the diaspora.'),
+                    self::field('landing.seo.title', 'Browser tab title', 'text', 'Join the Bahali Provider Directory | Bahali'),
+                    self::field('landing.seo.description', 'Search engine description', 'textarea', 'Join the Bahali Provider Directory and help individuals and families across Caribbean communities and the diaspora discover the mental health and emotional wellness support you offer.'),
+                    self::field('landing.seo.share_title', 'Link preview title', 'text', 'Make meaningful support easier to find.', 'Link previews (WhatsApp, Facebook, LinkedIn, X)'),
+                    self::field('landing.seo.share_description', 'Link preview description', 'textarea', 'Join a growing directory connecting individuals and families with mental health and emotional wellness providers across the Caribbean and its diaspora.', 'Link previews (WhatsApp, Facebook, LinkedIn, X)'),
+                    self::field('landing.seo.share_image', 'Link preview image (1200 × 630 px)', 'image', '/images/landing/social-share.jpg', 'Link previews (WhatsApp, Facebook, LinkedIn, X)', '1200 × 630 px JPG. Shown when the page link is shared.'),
                 ],
             ],
             [
-                'key' => 'hero',
+                'key' => 'landing_header',
+                'title' => 'Header menu',
+                'description' => 'Links at the top of the landing page.',
+                'fields' => [
+                    self::field('landing.header.link_1', 'Menu link 1', 'text', 'Our purpose'),
+                    self::field('landing.header.link_2', 'Menu link 2', 'text', 'How People Find Support'),
+                    self::field('landing.header.link_3', 'Menu link 3', 'text', 'How to join'),
+                    self::field('landing.header.button', 'Menu button', 'text', 'Apply to join →'),
+                ],
+            ],
+            [
+                'key' => 'landing_hero',
                 'title' => 'Hero',
-                'description' => 'The full-width banner at the top of the page.',
+                'description' => 'Top of the page.',
                 'fields' => [
-                    self::field('hero.image', 'Background Image', 'image', '/images/join/hero.jpg', null, 'Wide landscape image (min. 1920×900).'),
-                    self::field('hero.eyebrow', 'Eyebrow', 'text', 'For Caribbean & diaspora-serving providers'),
-                    self::field('hero.title', 'Heading', 'textarea', "Help Caribbean\nFamilies Find the\nCare They Need", null, 'Press Enter to add a line break.'),
-                    self::field('hero.description', 'Description', 'textarea', "Join a trusted network helping Caribbean\nindividuals and families find culturally\ngrounded emotional wellness support.", null, 'Press Enter to add a line break.'),
-                    self::field('hero.description_secondary', 'Second Paragraph', 'textarea', "Grow your professional presence while\nstrengthening access to care across our\ncommunities.", null, 'Press Enter to add a line break.'),
-                    self::field('hero.cta_primary', 'Primary Button Text', 'text', 'Create Your Provider Profile'),
-                    self::field('hero.cta_secondary', 'Secondary Button Text', 'text', 'Learn More'),
+                    self::field('landing.hero.eyebrow', 'Eyebrow label', 'text', 'JOIN THE BAHALI PROVIDER DIRECTORY'),
+                    self::field('landing.hero.title', 'Heading', 'text', 'Make meaningful support easier to find.'),
+                    self::field('landing.hero.body', 'Paragraph', 'textarea', 'Across the Caribbean and its diaspora, finding emotional wellness support is not always straightforward. Bahali is building a directory that helps individuals and families discover the services you offer, in the locations where you provide support.'),
+                    self::field('landing.hero.emphasis', 'Highlighted paragraph', 'textarea', 'We welcome providers from diverse professional and community-based backgrounds with experience providing mental health or emotional wellness support.'),
+                    self::field('landing.hero.button', 'Button', 'text', 'Apply to join the directory →'),
+                    self::field('landing.hero.link', 'Text link', 'text', 'Learn more'),
+                    self::field('landing.hero.image', 'Photo (at least 1600 px wide, JPG under 300 KB)', 'image', '/images/landing/hero.jpg', 'Photo', 'Crop out anything distracting at the bottom. The page keeps both faces in view (object-position 27% 40%).'),
+                    self::field('landing.hero.image_alt', 'Photo description (alt text)', 'text', 'A provider listens attentively to a client during a conversation in a bright room.', 'Photo'),
                 ],
             ],
             [
-                'key' => 'simple',
-                'title' => 'It’s Simple to Join',
-                'description' => 'Intro band below the hero.',
+                'key' => 'landing_purpose',
+                'title' => 'Why Bahali exists',
+                'description' => null,
                 'fields' => [
-                    self::field('simple.title', 'Heading', 'text', 'It’s simple to join'),
-                    self::field('simple.body', 'Description', 'textarea', 'Share your story today and step into the circle. You’ll appear before the Caribbean individuals and families who come to Bahali searching for someone who understands where they come from.'),
-                    self::field('simple.cta', 'Button Text', 'text', 'Join now'),
+                    self::field('landing.purpose.image', 'Photo (at least 1200 px wide, JPG under 300 KB)', 'image', '/images/landing/community.jpg', 'Photo', 'Landscape photo; shown with rounded corners.'),
+                    self::field('landing.purpose.image_alt', 'Photo description (alt text)', 'text', 'Two women laughing together on a park bench, one resting her arm along the bench beside the other.', 'Photo'),
+                    self::field('landing.purpose.eyebrow', 'Eyebrow label', 'text', 'WHY BAHALI EXISTS', 'Text'),
+                    self::field('landing.purpose.title', 'Heading', 'text', 'Support should be easier to discover, wherever home may be.', 'Text'),
+                    self::field('landing.purpose.body', 'Paragraph', 'textarea', 'Across Caribbean communities and the diaspora, finding appropriate mental health and emotional wellness support can be difficult. Distance, limited local options and uncertainty about where to turn can make that search even harder. By bringing information about providers and their services into one place, Bahali helps individuals and families discover available support while making the work of participating providers easier to find.', 'Text'),
+                    self::field('landing.purpose.quote', 'Quote', 'textarea', 'A directory designed around people\'s needs, locations and preferences—not around one profession.', 'Text'),
                 ],
             ],
             [
-                'key' => 'benefits',
-                'title' => 'Provider Benefits',
-                'description' => 'The nine-item benefits grid.',
-                'fields' => $benefitFields,
-            ],
-            [
-                'key' => 'referrals',
-                'title' => 'Referrals Showcase',
-                'description' => 'Text and image block after the benefits.',
+                'key' => 'landing_search',
+                'title' => 'How people find support',
+                'description' => 'Text beside the search preview, and the preview card itself.',
                 'fields' => [
-                    self::field('referrals.eyebrow', 'Eyebrow', 'text', 'The home of Caribbean referrals'),
-                    self::field('referrals.title', 'Heading', 'text', 'The first place families look for care that feels like home'),
-                    self::field('referrals.body', 'Description', 'textarea', 'Attract new clients and grow your practice when you join the directory built around Caribbean culture, language, and lived experience.'),
-                    self::field('referrals.cta', 'Button Text', 'text', 'Join now'),
-                    self::field('referrals.image', 'Image', 'image', '/images/join/referrals.jpg', null, 'Landscape or portrait (e.g. 1000×1000).'),
+                    self::field('landing.search.eyebrow', 'Eyebrow label', 'text', 'HOW PEOPLE FIND SUPPORT', 'Text'),
+                    self::field('landing.search.title', 'Heading', 'text', 'Help people discover the support you offer.', 'Text'),
+                    self::field('landing.search.body_1', 'Paragraph 1', 'textarea', 'People can explore options by location, area of support, language and how services are delivered, including in person and virtually.', 'Text'),
+                    self::field('landing.search.body_2', 'Paragraph 2', 'textarea', 'The search experience begins with what someone needs—not with a requirement to know which type of provider to approach.', 'Text'),
+                    self::field('landing.search.card_title', 'Card heading', 'text', 'Find support', 'Search preview card'),
+                    self::field('landing.search.field_1_label', 'Field 1 label', 'text', 'Location', 'Search preview card'),
+                    self::field('landing.search.field_1_text', 'Field 1 text', 'text', 'Select your location', 'Search preview card'),
+                    self::field('landing.search.field_2_label', 'Field 2 label', 'text', 'Area of support', 'Search preview card'),
+                    self::field('landing.search.field_2_text', 'Field 2 text', 'text', 'What would you like help with?', 'Search preview card'),
+                    self::field('landing.search.field_3_label', 'Field 3 label', 'text', 'Language spoken', 'Search preview card'),
+                    self::field('landing.search.field_3_text', 'Field 3 text', 'text', 'Select a language', 'Search preview card'),
+                    self::field('landing.search.chips_label', 'Chips label', 'text', 'Example areas of support', 'Search preview card'),
+                    self::field('landing.search.chip_1', 'Chip 1', 'text', 'Anxiety & Worry', 'Search preview card'),
+                    self::field('landing.search.chip_2', 'Chip 2 (shown as selected)', 'text', 'Grief & Loss', 'Search preview card'),
+                    self::field('landing.search.chip_3', 'Chip 3', 'text', 'Relationships & Family', 'Search preview card'),
+                    self::field('landing.search.option_1', 'Tick option 1', 'text', 'In-person support', 'Search preview card'),
+                    self::field('landing.search.option_2', 'Tick option 2', 'text', 'Virtual support', 'Search preview card'),
+                    self::field('landing.search.button', 'Button', 'text', 'Explore support →', 'Search preview card'),
                 ],
             ],
             [
-                'key' => 'stat',
-                'title' => 'Stat Band',
-                'description' => 'The amber band with the big number.',
+                'key' => 'landing_shared',
+                'title' => 'One shared purpose',
+                'description' => null,
                 'fields' => [
-                    self::field('stat.number', 'Big Number', 'text', '28+'),
-                    self::field('stat.description', 'Description', 'textarea', 'Caribbean regions and territories where families are searching for culturally grounded care — in 8+ languages.'),
-                    self::field('stat.image_1', 'Portrait 1', 'image', '/images/join/stat1.jpeg', 'Portraits', 'Portrait orientation (3:4).'),
-                    self::field('stat.image_2', 'Portrait 2', 'image', '/images/join/stat2.jpeg', 'Portraits', 'Portrait orientation (3:4).'),
-                    self::field('stat.image_3', 'Portrait 3', 'image', '/images/join/stat3.jpeg', 'Portraits', 'Portrait orientation (3:4).'),
+                    self::field('landing.shared.eyebrow', 'Eyebrow label', 'text', 'ONE SHARED PURPOSE'),
+                    self::field('landing.shared.title', 'Heading', 'text', 'Different forms of support. Equal respect.'),
+                    self::field('landing.shared.body', 'Paragraph', 'textarea', 'Supporting emotional wellness requires different kinds of knowledge, experience and care. Bahali brings together eligible clinical, counselling, pastoral, peer, allied and community-based providers, recognising their distinct contributions while clearly presenting the roles, qualifications and services they describe in their profiles.'),
+                    self::field('landing.shared.item_1.title', 'Title', 'text', 'Local relevance', 'Point 1'),
+                    self::field('landing.shared.item_1.body', 'Text', 'textarea', 'Discover support available in the locations where people live.', 'Point 1'),
+                    self::field('landing.shared.item_2.title', 'Title', 'text', 'Informed choice', 'Point 2'),
+                    self::field('landing.shared.item_2.body', 'Text', 'textarea', 'Explore provider-reported roles, qualifications and services before reaching out.', 'Point 2'),
+                    self::field('landing.shared.item_3.title', 'Title', 'text', 'Multiple pathways', 'Point 3'),
+                    self::field('landing.shared.item_3.body', 'Text', 'textarea', 'Explore different forms of support based on individual needs and preferences.', 'Point 3'),
                 ],
             ],
             [
-                'key' => 'testimonials',
-                'title' => 'Testimonials',
-                'description' => 'Voices from the circle.',
-                'fields' => $testimonialFields,
+                'key' => 'landing_why',
+                'title' => 'Why join Bahali',
+                'description' => 'Point 6 is shown with the coral accent line.',
+                'fields' => [
+                    self::field('landing.why.eyebrow', 'Eyebrow label', 'text', 'WHY JOIN BAHALI'),
+                    self::field('landing.why.title', 'Heading', 'text', 'Make what you offer easier to discover.'),
+                    self::field('landing.why.item_1.title', 'Title', 'text', 'Be found by location', 'Point 1'),
+                    self::field('landing.why.item_1.body', 'Text', 'textarea', 'Help people discover your services where you are available.', 'Point 1'),
+                    self::field('landing.why.item_2.title', 'Title', 'text', 'Explain your services', 'Point 2'),
+                    self::field('landing.why.item_2.body', 'Text', 'textarea', 'Give individuals a clearer understanding of the support you provide.', 'Point 2'),
+                    self::field('landing.why.item_3.title', 'Title', 'text', 'Show service options', 'Point 3'),
+                    self::field('landing.why.item_3.body', 'Text', 'textarea', 'Make it easy to identify whether you offer in-person or virtual support.', 'Point 3'),
+                    self::field('landing.why.item_4.title', 'Title', 'text', 'Present your experience', 'Point 4'),
+                    self::field('landing.why.item_4.body', 'Text', 'textarea', 'Share your qualifications, background and relevant experience.', 'Point 4'),
+                    self::field('landing.why.item_5.title', 'Title', 'text', 'Keep information current', 'Point 5'),
+                    self::field('landing.why.item_5.body', 'Text', 'textarea', 'Maintain an accurate representation of your services and availability.', 'Point 5'),
+                    self::field('landing.why.item_6.title', 'Title', 'text', 'No directory listing fee', 'Point 6'),
+                    self::field('landing.why.item_6.body', 'Text', 'textarea', 'Join the directory and maintain an approved profile at no cost.', 'Point 6'),
+                ],
             ],
             [
-                'key' => 'faq',
-                'title' => 'FAQ',
-                'description' => 'Two-column frequently asked questions.',
-                'fields' => $faqFields,
+                'key' => 'landing_steps',
+                'title' => 'How to join',
+                'description' => null,
+                'fields' => [
+                    self::field('landing.steps.eyebrow', 'Eyebrow label', 'text', 'HOW TO JOIN'),
+                    self::field('landing.steps.title', 'Heading', 'text', 'A clear application process.'),
+                    self::field('landing.steps.item_1.title', 'Title', 'text', 'Share your information', 'Step 01'),
+                    self::field('landing.steps.item_1.body', 'Text', 'textarea', 'Tell us about your role, services, experience and locations.', 'Step 01'),
+                    self::field('landing.steps.item_2.title', 'Title', 'text', 'Application review', 'Step 02'),
+                    self::field('landing.steps.item_2.body', 'Text', 'textarea', 'Bahali reviews your application to determine whether your profile meets the directory\'s eligibility criteria and standards.', 'Step 02'),
+                    self::field('landing.steps.item_3.title', 'Title', 'text', 'Become discoverable', 'Step 03'),
+                    self::field('landing.steps.item_3.body', 'Text', 'textarea', 'Once approved, your profile is published in the directory, making your services discoverable through relevant searches.', 'Step 03'),
+                ],
             ],
             [
-                'key' => 'mosaic',
-                'title' => 'Photo Mosaic',
-                'description' => 'Photo grid with the embedded call to action.',
-                'fields' => $mosaicFields,
+                'key' => 'landing_faq',
+                'title' => 'Frequently asked questions',
+                'description' => 'The first question is shown open.',
+                'fields' => [
+                    self::field('landing.faq.eyebrow', 'Eyebrow label', 'text', 'GOOD TO KNOW'),
+                    self::field('landing.faq.title', 'Heading', 'text', 'Frequently asked questions.'),
+                    self::field('landing.faq.item_1.question', 'Question', 'text', 'Who can apply?', 'Question 1'),
+                    self::field('landing.faq.item_1.answer', 'Answer', 'textarea', 'Eligible providers across clinical, counselling, pastoral, peer, allied and community-based support may apply. Requirements vary by role and services offered.', 'Question 1'),
+                    self::field('landing.faq.item_2.question', 'Question', 'text', 'Do I need to be Caribbean to apply?', 'Question 2'),
+                    self::field('landing.faq.item_2.answer', 'Answer', 'textarea', 'No. Bahali welcomes eligible providers from all backgrounds.', 'Question 2'),
+                    self::field('landing.faq.item_3.question', 'Question', 'text', 'Do I need experience working with Caribbean communities?', 'Question 3'),
+                    self::field('landing.faq.item_3.answer', 'Answer', 'textarea', 'No. Experience supporting Caribbean individuals, families or communities is not required. Providers who have this experience can indicate it in their profiles to help people make informed choices.', 'Question 3'),
+                    self::field('landing.faq.item_4.question', 'Question', 'text', 'Must I offer virtual support?', 'Question 4'),
+                    self::field('landing.faq.item_4.answer', 'Answer', 'textarea', 'No. Providers may offer in-person services, virtual services or both, depending on their services and applicable requirements.', 'Question 4'),
+                    self::field('landing.faq.item_5.question', 'Question', 'text', 'How are applications reviewed?', 'Question 5'),
+                    self::field('landing.faq.item_5.answer', 'Answer', 'textarea', 'Bahali reviews applications to assess whether providers meet the directory\'s eligibility criteria and standards. This includes reviewing the information submitted about their professional role, experience and services. Approval allows a profile to be published but does not constitute independent credential verification.', 'Question 5'),
+                    self::field('landing.faq.item_6.question', 'Question', 'text', 'Is there a listing fee?', 'Question 6'),
+                    self::field('landing.faq.item_6.answer', 'Answer', 'textarea', 'No. Applying to join the directory and maintaining an approved listing are free.', 'Question 6'),
+                ],
+            ],
+            [
+                'key' => 'landing_about',
+                'title' => 'About Bahali',
+                'description' => null,
+                'fields' => [
+                    self::field('landing.about.eyebrow', 'Eyebrow label', 'text', 'ABOUT BAHALI'),
+                    self::field('landing.about.body', 'Statement', 'textarea', 'Bahali is a nonprofit organisation dedicated to emotional wellness across Caribbean communities and the diaspora. Founded and led by Dr. Marsha Smith, PsyD, LCSW, a clinical psychologist and clinical social worker, Bahali created the Provider Directory to help people find support and help providers be found.'),
+                    self::field('landing.about.link_text', 'Link text', 'text', 'Learn more about Bahali →'),
+                    self::field('landing.about.link_url', 'Link address', 'text', 'https://bahali.org/about/', null, 'Full address, starting with https://'),
+                ],
+            ],
+            [
+                'key' => 'landing_closing',
+                'title' => 'Final invitation',
+                'description' => 'Deep teal section at the bottom of the page.',
+                'fields' => [
+                    self::field('landing.closing.eyebrow', 'Eyebrow label', 'text', 'AN INVITATION TO PARTICIPATE'),
+                    self::field('landing.closing.title', 'Heading', 'text', 'Help make support easier to find, wherever people call home.'),
+                    self::field('landing.closing.body', 'Paragraph', 'textarea', 'Join Bahali in making information about emotional wellness support more accessible across Caribbean communities and the diaspora.'),
+                    self::field('landing.closing.button', 'Button', 'text', 'Apply to join the directory →'),
+                ],
             ],
         ];
     }
