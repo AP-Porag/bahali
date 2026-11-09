@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LandingFooter from '@/components/landing/LandingFooter';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import PhoneInput from '@/components/PhoneInput';
 import { phoneError } from '@/lib/phone';

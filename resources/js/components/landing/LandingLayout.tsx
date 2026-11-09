@@ -2,6 +2,8 @@ import { Link } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 
 import '../../../css/landing.css';
+import LandingFooter from './LandingFooter';
+import { LANDING_URL, SIGNUP_URL } from './links';
 
 /**
  * Bahali Connect — shared header + footer for the landing page and its footer pages
@@ -9,13 +11,8 @@ import '../../../css/landing.css';
  * The client's styles.css lives in resources/css/landing.css, scoped under `.bc-landing`.
  */
 
-/* Page addresses — change here if the routes change. */
-export const LANDING_URL = '/';
-export const SIGNUP_URL = '/provider/directory/create'; // provider application form
-export const DIRECTORY_URL = '/provider'; // public directory search
-export const PRIVACY_URL = '/privacy';
-export const DISCLAIMER_URL = '/disclaimer';
-export const URGENT_SUPPORT_URL = '/urgent-support';
+/* Page addresses live in ./links.ts — re-exported here so pages can keep importing them from LandingLayout. */
+export { DIRECTORY_URL, DISCLAIMER_URL, LANDING_URL, PRIVACY_URL, SIGNUP_URL, URGENT_SUPPORT_URL } from './links';
 
 /* Bahali logo (replaces the "bahali / PROVIDER DIRECTORY" text logo in the header). */
 const LOGO_SRC = '/images/landing/bahali-logo.png';
@@ -68,31 +65,6 @@ function LandingHeader({ withNav, nav }: { withNav: boolean; nav: LandingNav }) 
                 </Link>
             </nav>
         </header>
-    );
-}
-
-function LandingFooter() {
-    return (
-        <footer>
-            <span>Bahali Provider Directory</span>
-
-            <nav className="footer-links" aria-label="Footer">
-                <span>
-                    Directory contact: <a href="mailto:directory@bahali.org">directory@bahali.org</a>
-                </span>
-                {/* Privacy Policy: DRAFT — legal sign-off needed. Must be live before the provider application collects any information. */}
-                <Link href={PRIVACY_URL}>Privacy Policy</Link>
-                {/* Directory Disclaimer: DRAFT pending legal review. */}
-                <Link href={DISCLAIMER_URL}>Directory Disclaimer</Link>
-                {/* Need urgent support?: emergency and crisis numbers, checked November 2026. */}
-                <Link href={URGENT_SUPPORT_URL}>Need urgent support?</Link>
-                <a href="https://bahali.org">Visit bahali.org →</a>
-            </nav>
-
-            <span>Because every mind deserves peace.</span>
-
-            <div className="footer-bottom">© 2026 Bahali Inc.</div>
-        </footer>
     );
 }
 

@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import LandingFooter from '@/components/landing/LandingFooter';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
 import { HelpCircle, Verified } from 'lucide-react';
 import { ProviderBadgeRow, displayName, initials, feeWithCurrency, reducedCostLabel } from '@/components/provider/ProviderBadges';
@@ -351,9 +351,12 @@ function AvailabilityBadge({ availability }) {
 function MoreTip({ items = [], align = 'left' }) {
     if (!items.length) return null;
     return (
-        <span tabIndex={0} className="group/more relative inline-block cursor-help whitespace-nowrap text-[#2C2C2C]/70 underline decoration-dotted underline-offset-2 outline-none focus-visible:text-[#1E4D4A]">
+        <span tabIndex={0} className="group/more inline-block cursor-help sm:relative whitespace-nowrap text-[#2C2C2C]/70 underline decoration-dotted underline-offset-2 outline-none focus-visible:text-[#1E4D4A]">
             +{items.length} more
-            <span role="tooltip" className={`pointer-events-none invisible absolute bottom-full z-20 mb-1.5 w-max max-w-[240px] whitespace-normal rounded-lg bg-[#1E4D4A] px-3 py-2 text-sm font-normal leading-snug text-white opacity-0 shadow-lg transition group-hover/more:visible group-hover/more:opacity-100 group-focus/more:visible group-focus/more:opacity-100 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+            {/* `hidden` (not `invisible`) so the closed tooltip takes no space — an invisible tooltip near the
+                right edge of a card made the whole page scroll sideways on phones. On phones the tooltip spans
+                the full width of its line (the line's <p> is `relative`) so it always stays on screen. */}
+            <span role="tooltip" className={`pointer-events-none absolute bottom-full z-20 mb-1.5 hidden w-max max-w-[240px] whitespace-normal rounded-lg bg-[#1E4D4A] px-3 py-2 text-sm font-normal leading-snug text-white shadow-lg group-hover/more:block group-focus/more:block max-sm:left-0 max-sm:right-0 max-sm:w-auto max-sm:max-w-none ${align === 'right' ? 'right-0' : 'left-0'}`}>
                 {items.join(', ')}
             </span>
         </span>
@@ -362,7 +365,7 @@ function MoreTip({ items = [], align = 'left' }) {
 
 function ProviderRow({ icon, children, className = '' }) {
     return (
-        <p className={`flex items-start gap-2 text-sm text-[#2C2C2C] ${className}`}>
+        <p className={`relative flex items-start gap-2 text-sm text-[#2C2C2C] ${className}`}>
             {icon && (
                 <span className="mt-0.5 flex-shrink-0 text-[#1E4D4A]">
                     <CardIcon d={icon} />
@@ -429,7 +432,7 @@ function ProviderCard({ p, selectedAreas = [], currentQuery = '', onOpen }) {
                     </p>
                 )}
                 {shownPopulations.length > 0 && (
-                    <p className="mt-1.5 text-sm text-[#2C2C2C]">
+                    <p className="relative mt-1.5 text-sm text-[#2C2C2C]">
                         <span className="font-semibold text-[#2C2C2C]">Who I support:</span>{' '}
                         {shownPopulations.join(', ')}
                         {extraPopulations > 0 && <>{' '}<MoreTip items={populations.slice(3)} /></>}
@@ -950,7 +953,7 @@ export default function Directory({
     }, [f]);
 
     return (
-        <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
+        <div className="min-h-screen overflow-x-clip bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
             <Head title={txt('seo.title')} />
             <Header />
 
@@ -1268,7 +1271,7 @@ export default function Directory({
                 </div>
             </section>
 
-            <Footer />
+            <LandingFooter />
         </div>
     );
 }

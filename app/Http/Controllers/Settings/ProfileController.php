@@ -45,6 +45,7 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        abort_if(strtolower($request->user()->email) === 'admin@app.com', 403, 'This account cannot be deleted.');
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);

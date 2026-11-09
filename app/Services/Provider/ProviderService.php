@@ -307,61 +307,135 @@ class ProviderService extends BaseService
     /**
      * Conflicting information to review before the profile is published
      * (shown to the admin on the verification page).
-     * Currently checks: years of experience mentioned in the biography vs. the
-     * "Years of experience" answer (e.g. bio says "more than 20 years", answer is "11–15 years").
+     * Checks the years of experience written in the biography AND in the
+     * Caribbean experience description against the "Years of experience" answer
+     * (e.g. bio says "more than 20 years", answer is "16–20 years").
      */
     public function reviewFlags(Provider $p): array
     {
         $flags = [];
 
         $range = $this->yearsBucketRange((string) $p->years_experience);
-        $bio = (string) $p->short_bio;
+        if (! $range) {
+            return $flags;
+        }
 
-        if ($range && $bio !== '') {
-            // Digits ("20") or words ("twenty", "twenty-five", "fifteen").
-            $number = '\d{1,2}|(?:twenty|thirty|forty|fifty)(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?'
-                . '|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|ten'
-                . '|one|two|three|four|five|six|seven|eight|nine';
-            $pattern = '/\b(over|more than|nearly|almost|about|around|approximately|close to)?\s*(' . $number . ')\s*(\+)?\s*(?:years?|yrs?)\b(?=[^.!?]{0,60}\b(?:experience|practi[cs]|work|career|field|clinical|serv|support|counsel|therap|walk))/i';
+        $texts = [
+            'biography'                        => (string) $p->short_bio,
+            'Caribbean experience description' => (string) $p->caribbean_experience_details,
+        ];
 
-            if (preg_match_all($pattern, $bio, $matches, PREG_SET_ORDER)) {
-                foreach ($matches as $m) {
-                    $qualifier = strtolower(trim($m[1] ?? ''));
-                    $years = $this->yearsNumber($m[2]);
-                    if ($years === null) {
-                        continue;
-                    }
-                    $plus = ! empty($m[3]);
-
-                    // "more than 20" / "20+" → at least 20; "nearly 20" → just under 20.
-                    $low = $years;
-                    $high = $years;
-                    if ($plus || in_array($qualifier, ['over', 'more than'], true)) {
-                        $high = INF;
-                    } elseif (in_array($qualifier, ['nearly', 'almost', 'close to'], true)) {
-                        $low = $years - 1;
-                    } elseif (in_array($qualifier, ['about', 'around', 'approximately'], true)) {
-                        $low = $years - 1;
-                        $high = $years + 1;
-                    }
-
-                    [$min, $max] = $range;
-                    if ($high < $min || $low > $max) {
-                        $flags[] = [
-                            'field'   => 'years_experience',
-                            'message' => sprintf(
-                                'The biography mentions "%s", but Years of experience is set to "%s". Please confirm which is correct before publishing.',
-                                trim($m[0]),
-                                $p->years_experience
-                            ),
-                        ];
-                        break;
-                    }
-                }
+        foreach ($texts as $label => $text) {
+            $claim = $this->conflictingYearsClaim($text, $range);
+            if ($claim !== null) {
+                $flags[] = [
+                    'field'   => 'years_experience',
+                    'message' => sprintf(
+                        'The %s mentions "%s", but Years of experience is set to "%s". Please confirm which is correct before publishing.',
+                        $label,
+                        $claim,
+                        $p->years_experience
+                    ),
+                ];
             }
         }
 
         return $flags;
+    }
+
+    /**
+     * First years-of-experience claim in $text that does not fit the selected range, or null.
+     * Understands "20 years", "20+ years", "more than 20 years", "over two decades",
+     * "nearly 15 yrs", "a 25-year career", "practising since 2001", etc.
+     * Ignores ages and dates ("12 years old", "5 years ago", "children aged 5 to 12 years").
+     */
+    private function conflictingYearsClaim(string $text, array $range): ?string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return null;
+        }
+
+        [$min, $max] = $range;
+
+        $number = '\d{1,2}|(?:twenty|thirty|forty|fifty)(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?'
+            . '|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|ten'
+            . '|one|two|three|four|five|six|seven|eight|nine|a';
+        $qualifier = 'more than|over|upwards of|in excess of|at least|just over|nearly|almost|close to|just under'
+            . '|less than|fewer than|under|about|around|approximately|roughly';
+        $pattern = '/\b(?:(' . $qualifier . ')\s+)?(' . $number . ')\s*(\+)?\s*-?\s*(years?|yrs?|decades?)\b(\s+or\s+more)?/iu';
+
+        foreach (preg_split('/(?<=[.!?])\s+|\R+/u', $text) as $sentence) {
+            if (preg_match_all($pattern, $sentence, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+                foreach ($matches as $m) {
+                    $phrase = $m[0][0];
+                    $offset = $m[0][1];
+                    $before = substr($sentence, 0, $offset);
+                    $after = substr($sentence, $offset + strlen($phrase));
+
+                    // Ages, dates and time-frames are not experience claims.
+                    if (preg_match('/^\s*(?:old|ago|of age)\b/i', $after)) {
+                        continue;
+                    }
+                    if (preg_match('/\b(?:aged?|ages|age of|within|every|per|next|coming|first)\s*(?:\d{1,2}\s*(?:to|-|–)\s*)?$/iu', $before)) {
+                        continue;
+                    }
+
+                    $unit = strtolower($m[4][0]);
+                    $isDecade = str_starts_with($unit, 'decade');
+                    $rawNumber = strtolower($m[2][0]);
+                    if ($rawNumber === 'a' && ! $isDecade) {
+                        continue; // "a year" is not a career length claim
+                    }
+                    $years = $rawNumber === 'a' ? 1.0 : $this->yearsNumber($rawNumber);
+                    if ($years === null) {
+                        continue;
+                    }
+                    if ($isDecade) {
+                        $years *= 10;
+                    }
+
+                    [$low, $high] = $this->claimInterval(
+                        $years,
+                        strtolower(trim($m[1][0] ?? '')),
+                        ! empty($m[3][0]) || ! empty($m[5][0] ?? '')
+                    );
+
+                    if ($high < $min || $low > $max) {
+                        return trim($phrase);
+                    }
+                }
+            }
+
+            // "practising since 2001" → about (this year − 2001) years.
+            if (
+                preg_match('/\bsince\s+((?:19|20)\d{2})\b/', $sentence, $s)
+                && preg_match('/\b(?:practi[cs]|work|career|counsel|serv|licen[cs]|experience|support|therap|clinic|coach|heal|nurs|teach)/i', $sentence)
+            ) {
+                $years = (float) now()->year - (float) $s[1];
+                if ($years >= 0 && ($years < $min || $years - 1 > $max)) {
+                    return trim($s[0]);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Range of years a claim means: "more than 20" → (20, ∞), "20+" → [20, ∞), "nearly 20" → [19, 20). */
+    private function claimInterval(float $years, string $qualifier, bool $orMore): array
+    {
+        if ($orMore || $qualifier === 'at least') {
+            return [$years, INF];
+        }
+
+        return match ($qualifier) {
+            'more than', 'over', 'upwards of', 'in excess of', 'just over' => [$years + 0.01, INF],
+            'nearly', 'almost', 'close to', 'just under'                  => [$years - 1, $years - 0.01],
+            'less than', 'fewer than', 'under'                             => [0, $years - 0.01],
+            'about', 'around', 'approximately', 'roughly'                  => [$years - 1, $years + 1],
+            default                                                        => [$years, $years],
+        };
     }
 
     /** "20" → 20, "twenty-five" → 25, "fifteen" → 15. */

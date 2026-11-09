@@ -52,12 +52,12 @@ const mainNavItems: NavItem[] = [
         icon: FileText,
         children: [
             {
-                title: 'Join the Circle',
+                title: 'Home',
                 href: '/admin/web/join-the-circle',
                 icon: HeartHandshake,
             },
             {
-                title: 'Provider Directory',
+                title: 'Provider Search',
                 href: '/admin/web/provider-directory',
                 icon: Search,
             },

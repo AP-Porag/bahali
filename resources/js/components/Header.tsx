@@ -61,7 +61,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                 <div className="mb-2 flex gap-8">
                     <nav className="hidden flex-wrap items-center gap-7 min-[982px]:flex">
                         {/* About */}
-                        <div
+                        {/* <div
                             className="relative"
                             onMouseEnter={() => setActiveDropdown('About')}
                             onMouseLeave={() => setActiveDropdown(null)}
@@ -108,10 +108,10 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Programs */}
-                        <div
+                        {/* <div
                             className="relative"
                             onMouseEnter={() => setActiveDropdown('Programs')}
                             onMouseLeave={() => setActiveDropdown(null)}
@@ -152,10 +152,10 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Resources */}
-                        <div
+                        {/* <div
                             className="relative"
                             onMouseEnter={() => setActiveDropdown('Resources')}
                             onMouseLeave={() => setActiveDropdown(null)}
@@ -204,34 +204,34 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Bahali Press */}
-                        <a
+                        {/* <a
                             href="https://bahali.org/bahali-press/#coping"
                             target="_blank"
                             className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Bahali Press
-                        </a>
+                        </a> */}
 
                         {/* Contact */}
-                        <a
+                        {/* <a
                             href="https://bahali.org/contact/"
                             target="_blank"
                             className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Contact
-                        </a>
+                        </a> */}
 
                         {/* Get Involved */}
-                        <a
+                        {/* <a
                             href="https://bahali.org/get-involved/"
                             target="_blank"
                             className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                         >
                             Get Involved
-                        </a>
+                        </a> */}
 
                         {/* Provider Directory Link */}
                         {/* <a
@@ -245,27 +245,27 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             {user ? (
                                 <a
                                     href={dashboardUrl}
-                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
+                                    className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                 >
                                     Dashboard
                                 </a>
                             ) : (
                                 <a
                                     href={loginUrl}
-                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
+                                    className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                 >
                                     Login
                                 </a>
                             )}
                         </div>
 
-                        <div className="hidden min-[982px]:block">
+                        {/* <div className="hidden min-[982px]:block">
                             <a href="https://bahali.org/donate/" target="_blank">
                                 <button className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
                                     Give Now
                                 </button>
                             </a>
-                        </div>
+                        </div> */}
 
 
                     </nav>

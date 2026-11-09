@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
 // Components...
@@ -11,7 +11,13 @@ import HeadingSmall from '@/components/heading-small';
 
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
+/* This account can never be deleted from the settings page. */
+const PROTECTED_EMAIL = 'admin@app.com';
+
 export default function DeleteUser() {
+    const { auth } = usePage<{ auth: { user: { email?: string } | null } }>().props;
+    const isProtected = (auth?.user?.email ?? '').toLowerCase() === PROTECTED_EMAIL;
+
     const passwordInput = useRef<HTMLInputElement>(null);
     const { data, setData, delete: destroy, processing, reset, errors, clearErrors } = useForm({ password: '' });
 
@@ -30,6 +36,11 @@ export default function DeleteUser() {
         clearErrors();
         reset();
     };
+
+    // No delete option for the protected admin account.
+    if (isProtected) {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/react';
 import Header from "@/components/provider/ProviderMenu";
 import ProviderMenu from '@/components/provider/ProviderMenu';
 import Footer from '@/components/Footer';
+import LandingFooter from '@/components/landing/LandingFooter';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import PhoneInput from '@/components/PhoneInput';
 import { phoneError } from '@/lib/phone';
@@ -852,7 +853,7 @@ export default function ProviderProfileEdit({
                         </main>
                     </div>
                 </div>
-                <Footer />
+                <LandingFooter />
             </div>
         </>
     );

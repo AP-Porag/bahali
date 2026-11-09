@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LandingFooter from '@/components/landing/LandingFooter';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
 import PhoneInput from '@/components/PhoneInput';
 import { phoneError } from '@/lib/phone';
@@ -1040,6 +1041,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
     const [submitted, setSubmitted] = useState(false);
+    // Server-side validation errors from the last submit (shown in a banner so none are hidden).
+    const [submitErrors, setSubmitErrors] = useState<string[]>([]);
     const topRef = useRef<HTMLDivElement>(null);
     // ---- OTP / account-creation state --------------------------------
     const [otpCode, setOtpCode] = useState('');
@@ -1512,11 +1515,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
             preserveScroll: true,
             onSuccess: () => setSubmitted(true),
             onError: (serverErrs: Record<string, string>) => {
+                // Show every server error — some belong to fields that are no longer on the form
+                // (e.g. an old "required" rule in StoreProviderRequest) and would otherwise be invisible.
+                setSubmitErrors(Object.entries(serverErrs).map(([field, msg]) => `${msg} (${field})`));
                 const firstField = Object.keys(serverErrs)[0];
                 if (firstField && FIELD_STEP[firstField] !== undefined) {
                     setStep(FIELD_STEP[firstField]);
-                    scrollTop();
                 }
+                scrollTop();
             },
         });
     };
@@ -1743,11 +1749,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             >
                                 Back to home
                             </a>
-                            <a href="https://bahali.org/contact"
+                            {/* <a href="https://bahali.org/contact"
                                 className="inline-flex min-h-[48px] items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white px-5 text-[15px] font-semibold text-[#1E4D4A] transition-colors hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 Contact
-                            </a>
+                            </a> */}
                         </div>
                     </div>
                 </div>
@@ -1849,6 +1855,14 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         {/* Form card */}
                         <main>
                             <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm sm:p-8">
+                                {submitErrors.length > 0 && (
+                                    <div role="alert" className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]">
+                                        <p className="font-semibold">We couldn't submit your application. Please fix the following:</p>
+                                        <ul className="mt-2 list-disc space-y-1 pl-5">
+                                            {submitErrors.map((m, i) => <li key={i}>{m}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
                                 <div className="mb-6 border-b border-[#E8D9B8] pb-5">
                                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1E4D4A]">
                                         Section {step + 1}

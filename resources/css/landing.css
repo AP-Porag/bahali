@@ -627,6 +627,24 @@
   padding: 0 3px;
   border-radius: 3px;
 }
+/* Footer bottom row: "© 2026 Bahali Inc." on the left, the technology-partner credit
+   (components/madbrain.tsx) on the right — same 12px size and colour as the copyright. */
+.bc-landing .footer-bottom-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px 16px;
+}
+.bc-landing .footer-bottom-row .footer-credit {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+.bc-landing .footer-bottom-row .footer-credit a {
+  color: #FF5619;
+}
 @media (max-width: 700px) {
   .bc-landing .safety-table tbody th {
     white-space: normal;
@@ -691,4 +709,11 @@
   .bc-landing .logo img {
     height: 44px;
   }
+}
+
+/* Footer used on its own (components/landing/LandingFooter.tsx): the wrapper only switches the
+   footer styles on — no full-page height or page background. */
+.bc-landing.bc-landing-footer {
+  min-height: 0;
+  background: transparent;
 }
