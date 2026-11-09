@@ -100,7 +100,7 @@ Sessions move at your pace. There’s no rush, no judgment — just a steady, cu
     slidingScale: true,
     insurances: ['Self-pay', 'Sliding scale available', 'Some regional plans'],
     accessibility: ['Wheelchair-accessible office', 'Evening appointments', 'Telehealth across time zones'],
-    email: 'hello@example.com',
+    email: 'directory@bahali.org',
     phone: '+1 (876) 555-0142',
     website: 'https://example.com',
 };
