@@ -1744,7 +1744,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             reach out about your listing in the Bahali Provider Directory.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                            <a href="https://bahali.org"
+                            <a href="/"
                                 className="inline-flex items-center justify-center bg-[#1E4D4A] px-5 text-white transition-colors hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                             >
                                 Back to home
