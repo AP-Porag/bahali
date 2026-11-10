@@ -108,7 +108,7 @@ export function AppSidebar() {
                             {/* <Link href="under-development" prefetch>
                                 <AppLogo />
                             </Link> */}
-                            <Link href="/admin/dashboard" prefetch>
+                            <Link href="/" prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

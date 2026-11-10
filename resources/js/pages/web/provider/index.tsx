@@ -1,7 +1,7 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Header from '@/components/Header';
+import LandingHeader from '@/components/landing/LandingHeader'
 import LandingFooter from '@/components/landing/LandingFooter';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
 import { HelpCircle, Verified } from 'lucide-react';
@@ -685,6 +685,12 @@ export default function Directory({
     // Falls back to the original default when the admin hasn't changed a field.
     const txt = (key) => content?.[key] || DEFAULT_CONTENT[key] || '';
 
+
+    const { auth } = usePage().props;
+    const user = auth?.user ?? null;
+    const headerButton = user
+        ? { label: 'Dashboard', href: user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
+        : { label: 'Login', href: '/login' };
     // Country-specific "All X" default option text (guide §2/§3).
     // Only countries the guide calls out need an explicit override;
     // everything else falls back to generic "All".
@@ -955,11 +961,11 @@ export default function Directory({
     return (
         <div className="min-h-screen overflow-x-clip bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
             <Head title={txt('seo.title')} />
-            <Header />
+            <LandingHeader button={headerButton} />
 
             {/* ===== HERO SECTION ===== */}
             <section className="relative bg-[#FAFAF6]">
-                <div className="relative z-10 mx-auto max-w-6xl px-5 py-12 lg:py-14">
+                <div className="relative z-10 px-[6%] max-[371px]:px-[4%] py-12 lg:py-14">
                     {/* Heading + image. The image sits to the right of the heading (top aligned with the eyebrow,
                         right edge aligned with the search card) on laptops/desktops only; below 1024px it is hidden
                         so nothing but the heading and intro text appears above the search form. */}

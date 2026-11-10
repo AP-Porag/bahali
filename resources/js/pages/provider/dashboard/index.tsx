@@ -323,7 +323,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                 <ProviderMenu />
 
                 {/* Main content */}
-                <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <main className="px-[6%] py-6 max-[371px]:px-[4%]">
                     {/* Welcome header */}
                     <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm sm:p-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

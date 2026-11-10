@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 import LandingLayout, { LANDING_URL } from '@/components/landing/LandingLayout';
 
@@ -35,11 +35,18 @@ const NUMBERS: { location: string; emergency: string; crisis: string }[] = [
 ];
 
 export default function UrgentSupport() {
+    // Header button: Dashboard when signed in (admin → admin dashboard, provider → provider dashboard), Login otherwise.
+    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
+    const user = auth?.user ?? null;
+    const headerButton = user
+        ? { label: 'Dashboard', href: user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
+        : { label: 'Login', href: '/login' };
+
     return (
-        <LandingLayout>
+        <LandingLayout button={headerButton}>
             <Head title="Need urgent support? — Bahali Provider Directory" />
 
-            <main className="section">
+            <main className="section page-aligned">
                 <div className="faq">
                     <div className="eyebrow coral">SAFETY INFORMATION</div>
                     <h1 style={{ fontSize: 'clamp(34px,4vw,47px)' }}>Need urgent support?</h1>

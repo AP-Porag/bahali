@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 import LandingLayout, { LANDING_URL, URGENT_SUPPORT_URL } from '@/components/landing/LandingLayout';
 
@@ -13,11 +13,18 @@ import LandingLayout, { LANDING_URL, URGENT_SUPPORT_URL } from '@/components/lan
  * Remove the draft badge once the final wording is approved.
  */
 export default function Disclaimer() {
+    // Header button: Dashboard when signed in (admin → admin dashboard, provider → provider dashboard), Login otherwise.
+    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
+    const user = auth?.user ?? null;
+    const headerButton = user
+        ? { label: 'Dashboard', href: user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
+        : { label: 'Login', href: '/login' };
+
     return (
-        <LandingLayout>
+        <LandingLayout button={headerButton}>
             <Head title="Directory Disclaimer — Bahali Provider Directory" />
 
-            <main className="section">
+            <main className="section page-aligned">
                 <div className="faq">
                     <div className="draft-badge">Draft — subject to legal review</div>
 

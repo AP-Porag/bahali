@@ -443,7 +443,7 @@ export default function AdminDashboard(props: DashboardProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
 
-            <div className="min-h-full bg-[#F7F3EC] px-3 py-5 text-[#1F2A2E] sm:px-5 lg:px-6">
+            <div className="m-4 rounded-xl bg-[#F7F3EC] px-5 py-10 sm:px-8 lg:py-14">
                 {/* Header */}
                 <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
@@ -451,7 +451,7 @@ export default function AdminDashboard(props: DashboardProps) {
                         <h1 className="text-3xl font-semibold leading-tight text-[#16302F] sm:text-4xl" style={SERIF}>Dashboard</h1>
                         <p className="mt-1 text-sm text-[#5B6B6E]">Manage providers, oversee verification, track directory use and find gaps in coverage.</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5">
                         <span className="inline-flex items-center gap-2 rounded-lg border border-[#0E7C7B]/25 bg-[#0E7C7B]/5 px-3 py-2 text-sm text-[#0B6463]">
                             <span className="h-2 w-2 rounded-full bg-[#2E9E5B]" />
                             Directory live · {nf.format(kpis.published.count)} published
@@ -469,7 +469,7 @@ export default function AdminDashboard(props: DashboardProps) {
                 </div>
 
                 {/* KPI cards */}
-                <div className="mb-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6">
+                <div className="mb-5 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3">
                     <KpiCard icon={Users} tone="teal" value={kpis.published.count} label="Published providers"
                         footer={<Trend change={kpis.published.change} note={`vs. ${range} days ago`} />} />
                     <KpiCard icon={ClipboardList} tone="coral" value={kpis.pending.count} label="Pending review"
@@ -485,7 +485,7 @@ export default function AdminDashboard(props: DashboardProps) {
                 </div>
 
                 {/* Row 2: Action required · Verification · Profile health */}
-                <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-[1.3fr_1fr_1fr]">
+                <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader icon={ClipboardList} href={links.pending}
                             title={<>Action Required <span className="text-[#C2543B]">({actionTotal})</span></>}
@@ -575,7 +575,7 @@ export default function AdminDashboard(props: DashboardProps) {
                         </div>
                     </Card>
 
-                    <Card className="lg:col-span-2 2xl:col-span-1">
+                    <Card className="lg:col-span-2">
                         <CardHeader icon={Layers} title="Profile Health" href={links.published}
                             hint="Published profiles. Overdue = availability not reconfirmed in 60 days." />
                         {health.total === 0 ? (
@@ -603,7 +603,7 @@ export default function AdminDashboard(props: DashboardProps) {
                 </div>
 
                 {/* Row 3: Search demand · Coverage · Outcomes */}
-                <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-[1fr_1.4fr_1fr]">
+                <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader icon={MapPin} title={<>Search Demand by Location <span className="text-sm font-normal text-[#6B7A78]">(Top 5)</span></>} />
                         {searchDemand.length === 0 ? (
@@ -623,12 +623,12 @@ export default function AdminDashboard(props: DashboardProps) {
                         )}
                     </Card>
 
-                    <Card className="lg:col-span-2 2xl:col-span-1 2xl:order-none">
+                    <Card className="lg:col-span-2">
                         <CardHeader icon={Users} title="Provider Coverage by Location" hint="Published providers only." />
                         <CoverageChart rows={coverage} />
                     </Card>
 
-                    <Card className="lg:order-first 2xl:order-none">
+                    <Card className="lg:order-first">
                         <CardHeader icon={BarChart3} title="Search Outcomes" />
                         {searchOutcomes.total === 0 ? (
                             <Empty>No directory searches in this period yet.</Empty>

@@ -760,7 +760,7 @@ export default function ProviderProfileEdit({
             <Head title="Edit Profile — Bahali" />
             <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
                 <Header />
-                <div ref={topRef} className="mx-auto max-w-5xl px-5 py-8 lg:py-12">
+                <div ref={topRef} className="px-[6%] py-8 max-[371px]:px-[4%] lg:py-12">
                     <div className="mb-6">
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">Provider portal</p>
                         <h1 className="mt-2 font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Edit your profile</h1>

@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 import LandingLayout, { LANDING_URL } from '@/components/landing/LandingLayout';
 
@@ -12,8 +12,15 @@ import LandingLayout, { LANDING_URL } from '@/components/landing/LandingLayout';
  * Must be live before the provider application collects any information.
  */
 export default function Privacy() {
+    // Header button: Dashboard when signed in (admin → admin dashboard, provider → provider dashboard), Login otherwise.
+    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
+    const user = auth?.user ?? null;
+    const headerButton = user
+        ? { label: 'Dashboard', href: user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
+        : { label: 'Login', href: '/login' };
+
     return (
-        <LandingLayout>
+        <LandingLayout button={headerButton}>
             <Head title="Privacy Policy — Bahali Provider Directory" />
 
             <main className="section">

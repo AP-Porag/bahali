@@ -1,6 +1,6 @@
-import Footer from '@/components/Footer';
-import Header from '@/components/Header';
-import { Head, Link } from '@inertiajs/react';
+import LandingHeader from '@/components/landing/LandingHeader'
+import LandingFooter from '@/components/landing/LandingFooter';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { createContext, useContext, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { formatPhoneDisplay, phoneHref } from '@/lib/phone';
@@ -451,6 +451,13 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
     const [imgError, setImgError] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
 
+    // Header button: Dashboard when signed in (admin → admin dashboard, provider → provider dashboard), Login otherwise.
+    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
+    const user = auth?.user ?? null;
+    const headerButton = user
+        ? { label: 'Dashboard', href: user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
+        : { label: 'Login', href: '/login' };
+
     const name = providerDisplayName(p.name);
     const credentialLine = [p.providerType === 'individual' ? p.credentials : null, p.title].filter(Boolean).join(' · ');
     const showPhoto = p.photo && !imgError;
@@ -639,10 +646,10 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
         <PageContentContext.Provider value={content}>
             <div className="min-h-screen bg-[#FAFAF6] pb-24 font-body text-[16px] leading-[1.6] text-[#2C2C2C] lg:pb-0">
                 <Head title={`${name} — Bahali`} />
-                <Header />
+                <LandingHeader button={headerButton} />
                 <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} provider={p} name={name} />
 
-                <div className="mx-auto max-w-6xl px-5 py-6 lg:py-8">
+                <div className="px-[6%] max-[371px]:px-[4%] py-6 lg:py-8">
                     {/* Back to results — above the header card */}
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <Link
@@ -740,7 +747,7 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                     </div>
                 </div>
 
-                <Footer />
+                <LandingFooter />
 
                 {/* sticky mobile contact bar */}
                 {hasContact && (

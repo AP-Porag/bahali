@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 import LandingLayout, { DIRECTORY_URL, SIGNUP_URL } from '@/components/landing/LandingLayout';
 
@@ -129,6 +129,11 @@ interface PageProps {
 export default function JoinTheCircle({ content = {} }: PageProps) {
     const t = (key: string): string => content[key] || DEFAULTS[key] || '';
 
+    // Signed in → the "Apply to join" buttons become "Dashboard" (admin → admin dashboard, provider → provider dashboard).
+    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
+    const user = auth?.user ?? null;
+    const dashboardUrl = user?.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard';
+
     return (
         <LandingLayout
             withNav
@@ -136,7 +141,8 @@ export default function JoinTheCircle({ content = {} }: PageProps) {
                 link1: t('landing.header.link_1'),
                 link2: t('landing.header.link_2'),
                 link3: t('landing.header.link_3'),
-                button: t('landing.header.button'),
+                button: user ? 'Dashboard' : t('landing.header.button'),
+                buttonHref: user ? dashboardUrl : SIGNUP_URL,
             }}
         >
             <Head title={t('landing.seo.title')} />
@@ -154,9 +160,9 @@ export default function JoinTheCircle({ content = {} }: PageProps) {
                         <p className="hero-emphasis">{t('landing.hero.emphasis')}</p>
 
                         <div className="hero-actions">
-                            {/* Provider application form */}
-                            <Link className="button" href={SIGNUP_URL}>
-                                {t('landing.hero.button')}
+                            {/* Provider application form (Dashboard when signed in) */}
+                            <Link className="button" href={user ? dashboardUrl : SIGNUP_URL}>
+                                {user ? 'Dashboard' : t('landing.hero.button')}
                             </Link>
                             <a className="text-link" href="#purpose">
                                 {t('landing.hero.link')}
@@ -352,9 +358,9 @@ export default function JoinTheCircle({ content = {} }: PageProps) {
 
                     <p>{t('landing.closing.body')}</p>
 
-                    {/* Provider application form */}
-                    <Link className="button light-button" href={SIGNUP_URL}>
-                        {t('landing.closing.button')}
+                    {/* Provider application form (Dashboard when signed in) */}
+                    <Link className="button light-button" href={user ? dashboardUrl : SIGNUP_URL}>
+                        {user ? 'Dashboard' : t('landing.closing.button')}
                     </Link>
                 </section>
             </main>
