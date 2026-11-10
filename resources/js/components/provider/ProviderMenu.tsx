@@ -94,12 +94,12 @@ export default function ProviderMenu() {
                         >
                             Edit Profile
                         </Link>
-                        <Link
+                        {/* <Link
                             href="/directory"
                             className={`rounded-lg px-3 py-2 text-sm ${isActive('/directory') ? activeClass : inactiveClass}`}
                         >
                             Directory
-                        </Link>
+                        </Link> */}
                         <Link
                             href="/logout"
                             method="post"

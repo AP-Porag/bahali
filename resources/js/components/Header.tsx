@@ -309,7 +309,7 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                             </button>
                         </div>
 
-                        <div>
+                        {/* <div>
                             <button
                                 onClick={() => toggleMenu('About')}
                                 className="flex w-full items-center justify-between border-gray-100 pb-6 text-left text-[16px] hover:border hover:text-[#163F3C] hover:underline hover:underline-offset-4"
@@ -373,10 +373,10 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     Advisory Board
                                 </a>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Programs */}
-                        <div>
+                        {/* <div>
                             <button
                                 onClick={() => toggleMenu('Programs')}
                                 className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
@@ -435,10 +435,10 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     Disaster Recovery
                                 </a>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Resources */}
-                        <div>
+                        {/* <div>
                             <button
                                 onClick={() => toggleMenu('Resources')}
                                 className="flex w-full items-center justify-between pb-6 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
@@ -505,69 +505,69 @@ export default function Header({ app_url = '', loginUrl = '/login' }: HeaderProp
                                     Bahali Resources Hub
                                 </a>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Bahali Press */}
-                        <div>
+                        {/* <div>
                             <a
                                 href="https://bahali.org/bahali-press/#coping"
                                 className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Bahali Press</span>
                             </a>
-                        </div>
+                        </div> */}
 
                         {/* Contact */}
-                        <div>
+                        {/* <div>
                             <a
                                 href="https://bahali.org/contact/"
                                 className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Contact</span>
                             </a>
-                        </div>
+                        </div> */}
 
                         {/* Get Involved */}
-                        <div>
+                        {/* <div>
                             <a
                                 href="https://bahali.org/get-involved/"
                                 className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Get Involved</span>
                             </a>
-                        </div>
+                        </div> */}
 
                         {/* Provider Directory Link (Mobile) */}
-                        <div>
+                        {/* <div>
                             <a
                                 href={directoryUrl}
                                 className="flex w-full items-center justify-between pb-4 text-left text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
                             >
                                 <span>Providers</span>
                             </a>
-                        </div>
+                        </div> */}
 
 
 
-                        <a href="https://bahali.org/donate/" target="_blank">
+                        {/* <a href="https://bahali.org/donate/" target="_blank">
                             <button className="font-body text-[16px] hover:text-[#163F3C] hover:underline hover:underline-offset-4">
                                 <span>Give Now</span>
                             </button>
-                        </a>
+                        </a> */}
 
                         {/* Login / Dashboard (Mobile) */}
                         <div className="mt-3">
                             {user ? (
                                 <a
                                     href={dashboardUrl}
-                                    className="font-body text-[16px] font-medium text-[#1E4D4A] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
+                                    className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                 >
                                     Dashboard
                                 </a>
                             ) : (
                                 <a
                                     href={loginUrl}
-                                    className="font-body text-[16px] font-medium text-[#2C2C2C] hover:text-[#163F3C] hover:underline hover:underline-offset-4"
+                                    className="font-body inline-flex min-h-[48px] cursor-pointer items-center rounded-[10px] bg-[#1E4D4A] px-7 text-[15px] font-semibold text-white transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
                                 >
                                     Login
                                 </a>
