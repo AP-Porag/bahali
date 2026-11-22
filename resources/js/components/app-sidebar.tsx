@@ -6,7 +6,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User, X } from 'lucide-react';
 import AppLogo from './app-logo';
-import { LayoutTemplate, FileText, HeartHandshake, Search, Contact } from 'lucide-react';
+import { LayoutTemplate, FileText, HeartHandshake, Search, Contact, Newspaper } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -65,6 +65,11 @@ const mainNavItems: NavItem[] = [
                 title: 'Provider Profile',
                 href: '/admin/web/provider-profile',
                 icon: Contact,
+            },
+            {
+                title: 'Blog',
+                href: '/admin/blog',
+                icon: Newspaper,
             },
         ],
     },
