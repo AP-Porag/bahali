@@ -65,6 +65,16 @@ const input =
 const labelCls = 'block text-sm font-medium text-[#16302F]';
 const hintCls = 'mt-1 text-xs text-[#7A8886]';
 
+/* Publish date: the server sends/receives UTC (ISO 8601); the input shows the admin's own local time. */
+const toLocalInput = (iso: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const toUtc = (local: string) => (local ? new Date(local).toISOString() : '');
+
 const toForm = (p: PostForm) => ({
     title: p.title,
     slug: p.slug,
@@ -90,7 +100,7 @@ const toForm = (p: PostForm) => ({
     seo_title: p.seo_title,
     seo_description: p.seo_description,
     status: p.status,
-    published_at: p.published_at,
+    published_at: toLocalInput(p.published_at),
 });
 
 /* Laravel accepts the XSRF-TOKEN cookie (always fresh) or the page's csrf meta tag. */
@@ -196,7 +206,7 @@ export default function BlogForm({ post, categories, statuses, otherPosts }: Pro
 
     const submit = (e: FormEvent) => {
         e.preventDefault();
-        form.transform((d) => ({ ...d, ...(isNew ? {} : { _method: 'put' }) }));
+        form.transform((d) => ({ ...d, published_at: toUtc(d.published_at), ...(isNew ? {} : { _method: 'put' }) }));
         form.post(isNew ? '/admin/blog' : `/admin/blog/${post.id}`, {
             forceFormData: true,
             preserveScroll: true,

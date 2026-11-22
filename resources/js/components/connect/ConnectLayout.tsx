@@ -30,7 +30,8 @@ export type ConnectPage =
     | 'directory'
     | 'accessibility'
     | 'spotlight'
-    | 'urgent';
+    | 'urgent'
+    | 'account';
 
 interface SharedProps {
     auth?: { user?: { role?: string } | null };
@@ -76,7 +77,7 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                 ref={trigger}
                 type="button"
                 id="provider-nav-trigger"
-                className={'provider-nav-trigger' + (page === 'providers' ? ' provider-nav-active' : '')}
+                className={'provider-nav-trigger' + (page === 'providers' || page === 'account' ? ' provider-nav-active' : '')}
                 aria-expanded={open}
                 aria-controls="provider-nav-links"
                 onClick={() => setOpen(!open)}
@@ -95,8 +96,22 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                 <Link ref={firstLink} href={URLS.providers} aria-current={page === 'providers' ? 'page' : undefined} onClick={() => setOpen(false)}>
                     Join Bahali Connect
                 </Link>
-                {/* Existing account system: provider login, or the provider dashboard once signed in. */}
-                <a href={signedIn ? URLS.account : URLS.login}>{signedIn ? 'My provider account' : 'Provider login'}</a>
+                {/* Existing account system: provider login, or the provider account links once signed in. */}
+                {signedIn ? (
+                    <>
+                        <Link href={URLS.account} aria-current={page === 'account' ? 'page' : undefined} onClick={() => setOpen(false)}>
+                            My dashboard
+                        </Link>
+                        <Link href={URLS.editProfile} onClick={() => setOpen(false)}>
+                            Edit profile
+                        </Link>
+                        <Link as="button" method="post" href={URLS.logout} className="provider-nav-logout" onClick={() => setOpen(false)}>
+                            Log out
+                        </Link>
+                    </>
+                ) : (
+                    <a href={URLS.login}>Provider login</a>
+                )}
             </div>
         </div>
     );
@@ -170,21 +185,9 @@ export default function ConnectLayout({
                 <div className="site-topline" aria-hidden="true" />
                 <div className="wrap header-inner">
                     <div className="brand">
-                        <span>
-                            <Link className="brand-name brand-home" href={URLS.home} aria-label="Bahali Connect home">
-                                Bahali <b>Connect</b>
-                                <i aria-hidden="true">•</i>
-                            </Link>
-                            <a
-                                className="endorsement"
-                                href={BAHALI_URL}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label="A service of Bahali — visit Bahali.org in a new tab"
-                            >
-                                A SERVICE OF BAHALI
-                            </a>
-                        </span>
+                        <Link className="brand-home brand-logo-link" href={URLS.home} aria-label="Bahali Connect home">
+                            <img className="brand-logo" src="/images/Bahali_p.png" alt="Bahali" width="3290" height="1426" />
+                        </Link>
                     </div>
 
                     <nav id="main-navigation" className={mobile ? 'open' : ''} aria-label="Main navigation">
@@ -221,9 +224,6 @@ export default function ConnectLayout({
             <footer id="footer">
                 <div className="wrap footer-top">
                     <div>
-                        {/* <div className="footer-brand">
-                            Bahali Connect<span aria-hidden="true">•</span>
-                        </div> */}
                         <a className="bahali-footer-logo" href={BAHALI_URL} target="_blank" rel="noreferrer" aria-label="Bahali — visit Bahali.org">
                             <img src="/images/connect/bahali-logo-white.png" alt="Bahali" width="600" height="213" loading="lazy" />
                         </a>

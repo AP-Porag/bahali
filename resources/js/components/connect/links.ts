@@ -15,6 +15,8 @@ export const CONNECT_URLS = {
     signup: '/provider/directory/create', // existing provider application (email code, draft, review)
     login: '/login', // existing provider login
     account: '/provider/dashboard', // existing provider dashboard
+    editProfile: '/provider/profile/edit', // existing provider profile editor
+    logout: '/logout', // Laravel logout (POST)
     how: '/how-it-works',
     about: '/about',
     blog: '/blog',

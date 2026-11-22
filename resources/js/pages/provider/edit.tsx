@@ -1,23 +1,31 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { Head, useForm } from '@inertiajs/react';
-import Header from "@/components/provider/ProviderMenu";
-import ProviderMenu from '@/components/provider/ProviderMenu';
-import Footer from '@/components/Footer';
-import LandingFooter from '@/components/landing/LandingFooter';
-import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import ConnectLayout from '@/components/connect/ConnectLayout';
 import PhoneInput from '@/components/PhoneInput';
-import { phoneError } from '@/lib/phone';
-import { CURRENCY_OPTIONS, REDUCED_COST_SCOPES, ReducedCostScope, currencyForCountry, currencySymbol, feePreview, hasReducedCost } from '@/constants/fees';
 import {
-    LocationSection, locationPayload, serviceFormatFlags, validateLocationStep,
-    type LocationValues, type ProviderLocation,
+    LocationSection,
+    locationPayload,
+    serviceFormatFlags,
+    validateLocationStep,
+    type LocationValues,
+    type ProviderLocation,
 } from '@/components/provider/LocationSection';
+import {
+    CURRENCY_OPTIONS,
+    REDUCED_COST_SCOPES,
+    ReducedCostScope,
+    currencyForCountry,
+    currencySymbol,
+    feePreview,
+    hasReducedCost,
+} from '@/constants/fees';
+import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import { phoneError } from '@/lib/phone';
+import { useForm } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-type ProviderType =
-    | 'individual' | 'organization' | 'support_group' | 'faith_based' | 'community_program';
+type ProviderType = 'individual' | 'organization' | 'support_group' | 'faith_based' | 'community_program';
 type LicenseStatus = 'active' | 'provisional' | 'not_applicable';
 type YesNo = 'yes' | 'no';
 
@@ -43,7 +51,7 @@ interface ProviderFormData {
     specialized_training: string[];
     specialized_training_other: string;
     certifications: string[];
-    caribbean_experience: YesNo | '';         // "Yes" / "Not yet" (stored as yes / no)
+    caribbean_experience: YesNo | ''; // "Yes" / "Not yet" (stored as yes / no)
     caribbean_experience_details: string;
     lgbtq_affirming: YesNo | '';
     languages: string[];
@@ -67,7 +75,7 @@ interface ProviderFormData {
     fee_max: string;
     fee_currency: string;
     reduced_cost_scope: ReducedCostScope;
-    contact_person_name: string;     // organizations only
+    contact_person_name: string; // organizations only
     contact_person_role: string;
     contact_person_email: string;
     phone: string;
@@ -94,29 +102,153 @@ const PROVIDER_TYPES: { value: ProviderType; label: string }[] = [
     { value: 'community_program', label: 'Community Program' },
 ];
 const PROFESSIONAL_TITLES = [
-    'Clinical Psychologist', 'Neuropsychologist', 'School Psychologist', 'Psychiatrist',
-    'Psychiatric Mental Health Nurse Practitioner', 'Clinical Social Worker', 'Mental Health Counselor',
-    'Marriage and Family Therapist', 'Board Certified Behavior Analyst (BCBA)', 'Substance Use Counselor',
-    'Addiction Medicine Specialist', 'Developmental-Behavioral Pediatrician', 'Parent Coach',
-    'Peer Support Specialist', 'Community Health Worker', 'Pastoral Counselor', 'Other (specify)',
+    'Clinical Psychologist',
+    'Neuropsychologist',
+    'School Psychologist',
+    'Psychiatrist',
+    'Psychiatric Mental Health Nurse Practitioner',
+    'Clinical Social Worker',
+    'Mental Health Counselor',
+    'Marriage and Family Therapist',
+    'Board Certified Behavior Analyst (BCBA)',
+    'Substance Use Counselor',
+    'Addiction Medicine Specialist',
+    'Developmental-Behavioral Pediatrician',
+    'Parent Coach',
+    'Peer Support Specialist',
+    'Community Health Worker',
+    'Pastoral Counselor',
+    'Other (specify)',
 ];
-const YEARS_EXPERIENCE = [
-    'Less than 2 years', '2–5 years', '6–10 years', '11–15 years', '16–20 years', '20+ years',
-];
+const YEARS_EXPERIENCE = ['Less than 2 years', '2–5 years', '6–10 years', '11–15 years', '16–20 years', '20+ years'];
 const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
     { value: 'provisional', label: 'Provisional' },
     { value: 'not_applicable', label: 'Not Applicable' },
 ];
-const POPULATIONS_SERVED = ['Infants & Toddlers (0–5)', 'Children (6–12)', 'Adolescents (13–17)', 'Young Adults (18–25)', 'Adults (26–64)', 'Older Adults (65+)', 'Parents', 'Caregivers', 'Couples', 'Families', 'Veterans', 'Faith Leaders & Clergy', 'Helping Professionals', 'Educators', 'First Responders', 'Healthcare Professionals', 'Community Leaders'];
-const TREATMENT_APPROACHES = ['Acceptance & Commitment Therapy (ACT)', 'Cognitive Behavioral Therapy (CBT)', 'Cognitive Processing Therapy (CPT)', 'Dialectical Behavior Therapy (DBT)', 'Eye Movement Desensitization & Reprocessing (EMDR)', 'Exposure & Response Prevention (ERP)', 'Family Systems Therapy', 'Gottman Method', 'Interpersonal Psychotherapy (IPT)', 'Mindfulness-Based Approaches', 'Motivational Interviewing (MI)', 'Person-Centered Therapy', 'Prolonged Exposure (PE)', 'Psychodynamic Therapy', 'Solution-Focused Brief Therapy (SFBT)', 'Trauma-Focused Cognitive Behavioral Therapy (TF-CBT)', 'Integrative / Eclectic Therapy', 'Other (specify)'];
-const SPECIALIZED_TRAINING_OPTIONS = ['Psychological First Aid (PFA)', 'Trauma & PTSD', 'Suicide Prevention & Intervention', 'Grief & Bereavement', 'Perinatal Mental Health', 'Substance Use & Recovery', 'Domestic & Intimate Partner Violence', 'Military & Veteran Mental Health', 'Dementia & Cognitive Care', 'Autism & Neurodiversity', 'ADHD', 'Couples & Family Therapy', 'Other Specialized Training'];
+const POPULATIONS_SERVED = [
+    'Infants & Toddlers (0–5)',
+    'Children (6–12)',
+    'Adolescents (13–17)',
+    'Young Adults (18–25)',
+    'Adults (26–64)',
+    'Older Adults (65+)',
+    'Parents',
+    'Caregivers',
+    'Couples',
+    'Families',
+    'Veterans',
+    'Faith Leaders & Clergy',
+    'Helping Professionals',
+    'Educators',
+    'First Responders',
+    'Healthcare Professionals',
+    'Community Leaders',
+];
+const TREATMENT_APPROACHES = [
+    'Acceptance & Commitment Therapy (ACT)',
+    'Cognitive Behavioral Therapy (CBT)',
+    'Cognitive Processing Therapy (CPT)',
+    'Dialectical Behavior Therapy (DBT)',
+    'Eye Movement Desensitization & Reprocessing (EMDR)',
+    'Exposure & Response Prevention (ERP)',
+    'Family Systems Therapy',
+    'Gottman Method',
+    'Interpersonal Psychotherapy (IPT)',
+    'Mindfulness-Based Approaches',
+    'Motivational Interviewing (MI)',
+    'Person-Centered Therapy',
+    'Prolonged Exposure (PE)',
+    'Psychodynamic Therapy',
+    'Solution-Focused Brief Therapy (SFBT)',
+    'Trauma-Focused Cognitive Behavioral Therapy (TF-CBT)',
+    'Integrative / Eclectic Therapy',
+    'Other (specify)',
+];
+const SPECIALIZED_TRAINING_OPTIONS = [
+    'Psychological First Aid (PFA)',
+    'Trauma & PTSD',
+    'Suicide Prevention & Intervention',
+    'Grief & Bereavement',
+    'Perinatal Mental Health',
+    'Substance Use & Recovery',
+    'Domestic & Intimate Partner Violence',
+    'Military & Veteran Mental Health',
+    'Dementia & Cognitive Care',
+    'Autism & Neurodiversity',
+    'ADHD',
+    'Couples & Family Therapy',
+    'Other Specialized Training',
+];
 const LANGUAGES = ['English', 'Spanish', 'Haitian Creole', 'French', 'Jamaican Patois', 'Trinidadian Creole', 'Dutch', 'Other'];
 const SERVICE_FORMATS = ['In-Person', 'Virtual', 'Hybrid', 'Home-Based / Mobile', 'Group-Based', 'School-Based'];
-const PRACTICE_SETTINGS = ['Private Practice', 'Community Agency', 'Hospital / Health System', 'School', 'University', 'Faith-Based Setting', 'Nonprofit Organization', 'Government Agency', 'Independent Contractor'];
-const PAYMENT_METHODS = ['Self-Pay', 'Insurance Accepted', 'Medicaid', 'Medicare', 'Employee Assistance Programs (EAP)', 'Sliding Scale', 'Government-Funded', 'Grant-Funded', 'Donation-Based', 'Pro Bono / Volunteer Services', 'No-Cost Services'];
-const ACCESSIBILITY_OPTIONS = ['Wheelchair Accessible', 'ADA Accessible', 'Interpreter Available', 'Closed Captioning Available', 'Sensory-Friendly Environment', 'Home Visits Available', 'Public Transportation Accessible'];
-const REGIONS = ['Anguilla', 'Antigua and Barbuda', 'Aruba', 'Bahamas', 'Barbados', 'Belize', 'Bermuda', 'British Virgin Islands', 'Cayman Islands', 'Cuba', 'Curaçao', 'Dominica', 'Dominican Republic', 'Grenada', 'Guadeloupe', 'Guyana', 'Haiti', 'Jamaica', 'Martinique', 'Montserrat', 'Puerto Rico', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Spanish Virgin Islands', 'Suriname', 'Trinidad and Tobago', 'Turks and Caicos Islands', 'United States', 'United States Virgin Islands', 'United Kingdom', 'Canada'];
+const PRACTICE_SETTINGS = [
+    'Private Practice',
+    'Community Agency',
+    'Hospital / Health System',
+    'School',
+    'University',
+    'Faith-Based Setting',
+    'Nonprofit Organization',
+    'Government Agency',
+    'Independent Contractor',
+];
+const PAYMENT_METHODS = [
+    'Self-Pay',
+    'Insurance Accepted',
+    'Medicaid',
+    'Medicare',
+    'Employee Assistance Programs (EAP)',
+    'Sliding Scale',
+    'Government-Funded',
+    'Grant-Funded',
+    'Donation-Based',
+    'Pro Bono / Volunteer Services',
+    'No-Cost Services',
+];
+const ACCESSIBILITY_OPTIONS = [
+    'Wheelchair Accessible',
+    'ADA Accessible',
+    'Interpreter Available',
+    'Closed Captioning Available',
+    'Sensory-Friendly Environment',
+    'Home Visits Available',
+    'Public Transportation Accessible',
+];
+const REGIONS = [
+    'Anguilla',
+    'Antigua and Barbuda',
+    'Aruba',
+    'Bahamas',
+    'Barbados',
+    'Belize',
+    'Bermuda',
+    'British Virgin Islands',
+    'Cayman Islands',
+    'Cuba',
+    'Curaçao',
+    'Dominica',
+    'Dominican Republic',
+    'Grenada',
+    'Guadeloupe',
+    'Guyana',
+    'Haiti',
+    'Jamaica',
+    'Martinique',
+    'Montserrat',
+    'Puerto Rico',
+    'Saint Kitts and Nevis',
+    'Saint Lucia',
+    'Saint Vincent and the Grenadines',
+    'Spanish Virgin Islands',
+    'Suriname',
+    'Trinidad and Tobago',
+    'Turks and Caicos Islands',
+    'United States',
+    'United States Virgin Islands',
+    'United Kingdom',
+    'Canada',
+];
 
 /* ------------------------------------------------------------------ */
 /*  Step metadata (no OTP / account / consent — this is edit mode)     */
@@ -142,21 +274,62 @@ const STEPS = [
 const TOTAL_STEPS = STEPS.length;
 
 const FIELD_STEP: Record<string, number> = {
-    provider_type: 0, organization_name: 0, credentials: 0, professional_title: 0, professional_title_other: 0,
-    short_bio: 1, years_experience: 1,
-    license_number: 2, license_not_applicable: 2, license_states: 2, license_states_other: 2, license_status: 2, verification_document: 2,
-    areas_of_support: 3, areas_of_support_other: 3,
+    provider_type: 0,
+    organization_name: 0,
+    credentials: 0,
+    professional_title: 0,
+    professional_title_other: 0,
+    short_bio: 1,
+    years_experience: 1,
+    license_number: 2,
+    license_not_applicable: 2,
+    license_states: 2,
+    license_states_other: 2,
+    license_status: 2,
+    verification_document: 2,
+    areas_of_support: 3,
+    areas_of_support_other: 3,
     populations_served: 4,
-    treatment_approaches: 5, treatment_approaches_other: 5, specialized_training: 5, specialized_training_other: 5, certifications: 5,
-    caribbean_experience: 6, caribbean_experience_details: 6, lgbtq_affirming: 6, languages: 6, languages_other: 6, cultural_approach: 6,
-    service_formats: 7, practice_settings: 7, practice_settings_other: 7,
-    address: 8, city: 8, state_province: 8, country: 8, multiple_locations: 8, additional_locations: 8, hide_address: 8, telehealth_regions: 8, telehealth_regions_other: 8,
-    payment_methods: 9, insurance_plans: 9,
-    fee_min: 10, fee_max: 10, fee_currency: 10, reduced_cost_scope: 10,
-    contact_person_name: 11, contact_person_role: 11, contact_person_email: 11,
-    phone: 11, show_phone: 11, website: 11, social_links: 11,
-    profile_photo: 12, additional_photos: 12,
-    accessibility: 13, accessibility_other: 13,
+    treatment_approaches: 5,
+    treatment_approaches_other: 5,
+    specialized_training: 5,
+    specialized_training_other: 5,
+    certifications: 5,
+    caribbean_experience: 6,
+    caribbean_experience_details: 6,
+    lgbtq_affirming: 6,
+    languages: 6,
+    languages_other: 6,
+    cultural_approach: 6,
+    service_formats: 7,
+    practice_settings: 7,
+    practice_settings_other: 7,
+    address: 8,
+    city: 8,
+    state_province: 8,
+    country: 8,
+    multiple_locations: 8,
+    additional_locations: 8,
+    hide_address: 8,
+    telehealth_regions: 8,
+    telehealth_regions_other: 8,
+    payment_methods: 9,
+    insurance_plans: 9,
+    fee_min: 10,
+    fee_max: 10,
+    fee_currency: 10,
+    reduced_cost_scope: 10,
+    contact_person_name: 11,
+    contact_person_role: 11,
+    contact_person_email: 11,
+    phone: 11,
+    show_phone: 11,
+    website: 11,
+    social_links: 11,
+    profile_photo: 12,
+    additional_photos: 12,
+    accessibility: 13,
+    accessibility_other: 13,
     accepting_new_clients: 14,
 };
 
@@ -198,55 +371,137 @@ const errClass = (hasError: boolean) =>
         ? 'border-[#C2543B] focus:border-[#C2543B] focus:ring-[#C2543B]/30'
         : 'border-[#1E4D4A]/65 focus:border-[#1E4D4A] focus:ring-[#1E4D4A]/25';
 
-function FieldShell({ label, required, hint, error, children }: { label?: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode; }) {
+function FieldShell({
+    label,
+    required,
+    hint,
+    error,
+    children,
+}: {
+    label?: string;
+    required?: boolean;
+    hint?: string;
+    error?: string;
+    children: React.ReactNode;
+}) {
     return (
         <div>
             {label && (
                 <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">
-                    {label}{required && <span className="ml-1 text-[#A8472F]">*</span>}
+                    {label}
+                    {required && <span className="ml-1 text-[#A8472F]">*</span>}
                 </label>
             )}
             {hint && <p className="mb-2 text-sm text-[#2C2C2C]">{hint}</p>}
             {children}
             {error && (
                 <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
-                    <span aria-hidden>⚠</span>{error}
+                    <span aria-hidden>⚠</span>
+                    {error}
                 </p>
             )}
         </div>
     );
 }
 
-function TextInput({ value, onChange, error, placeholder, type = 'text', disabled = false }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; type?: string; disabled?: boolean; }) {
+function TextInput({
+    value,
+    onChange,
+    error,
+    placeholder,
+    type = 'text',
+    disabled = false,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    placeholder?: string;
+    type?: string;
+    disabled?: boolean;
+}) {
     return (
-        <input type={type} value={value} disabled={disabled} placeholder={placeholder}
+        <input
+            type={type}
+            value={value}
+            disabled={disabled}
+            placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`} />
+            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`}
+        />
     );
 }
 
-function TextArea({ value, onChange, error, placeholder, rows = 5 }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; rows?: number; }) {
+function TextArea({
+    value,
+    onChange,
+    error,
+    placeholder,
+    rows = 5,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    placeholder?: string;
+    rows?: number;
+}) {
     return (
-        <textarea value={value} rows={rows} placeholder={placeholder}
+        <textarea
+            value={value}
+            rows={rows}
+            placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 ${errClass(!!error)}`}
+        />
     );
 }
 
 /* ---- money input (numbers + one dot only) ---- */
-function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; prefix?: string; }) {
+function MoneyInput({
+    value,
+    onChange,
+    error,
+    placeholder,
+    prefix = '$',
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    placeholder?: string;
+    prefix?: string;
+}) {
     return (
         <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
-            <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
+            <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
+            <input
+                type="text"
+                inputMode="decimal"
+                value={value}
+                placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
                 style={{ paddingLeft: `${1.25 + prefix.trim().length * 0.5}rem` }}
-                className={`min-h-[48px] w-full rounded-[10px] border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                className={`min-h-[48px] w-full rounded-[10px] border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 ${errClass(!!error)}`}
+            />
         </div>
     );
 }
 
-function SearchableSelect({ value, onChange, options, error, placeholder = 'Select…', searchPlaceholder = 'Search…', emptyText = 'No results found.' }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] | string[]; error?: boolean; placeholder?: string; searchPlaceholder?: string; emptyText?: string; }) {
+function SearchableSelect({
+    value,
+    onChange,
+    options,
+    error,
+    placeholder = 'Select…',
+    searchPlaceholder = 'Search…',
+    emptyText = 'No results found.',
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    options: { value: string; label: string }[] | string[];
+    error?: boolean;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyText?: string;
+}) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const rootRef = useRef<HTMLDivElement>(null);
@@ -260,36 +515,87 @@ function SearchableSelect({ value, onChange, options, error, placeholder = 'Sele
     const selectedLabel = opts.find((o) => o.value === value)?.label ?? '';
     useEffect(() => {
         if (!open) return;
-        const onClick = (e: MouseEvent) => { if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false); };
-        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+        const onClick = (e: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpen(false);
+        };
         document.addEventListener('mousedown', onClick);
         document.addEventListener('keydown', onKey);
-        return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey); };
+        return () => {
+            document.removeEventListener('mousedown', onClick);
+            document.removeEventListener('keydown', onKey);
+        };
     }, [open]);
-    useEffect(() => { if (open) requestAnimationFrame(() => searchRef.current?.focus()); else setQuery(''); }, [open]);
+    useEffect(() => {
+        if (open) requestAnimationFrame(() => searchRef.current?.focus());
+        else setQuery('');
+    }, [open]);
     return (
         <div ref={rootRef} className="relative">
-            <button type="button" role="combobox" aria-expanded={open} onClick={() => setOpen((o) => !o)}
-                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}>
+            <button
+                type="button"
+                role="combobox"
+                aria-expanded={open}
+                onClick={() => setOpen((o) => !o)}
+                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left transition outline-none focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}
+            >
                 <span className={`truncate ${selectedLabel ? 'text-[#2C2C2C]' : 'text-[#2C2C2C]/70'}`}>{selectedLabel || placeholder}</span>
-                <svg viewBox="0 0 24 24" className={`ml-2 h-4 w-4 flex-shrink-0 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+                <svg
+                    viewBox="0 0 24 24"
+                    className={`ml-2 h-4 w-4 flex-shrink-0 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+                </svg>
             </button>
             {open && (
                 <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
                     <div className="flex items-center gap-2 border-b border-[#E8D9B8] px-3">
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
-                        <input ref={searchRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchPlaceholder} className="w-full bg-transparent py-2.5 text-sm text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none" />
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+                        </svg>
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={searchPlaceholder}
+                            className="w-full bg-transparent py-2.5 text-sm text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none"
+                        />
                     </div>
                     <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
-                        {filtered.length === 0 && (<li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>)}
+                        {filtered.length === 0 && <li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>}
                         {filtered.map((o) => {
                             const active = o.value === value;
                             return (
                                 <li key={o.value}>
-                                    <button type="button" role="option" aria-selected={active} onClick={() => { onChange(o.value); setOpen(false); }}
-                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'}`}>
-                                        <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#1E4D4A] ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden>
-                                            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>
+                                    <button
+                                        type="button"
+                                        role="option"
+                                        aria-selected={active}
+                                        onClick={() => {
+                                            onChange(o.value);
+                                            setOpen(false);
+                                        }}
+                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'}`}
+                                    >
+                                        <span
+                                            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#1E4D4A] ${active ? 'opacity-100' : 'opacity-0'}`}
+                                            aria-hidden
+                                        >
+                                            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                                                <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                            </svg>
                                         </span>
                                         <span className="leading-snug">{o.label}</span>
                                     </button>
@@ -303,14 +609,20 @@ function SearchableSelect({ value, onChange, options, error, placeholder = 'Sele
     );
 }
 
-function RadioRow({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; }) {
+function RadioRow({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
     return (
         <div className="flex flex-wrap gap-2.5">
             {options.map((o) => {
                 const active = value === o.value;
                 return (
-                    <button key={o.value} type="button" role="radio" aria-checked={active} onClick={() => onChange(o.value)}
-                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}>
+                    <button
+                        key={o.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => onChange(o.value)}
+                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}
+                    >
                         {o.label}
                     </button>
                 );
@@ -319,16 +631,39 @@ function RadioRow({ options, value, onChange }: { options: { value: string; labe
     );
 }
 
-function CheckGrid({ options, selected, onToggle, columns = 2 }: { options: string[]; selected: string[]; onToggle: (v: string) => void; columns?: number; }) {
+function CheckGrid({
+    options,
+    selected,
+    onToggle,
+    columns = 2,
+}: {
+    options: string[];
+    selected: string[];
+    onToggle: (v: string) => void;
+    columns?: number;
+}) {
     return (
         <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
             {options.map((o) => {
                 const active = selected.includes(o);
                 return (
-                    <button key={o} type="button" role="checkbox" aria-checked={active} onClick={() => onToggle(o)}
-                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}>
-                        <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
-                            {active && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
+                    <button
+                        key={o}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={active}
+                        onClick={() => onToggle(o)}
+                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}
+                    >
+                        <span
+                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`}
+                            aria-hidden
+                        >
+                            {active && (
+                                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                    <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                </svg>
+                            )}
                         </span>
                         <span className="min-w-0 leading-snug [overflow-wrap:anywhere]">{o}</span>
                     </button>
@@ -338,35 +673,69 @@ function CheckGrid({ options, selected, onToggle, columns = 2 }: { options: stri
     );
 }
 
-function OtherCheckboxField({ checked, text, onToggle, onTextChange, placeholder, error }: { checked: boolean; text: string; onToggle: () => void; onTextChange: (v: string) => void; placeholder?: string; error?: boolean; }) {
+function OtherCheckboxField({
+    checked,
+    text,
+    onToggle,
+    onTextChange,
+    placeholder,
+    error,
+}: {
+    checked: boolean;
+    text: string;
+    onToggle: () => void;
+    onTextChange: (v: string) => void;
+    placeholder?: string;
+    error?: boolean;
+}) {
     return (
         <div className="mt-2.5 space-y-2.5">
-            <button type="button" role="checkbox" aria-checked={checked} onClick={onToggle}
-                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}>
-                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
-                    {checked && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
+            <button
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={onToggle}
+                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'}`}
+            >
+                <span
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`}
+                    aria-hidden
+                >
+                    {checked && (
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                        </svg>
+                    )}
                 </span>
                 <span className="leading-snug">Other (specify)</span>
             </button>
-            {checked && (<TextInput value={text} onChange={onTextChange} placeholder={placeholder} error={error} />)}
+            {checked && <TextInput value={text} onChange={onTextChange} placeholder={placeholder} error={error} />}
         </div>
     );
 }
 
-function CertificationsInput({ values, onChange }: { values: string[]; onChange: (list: string[]) => void; }) {
+function CertificationsInput({ values, onChange }: { values: string[]; onChange: (list: string[]) => void }) {
     const add = () => onChange([...values, '']);
-    const update = (idx: number, val: string) => { const l = [...values]; l[idx] = val; onChange(l); };
+    const update = (idx: number, val: string) => {
+        const l = [...values];
+        l[idx] = val;
+        onChange(l);
+    };
     const remove = (idx: number) => onChange(values.filter((_, i) => i !== idx));
     return (
         <div className="space-y-2">
             {values.map((val, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                     <TextInput value={val} onChange={(v) => update(idx, v)} placeholder="e.g. PMH-C, CCTP, EMDR Certified Therapist" />
-                    <button type="button" onClick={() => remove(idx)} className="text-sm text-[#A8472F] hover:underline">Remove</button>
+                    <button type="button" onClick={() => remove(idx)} className="text-sm text-[#A8472F] hover:underline">
+                        Remove
+                    </button>
                 </div>
             ))}
             <button type="button" onClick={add} className="inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline">
-                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} /></svg>
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                    <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} />
+                </svg>
                 Add credential
             </button>
         </div>
@@ -376,8 +745,18 @@ function CertificationsInput({ values, onChange }: { values: string[]; onChange:
 /* ------------------------------------------------------------------ */
 /*  Page props                                                         */
 /* ------------------------------------------------------------------ */
-interface RegionData { id: number; name: string; regionTypeName?: string; regionTypeLabel?: string; }
-interface CountryData { id: number; name: string; code: string; regions: RegionData[]; }
+interface RegionData {
+    id: number;
+    name: string;
+    regionTypeName?: string;
+    regionTypeLabel?: string;
+}
+interface CountryData {
+    id: number;
+    name: string;
+    code: string;
+    regions: RegionData[];
+}
 interface StoredProvider extends Partial<Record<string, unknown>> {
     email?: string;
     status?: string;
@@ -396,8 +775,13 @@ interface PageProps {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function ProviderProfileEdit({
-    errors: serverErrors, countries, provider,
-    supportAreas = [], existingProfilePhoto, existingVerificationDoc, existingAdditionalPhotos = [],
+    errors: serverErrors,
+    countries,
+    provider,
+    supportAreas = [],
+    existingProfilePhoto,
+    existingVerificationDoc,
+    existingAdditionalPhotos = [],
 }: PageProps) {
     const [step, setStep] = useState(0);
     const [errors, setErrors] = useState<FormErrors>({});
@@ -413,20 +797,38 @@ export default function ProviderProfileEdit({
         const p = provider || {};
         const arr = (k: string) => (Array.isArray(p[k]) ? (p[k] as string[]) : []);
 
-        const pt = splitStored(arr('professional_title'), PROFESSIONAL_TITLES.filter(t => t !== 'Other (specify)'), 'Other (specify)');
-        const lang = splitStored(arr('languages'), LANGUAGES.filter(l => l !== 'Other'), 'Other');
+        const pt = splitStored(
+            arr('professional_title'),
+            PROFESSIONAL_TITLES.filter((t) => t !== 'Other (specify)'),
+            'Other (specify)',
+        );
+        const lang = splitStored(
+            arr('languages'),
+            LANGUAGES.filter((l) => l !== 'Other'),
+            'Other',
+        );
         const ls = splitStored(arr('license_states'), REGIONS, '__other__');
         const tr = splitStored(arr('telehealth_regions'), REGIONS, '__other__');
         const acc = splitStored(arr('accessibility'), ACCESSIBILITY_OPTIONS, '__other__');
         const ps = splitStored(arr('practice_settings'), PRACTICE_SETTINGS, '__other__');
-        const ta = splitStored(arr('treatment_approaches'), TREATMENT_APPROACHES.filter(t => t !== 'Other (specify)'), 'Other (specify)');
-        const st = splitStored(arr('specialized_training'), SPECIALIZED_TRAINING_OPTIONS.filter(t => t !== 'Other Specialized Training'), 'Other Specialized Training');
+        const ta = splitStored(
+            arr('treatment_approaches'),
+            TREATMENT_APPROACHES.filter((t) => t !== 'Other (specify)'),
+            'Other (specify)',
+        );
+        const st = splitStored(
+            arr('specialized_training'),
+            SPECIALIZED_TRAINING_OPTIONS.filter((t) => t !== 'Other Specialized Training'),
+            'Other Specialized Training',
+        );
 
         const knownAreas = new Set<string>();
-        AREAS_OF_SUPPORT_GROUPS.forEach(g => g.items.forEach(i => knownAreas.add(i)));
+        AREAS_OF_SUPPORT_GROUPS.forEach((g) => g.items.forEach((i) => knownAreas.add(i)));
         const areasFlat: string[] = [];
         const customAreas: Record<string, { checked: boolean; text: string }> = {};
-        AREAS_OF_SUPPORT_GROUPS.forEach(g => { customAreas[g.category] = { checked: false, text: '' }; });
+        AREAS_OF_SUPPORT_GROUPS.forEach((g) => {
+            customAreas[g.category] = { checked: false, text: '' };
+        });
         supportAreas.forEach(({ category, area }) => {
             if (knownAreas.has(area)) {
                 if (!areasFlat.includes(area)) areasFlat.push(area);
@@ -474,8 +876,12 @@ export default function ProviderProfileEdit({
             state_province: (p.state_province as string) || '',
             country: (p.country as string) || '',
             multiple_locations: (p.multiple_locations as YesNo) || '',
-            additional_locations: (Array.isArray(p.additional_locations) ? (p.additional_locations as Partial<ProviderLocation>[]) : [])
-                .map((l) => ({ country: l.country || '', state_province: l.state_province || '', city: l.city || '', street: l.street || '' })),
+            additional_locations: (Array.isArray(p.additional_locations) ? (p.additional_locations as Partial<ProviderLocation>[]) : []).map((l) => ({
+                country: l.country || '',
+                state_province: l.state_province || '',
+                city: l.city || '',
+                street: l.street || '',
+            })),
             hide_address: !!p.hide_address,
             telehealth_regions: tr.values,
             telehealth_regions_other: tr.otherText,
@@ -496,8 +902,7 @@ export default function ProviderProfileEdit({
             additional_photos: [],
             accessibility: acc.values,
             accessibility_other: acc.otherText,
-            accepting_new_clients:
-                typeof p.accepting_new_clients === 'boolean' ? (p.accepting_new_clients as boolean) : null,
+            accepting_new_clients: typeof p.accepting_new_clients === 'boolean' ? (p.accepting_new_clients as boolean) : null,
         };
         return { data, customAreas };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -505,7 +910,7 @@ export default function ProviderProfileEdit({
 
     const [customSupportAreas, setCustomSupportAreas] = useState(built.customAreas);
     const updateCustomSupportArea = (category: string, field: 'checked' | 'text', value: boolean | string) => {
-        setCustomSupportAreas(prev => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
+        setCustomSupportAreas((prev) => ({ ...prev, [category]: { ...prev[category], [field]: value } }));
     };
 
     const form = useForm<ProviderFormData>(built.data);
@@ -544,27 +949,34 @@ export default function ProviderProfileEdit({
                 if (!d.provider_type) e.provider_type = 'Please select a provider type.';
                 if (!d.organization_name.trim()) e.organization_name = 'Please enter your name or organization.';
                 if (d.professional_title.length === 0) e.professional_title = 'Please select at least one professional title.';
-                if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim()) e.professional_title_other = 'Please specify your title.';
+                if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
+                    e.professional_title_other = 'Please specify your title.';
                 break;
             case 1:
                 if (!d.short_bio.trim()) e.short_bio = 'A short bio is required.';
                 else if (wordCount(d.short_bio) > 500) e.short_bio = 'Please keep your bio to 500 words or fewer.';
                 break;
             case 2: {
-                if (!d.license_not_applicable && !d.license_number.trim()) e.license_number = 'Enter your license number, or select "Not applicable".';
+                if (!d.license_not_applicable && !d.license_number.trim())
+                    e.license_number = 'Enter your license number, or select "Not applicable".';
                 if (!d.license_status) e.license_status = 'Please select your license status.';
                 const hasOther = d.license_states.includes('__other__');
                 const hasSel = d.license_states.length > 0 && !(d.license_states.length === 1 && hasOther);
-                if (!hasSel && !(hasOther && d.license_states_other.trim())) e.license_states = 'Select at least one state/country or specify "Other".';
+                if (!hasSel && !(hasOther && d.license_states_other.trim()))
+                    e.license_states = 'Select at least one state/country or specify "Other".';
                 if (hasOther && !d.license_states_other.trim()) e.license_states_other = 'Please specify the other state or country.';
                 break;
             }
             case 3: {
                 const selectedCount = d.areas_of_support.length;
-                let customCount = 0; const customErrors: string[] = [];
+                let customCount = 0;
+                const customErrors: string[] = [];
                 for (const cat of Object.keys(customSupportAreas)) {
                     const c = customSupportAreas[cat];
-                    if (c.checked) { if (c.text.trim() === '') customErrors.push(`Please specify the custom area for "${cat}".`); else customCount++; }
+                    if (c.checked) {
+                        if (c.text.trim() === '') customErrors.push(`Please specify the custom area for "${cat}".`);
+                        else customCount++;
+                    }
                 }
                 if (selectedCount === 0 && customCount === 0) e.areas_of_support = 'Select at least one area of support or specify an "Other" area.';
                 if (customErrors.length > 0) e.areas_of_support = customErrors[0];
@@ -574,12 +986,15 @@ export default function ProviderProfileEdit({
                 if (d.populations_served.length === 0) e.populations_served = 'Select at least one population you serve.';
                 break;
             case 5:
-                if (d.treatment_approaches.includes('Other (specify)') && !d.treatment_approaches_other.trim()) e.treatment_approaches_other = 'Please specify your other approach.';
-                if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim()) e.specialized_training_other = 'Please specify your other training.';
+                if (d.treatment_approaches.includes('Other (specify)') && !d.treatment_approaches_other.trim())
+                    e.treatment_approaches_other = 'Please specify your other approach.';
+                if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim())
+                    e.specialized_training_other = 'Please specify your other training.';
                 break;
             case 6:
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please choose Yes or Not yet.';
-                if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150) e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
+                if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150)
+                    e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
                 if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
                 if (d.languages.includes('Other') && !d.languages_other.trim()) e.languages_other = 'Please specify the other language(s).';
@@ -594,7 +1009,8 @@ export default function ProviderProfileEdit({
                 Object.assign(e, validateLocationStep(countries, d as LocationValues));
                 const hasOther = d.telehealth_regions.includes('__other__');
                 const hasSel = d.telehealth_regions.length > 0 && !(d.telehealth_regions.length === 1 && hasOther);
-                if (!hasSel && !(hasOther && d.telehealth_regions_other.trim())) e.telehealth_regions = 'Select at least one telehealth region or specify "Other".';
+                if (!hasSel && !(hasOther && d.telehealth_regions_other.trim()))
+                    e.telehealth_regions = 'Select at least one telehealth region or specify "Other".';
                 if (hasOther && !d.telehealth_regions_other.trim()) e.telehealth_regions_other = 'Please specify the other telehealth region(s).';
                 break;
             }
@@ -631,7 +1047,8 @@ export default function ProviderProfileEdit({
                 break;
             case 13: {
                 // Optional for everyone (and can be skipped entirely for virtual-only care).
-                if (d.accessibility.includes('__other__') && !d.accessibility_other.trim()) e.accessibility_other = 'Please describe the other accommodation, or untick "Other".';
+                if (d.accessibility.includes('__other__') && !d.accessibility_other.trim())
+                    e.accessibility_other = 'Please describe the other accommodation, or untick "Other".';
                 break;
             }
             case 14:
@@ -646,32 +1063,51 @@ export default function ProviderProfileEdit({
     /* ---- navigation ------------------------------------------------- */
     const goNext = () => {
         const stepErrors = validateStep(step, d);
-        if (Object.keys(stepErrors).length > 0) { setErrors(stepErrors); return; }
+        if (Object.keys(stepErrors).length > 0) {
+            setErrors(stepErrors);
+            return;
+        }
         setErrors({});
         setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
         scrollTop();
     };
-    const goBack = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)); scrollTop(); };
+    const goBack = () => {
+        setErrors({});
+        setStep((s) => Math.max(s - 1, 0));
+        scrollTop();
+    };
 
     const handleSubmit = () => {
         setSubmitErrors([]);
         const stepErrors = validateStep(step, d);
-        if (Object.keys(stepErrors).length > 0) { setErrors(stepErrors); return; }
+        if (Object.keys(stepErrors).length > 0) {
+            setErrors(stepErrors);
+            return;
+        }
         for (let i = 0; i < TOTAL_STEPS; i++) {
             const e = validateStep(i, d);
-            if (Object.keys(e).length > 0) { setErrors(e); setStep(i); scrollTop(); return; }
+            if (Object.keys(e).length > 0) {
+                setErrors(e);
+                setStep(i);
+                scrollTop();
+                return;
+            }
         }
 
         const areaToCategoryMap: Record<string, string> = {};
-        AREAS_OF_SUPPORT_GROUPS.forEach(g => g.items.forEach(item => { areaToCategoryMap[item] = g.category; }));
+        AREAS_OF_SUPPORT_GROUPS.forEach((g) =>
+            g.items.forEach((item) => {
+                areaToCategoryMap[item] = g.category;
+            }),
+        );
 
         const mergeOther = (a: string[], sentinel: string, text: string): string[] => {
-            const out = a.filter(v => v !== sentinel);
+            const out = a.filter((v) => v !== sentinel);
             if (a.includes(sentinel) && text && text.trim()) out.push(text.trim());
             return out;
         };
 
-        const keptPaths = keptPhotos.map(p => p.path);
+        const keptPaths = keptPhotos.map((p) => p.path);
 
         form.transform((data) => {
             const finalAreas: string[] = [];
@@ -695,7 +1131,7 @@ export default function ProviderProfileEdit({
                 practice_settings: mergeOther(data.practice_settings, '__other__', data.practice_settings_other),
                 treatment_approaches: mergeOther(data.treatment_approaches, 'Other (specify)', data.treatment_approaches_other),
                 specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
-                certifications: data.certifications.filter(c => c.trim() !== ''),
+                certifications: data.certifications.filter((c) => c.trim() !== ''),
                 existing_additional_photos: keptPaths,
                 accepting_new_clients: data.accepting_new_clients ? 1 : 0,
                 fee_min: data.fee_min.trim() === '' ? '' : data.fee_min.trim(),
@@ -730,78 +1166,103 @@ export default function ProviderProfileEdit({
     /* ---- success screen -------------------------------------------- */
     if (submitted) {
         return (
-            <>
-                <ProviderMenu />
-                <Head title="Changes Submitted — Bahali Provider Directory" />
-                <div className="min-h-screen bg-[#FAFAF6] px-4 py-16 font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
+            <ConnectLayout page="account" title="Changes submitted">
+                <div className="bc-plain font-body min-h-[60vh] bg-[#FAFAF6] px-4 py-16 text-[16px] leading-[1.6] text-[#2C2C2C]">
                     <div className="mx-auto max-w-xl rounded-2xl border border-[#E8D9B8] bg-white p-10 text-center shadow-sm">
                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#1E4D4A]/10">
-                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>
+                            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2.2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                            </svg>
                         </div>
-                        <h1 className="font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Changes submitted for review</h1>
+                        <h1 className="font-display text-[38px] leading-[1.1] font-semibold text-[#1E4D4A] md:text-[48px]">
+                            Changes submitted for review
+                        </h1>
                         <p className="mt-3 text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Your updated profile has been saved and is now <strong>pending review</strong>. Your public
-                            listing continues to show your previously approved details until an admin approves the changes.
+                            Your updated profile has been saved and is now <strong>pending review</strong>. Your public listing continues to show your
+                            previously approved details until an admin approves the changes.
                         </p>
                         <div className="mt-8">
-                            <a href="/provider/dashboard" className="inline-flex items-center justify-center bg-[#1E4D4A] px-5 text-white transition-colors hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
+                            <a
+                                href="/provider/dashboard"
+                                className="inline-flex min-h-[48px] items-center justify-center rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+                            >
                                 Back to my profile
                             </a>
                         </div>
                     </div>
                 </div>
-            </>
+            </ConnectLayout>
         );
     }
 
     /* ---- render ----------------------------------------------------- */
     return (
-        <>
-            <Head title="Edit Profile — Bahali" />
-            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
-                <Header />
-                <div ref={topRef} className="px-[6%] py-8 max-[371px]:px-[4%] lg:py-12">
+        <ConnectLayout page="account" title="Edit profile">
+            <div className="bc-plain font-body bg-[#FAFAF6] text-[16px] leading-[1.6] text-[#2C2C2C]">
+                <div ref={topRef} className="mx-auto max-w-[1260px] scroll-mt-28 px-9 py-8 max-[1100px]:px-7 max-[600px]:px-5 lg:py-12">
                     <div className="mb-6">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">Provider portal</p>
-                        <h1 className="mt-2 font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Edit your profile</h1>
+                        <p className="text-sm font-semibold tracking-[0.18em] text-[#1E4D4A] uppercase">Provider portal</p>
+                        <h1 className="font-display mt-2 text-[38px] leading-[1.1] font-semibold text-[#1E4D4A] md:text-[48px]">Edit your profile</h1>
                         <p className="mt-2 max-w-2xl text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Update your information below. Saved changes are sent for review before they appear publicly —
-                            your current approved listing stays live in the meantime.
+                            Update your information below. Saved changes are sent for review before they appear publicly — your current approved
+                            listing stays live in the meantime.
                         </p>
                         {provider?.status && (
                             <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]">
-                                Current status: <span className="font-semibold capitalize text-[#1E4D4A]">{String(provider.status).replace(/_/g, ' ')}</span>
+                                Current status:{' '}
+                                <span className="font-semibold text-[#1E4D4A] capitalize">{String(provider.status).replace(/_/g, ' ')}</span>
                             </span>
                         )}
                     </div>
 
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-                        <aside className="lg:sticky lg:top-8 lg:self-start">
+                        <aside className="lg:sticky lg:top-28 lg:self-start">
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
-                                    <span className="font-medium text-[#2C2C2C]">Step {step + 1} of {TOTAL_STEPS}</span>
+                                    <span className="font-medium text-[#2C2C2C]">
+                                        Step {step + 1} of {TOTAL_STEPS}
+                                    </span>
                                     <span className="text-[#2C2C2C]">{progress}%</span>
                                 </div>
                                 <div className="h-2 w-full overflow-hidden rounded-full bg-[#E8D9B8]">
                                     <div className="h-full rounded-full bg-[#1E4D4A] transition-all duration-500" style={{ width: `${progress}%` }} />
                                 </div>
-                                <p className="mt-2 text-[18px] font-semibold leading-[1.2] text-[#1E4D4A]">{STEPS[step].title}</p>
+                                <p className="mt-2 text-[18px] leading-[1.2] font-semibold text-[#1E4D4A]">{STEPS[step].title}</p>
                             </div>
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
-                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E8D9B8]" aria-hidden />
+                                    <span className="absolute top-2 bottom-2 left-[24px] w-px bg-[#E8D9B8]" aria-hidden />
                                     {STEPS.map((s, i) => {
-                                        const isDone = i < step; const isCurrent = i === step;
+                                        const isDone = i < step;
+                                        const isCurrent = i === step;
                                         return (
                                             <li key={s.key} className="relative mb-1 last:mb-0">
-                                                <button type="button"
-                                                    onClick={() => { setErrors({}); setStep(i); scrollTop(); }}
-                                                    className="flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition cursor-pointer hover:bg-[#1E4D4A]/5">
-                                                    <span className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${isDone ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : isCurrent ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]' : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'}`}>
-                                                        {isDone ? (<svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>) : (i + 1)}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setErrors({});
+                                                        setStep(i);
+                                                        scrollTop();
+                                                    }}
+                                                    className="flex w-full cursor-pointer items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-[#1E4D4A]/5"
+                                                >
+                                                    <span
+                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${isDone ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : isCurrent ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]' : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'}`}
+                                                    >
+                                                        {isDone ? (
+                                                            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                                                                <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                                                            </svg>
+                                                        ) : (
+                                                            i + 1
+                                                        )}
                                                     </span>
                                                     <span className="min-w-0 pt-0.5">
-                                                        <span className={`block text-[15px] leading-tight ${isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'}`}>{s.title}</span>
+                                                        <span
+                                                            className={`block text-[15px] leading-tight ${isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'}`}
+                                                        >
+                                                            {s.title}
+                                                        </span>
                                                         <span className="block text-sm text-[#2C2C2C]/70">{s.subtitle}</span>
                                                     </span>
                                                 </button>
@@ -812,50 +1273,81 @@ export default function ProviderProfileEdit({
                             </nav>
                         </aside>
 
-                        <main>
+                        <div>
                             <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm sm:p-8">
                                 {submitErrors.length > 0 && (
-                                    <div role="alert" className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]">
+                                    <div
+                                        role="alert"
+                                        className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]"
+                                    >
                                         <p className="font-semibold">We couldn't save your changes. Please fix the following:</p>
                                         <ul className="mt-2 list-disc space-y-1 pl-5">
-                                            {submitErrors.map((m, i) => <li key={i}>{m}</li>)}
+                                            {submitErrors.map((m, i) => (
+                                                <li key={i}>{m}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
                                 <div className="mb-6 border-b border-[#E8D9B8] pb-5">
-                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1E4D4A]">Section {step + 1}</p>
-                                    <h2 className="mt-1 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">{STEPS[step].title}</h2>
+                                    <p className="text-sm font-semibold tracking-[0.16em] text-[#1E4D4A] uppercase">Section {step + 1}</p>
+                                    <h2 className="font-display mt-1 text-[32px] leading-[1.15] font-semibold text-[#1E4D4A] md:text-[40px]">
+                                        {STEPS[step].title}
+                                    </h2>
                                 </div>
                                 <div className="space-y-6">
                                     <StepBody
-                                        step={step} d={d} set={set} toggle={toggle} fieldError={fieldError} countries={countries}
-                                        customSupportAreas={customSupportAreas} onCustomSupportChange={updateCustomSupportArea}
-                                        providerEmail={provider?.email} existingProfilePhoto={existingProfilePhoto}
-                                        existingVerificationDoc={existingVerificationDoc} keptPhotos={keptPhotos}
-                                        onRemoveKept={(path) => setKeptPhotos(prev => prev.filter(p => p.path !== path))}
+                                        step={step}
+                                        d={d}
+                                        set={set}
+                                        toggle={toggle}
+                                        fieldError={fieldError}
+                                        countries={countries}
+                                        customSupportAreas={customSupportAreas}
+                                        onCustomSupportChange={updateCustomSupportArea}
+                                        providerEmail={provider?.email}
+                                        existingProfilePhoto={existingProfilePhoto}
+                                        existingVerificationDoc={existingVerificationDoc}
+                                        keptPhotos={keptPhotos}
+                                        onRemoveKept={(path) => setKeptPhotos((prev) => prev.filter((p) => p.path !== path))}
                                     />
                                 </div>
                                 <div className="mt-8 flex items-center justify-between border-t border-[#E8D9B8] pt-6">
-                                    <button type="button" onClick={goBack} disabled={step === 0}
-                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${step === 0 ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70' : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}>← Back</button>
+                                    <button
+                                        type="button"
+                                        onClick={goBack}
+                                        disabled={step === 0}
+                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none ${step === 0 ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70' : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'}`}
+                                    >
+                                        ← Back
+                                    </button>
                                     {step < TOTAL_STEPS - 1 ? (
-                                        <button type="button" onClick={goNext}
-                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">Continue →</button>
+                                        <button
+                                            type="button"
+                                            onClick={goNext}
+                                            className="min-h-[48px] rounded-[10px] bg-[#1E4D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:ring-4 focus:ring-[#1E4D4A]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+                                        >
+                                            Continue →
+                                        </button>
                                     ) : (
-                                        <button type="button" onClick={handleSubmit} disabled={form.processing}
-                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            disabled={form.processing}
+                                            className="min-h-[48px] rounded-[10px] bg-[#1E4D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:ring-4 focus:ring-[#1E4D4A]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60"
+                                        >
                                             {form.processing ? 'Saving…' : 'Save & submit for review'}
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            <p className="mt-4 text-center text-sm text-[#2C2C2C]/70">Fields marked <span className="text-[#A8472F]">*</span> are required.</p>
-                        </main>
+                            <p className="mt-4 text-center text-sm text-[#2C2C2C]/70">
+                                Fields marked <span className="text-[#A8472F]">*</span> are required.
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <LandingFooter />
             </div>
-        </>
+        </ConnectLayout>
     );
 }
 
@@ -863,9 +1355,19 @@ export default function ProviderProfileEdit({
 /*  Step body                                                          */
 /* ------------------------------------------------------------------ */
 function StepBody({
-    step, d, set, toggle, fieldError, countries,
-    customSupportAreas, onCustomSupportChange,
-    providerEmail, existingProfilePhoto, existingVerificationDoc, keptPhotos, onRemoveKept,
+    step,
+    d,
+    set,
+    toggle,
+    fieldError,
+    countries,
+    customSupportAreas,
+    onCustomSupportChange,
+    providerEmail,
+    existingProfilePhoto,
+    existingVerificationDoc,
+    keptPhotos,
+    onRemoveKept,
 }: {
     step: number;
     d: ProviderFormData;
@@ -904,17 +1406,32 @@ function StepBody({
                         <RadioRow value={d.provider_type} onChange={(v) => set('provider_type', v as ProviderType)} options={PROVIDER_TYPES} />
                     </FieldShell>
                     <FieldShell label="Provider or Organization Name" required error={fieldError('organization_name')}>
-                        <TextInput value={d.organization_name} onChange={(v) => set('organization_name', v)} error={!!fieldError('organization_name')} placeholder="Dr. Jane Doe, PsyD or Harmony Counseling Center" />
+                        <TextInput
+                            value={d.organization_name}
+                            onChange={(v) => set('organization_name', v)}
+                            error={!!fieldError('organization_name')}
+                            placeholder="Dr. Jane Doe, PsyD or Harmony Counseling Center"
+                        />
                     </FieldShell>
                     <FieldShell label="Credentials / License" hint="Examples: PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC" error={fieldError('credentials')}>
                         <TextInput value={d.credentials} onChange={(v) => set('credentials', v)} placeholder="PsyD, LCSW…" />
                     </FieldShell>
                     <FieldShell label="Professional title(s)" required hint="Select all that apply." error={fieldError('professional_title')}>
-                        <CheckGrid options={PROFESSIONAL_TITLES} selected={d.professional_title} onToggle={(v) => toggle('professional_title', v)} columns={2} />
+                        <CheckGrid
+                            options={PROFESSIONAL_TITLES}
+                            selected={d.professional_title}
+                            onToggle={(v) => toggle('professional_title', v)}
+                            columns={2}
+                        />
                     </FieldShell>
                     {d.professional_title.includes('Other (specify)') && (
                         <FieldShell label="Please specify your title" required error={fieldError('professional_title_other')}>
-                            <TextInput value={d.professional_title_other} onChange={(v) => set('professional_title_other', v)} error={!!fieldError('professional_title_other')} placeholder="Your professional title" />
+                            <TextInput
+                                value={d.professional_title_other}
+                                onChange={(v) => set('professional_title_other', v)}
+                                error={!!fieldError('professional_title_other')}
+                                placeholder="Your professional title"
+                            />
                         </FieldShell>
                     )}
                 </>
@@ -924,48 +1441,119 @@ function StepBody({
                 <>
                     {providerEmail && (
                         <FieldShell label="Email address" hint="Your sign-in email can't be changed here.">
-                            <TextInput value={providerEmail} onChange={() => { }} disabled />
+                            <TextInput value={providerEmail} onChange={() => {}} disabled />
                         </FieldShell>
                     )}
-                    <FieldShell label="Short bio" required hint="Tell community members about yourself and your approach. (Max 500 words)" error={fieldError('short_bio')}>
-                        <TextArea value={d.short_bio} onChange={(v) => set('short_bio', v)} error={!!fieldError('short_bio')} rows={7} placeholder="Share your story, your values, and how you support healing…" />
+                    <FieldShell
+                        label="Short bio"
+                        required
+                        hint="Tell community members about yourself and your approach. (Max 500 words)"
+                        error={fieldError('short_bio')}
+                    >
+                        <TextArea
+                            value={d.short_bio}
+                            onChange={(v) => set('short_bio', v)}
+                            error={!!fieldError('short_bio')}
+                            rows={7}
+                            placeholder="Share your story, your values, and how you support healing…"
+                        />
                         <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.short_bio)} / 500 words</p>
                     </FieldShell>
                     <FieldShell label="Years of experience" error={fieldError('years_experience')}>
-                        <SearchableSelect value={d.years_experience} onChange={(v) => set('years_experience', v)} options={YEARS_EXPERIENCE} placeholder="Select…" searchPlaceholder="Search experience…" />
+                        <SearchableSelect
+                            value={d.years_experience}
+                            onChange={(v) => set('years_experience', v)}
+                            options={YEARS_EXPERIENCE}
+                            placeholder="Select…"
+                            searchPlaceholder="Search experience…"
+                        />
                     </FieldShell>
                 </>
             );
         case 2:
             return (
                 <>
-                    <FieldShell label="License number" required hint='Enter your license number, or select "Not applicable" below.' error={fieldError('license_number')}>
-                        <TextInput value={d.license_number} onChange={(v) => set('license_number', v)} error={!!fieldError('license_number')} disabled={d.license_not_applicable} placeholder="Your professional license number" />
+                    <FieldShell
+                        label="License number"
+                        required
+                        hint='Enter your license number, or select "Not applicable" below.'
+                        error={fieldError('license_number')}
+                    >
+                        <TextInput
+                            value={d.license_number}
+                            onChange={(v) => set('license_number', v)}
+                            error={!!fieldError('license_number')}
+                            disabled={d.license_not_applicable}
+                            placeholder="Your professional license number"
+                        />
                     </FieldShell>
-                    <ConsentItem checked={d.license_not_applicable} onChange={(v) => { set('license_not_applicable', v); if (v) set('license_number', ''); }}>Not applicable</ConsentItem>
+                    <ConsentItem
+                        checked={d.license_not_applicable}
+                        onChange={(v) => {
+                            set('license_not_applicable', v);
+                            if (v) set('license_number', '');
+                        }}
+                    >
+                        Not applicable
+                    </ConsentItem>
                     <FieldShell label="State / Country of licensure" required hint="Select all that apply." error={fieldError('license_states')}>
                         <CheckGrid options={REGIONS} selected={d.license_states} onToggle={(v) => toggle('license_states', v)} columns={2} />
-                        <OtherCheckboxField checked={d.license_states.includes('__other__')} text={d.license_states_other}
-                            onToggle={() => { const o = '__other__'; set('license_states', d.license_states.includes(o) ? d.license_states.filter(v => v !== o) : [...d.license_states, o]); }}
-                            onTextChange={(v) => set('license_states_other', v)} placeholder="Specify the state or country…" error={!!fieldError('license_states_other')} />
+                        <OtherCheckboxField
+                            checked={d.license_states.includes('__other__')}
+                            text={d.license_states_other}
+                            onToggle={() => {
+                                const o = '__other__';
+                                set(
+                                    'license_states',
+                                    d.license_states.includes(o) ? d.license_states.filter((v) => v !== o) : [...d.license_states, o],
+                                );
+                            }}
+                            onTextChange={(v) => set('license_states_other', v)}
+                            placeholder="Specify the state or country…"
+                            error={!!fieldError('license_states_other')}
+                        />
                     </FieldShell>
                     <FieldShell label="License status" required error={fieldError('license_status')}>
                         <RadioRow value={d.license_status} onChange={(v) => set('license_status', v as LicenseStatus)} options={LICENSE_STATUSES} />
                     </FieldShell>
-                    <FieldShell label="Verification document" hint="Optional — a license certificate or proof of credentials (PDF, JPG, PNG)." error={fieldError('verification_document')}>
+                    <FieldShell
+                        label="Verification document"
+                        hint="Optional — a license certificate or proof of credentials (PDF, JPG, PNG)."
+                        error={fieldError('verification_document')}
+                    >
                         {!d.verification_document && existingVerificationDoc && (
-                            <a href={existingVerificationDoc} target="_blank" rel="noreferrer" className="mb-2 inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline">
-                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" /></svg>
+                            <a
+                                href={existingVerificationDoc}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mb-2 inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M9 12h6m-6 4h6m2 4H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"
+                                    />
+                                </svg>
                                 View current document
                             </a>
                         )}
-                        <FileInput file={d.verification_document} accept=".pdf,.jpg,.jpeg,.png" onChange={(f) => set('verification_document', (f && f instanceof File) ? f : null)} />
+                        <FileInput
+                            file={d.verification_document}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(f) => set('verification_document', f && f instanceof File ? f : null)}
+                        />
                     </FieldShell>
                 </>
             );
         case 3:
             return (
-                <FieldShell label="Areas of support" required hint="Expand each category and select every area where you have expertise. You may also add custom areas via 'Other'." error={fieldError('areas_of_support')}>
+                <FieldShell
+                    label="Areas of support"
+                    required
+                    hint="Expand each category and select every area where you have expertise. You may also add custom areas via 'Other'."
+                    error={fieldError('areas_of_support')}
+                >
                     <div className="space-y-2.5">
                         {AREAS_OF_SUPPORT_GROUPS.map((group) => {
                             const category = group.category;
@@ -975,22 +1563,50 @@ function StepBody({
                             const totalSelected = count + (customSelected ? 1 : 0);
                             const isOpen = openCat === category;
                             return (
-                                <div key={category} className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]/50' : 'border-[#1E4D4A]/65'}`}>
-                                    <button type="button" aria-expanded={isOpen} onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
-                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'}`}>
+                                <div
+                                    key={category}
+                                    className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]/50' : 'border-[#1E4D4A]/65'}`}
+                                >
+                                    <button
+                                        type="button"
+                                        aria-expanded={isOpen}
+                                        onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
+                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'}`}
+                                    >
                                         <span className="flex items-center gap-2.5">
                                             <span className="text-sm font-semibold text-[#2C2C2C]">{category}</span>
-                                            {totalSelected > 0 && (<span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">{totalSelected} selected</span>)}
+                                            {totalSelected > 0 && (
+                                                <span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">
+                                                    {totalSelected} selected
+                                                </span>
+                                            )}
                                         </span>
-                                        <svg viewBox="0 0 24 24" className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" /></svg>
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+                                        </svg>
                                     </button>
                                     {isOpen && (
                                         <div className="border-t border-[#E8D9B8] bg-white p-3.5">
-                                            <CheckGrid options={group.items} selected={d.areas_of_support} onToggle={(v) => toggle('areas_of_support', v)} columns={2} />
-                                            <OtherCheckboxField checked={custom.checked} text={custom.text}
+                                            <CheckGrid
+                                                options={group.items}
+                                                selected={d.areas_of_support}
+                                                onToggle={(v) => toggle('areas_of_support', v)}
+                                                columns={2}
+                                            />
+                                            <OtherCheckboxField
+                                                checked={custom.checked}
+                                                text={custom.text}
                                                 onToggle={() => onCustomSupportChange(category, 'checked', !custom.checked)}
                                                 onTextChange={(v) => onCustomSupportChange(category, 'text', v)}
-                                                placeholder="Describe the other area of support…" error={!!fieldError('areas_of_support')} />
+                                                placeholder="Describe the other area of support…"
+                                                error={!!fieldError('areas_of_support')}
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -998,32 +1614,67 @@ function StepBody({
                         })}
                     </div>
                     {d.areas_of_support.length > 0 && (
-                        <p className="mt-3 text-sm font-medium text-[#1E4D4A]">{d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected</p>
+                        <p className="mt-3 text-sm font-medium text-[#1E4D4A]">
+                            {d.areas_of_support.length} area{d.areas_of_support.length === 1 ? '' : 's'} selected
+                        </p>
                     )}
                 </FieldShell>
             );
         case 4:
             return (
                 <FieldShell label="Populations served" required hint="Select all that apply." error={fieldError('populations_served')}>
-                    <CheckGrid options={POPULATIONS_SERVED} selected={d.populations_served} onToggle={(v) => toggle('populations_served', v)} columns={2} />
+                    <CheckGrid
+                        options={POPULATIONS_SERVED}
+                        selected={d.populations_served}
+                        onToggle={(v) => toggle('populations_served', v)}
+                        columns={2}
+                    />
                 </FieldShell>
             );
         case 5:
             return (
                 <>
                     <FieldShell label="Treatment Approaches" hint="Select all that apply. (Optional)" error={fieldError('treatment_approaches')}>
-                        <CheckGrid options={TREATMENT_APPROACHES} selected={d.treatment_approaches} onToggle={(v) => toggle('treatment_approaches', v)} columns={2} />
+                        <CheckGrid
+                            options={TREATMENT_APPROACHES}
+                            selected={d.treatment_approaches}
+                            onToggle={(v) => toggle('treatment_approaches', v)}
+                            columns={2}
+                        />
                         {d.treatment_approaches.includes('Other (specify)') && (
-                            <div className="mt-3"><TextInput value={d.treatment_approaches_other} onChange={(v) => set('treatment_approaches_other', v)} placeholder="Describe your other approach…" error={!!fieldError('treatment_approaches_other')} /></div>
+                            <div className="mt-3">
+                                <TextInput
+                                    value={d.treatment_approaches_other}
+                                    onChange={(v) => set('treatment_approaches_other', v)}
+                                    placeholder="Describe your other approach…"
+                                    error={!!fieldError('treatment_approaches_other')}
+                                />
+                            </div>
                         )}
                     </FieldShell>
                     <FieldShell label="Specialized Training" hint="Select all that apply. (Optional)" error={fieldError('specialized_training')}>
-                        <CheckGrid options={SPECIALIZED_TRAINING_OPTIONS} selected={d.specialized_training} onToggle={(v) => toggle('specialized_training', v)} columns={2} />
+                        <CheckGrid
+                            options={SPECIALIZED_TRAINING_OPTIONS}
+                            selected={d.specialized_training}
+                            onToggle={(v) => toggle('specialized_training', v)}
+                            columns={2}
+                        />
                         {d.specialized_training.includes('Other Specialized Training') && (
-                            <div className="mt-3"><TextInput value={d.specialized_training_other} onChange={(v) => set('specialized_training_other', v)} placeholder="Describe your other training…" error={!!fieldError('specialized_training_other')} /></div>
+                            <div className="mt-3">
+                                <TextInput
+                                    value={d.specialized_training_other}
+                                    onChange={(v) => set('specialized_training_other', v)}
+                                    placeholder="Describe your other training…"
+                                    error={!!fieldError('specialized_training_other')}
+                                />
+                            </div>
                         )}
                     </FieldShell>
-                    <FieldShell label="Certifications & Credentials (Optional)" hint="List any relevant certifications you would like displayed." error={fieldError('certifications')}>
+                    <FieldShell
+                        label="Certifications & Credentials (Optional)"
+                        hint="List any relevant certifications you would like displayed."
+                        error={fieldError('certifications')}
+                    >
                         <CertificationsInput values={d.certifications} onChange={(list) => set('certifications', list)} />
                     </FieldShell>
                 </>
@@ -1031,28 +1682,77 @@ function StepBody({
         case 6:
             return (
                 <>
-                    <FieldShell label="Do you have experience supporting Caribbean individuals, families, or communities?" required hint="Providers from all backgrounds are welcome. Your response helps people find providers with experience supporting Caribbean individuals, families, and communities, both in the Caribbean and abroad." error={fieldError('caribbean_experience')}>
-                        <RadioRow value={d.caribbean_experience} onChange={(v) => set('caribbean_experience', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'Not yet' }]} />
+                    <FieldShell
+                        label="Do you have experience supporting Caribbean individuals, families, or communities?"
+                        required
+                        hint="Providers from all backgrounds are welcome. Your response helps people find providers with experience supporting Caribbean individuals, families, and communities, both in the Caribbean and abroad."
+                        error={fieldError('caribbean_experience')}
+                    >
+                        <RadioRow
+                            value={d.caribbean_experience}
+                            onChange={(v) => set('caribbean_experience', v as YesNo)}
+                            options={[
+                                { value: 'yes', label: 'Yes' },
+                                { value: 'no', label: 'Not yet' },
+                            ]}
+                        />
                     </FieldShell>
                     {d.caribbean_experience === 'yes' && (
-                        <FieldShell label="Describe your experience (optional)" hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)' error={fieldError('caribbean_experience_details')}>
-                            <TextArea value={d.caribbean_experience_details} onChange={(v) => set('caribbean_experience_details', v)} error={!!fieldError('caribbean_experience_details')} rows={4} placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…" />
+                        <FieldShell
+                            label="Describe your experience (optional)"
+                            hint='Optional. You can include experience with the Caribbean diaspora. Shown on your profile under "Experience with Caribbean communities", labelled "Provider-reported". (Max 150 words)'
+                            error={fieldError('caribbean_experience_details')}
+                        >
+                            <TextArea
+                                value={d.caribbean_experience_details}
+                                onChange={(v) => set('caribbean_experience_details', v)}
+                                error={!!fieldError('caribbean_experience_details')}
+                                rows={4}
+                                placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…"
+                            />
                             <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.caribbean_experience_details)} / 150 words</p>
                         </FieldShell>
                     )}
-                    <FieldShell label="Do you offer LGBTQIA+ affirming care?" required hint="This helps people find providers who understand and support their identity." error={fieldError('lgbtq_affirming')}>
-                        <RadioRow value={d.lgbtq_affirming} onChange={(v) => set('lgbtq_affirming', v as YesNo)} options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]} />
+                    <FieldShell
+                        label="Do you offer LGBTQIA+ affirming care?"
+                        required
+                        hint="This helps people find providers who understand and support their identity."
+                        error={fieldError('lgbtq_affirming')}
+                    >
+                        <RadioRow
+                            value={d.lgbtq_affirming}
+                            onChange={(v) => set('lgbtq_affirming', v as YesNo)}
+                            options={[
+                                { value: 'yes', label: 'Yes' },
+                                { value: 'no', label: 'No' },
+                            ]}
+                        />
                     </FieldShell>
                     <FieldShell label="Languages spoken" required hint="Select all that apply." error={fieldError('languages')}>
                         <CheckGrid options={LANGUAGES} selected={d.languages} onToggle={(v) => toggle('languages', v)} columns={2} />
                     </FieldShell>
                     {d.languages.includes('Other') && (
                         <FieldShell label="Please specify other language(s)" required error={fieldError('languages_other')}>
-                            <TextInput value={d.languages_other} onChange={(v) => set('languages_other', v)} error={!!fieldError('languages_other')} placeholder="e.g. Papiamento, Portuguese" />
+                            <TextInput
+                                value={d.languages_other}
+                                onChange={(v) => set('languages_other', v)}
+                                error={!!fieldError('languages_other')}
+                                placeholder="e.g. Papiamento, Portuguese"
+                            />
                         </FieldShell>
                     )}
-                    <FieldShell label="How do you incorporate culture into your work?" hint="Optional. (Max 250 words)" error={fieldError('cultural_approach')}>
-                        <TextArea value={d.cultural_approach} onChange={(v) => set('cultural_approach', v)} error={!!fieldError('cultural_approach')} rows={5} placeholder="Describe how culture, story, and lived experience shape your care…" />
+                    <FieldShell
+                        label="How do you incorporate culture into your work?"
+                        hint="Optional. (Max 250 words)"
+                        error={fieldError('cultural_approach')}
+                    >
+                        <TextArea
+                            value={d.cultural_approach}
+                            onChange={(v) => set('cultural_approach', v)}
+                            error={!!fieldError('cultural_approach')}
+                            rows={5}
+                            placeholder="Describe how culture, story, and lived experience shape your care…"
+                        />
                         <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.cultural_approach)} / 250 words</p>
                     </FieldShell>
                 </>
@@ -1061,13 +1761,34 @@ function StepBody({
             return (
                 <>
                     <FieldShell label="Service formats" required hint="Select all that apply." error={fieldError('service_formats')}>
-                        <CheckGrid options={SERVICE_FORMATS} selected={d.service_formats} onToggle={(v) => toggle('service_formats', v)} columns={2} />
+                        <CheckGrid
+                            options={SERVICE_FORMATS}
+                            selected={d.service_formats}
+                            onToggle={(v) => toggle('service_formats', v)}
+                            columns={2}
+                        />
                     </FieldShell>
                     <FieldShell label="Practice setting" required hint="Select all that apply." error={fieldError('practice_settings')}>
-                        <CheckGrid options={PRACTICE_SETTINGS} selected={d.practice_settings} onToggle={(v) => toggle('practice_settings', v)} columns={2} />
-                        <OtherCheckboxField checked={d.practice_settings.includes('__other__')} text={d.practice_settings_other || ''}
-                            onToggle={() => { const o = '__other__'; set('practice_settings', d.practice_settings.includes(o) ? d.practice_settings.filter(v => v !== o) : [...d.practice_settings, o]); }}
-                            onTextChange={(v) => set('practice_settings_other', v)} placeholder="Specify other practice setting…" error={!!fieldError('practice_settings_other')} />
+                        <CheckGrid
+                            options={PRACTICE_SETTINGS}
+                            selected={d.practice_settings}
+                            onToggle={(v) => toggle('practice_settings', v)}
+                            columns={2}
+                        />
+                        <OtherCheckboxField
+                            checked={d.practice_settings.includes('__other__')}
+                            text={d.practice_settings_other || ''}
+                            onToggle={() => {
+                                const o = '__other__';
+                                set(
+                                    'practice_settings',
+                                    d.practice_settings.includes(o) ? d.practice_settings.filter((v) => v !== o) : [...d.practice_settings, o],
+                                );
+                            }}
+                            onTextChange={(v) => set('practice_settings_other', v)}
+                            placeholder="Specify other practice setting…"
+                            error={!!fieldError('practice_settings_other')}
+                        />
                     </FieldShell>
                 </>
             );
@@ -1088,11 +1809,26 @@ function StepBody({
                             additional_locations: fieldError('additional_locations'),
                         }}
                     />
-                    <FieldShell label="Telehealth regions served" hint="Optional. Select every region where you can offer telehealth." error={fieldError('telehealth_regions')}>
+                    <FieldShell
+                        label="Telehealth regions served"
+                        hint="Optional. Select every region where you can offer telehealth."
+                        error={fieldError('telehealth_regions')}
+                    >
                         <CheckGrid options={REGIONS} selected={d.telehealth_regions} onToggle={(v) => toggle('telehealth_regions', v)} columns={2} />
-                        <OtherCheckboxField checked={d.telehealth_regions.includes('__other__')} text={d.telehealth_regions_other}
-                            onToggle={() => { const o = '__other__'; set('telehealth_regions', d.telehealth_regions.includes(o) ? d.telehealth_regions.filter(v => v !== o) : [...d.telehealth_regions, o]); }}
-                            onTextChange={(v) => set('telehealth_regions_other', v)} placeholder="Specify the other telehealth region(s)…" error={!!fieldError('telehealth_regions_other')} />
+                        <OtherCheckboxField
+                            checked={d.telehealth_regions.includes('__other__')}
+                            text={d.telehealth_regions_other}
+                            onToggle={() => {
+                                const o = '__other__';
+                                set(
+                                    'telehealth_regions',
+                                    d.telehealth_regions.includes(o) ? d.telehealth_regions.filter((v) => v !== o) : [...d.telehealth_regions, o],
+                                );
+                            }}
+                            onTextChange={(v) => set('telehealth_regions_other', v)}
+                            placeholder="Specify the other telehealth region(s)…"
+                            error={!!fieldError('telehealth_regions_other')}
+                        />
                     </FieldShell>
                 </>
             );
@@ -1100,10 +1836,20 @@ function StepBody({
             return (
                 <>
                     <FieldShell label="Accepted payment methods" required hint="Select all that apply." error={fieldError('payment_methods')}>
-                        <CheckGrid options={PAYMENT_METHODS} selected={d.payment_methods} onToggle={(v) => toggle('payment_methods', v)} columns={2} />
+                        <CheckGrid
+                            options={PAYMENT_METHODS}
+                            selected={d.payment_methods}
+                            onToggle={(v) => toggle('payment_methods', v)}
+                            columns={2}
+                        />
                     </FieldShell>
                     <FieldShell label="Insurance plans accepted" hint="Optional." error={fieldError('insurance_plans')}>
-                        <TextArea value={d.insurance_plans} onChange={(v) => set('insurance_plans', v)} rows={3} placeholder="e.g. Aetna, Blue Cross Blue Shield, Cigna…" />
+                        <TextArea
+                            value={d.insurance_plans}
+                            onChange={(v) => set('insurance_plans', v)}
+                            rows={3}
+                            placeholder="e.g. Aetna, Blue Cross Blue Shield, Cigna…"
+                        />
                     </FieldShell>
                 </>
             );
@@ -1118,26 +1864,45 @@ function StepBody({
                         <div className="grid gap-4 sm:grid-cols-3">
                             <div>
                                 <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Currency</label>
-                                <SearchableSelect value={d.fee_currency} onChange={(v) => set('fee_currency', v)} options={CURRENCY_OPTIONS} error={!!fieldError('fee_currency')} placeholder="Select currency…" searchPlaceholder="Search currency…" />
+                                <SearchableSelect
+                                    value={d.fee_currency}
+                                    onChange={(v) => set('fee_currency', v)}
+                                    options={CURRENCY_OPTIONS}
+                                    error={!!fieldError('fee_currency')}
+                                    placeholder="Select currency…"
+                                    searchPlaceholder="Search currency…"
+                                />
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Minimum fee</label>
-                                <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" prefix={currencySymbol(d.fee_currency)} />
+                                <MoneyInput
+                                    value={d.fee_min}
+                                    onChange={(v) => set('fee_min', v)}
+                                    error={!!fieldError('fee_min')}
+                                    placeholder="100"
+                                    prefix={currencySymbol(d.fee_currency)}
+                                />
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-semibold text-[#2C2C2C]">Maximum fee</label>
-                                <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" prefix={currencySymbol(d.fee_currency)} />
+                                <MoneyInput
+                                    value={d.fee_max}
+                                    onChange={(v) => set('fee_max', v)}
+                                    error={!!fieldError('fee_max')}
+                                    placeholder="150"
+                                    prefix={currencySymbol(d.fee_currency)}
+                                />
                             </div>
                         </div>
                         {fieldError('fee_currency') && (
-                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
+                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
+                                <span aria-hidden>⚠</span>
+                                {fieldError('fee_currency')}
+                            </p>
                         )}
                         {(d.fee_min || d.fee_max) && (
                             <p className="mt-2.5 text-sm text-[#2C2C2C]">
-                                Preview:{' '}
-                                <span className="font-semibold text-[#2C2C2C]">
-                                    {feePreview(d.fee_min, d.fee_max, d.fee_currency)}
-                                </span>
+                                Preview: <span className="font-semibold text-[#2C2C2C]">{feePreview(d.fee_min, d.fee_max, d.fee_currency)}</span>
                             </p>
                         )}
                     </FieldShell>
@@ -1148,7 +1913,11 @@ function StepBody({
                             hint="You selected a sliding scale or free / low-cost option. This tells visitors whether it applies to the fee shown above or to other services or programs you offer."
                             error={fieldError('reduced_cost_scope')}
                         >
-                            <RadioRow value={d.reduced_cost_scope} onChange={(v) => set('reduced_cost_scope', v as ReducedCostScope)} options={REDUCED_COST_SCOPES} />
+                            <RadioRow
+                                value={d.reduced_cost_scope}
+                                onChange={(v) => set('reduced_cost_scope', v as ReducedCostScope)}
+                                options={REDUCED_COST_SCOPES}
+                            />
                         </FieldShell>
                     )}
                 </>
@@ -1160,35 +1929,56 @@ function StepBody({
                         <div className="space-y-4 rounded-xl border border-[#E8D9B8] bg-[#FAFAF6] p-4 sm:p-5">
                             <div>
                                 <p className="text-sm font-semibold text-[#2C2C2C]">Contact person</p>
-                                <p className="mt-0.5 text-sm text-[#2C2C2C]">Organizations need a named person Bahali and visitors can reach about this listing.</p>
+                                <p className="mt-0.5 text-sm text-[#2C2C2C]">
+                                    Organizations need a named person Bahali and visitors can reach about this listing.
+                                </p>
                             </div>
                             <FieldShell label="Full name" required error={fieldError('contact_person_name')}>
-                                <TextInput value={d.contact_person_name} onChange={(v) => set('contact_person_name', v)} error={!!fieldError('contact_person_name')} placeholder="e.g. Rev. Marcia Brown" />
+                                <TextInput
+                                    value={d.contact_person_name}
+                                    onChange={(v) => set('contact_person_name', v)}
+                                    error={!!fieldError('contact_person_name')}
+                                    placeholder="e.g. Rev. Marcia Brown"
+                                />
                             </FieldShell>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <FieldShell label="Role / title" hint="Optional." error={fieldError('contact_person_role')}>
-                                    <TextInput value={d.contact_person_role} onChange={(v) => set('contact_person_role', v)} placeholder="e.g. Pastoral Care Coordinator" />
+                                    <TextInput
+                                        value={d.contact_person_role}
+                                        onChange={(v) => set('contact_person_role', v)}
+                                        placeholder="e.g. Pastoral Care Coordinator"
+                                    />
                                 </FieldShell>
                                 <FieldShell label="Email" hint="Optional. Only Bahali sees this." error={fieldError('contact_person_email')}>
-                                    <TextInput value={d.contact_person_email} onChange={(v) => set('contact_person_email', v)} error={!!fieldError('contact_person_email')} type="email" placeholder="name@organization.org" />
+                                    <TextInput
+                                        value={d.contact_person_email}
+                                        onChange={(v) => set('contact_person_email', v)}
+                                        error={!!fieldError('contact_person_email')}
+                                        type="email"
+                                        placeholder="name@organization.org"
+                                    />
                                 </FieldShell>
                             </div>
                         </div>
                     )}
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
-                        <PhoneInput
-                            value={d.phone}
-                            onChange={(v) => set('phone', v)}
-                            error={!!fieldError('phone')}
-                            defaultCountry={d.country}
-                        />
+                        <PhoneInput value={d.phone} onChange={(v) => set('phone', v)} error={!!fieldError('phone')} defaultCountry={d.country} />
                     </FieldShell>
                     <div>
-                        <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>Show my phone number on my public profile</ConsentItem>
-                        <p className="mt-1.5 text-sm text-[#2C2C2C]">Untick to keep your number private. Bahali will still use it to contact you about your listing.</p>
+                        <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>
+                            Show my phone number on my public profile
+                        </ConsentItem>
+                        <p className="mt-1.5 text-sm text-[#2C2C2C]">
+                            Untick to keep your number private. Bahali will still use it to contact you about your listing.
+                        </p>
                     </div>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
-                        <TextInput value={d.website} onChange={(v) => set('website', v)} error={!!fieldError('website')} placeholder="yourpractice.com" />
+                        <TextInput
+                            value={d.website}
+                            onChange={(v) => set('website', v)}
+                            error={!!fieldError('website')}
+                            placeholder="yourpractice.com"
+                        />
                     </FieldShell>
                     <FieldShell label="Social media links" hint="Optional. Add up to 5 links." error={fieldError('social_links')}>
                         <SocialLinksInput value={d.social_links} onChange={(v) => set('social_links', v)} />
@@ -1198,40 +1988,82 @@ function StepBody({
         case 12:
             return (
                 <>
-                    <FieldShell label="Professional photo or organization logo" required hint="A clear headshot or your logo. JPG or PNG." error={fieldError('profile_photo')}>
+                    <FieldShell
+                        label="Professional photo or organization logo"
+                        required
+                        hint="A clear headshot or your logo. JPG or PNG."
+                        error={fieldError('profile_photo')}
+                    >
                         {!d.profile_photo && existingProfilePhoto && (
                             <div className="mb-3 flex items-center gap-3">
                                 <img src={existingProfilePhoto} alt="Current" className="h-16 w-16 rounded-lg border border-[#E8D9B8] object-cover" />
                                 <span className="text-sm text-[#2C2C2C]">Current photo — choose a file to replace it.</span>
                             </div>
                         )}
-                        <FileInput file={d.profile_photo} accept=".jpg,.jpeg,.png" preview allowedTypes={['jpg', 'jpeg', 'png']} onChange={(f) => set('profile_photo', (f && f instanceof File) ? f : null)} />
+                        <FileInput
+                            file={d.profile_photo}
+                            accept=".jpg,.jpeg,.png"
+                            preview
+                            allowedTypes={['jpg', 'jpeg', 'png']}
+                            onChange={(f) => set('profile_photo', f && f instanceof File ? f : null)}
+                        />
                     </FieldShell>
-                    <FieldShell label="Additional photos" hint="Optional. Images of your space, team, or community work." error={fieldError('additional_photos')}>
+                    <FieldShell
+                        label="Additional photos"
+                        hint="Optional. Images of your space, team, or community work."
+                        error={fieldError('additional_photos')}
+                    >
                         {keptPhotos.length > 0 && (
                             <ul className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                                 {keptPhotos.map((p) => (
                                     <li key={p.path} className="relative">
                                         <img src={p.url} alt="" className="h-24 w-full rounded-lg border border-[#E8D9B8] object-cover" />
-                                        <button type="button" onClick={() => onRemoveKept(p.path)} aria-label="Remove photo"
-                                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#A8472F] shadow ring-1 ring-black/5 hover:bg-white">
-                                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M6 6l12 12M18 6 6 18" /></svg>
+                                        <button
+                                            type="button"
+                                            onClick={() => onRemoveKept(p.path)}
+                                            aria-label="Remove photo"
+                                            className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#A8472F] shadow ring-1 ring-black/5 hover:bg-white"
+                                        >
+                                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                                                <path d="M6 6l12 12M18 6 6 18" />
+                                            </svg>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         )}
-                        <MultiFileInput files={d.additional_photos} accept=".jpg,.jpeg,.png,.webp" allowedTypes={['jpg', 'jpeg', 'png', 'webp']} onChange={(files) => set('additional_photos', files)} />
+                        <MultiFileInput
+                            files={d.additional_photos}
+                            accept=".jpg,.jpeg,.png,.webp"
+                            allowedTypes={['jpg', 'jpeg', 'png', 'webp']}
+                            onChange={(files) => set('additional_photos', files)}
+                        />
                     </FieldShell>
                 </>
             );
         case 13:
             return (
-                <FieldShell label="Accessibility" hint={virtualOnly ? 'Optional. You offer virtual care only, so you can skip this section.' : 'Optional. Select all that apply. If you need an option not listed, check "Other".'} error={fieldError('accessibility')}>
+                <FieldShell
+                    label="Accessibility"
+                    hint={
+                        virtualOnly
+                            ? 'Optional. You offer virtual care only, so you can skip this section.'
+                            : 'Optional. Select all that apply. If you need an option not listed, check "Other".'
+                    }
+                    error={fieldError('accessibility')}
+                >
                     <CheckGrid options={ACCESSIBILITY_OPTIONS} selected={d.accessibility} onToggle={(v) => toggle('accessibility', v)} columns={2} />
-                    <OtherCheckboxField checked={d.accessibility.includes('__other__')} text={d.accessibility_other}
-                        onToggle={() => { const o = '__other__'; set('accessibility', d.accessibility.includes(o) ? d.accessibility.filter(v => v !== o) : [...d.accessibility, o]); }}
-                        onTextChange={(v) => set('accessibility_other', v)} placeholder="Describe the accessibility feature or accommodation…" error={!!fieldError('accessibility_other')} />
+                    <OtherCheckboxField
+                        checked={d.accessibility.includes('__other__')}
+                        text={d.accessibility_other}
+                        onToggle={() => {
+                            const o = '__other__';
+                            set('accessibility', d.accessibility.includes(o) ? d.accessibility.filter((v) => v !== o) : [...d.accessibility, o]);
+                        }}
+                        onTextChange={(v) => set('accessibility_other', v)}
+                        placeholder="Describe the accessibility feature or accommodation…"
+                        error={!!fieldError('accessibility_other')}
+                    />
                 </FieldShell>
             );
         case 14:
@@ -1260,75 +2092,152 @@ function StepBody({
 /* ------------------------------------------------------------------ */
 /*  File inputs & consent row                                          */
 /* ------------------------------------------------------------------ */
-function FileInput({ file, onChange, accept, preview = false, allowedTypes = [] }: { file: File | null; onChange: (f: File | null) => void; accept?: string; preview?: boolean; allowedTypes?: string[]; }) {
+function FileInput({
+    file,
+    onChange,
+    accept,
+    preview = false,
+    allowedTypes = [],
+}: {
+    file: File | null;
+    onChange: (f: File | null) => void;
+    accept?: string;
+    preview?: boolean;
+    allowedTypes?: string[];
+}) {
     const [fileError, setFileError] = useState('');
     const previewUrl = useMemo(() => (preview && file ? URL.createObjectURL(file) : null), [preview, file]);
-    useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+    useEffect(
+        () => () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        },
+        [previewUrl],
+    );
     const validateFile = (f: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const ext = f.name.split('.').pop()?.toLowerCase();
-        const ok = allowedTypes.some(t => ext === t.toLowerCase() || f.type.toLowerCase().includes(t.toLowerCase()));
+        const ok = allowedTypes.some((t) => ext === t.toLowerCase() || f.type.toLowerCase().includes(t.toLowerCase()));
         return ok ? null : `Only ${allowedTypes.join(', ').toUpperCase()} files are allowed.`;
     };
     return (
         <div>
             <div className="flex items-center gap-4">
                 <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                    </svg>
                     {file ? 'Replace file' : 'Choose file'}
-                    <input type="file" accept={accept} className="hidden" onChange={(e) => {
-                        const selected = e.target.files?.[0] ?? null; e.target.value = '';
-                        if (selected) { const err = validateFile(selected); if (err) { setFileError(err); return; } }
-                        setFileError(''); onChange(selected);
-                    }} />
+                    <input
+                        type="file"
+                        accept={accept}
+                        className="hidden"
+                        onChange={(e) => {
+                            const selected = e.target.files?.[0] ?? null;
+                            e.target.value = '';
+                            if (selected) {
+                                const err = validateFile(selected);
+                                if (err) {
+                                    setFileError(err);
+                                    return;
+                                }
+                            }
+                            setFileError('');
+                            onChange(selected);
+                        }}
+                    />
                 </label>
-                {previewUrl && (<img src={previewUrl} alt="Preview" className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover" />)}
+                {previewUrl && <img src={previewUrl} alt="Preview" className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover" />}
                 {file && (
                     <div className="flex items-center gap-2 text-sm text-[#2C2C2C]">
                         <span className="max-w-[180px] truncate">{file.name}</span>
-                        <button type="button" onClick={() => onChange(null)} className="text-[#A8472F] hover:underline">Remove</button>
+                        <button type="button" onClick={() => onChange(null)} className="text-[#A8472F] hover:underline">
+                            Remove
+                        </button>
                     </div>
                 )}
             </div>
-            {fileError && (<p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fileError}</p>)}
+            {fileError && (
+                <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
+                    <span aria-hidden>⚠</span>
+                    {fileError}
+                </p>
+            )}
         </div>
     );
 }
 
-function MultiFileInput({ files, onChange, accept, allowedTypes = [] }: { files: File[]; onChange: (files: File[]) => void; accept?: string; allowedTypes?: string[]; }) {
+function MultiFileInput({
+    files,
+    onChange,
+    accept,
+    allowedTypes = [],
+}: {
+    files: File[];
+    onChange: (files: File[]) => void;
+    accept?: string;
+    allowedTypes?: string[];
+}) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
     const validateFile = (file: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const ext = file.name.split('.').pop()?.toLowerCase();
-        const ok = allowedTypes.some(t => ext === t.toLowerCase() || file.type.toLowerCase().includes(t.toLowerCase()));
+        const ok = allowedTypes.some((t) => ext === t.toLowerCase() || file.type.toLowerCase().includes(t.toLowerCase()));
         return ok ? null : `${file.name}: Only ${allowedTypes.join(', ').toUpperCase()} allowed`;
     };
     return (
         <div className="space-y-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-[#E8D9B8] bg-[#FAFAF6] px-4 py-3 text-sm font-medium text-[#2C2C2C] transition hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
                 Add photos
-                <input ref={inputRef} type="file" accept={accept} multiple className="hidden" onChange={(e) => {
-                    const newFiles = e.target.files ? Array.from(e.target.files) : [];
-                    const errors: Record<string, string> = {}; const valid: File[] = [];
-                    newFiles.forEach((file) => { const err = validateFile(file); if (err) errors[file.name] = err; else valid.push(file); });
-                    setFileErrors(errors);
-                    if (valid.length > 0) onChange([...files, ...valid]);
-                    e.target.value = '';
-                }} />
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept={accept}
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                        const newFiles = e.target.files ? Array.from(e.target.files) : [];
+                        const errors: Record<string, string> = {};
+                        const valid: File[] = [];
+                        newFiles.forEach((file) => {
+                            const err = validateFile(file);
+                            if (err) errors[file.name] = err;
+                            else valid.push(file);
+                        });
+                        setFileErrors(errors);
+                        if (valid.length > 0) onChange([...files, ...valid]);
+                        e.target.value = '';
+                    }}
+                />
             </label>
             {Object.keys(fileErrors).length > 0 && (
                 <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
-                    {Object.values(fileErrors).map((err, idx) => (<p key={idx} className="mb-1 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{err}</p>))}
+                    {Object.values(fileErrors).map((err, idx) => (
+                        <p key={idx} className="mb-1 flex items-center gap-1 text-sm text-[#A8472F]">
+                            <span aria-hidden>⚠</span>
+                            {err}
+                        </p>
+                    ))}
                 </div>
             )}
             {files.length > 0 && (
                 <ul className="space-y-1.5">
                     {files.map((f, i) => (
-                        <li key={`${f.name}-${i}-${f.lastModified}`} className="flex items-center justify-between rounded-lg border border-[#E8D9B8] bg-[#FAFAF6] px-3 py-2 text-sm text-[#2C2C2C]">
+                        <li
+                            key={`${f.name}-${i}-${f.lastModified}`}
+                            className="flex items-center justify-between rounded-lg border border-[#E8D9B8] bg-[#FAFAF6] px-3 py-2 text-sm text-[#2C2C2C]"
+                        >
                             <span className="max-w-[240px] truncate">{f.name}</span>
-                            <button type="button" onClick={() => onChange(files.filter((_, idx) => idx !== i))} className="text-[#A8472F] hover:underline">Remove</button>
+                            <button
+                                type="button"
+                                onClick={() => onChange(files.filter((_, idx) => idx !== i))}
+                                className="text-[#A8472F] hover:underline"
+                            >
+                                Remove
+                            </button>
                         </li>
                     ))}
                 </ul>
@@ -1337,35 +2246,76 @@ function MultiFileInput({ files, onChange, accept, allowedTypes = [] }: { files:
     );
 }
 
-function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: string) => void; }) {
+function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const MAX = 5;
     const makeRows = () => {
-        const parts = value ? value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) : [];
+        const parts = value
+            ? value
+                  .split(/[\n,]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+            : [];
         const init = parts.length ? parts : [''];
         return init.map((v, i) => ({ id: i + 1, value: v }));
     };
     const [rows, setRows] = useState<{ id: number; value: string }[]>(makeRows);
     const nextId = useRef(rows.length + 1);
-    const sync = (next: { id: number; value: string }[]) => { setRows(next); onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', ')); };
+    const sync = (next: { id: number; value: string }[]) => {
+        setRows(next);
+        onChange(
+            next
+                .map((r) => r.value.trim())
+                .filter(Boolean)
+                .join(', '),
+        );
+    };
     const updateAt = (id: number, v: string) => sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
-    const addField = () => { if (rows.length >= MAX) return; sync([...rows, { id: nextId.current++, value: '' }]); };
+    const addField = () => {
+        if (rows.length >= MAX) return;
+        sync([...rows, { id: nextId.current++, value: '' }]);
+    };
     const removeAt = (id: number) => sync(rows.filter((r) => r.id !== id));
     return (
         <div className="space-y-2.5">
             {rows.map((row, i) => {
-                const isFirst = i === 0; const isLast = i === rows.length - 1;
+                const isFirst = i === 0;
+                const isLast = i === rows.length - 1;
                 return (
                     <div key={row.id} className="flex items-center gap-2">
-                        <input type="text" placeholder="Enter Platform Name" className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25" />
-                        <input type="url" value={row.value} onChange={(e) => updateAt(row.id, e.target.value)} placeholder="https://www.example.com" className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25" />
+                        <input
+                            type="text"
+                            placeholder="Enter Platform Name"
+                            className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
+                        />
+                        <input
+                            type="url"
+                            value={row.value}
+                            onChange={(e) => updateAt(row.id, e.target.value)}
+                            placeholder="https://www.example.com"
+                            className="min-h-[48px] w-full rounded-[10px] border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
+                        />
                         {isLast && rows.length < MAX && (
-                            <button type="button" onClick={addField} aria-label="Add another link" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2">
-                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
+                            <button
+                                type="button"
+                                onClick={addField}
+                                aria-label="Add another link"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                                </svg>
                             </button>
                         )}
                         {!isFirst && (
-                            <button type="button" onClick={() => removeAt(row.id)} aria-label="Remove this link" className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A]/65 text-[#A8472F] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5">
-                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            <button
+                                type="button"
+                                onClick={() => removeAt(row.id)}
+                                aria-label="Remove this link"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A]/65 text-[#A8472F] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         )}
                     </div>
@@ -1375,19 +2325,37 @@ function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: st
     );
 }
 
-
-
-function ConsentItem({ checked, onChange, error, children }: { checked: boolean; onChange: (v: boolean) => void; error?: string; children: React.ReactNode; }) {
+function ConsentItem({
+    checked,
+    onChange,
+    error,
+    children,
+}: {
+    checked: boolean;
+    onChange: (v: boolean) => void;
+    error?: string;
+    children: React.ReactNode;
+}) {
     return (
         <div>
-            <button type="button" onClick={() => onChange(!checked)}
-                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8' : error ? 'border-[#C2543B] bg-[#C2543B]/5' : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'}`}>
-                <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`} aria-hidden>
-                    {checked && (<svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>)}
+            <button
+                type="button"
+                onClick={() => onChange(!checked)}
+                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8' : error ? 'border-[#C2543B] bg-[#C2543B]/5' : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'}`}
+            >
+                <span
+                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'}`}
+                    aria-hidden
+                >
+                    {checked && (
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                            <path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" />
+                        </svg>
+                    )}
                 </span>
                 <span className="text-[15px] leading-snug text-[#2C2C2C]">{children}</span>
             </button>
-            {error && (<p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>)}
+            {error && <p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>}
         </div>
     );
 }

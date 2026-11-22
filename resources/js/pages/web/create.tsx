@@ -1,26 +1,30 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import LandingHeader from '@/components/landing/LandingHeader'
-import LandingFooter from '@/components/landing/LandingFooter';
-import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import ConnectLayout from '@/components/connect/ConnectLayout';
 import PhoneInput from '@/components/PhoneInput';
-import { phoneError } from '@/lib/phone';
-import { CURRENCY_OPTIONS, REDUCED_COST_SCOPES, ReducedCostScope, currencyForCountry, currencySymbol, feePreview, hasReducedCost } from '@/constants/fees';
 import {
-    LocationSection, locationPayload, serviceFormatFlags, validateLocationStep,
-    type LocationValues, type ProviderLocation,
+    LocationSection,
+    locationPayload,
+    serviceFormatFlags,
+    validateLocationStep,
+    type LocationValues,
+    type ProviderLocation,
 } from '@/components/provider/LocationSection';
+import {
+    CURRENCY_OPTIONS,
+    REDUCED_COST_SCOPES,
+    ReducedCostScope,
+    currencyForCountry,
+    currencySymbol,
+    feePreview,
+    hasReducedCost,
+} from '@/constants/fees';
+import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import { phoneError } from '@/lib/phone';
+import { useForm } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-type ProviderType =
-    | 'individual'
-    | 'organization'
-    | 'support_group'
-    | 'faith_based'
-    | 'community_program';
+type ProviderType = 'individual' | 'organization' | 'support_group' | 'faith_based' | 'community_program';
 type LicenseStatus = 'active' | 'provisional' | 'not_applicable';
 type YesNo = 'yes' | 'no';
 
@@ -55,9 +59,9 @@ interface ProviderFormData {
     specialized_training_other: string;
     certifications: string[];
     // Step 8 — Cultural & Language Responsiveness
-    caribbean_experience: YesNo | '';         // "Yes" / "Not yet" (stored as yes / no)
+    caribbean_experience: YesNo | ''; // "Yes" / "Not yet" (stored as yes / no)
     caribbean_experience_details: string;
-    lgbtq_affirming: YesNo | '';              // ← NEW
+    lgbtq_affirming: YesNo | ''; // ← NEW
     languages: string[];
     languages_other: string;
     cultural_approach: string;
@@ -82,7 +86,7 @@ interface ProviderFormData {
     fee_currency: string;
     reduced_cost_scope: ReducedCostScope;
     // Step 13 — Contact Information
-    contact_person_name: string;     // organizations only
+    contact_person_name: string; // organizations only
     contact_person_role: string;
     contact_person_email: string;
     phone: string;
@@ -137,14 +141,7 @@ const PROFESSIONAL_TITLES = [
     'Pastoral Counselor',
     'Other (specify)',
 ];
-const YEARS_EXPERIENCE = [
-    'Less than 2 years',
-    '2–5 years',
-    '6–10 years',
-    '11–15 years',
-    '16–20 years',
-    '20+ years',
-];
+const YEARS_EXPERIENCE = ['Less than 2 years', '2–5 years', '6–10 years', '11–15 years', '16–20 years', '20+ years'];
 const LICENSE_STATUSES: { value: LicenseStatus; label: string }[] = [
     { value: 'active', label: 'Active' },
     { value: 'provisional', label: 'Provisional' },
@@ -354,24 +351,8 @@ const SPECIALIZED_TRAINING_OPTIONS = [
     'Couples & Family Therapy',
     'Other Specialized Training',
 ];
-const LANGUAGES = [
-    'English',
-    'Spanish',
-    'Haitian Creole',
-    'French',
-    'Jamaican Patois',
-    'Trinidadian Creole',
-    'Dutch',
-    'Other',
-];
-const SERVICE_FORMATS = [
-    'In-Person',
-    'Virtual',
-    'Hybrid',
-    'Home-Based / Mobile',
-    'Group-Based',
-    'School-Based',
-];
+const LANGUAGES = ['English', 'Spanish', 'Haitian Creole', 'French', 'Jamaican Patois', 'Trinidadian Creole', 'Dutch', 'Other'];
+const SERVICE_FORMATS = ['In-Person', 'Virtual', 'Hybrid', 'Home-Based / Mobile', 'Group-Based', 'School-Based'];
 const PRACTICE_SETTINGS = [
     'Private Practice',
     'Community Agency',
@@ -448,7 +429,7 @@ const REGIONS = [
 const STEPS = [
     { key: 'basic', title: 'Provider Information', subtitle: 'Who you are' },
     { key: 'about', title: 'About You', subtitle: 'Your approach' },
-    { key: 'verify', title: 'Verify Email', subtitle: 'Confirm it\'s you' },
+    { key: 'verify', title: 'Verify Email', subtitle: "Confirm it's you" },
     { key: 'license', title: 'Licensure & Verification', subtitle: 'Credentials' },
     { key: 'areas', title: 'Areas of Support', subtitle: 'What you help with' },
     { key: 'populations', title: 'Populations Served', subtitle: 'Who you serve' },
@@ -467,34 +448,69 @@ const STEPS = [
 const TOTAL_STEPS = STEPS.length;
 // Maps a field to the step index it belongs to
 const FIELD_STEP: Record<string, number> = {
-    provider_type: 0, organization_name: 0, credentials: 0,
-    professional_title: 0, professional_title_other: 0,
-    short_bio: 1, years_experience: 1,
-    email: 1, password: 1,
-    license_number: 3, license_not_applicable: 3,
-    license_states: 3, license_states_other: 3,
-    license_status: 3, verification_document: 3,
-    areas_of_support: 4, areas_of_support_other: 4,
+    provider_type: 0,
+    organization_name: 0,
+    credentials: 0,
+    professional_title: 0,
+    professional_title_other: 0,
+    short_bio: 1,
+    years_experience: 1,
+    email: 1,
+    password: 1,
+    license_number: 3,
+    license_not_applicable: 3,
+    license_states: 3,
+    license_states_other: 3,
+    license_status: 3,
+    verification_document: 3,
+    areas_of_support: 4,
+    areas_of_support_other: 4,
     populations_served: 5,
-    treatment_approaches: 6, treatment_approaches_other: 6,
-    specialized_training: 6, specialized_training_other: 6,
+    treatment_approaches: 6,
+    treatment_approaches_other: 6,
+    specialized_training: 6,
+    specialized_training_other: 6,
     certifications: 6,
-    caribbean_experience: 7, caribbean_experience_details: 7,
+    caribbean_experience: 7,
+    caribbean_experience_details: 7,
     lgbtq_affirming: 7,
-    languages: 7, languages_other: 7, cultural_approach: 7,
-    service_formats: 8, practice_settings: 8,
+    languages: 7,
+    languages_other: 7,
+    cultural_approach: 7,
+    service_formats: 8,
+    practice_settings: 8,
     practice_settings_other: 8,
-    address: 9, city: 9, state_province: 9, country: 9,
-    multiple_locations: 9, additional_locations: 9, hide_address: 9, telehealth_regions: 9, telehealth_regions_other: 9,
-    payment_methods: 10, insurance_plans: 10,
-    fee_min: 11, fee_max: 11, fee_currency: 11, reduced_cost_scope: 11,
-    contact_person_name: 12, contact_person_role: 12, contact_person_email: 12,
-    phone: 12, show_phone: 12, website: 12, social_links: 12,
-    profile_photo: 13, additional_photos: 13,
-    accessibility: 14, accessibility_other: 14,
+    address: 9,
+    city: 9,
+    state_province: 9,
+    country: 9,
+    multiple_locations: 9,
+    additional_locations: 9,
+    hide_address: 9,
+    telehealth_regions: 9,
+    telehealth_regions_other: 9,
+    payment_methods: 10,
+    insurance_plans: 10,
+    fee_min: 11,
+    fee_max: 11,
+    fee_currency: 11,
+    reduced_cost_scope: 11,
+    contact_person_name: 12,
+    contact_person_role: 12,
+    contact_person_email: 12,
+    phone: 12,
+    show_phone: 12,
+    website: 12,
+    social_links: 12,
+    profile_photo: 13,
+    additional_photos: 13,
+    accessibility: 14,
+    accessibility_other: 14,
     accepting_new_clients: 15,
-    consent_accurate: 16, consent_notify: 16,
-    consent_no_endorsement: 16, consent_public: 16,
+    consent_accurate: 16,
+    consent_notify: 16,
+    consent_no_endorsement: 16,
+    consent_public: 16,
 };
 /* ------------------------------------------------------------------ */
 /*  Validation helpers                                                 */
@@ -542,7 +558,12 @@ function FieldShell({
     );
 }
 function TextInput({
-    value, onChange, error, placeholder, type = 'text', disabled = false,
+    value,
+    onChange,
+    error,
+    placeholder,
+    type = 'text',
+    disabled = false,
 }: {
     value: string;
     onChange: (v: string) => void;
@@ -558,12 +579,16 @@ function TextInput({
             disabled={disabled}
             placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`}
+            className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-[#FAFAF6] disabled:text-[#2C2C2C]/70 ${errClass(!!error)}`}
         />
     );
 }
 function TextArea({
-    value, onChange, error, placeholder, rows = 5,
+    value,
+    onChange,
+    error,
+    placeholder,
+    rows = 5,
 }: {
     value: string;
     onChange: (v: string) => void;
@@ -577,23 +602,43 @@ function TextArea({
             rows={rows}
             placeholder={placeholder}
             onChange={(ev) => onChange(ev.target.value)}
-            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`}
+            className={`w-full resize-y rounded-[10px] border bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 ${errClass(!!error)}`}
         />
     );
 }
-function MoneyInput({ value, onChange, error, placeholder, prefix = '$' }: { value: string; onChange: (v: string) => void; error?: boolean; placeholder?: string; prefix?: string; }) {
+function MoneyInput({
+    value,
+    onChange,
+    error,
+    placeholder,
+    prefix = '$',
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    error?: boolean;
+    placeholder?: string;
+    prefix?: string;
+}) {
     return (
         <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
-            <input type="text" inputMode="decimal" value={value} placeholder={placeholder}
+            <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-[#2C2C2C]/70">{prefix}</span>
+            <input
+                type="text"
+                inputMode="decimal"
+                value={value}
+                placeholder={placeholder}
                 onChange={(ev) => onChange(ev.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))}
                 style={{ paddingLeft: `${1.25 + prefix.trim().length * 0.5}rem` }}
-                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`} />
+                className={`w-full rounded-lg border bg-white py-2.5 pr-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 ${errClass(!!error)}`}
+            />
         </div>
     );
 }
 function PasswordInput({
-    value, onChange, error, placeholder,
+    value,
+    onChange,
+    error,
+    placeholder,
 }: {
     value: string;
     onChange: (v: string) => void;
@@ -609,7 +654,7 @@ function PasswordInput({
                 placeholder={placeholder}
                 autoComplete="new-password"
                 onChange={(ev) => onChange(ev.target.value)}
-                className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 pr-11 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:ring-4 ${errClass(!!error)}`}
+                className={`min-h-[48px] w-full rounded-[10px] border bg-white px-3.5 py-2.5 pr-11 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:ring-4 ${errClass(!!error)}`}
             />
             <button
                 type="button"
@@ -619,11 +664,19 @@ function PasswordInput({
             >
                 {show ? (
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.5 10.5 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.243 4.243L9.88 9.88" />
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.5 10.5 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.243 4.243L9.88 9.88"
+                        />
                     </svg>
                 ) : (
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                        />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                     </svg>
                 )}
@@ -632,8 +685,13 @@ function PasswordInput({
     );
 }
 function SearchableSelect({
-    value, onChange, options, error, placeholder = 'Select…',
-    searchPlaceholder = 'Search…', emptyText = 'No results found.',
+    value,
+    onChange,
+    options,
+    error,
+    placeholder = 'Select…',
+    searchPlaceholder = 'Search…',
+    emptyText = 'No results found.',
 }: {
     value: string;
     onChange: (v: string) => void;
@@ -647,10 +705,7 @@ function SearchableSelect({
     const [query, setQuery] = useState('');
     const rootRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
-    const opts = useMemo(
-        () => options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o)),
-        [options]
-    );
+    const opts = useMemo(() => options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o)), [options]);
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return opts;
@@ -688,15 +743,15 @@ function SearchableSelect({
                 role="combobox"
                 aria-expanded={open}
                 onClick={() => setOpen((o) => !o)}
-                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left outline-none transition focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}
+                className={`flex min-h-[48px] w-full items-center justify-between rounded-[10px] border bg-white px-3.5 py-2.5 text-left transition outline-none focus:ring-4 ${errClass(!!error)} ${open ? 'border-[#1E4D4A] ring-4 ring-[#1E4D4A]/25' : ''}`}
             >
-                <span className={`truncate ${selectedLabel ? 'text-[#2C2C2C]' : 'text-[#2C2C2C]/70'}`}>
-                    {selectedLabel || placeholder}
-                </span>
+                <span className={`truncate ${selectedLabel ? 'text-[#2C2C2C]' : 'text-[#2C2C2C]/70'}`}>{selectedLabel || placeholder}</span>
                 <svg
                     viewBox="0 0 24 24"
                     className={`ml-2 h-4 w-4 flex-shrink-0 text-[#2C2C2C] transition-transform ${open ? 'rotate-180' : ''}`}
-                    fill="none" stroke="currentColor" strokeWidth={2}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                 </svg>
@@ -704,7 +759,13 @@ function SearchableSelect({
             {open && (
                 <div className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-lg border border-[#1E4D4A]/65 bg-white shadow-lg">
                     <div className="flex items-center gap-2 border-b border-[#E8D9B8] px-3">
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4 flex-shrink-0 text-[#2C2C2C]/70"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                        >
                             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
                         </svg>
                         <input
@@ -717,9 +778,7 @@ function SearchableSelect({
                         />
                     </div>
                     <ul role="listbox" className="max-h-60 overflow-y-auto p-1">
-                        {filtered.length === 0 && (
-                            <li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>
-                        )}
+                        {filtered.length === 0 && <li className="px-3 py-6 text-center text-sm text-[#2C2C2C]/70">{emptyText}</li>}
                         {filtered.map((o) => {
                             const active = o.value === value;
                             return (
@@ -732,10 +791,9 @@ function SearchableSelect({
                                             onChange(o.value);
                                             setOpen(false);
                                         }}
-                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${active
-                                            ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]'
-                                            : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'
-                                            }`}
+                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${
+                                            active ? 'bg-[#1E4D4A]/10 text-[#1E4D4A]' : 'text-[#2C2C2C] hover:bg-[#1E4D4A]/5'
+                                        }`}
                                     >
                                         <span
                                             className={`flex h-4 w-4 flex-shrink-0 items-center justify-center text-[#1E4D4A] ${active ? 'opacity-100' : 'opacity-0'}`}
@@ -757,7 +815,10 @@ function SearchableSelect({
     );
 }
 function RadioRow({
-    options, value, onChange, name,
+    options,
+    value,
+    onChange,
+    name,
 }: {
     options: { value: string; label: string }[];
     value: string;
@@ -775,10 +836,11 @@ function RadioRow({
                         role="radio"
                         aria-checked={active}
                         onClick={() => onChange(o.value)}
-                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${active
-                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm'
-                            : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'
-                            }`}
+                        className={`min-h-[48px] rounded-[10px] border px-4 py-2.5 text-[15px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${
+                            active
+                                ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white shadow-sm'
+                                : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A] hover:bg-[#1E4D4A]/5'
+                        }`}
                     >
                         {o.label}
                     </button>
@@ -788,7 +850,10 @@ function RadioRow({
     );
 }
 function CheckGrid({
-    options, selected, onToggle, columns = 2,
+    options,
+    selected,
+    onToggle,
+    columns = 2,
 }: {
     options: string[];
     selected: string[];
@@ -796,10 +861,7 @@ function CheckGrid({
     columns?: number;
 }) {
     return (
-        <div
-            className="grid gap-2.5"
-            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-        >
+        <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
             {options.map((o) => {
                 const active = selected.includes(o);
                 return (
@@ -809,14 +871,16 @@ function CheckGrid({
                         role="checkbox"
                         aria-checked={active}
                         onClick={() => onToggle(o)}
-                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${active
-                            ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
-                            : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
-                            }`}
+                        className={`flex min-h-[48px] items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${
+                            active
+                                ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
+                                : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
+                        }`}
                     >
                         <span
-                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
-                                }`}
+                            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+                                active ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
+                            }`}
                             aria-hidden
                         >
                             {active && (
@@ -837,7 +901,12 @@ function CheckGrid({
  * match a normal CheckGrid cell (white background, no dashed / sand box).
  */
 function OtherCheckboxField({
-    checked, text, onToggle, onTextChange, placeholder, error,
+    checked,
+    text,
+    onToggle,
+    onTextChange,
+    placeholder,
+    error,
 }: {
     checked: boolean;
     text: string;
@@ -847,20 +916,20 @@ function OtherCheckboxField({
     error?: boolean;
 }) {
     return (
-        <div className="mt-2.5 space-y-2.5 ">
+        <div className="mt-2.5 space-y-2.5">
             <button
                 type="button"
                 role="checkbox"
                 aria-checked={checked}
                 onClick={onToggle}
-                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${checked
-                    ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
-                    : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
-                    }`}
+                className={`flex min-h-[48px] w-full items-center gap-2.5 rounded-[10px] border px-3.5 py-2.5 text-left text-[15px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-1 ${
+                    checked ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]' : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
+                }`}
             >
                 <span
-                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
-                        }`}
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+                        checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
+                    }`}
                     aria-hidden
                 >
                     {checked && (
@@ -871,14 +940,7 @@ function OtherCheckboxField({
                 </span>
                 <span className="leading-snug">Other (specify)</span>
             </button>
-            {checked && (
-                <TextInput
-                    value={text}
-                    onChange={onTextChange}
-                    placeholder={placeholder}
-                    error={error}
-                />
-            )}
+            {checked && <TextInput value={text} onChange={onTextChange} placeholder={placeholder} error={error} />}
         </div>
     );
 }
@@ -899,9 +961,7 @@ function AccordionCheckGroups({
     customData: Record<string, { checked: boolean; text: string }>;
     onCustomChange: (category: string, field: 'checked' | 'text', value: boolean | string) => void;
 }) {
-    const [openCat, setOpenCat] = useState<string>(
-        groups[0]?.category ?? ''
-    );
+    const [openCat, setOpenCat] = useState<string>(groups[0]?.category ?? '');
     const toggleCat = (cat: string) => {
         setOpenCat((prev) => (prev === cat ? '' : cat));
     };
@@ -916,20 +976,18 @@ function AccordionCheckGroups({
                 return (
                     <div
                         key={g.category}
-                        className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'
-                            }`}
+                        className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'}`}
                     >
                         <button
                             type="button"
                             aria-expanded={isOpen}
                             onClick={() => toggleCat(g.category)}
-                            className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
-                                }`}
+                            className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${
+                                isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
+                            }`}
                         >
                             <span className="flex items-center gap-2.5">
-                                <span className="text-sm font-semibold text-[#2C2C2C]">
-                                    {g.category}
-                                </span>
+                                <span className="text-sm font-semibold text-[#2C2C2C]">{g.category}</span>
                                 {totalSelected > 0 && (
                                     <span className="inline-flex items-center rounded-full bg-[#1E4D4A] px-2 py-0.5 text-sm font-semibold text-white">
                                         {totalSelected} selected
@@ -939,19 +997,16 @@ function AccordionCheckGroups({
                             <svg
                                 viewBox="0 0 24 24"
                                 className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                                fill="none" stroke="currentColor" strokeWidth={2}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
                         {isOpen && (
                             <div className="border-t border-[#E8D9B8] bg-white p-3.5">
-                                <CheckGrid
-                                    options={g.items}
-                                    selected={selected}
-                                    onToggle={onToggle}
-                                    columns={2}
-                                />
+                                <CheckGrid options={g.items} selected={selected} onToggle={onToggle} columns={2} />
                                 {/* "Other" — same design as the form, no background box */}
                                 <OtherCheckboxField
                                     checked={custom.checked}
@@ -969,13 +1024,7 @@ function AccordionCheckGroups({
     );
 }
 // Certifications input component
-function CertificationsInput({
-    values,
-    onChange,
-}: {
-    values: string[];
-    onChange: (list: string[]) => void;
-}) {
+function CertificationsInput({ values, onChange }: { values: string[]; onChange: (list: string[]) => void }) {
     const add = () => onChange([...values, '']);
     const update = (idx: number, val: string) => {
         const newList = [...values];
@@ -990,25 +1039,13 @@ function CertificationsInput({
         <div className="space-y-2">
             {values.map((val, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                    <TextInput
-                        value={val}
-                        onChange={(v) => update(idx, v)}
-                        placeholder="e.g. PMH-C, CCTP, EMDR Certified Therapist"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => remove(idx)}
-                        className="text-sm text-[#A8472F] hover:underline"
-                    >
+                    <TextInput value={val} onChange={(v) => update(idx, v)} placeholder="e.g. PMH-C, CCTP, EMDR Certified Therapist" />
+                    <button type="button" onClick={() => remove(idx)} className="text-sm text-[#A8472F] hover:underline">
                         Remove
                     </button>
                 </div>
             ))}
-            <button
-                type="button"
-                onClick={add}
-                className="inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline"
-            >
+            <button type="button" onClick={add} className="inline-flex items-center gap-1 text-sm text-[#1E4D4A] hover:underline">
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
                     <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth={2} />
                 </svg>
@@ -1023,7 +1060,7 @@ function CertificationsInput({
 interface RegionData {
     id: number;
     name: string;
-    parentId?: number | null;      // ← NEW (UK hierarchy)
+    parentId?: number | null; // ← NEW (UK hierarchy)
     regionTypeName?: string;
     regionTypeLabel?: string;
 }
@@ -1052,23 +1089,18 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     const [resending, setResending] = useState(false);
     const [otpError, setOtpError] = useState('');
 
-    // Header button: Dashboard when signed in, Login otherwise.
-    const { auth } = usePage<{ auth?: { user?: { role?: string } | null } }>().props;
-    const headerButton = auth?.user
-        ? { label: 'Dashboard', href: auth.user.role === 'admin' ? '/admin/dashboard' : '/provider/dashboard' }
-        : { label: 'Login', href: '/login' };
     // ---- Custom "Other" support areas per category -------------------
     const [customSupportAreas, setCustomSupportAreas] = useState<Record<string, { checked: boolean; text: string }>>(() => {
         const init: Record<string, { checked: boolean; text: string }> = {};
-        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
+        AREAS_OF_SUPPORT_GROUPS.forEach((group) => {
             init[group.category] = { checked: false, text: '' };
         });
         return init;
     });
     const updateCustomSupportArea = (category: string, field: 'checked' | 'text', value: boolean | string) => {
-        setCustomSupportAreas(prev => ({
+        setCustomSupportAreas((prev) => ({
             ...prev,
-            [category]: { ...prev[category], [field]: value }
+            [category]: { ...prev[category], [field]: value },
         }));
     };
     // ---- Form -------------------------------------------------------
@@ -1098,7 +1130,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         certifications: [],
         caribbean_experience: '',
         caribbean_experience_details: '',
-        lgbtq_affirming: '',              // ← NEW
+        lgbtq_affirming: '', // ← NEW
         languages: [],
         languages_other: '',
         cultural_approach: '',
@@ -1145,13 +1177,10 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     };
     const toggle = (key: FieldName, value: string) => {
         const arr = (d[key] as string[]) ?? [];
-        const next = arr.includes(value)
-            ? arr.filter((v) => v !== value)
-            : [...arr, value];
+        const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
         set(key, next as ProviderFormData[typeof key]);
     };
-    const scrollTop = () =>
-        topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     /* ---- Address visibility follows the service formats --------------
        In-person / hybrid care → address can't be hidden.
@@ -1166,8 +1195,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formatsKey]);
     /* ---- OTP / account helpers --------------------------------------- */
-    const getCsrfToken = () =>
-        document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+    const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
     const createAccountAndSendOtp = async (): Promise<boolean> => {
         setCreatingAccount(true);
         setOtpError('');
@@ -1197,7 +1225,9 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     mapped.password = Array.isArray(json.errors.password) ? json.errors.password[0] : json.errors.password;
                 }
                 if (json.errors?.organization_name) {
-                    mapped.organization_name = Array.isArray(json.errors.organization_name) ? json.errors.organization_name[0] : json.errors.organization_name;
+                    mapped.organization_name = Array.isArray(json.errors.organization_name)
+                        ? json.errors.organization_name[0]
+                        : json.errors.organization_name;
                 }
                 setErrors(mapped);
                 return false;
@@ -1269,10 +1299,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         switch (step) {
             case 0:
                 if (!d.provider_type) e.provider_type = 'Please select a provider type.';
-                if (!d.organization_name.trim())
-                    e.organization_name = 'Please enter your name or organization.';
-                if (d.professional_title.length === 0)
-                    e.professional_title = 'Please select at least one professional title.';
+                if (!d.organization_name.trim()) e.organization_name = 'Please enter your name or organization.';
+                if (d.professional_title.length === 0) e.professional_title = 'Please select at least one professional title.';
                 if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
                     e.professional_title_other = 'Please specify your title.';
                 break;
@@ -1327,8 +1355,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 break;
             }
             case 5:
-                if (d.populations_served.length === 0)
-                    e.populations_served = 'Select at least one population you serve.';
+                if (d.populations_served.length === 0) e.populations_served = 'Select at least one population you serve.';
                 break;
             case 6: {
                 if (d.treatment_approaches.includes('Other (specify)') && !d.treatment_approaches_other.trim()) {
@@ -1343,12 +1370,10 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please choose Yes or Not yet.';
                 if (d.caribbean_experience === 'yes' && wordCount(d.caribbean_experience_details) > 150)
                     e.caribbean_experience_details = 'Please keep this to 150 words or fewer.';
-                if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.';         // ← NEW
+                if (!d.lgbtq_affirming) e.lgbtq_affirming = 'Please answer so people can find the right support.'; // ← NEW
                 if (d.languages.length === 0) e.languages = 'Select at least one language you speak.';
-                if (d.languages.includes('Other') && !d.languages_other.trim())
-                    e.languages_other = 'Please specify the other language(s).';
-                if (d.cultural_approach && wordCount(d.cultural_approach) > 250)
-                    e.cultural_approach = 'Please keep this to 250 words or fewer.';
+                if (d.languages.includes('Other') && !d.languages_other.trim()) e.languages_other = 'Please specify the other language(s).';
+                if (d.cultural_approach && wordCount(d.cultural_approach) > 250) e.cultural_approach = 'Please keep this to 250 words or fewer.';
                 break;
             case 8:
                 if (d.service_formats.length === 0) e.service_formats = 'Select at least one service format.';
@@ -1459,8 +1484,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
 
         // 2) area -> category map (for the "category|area" format).
         const areaToCategoryMap: Record<string, string> = {};
-        AREAS_OF_SUPPORT_GROUPS.forEach(group => {
-            group.items.forEach(item => {
+        AREAS_OF_SUPPORT_GROUPS.forEach((group) => {
+            group.items.forEach((item) => {
                 areaToCategoryMap[item] = group.category;
             });
         });
@@ -1468,7 +1493,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
         // Drop the sentinel and merge the typed value into the array,
         // so the custom "Other" text sits in the JSON array like a checkmark value.
         const mergeOther = (arr: string[], sentinel: string, text: string): string[] => {
-            const out = arr.filter(v => v !== sentinel);
+            const out = arr.filter((v) => v !== sentinel);
             if (arr.includes(sentinel) && text && text.trim()) out.push(text.trim());
             return out;
         };
@@ -1501,7 +1526,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 practice_settings: mergeOther(data.practice_settings, '__other__', data.practice_settings_other),
                 treatment_approaches: mergeOther(data.treatment_approaches, 'Other (specify)', data.treatment_approaches_other),
                 specialized_training: mergeOther(data.specialized_training, 'Other Specialized Training', data.specialized_training_other),
-                certifications: data.certifications.filter(c => c.trim() !== ''),
+                certifications: data.certifications.filter((c) => c.trim() !== ''),
                 fee_min: data.fee_min.trim() === '' ? '' : data.fee_min.trim(),
                 fee_max: data.fee_max.trim() === '' ? '' : data.fee_max.trim(),
                 fee_currency: data.fee_currency || 'USD',
@@ -1728,38 +1753,30 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
     //         },
     //     });
     // };
-    const fieldError = (key: FieldName): string | undefined =>
-        errors[key] || (serverErrors?.[key] ?? form.errors[key]);
+    const fieldError = (key: FieldName): string | undefined => errors[key] || (serverErrors?.[key] ?? form.errors[key]);
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
     /* ---- success screen -------------------------------------------- */
     if (submitted) {
         return (
-            <>
-                <LandingHeader
-                    containerWidth={1024}
-                    gutter={20}
-                    // items={[
-                    //     { label: 'Find support', href: '/provider' },
-                    //     { label: 'Visit bahali.org', href: 'https://bahali.org', newTab: true },
-                    // ]}
-                    button={headerButton}
-                />
-                <Head title="Application Received — Bahali Provider Directory" />
-                <div className="min-h-screen bg-[#FAFAF6] px-4 py-16 font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
+            <ConnectLayout page="providers" title="Application received">
+                <div className="bc-plain font-body min-h-[60vh] bg-[#FAFAF6] px-4 py-16 text-[16px] leading-[1.6] text-[#2C2C2C]">
                     <div className="mx-auto max-w-xl rounded-2xl border border-[#E8D9B8] bg-white p-10 text-center shadow-sm">
                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#1E4D4A]/10">
                             <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2.2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
                             </svg>
                         </div>
-                        <h1 className="font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">Thank you for joining the circle</h1>
+                        <h1 className="font-display text-[38px] leading-[1.1] font-semibold text-[#1E4D4A] md:text-[48px]">
+                            Thank you for joining the circle
+                        </h1>
                         <p className="mt-3 text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Your application has been received. Our team will review your details and
-                            reach out about your listing in the Bahali Provider Directory.
+                            Your application has been received. Our team will review your details and reach out about your listing in the Bahali
+                            Provider Directory.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                            <a href="/"
-                                className="inline-flex items-center justify-center bg-[#1E4D4A] px-5 text-white transition-colors hover:bg-[#163F3C] min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
+                            <a
+                                href="/"
+                                className="inline-flex min-h-[48px] items-center justify-center rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none"
                             >
                                 Back to home
                             </a>
@@ -1771,37 +1788,27 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                         </div>
                     </div>
                 </div>
-                <LandingFooter />
-            </>
+            </ConnectLayout>
         );
     }
     /* ---- render ----------------------------------------------------- */
     return (
-        <>
-            <Head title="Provider Directory Registration — Bahali" />
-            <div className="min-h-screen bg-[#FAFAF6] font-body text-[16px] leading-[1.6] text-[#2C2C2C]">
-                <LandingHeader
-                    // items={[
-                    //     { label: 'Find support', href: '/provider' },
-                    //     { label: 'Visit bahali.org', href: 'https://bahali.org', newTab: true },
-                    // ]}
-                    button={headerButton}
-                />
-                <div ref={topRef} className="px-[6%] py-8 max-[371px]:px-[4%] lg:py-12">
+        <ConnectLayout page="providers" title="Join Bahali Connect">
+            <div className="bc-plain font-body bg-[#FAFAF6] text-[16px] leading-[1.6] text-[#2C2C2C]">
+                <div ref={topRef} className="mx-auto max-w-[1260px] scroll-mt-28 px-9 py-8 max-[1100px]:px-7 max-[600px]:px-5 lg:py-12">
                     <div className="mb-8">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#1E4D4A]">
-                            Join the directory
-                        </p>
-                        <h1 className="mt-2 font-display text-[38px] font-semibold leading-[1.1] text-[#1E4D4A] md:text-[48px]">
+                        <p className="text-sm font-semibold tracking-[0.18em] text-[#1E4D4A] uppercase">Join the directory</p>
+                        <h1 className="font-display mt-2 text-[38px] leading-[1.1] font-semibold text-[#1E4D4A] md:text-[48px]">
                             Become a Bahali wellness provider
                         </h1>
                         <p className="mt-2 max-w-2xl text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Your profile helps Caribbean individuals and families find care that understands their culture, experiences, and community. Complete each section below. Every step must be completed before you can continue.
+                            Your profile helps Caribbean individuals and families find care that understands their culture, experiences, and
+                            community. Complete each section below. Every step must be completed before you can continue.
                         </p>
                     </div>
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
                         {/* Stepper */}
-                        <aside className="lg:sticky lg:top-8 lg:self-start">
+                        <aside className="lg:sticky lg:top-28 lg:self-start">
                             <div className="mb-4 lg:hidden">
                                 <div className="mb-2 flex items-center justify-between text-sm">
                                     <span className="font-medium text-[#2C2C2C]">
@@ -1810,18 +1817,13 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                     <span className="text-[#2C2C2C]">{progress}%</span>
                                 </div>
                                 <div className="h-2 w-full overflow-hidden rounded-full bg-[#E8D9B8]">
-                                    <div
-                                        className="h-full rounded-full bg-[#1E4D4A] transition-all duration-500"
-                                        style={{ width: `${progress}%` }}
-                                    />
+                                    <div className="h-full rounded-full bg-[#1E4D4A] transition-all duration-500" style={{ width: `${progress}%` }} />
                                 </div>
-                                <p className="mt-2 text-[18px] font-semibold leading-[1.2] text-[#1E4D4A]">
-                                    {STEPS[step].title}
-                                </p>
+                                <p className="mt-2 text-[18px] leading-[1.2] font-semibold text-[#1E4D4A]">{STEPS[step].title}</p>
                             </div>
                             <nav className="hidden lg:block" aria-label="Progress">
                                 <ol className="relative">
-                                    <span className="absolute left-[24px] top-2 bottom-2 w-px bg-[#E8D9B8]" aria-hidden />
+                                    <span className="absolute top-2 bottom-2 left-[24px] w-px bg-[#E8D9B8]" aria-hidden />
                                     {STEPS.map((s, i) => {
                                         const isDone = i < step;
                                         const isCurrent = i === step;
@@ -1837,16 +1839,18 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                                         }
                                                     }}
                                                     disabled={i > step}
-                                                    className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition ${i <= step ? 'cursor-pointer hover:bg-[#1E4D4A]/5' : 'cursor-default'
-                                                        }`}
+                                                    className={`flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition ${
+                                                        i <= step ? 'cursor-pointer hover:bg-[#1E4D4A]/5' : 'cursor-default'
+                                                    }`}
                                                 >
                                                     <span
-                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${isDone
-                                                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
-                                                            : isCurrent
-                                                                ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]'
-                                                                : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'
-                                                            }`}
+                                                        className={`relative z-10 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition ${
+                                                            isDone
+                                                                ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
+                                                                : isCurrent
+                                                                  ? 'border-[#1E4D4A] bg-white text-[#1E4D4A]'
+                                                                  : 'border-[#E8D9B8] bg-[#FAFAF6] text-[#2C2C2C]/70'
+                                                        }`}
                                                     >
                                                         {isDone ? (
                                                             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
@@ -1858,8 +1862,9 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                                     </span>
                                                     <span className="min-w-0 pt-0.5">
                                                         <span
-                                                            className={`block text-[15px] leading-tight ${isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'
-                                                                }`}
+                                                            className={`block text-[15px] leading-tight ${
+                                                                isCurrent ? 'font-semibold text-[#1E4D4A]' : 'font-medium text-[#2C2C2C]'
+                                                            }`}
                                                         >
                                                             {s.title}
                                                         </span>
@@ -1873,21 +1878,24 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             </nav>
                         </aside>
                         {/* Form card */}
-                        <main>
+                        <div>
                             <div className="rounded-2xl border border-[#E8D9B8] bg-white p-6 shadow-sm sm:p-8">
                                 {submitErrors.length > 0 && (
-                                    <div role="alert" className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]">
+                                    <div
+                                        role="alert"
+                                        className="mb-6 rounded-xl border border-[#C2543B]/40 bg-[#C2543B]/5 p-4 text-sm text-[#8A3F27]"
+                                    >
                                         <p className="font-semibold">We couldn't submit your application. Please fix the following:</p>
                                         <ul className="mt-2 list-disc space-y-1 pl-5">
-                                            {submitErrors.map((m, i) => <li key={i}>{m}</li>)}
+                                            {submitErrors.map((m, i) => (
+                                                <li key={i}>{m}</li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
                                 <div className="mb-6 border-b border-[#E8D9B8] pb-5">
-                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#1E4D4A]">
-                                        Section {step + 1}
-                                    </p>
-                                    <h2 className="mt-1 font-display text-[32px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[40px]">
+                                    <p className="text-sm font-semibold tracking-[0.16em] text-[#1E4D4A] uppercase">Section {step + 1}</p>
+                                    <h2 className="font-display mt-1 text-[32px] leading-[1.15] font-semibold text-[#1E4D4A] md:text-[40px]">
                                         {STEPS[step].title}
                                     </h2>
                                 </div>
@@ -1916,10 +1924,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                         type="button"
                                         onClick={goBack}
                                         disabled={step === 0 || STEPS[step].key === 'verify'}
-                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 ${step === 0 || STEPS[step].key === 'verify'
-                                            ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70'
-                                            : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'
-                                            }`}
+                                        className={`min-h-[48px] rounded-[10px] border px-5 text-[15px] font-semibold transition focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none ${
+                                            step === 0 || STEPS[step].key === 'verify'
+                                                ? 'cursor-not-allowed border-[#1E4D4A]/30 bg-white text-[#2C2C2C]/70'
+                                                : 'border-[#1E4D4A] bg-white text-[#1E4D4A] hover:bg-[#1E4D4A]/5'
+                                        }`}
                                     >
                                         ← Back
                                     </button>
@@ -1928,7 +1937,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={goNext}
                                             disabled={creatingAccount}
-                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
+                                            className="min-h-[48px] rounded-[10px] bg-[#1E4D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:ring-4 focus:ring-[#1E4D4A]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60"
                                         >
                                             {creatingAccount ? 'Creating account…' : 'Continue →'}
                                         </button>
@@ -1937,7 +1946,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                                             type="button"
                                             onClick={handleSubmit}
                                             disabled={form.processing}
-                                            className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] focus:outline-none focus:ring-4 focus:ring-[#1E4D4A]/30 disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
+                                            className="min-h-[48px] rounded-[10px] bg-[#1E4D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus:ring-4 focus:ring-[#1E4D4A]/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60"
                                         >
                                             {form.processing ? 'Submitting…' : 'Submit application'}
                                         </button>
@@ -1947,21 +1956,32 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             <p className="mt-4 text-center text-sm text-[#2C2C2C]/70">
                                 Fields marked <span className="text-[#A8472F]">*</span> are required.
                             </p>
-                        </main>
+                        </div>
                     </div>
                 </div>
             </div>
-            <LandingFooter />
-        </>
+        </ConnectLayout>
     );
 }
 /* ------------------------------------------------------------------ */
 /*  Step body — renders the active section                             */
 /* ------------------------------------------------------------------ */
 function StepBody({
-    step, d, set, toggle, fieldError, countries,
-    otpCode, setOtpCode, otpError, verifyingOtp, resending, onVerifyOtp, onResendOtp,
-    customSupportAreas, onCustomSupportChange,
+    step,
+    d,
+    set,
+    toggle,
+    fieldError,
+    countries,
+    otpCode,
+    setOtpCode,
+    otpError,
+    verifyingOtp,
+    resending,
+    onVerifyOtp,
+    onResendOtp,
+    customSupportAreas,
+    onCustomSupportChange,
 }: {
     step: number;
     d: ProviderFormData;
@@ -1980,9 +2000,7 @@ function StepBody({
     onCustomSupportChange: (category: string, field: 'checked' | 'text', value: boolean | string) => void;
 }) {
     // 🔥 FIX: added openCat state for the inline accordion in case 4
-    const [openCat, setOpenCat] = useState<string>(
-        AREAS_OF_SUPPORT_GROUPS[0]?.category ?? ''
-    );
+    const [openCat, setOpenCat] = useState<string>(AREAS_OF_SUPPORT_GROUPS[0]?.category ?? '');
 
     const { virtualOnly } = serviceFormatFlags(d.service_formats);
     const isOrg = !!d.provider_type && d.provider_type !== 'individual';
@@ -2011,11 +2029,7 @@ function StepBody({
                             options={PROVIDER_TYPES}
                         />
                     </FieldShell>
-                    <FieldShell
-                        label="Provider or Organization Name"
-                        required
-                        error={fieldError('organization_name')}
-                    >
+                    <FieldShell label="Provider or Organization Name" required error={fieldError('organization_name')}>
                         <TextInput
                             value={d.organization_name}
                             onChange={(v) => set('organization_name', v)}
@@ -2023,23 +2037,10 @@ function StepBody({
                             placeholder="Dr. Jane Doe, PsyD or Harmony Counseling Center"
                         />
                     </FieldShell>
-                    <FieldShell
-                        label="Credentials / License"
-                        hint="Examples: PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC"
-                        error={fieldError('credentials')}
-                    >
-                        <TextInput
-                            value={d.credentials}
-                            onChange={(v) => set('credentials', v)}
-                            placeholder="PsyD, LCSW…"
-                        />
+                    <FieldShell label="Credentials / License" hint="Examples: PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC" error={fieldError('credentials')}>
+                        <TextInput value={d.credentials} onChange={(v) => set('credentials', v)} placeholder="PsyD, LCSW…" />
                     </FieldShell>
-                    <FieldShell
-                        label="Professional title(s)"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('professional_title')}
-                    >
+                    <FieldShell label="Professional title(s)" required hint="Select all that apply." error={fieldError('professional_title')}>
                         <CheckGrid
                             options={PROFESSIONAL_TITLES}
                             selected={d.professional_title}
@@ -2048,11 +2049,7 @@ function StepBody({
                         />
                     </FieldShell>
                     {d.professional_title.includes('Other (specify)') && (
-                        <FieldShell
-                            label="Please specify your title"
-                            required
-                            error={fieldError('professional_title_other')}
-                        >
+                        <FieldShell label="Please specify your title" required error={fieldError('professional_title_other')}>
                             <TextInput
                                 value={d.professional_title_other}
                                 onChange={(v) => set('professional_title_other', v)}
@@ -2067,12 +2064,7 @@ function StepBody({
         case 1:
             return (
                 <>
-                    <FieldShell
-                        label="Email address"
-                        required
-                        hint="You'll use this to sign in and manage your listing."
-                        error={fieldError('email')}
-                    >
+                    <FieldShell label="Email address" required hint="You'll use this to sign in and manage your listing." error={fieldError('email')}>
                         <TextInput
                             value={d.email}
                             onChange={(v) => set('email', v)}
@@ -2107,9 +2099,7 @@ function StepBody({
                             rows={7}
                             placeholder="Share your story, your values, and how you support healing…"
                         />
-                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
-                            {wordCount(d.short_bio)} / 500 words
-                        </p>
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.short_bio)} / 500 words</p>
                     </FieldShell>
                     <FieldShell label="Years of experience" error={fieldError('years_experience')}>
                         <SearchableSelect
@@ -2128,12 +2118,16 @@ function StepBody({
                 <div className="space-y-5 text-center">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1E4D4A]/10">
                         <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0h3.75v3.75M3.98 8.223A10.477 10.477 0 0 1 12 4.5" />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0h3.75v3.75M3.98 8.223A10.477 10.477 0 0 1 12 4.5"
+                            />
                         </svg>
                     </div>
                     <p className="text-[#2C2C2C]">
-                        We sent a 6-digit verification code to <strong>{d.email}</strong>.
-                        Enter it below to continue. If you don't see it in your inbox, please check your spam or junk folder.
+                        We sent a 6-digit verification code to <strong>{d.email}</strong>. Enter it below to continue. If you don't see it in your
+                        inbox, please check your spam or junk folder.
                     </p>
                     <div className="mx-auto max-w-xs">
                         <input
@@ -2143,11 +2137,12 @@ function StepBody({
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                             placeholder="000000"
-                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-3 text-center text-2xl tracking-[0.4em] text-[#2C2C2C] outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-3 text-center text-2xl tracking-[0.4em] text-[#2C2C2C] transition outline-none focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         {otpError && (
                             <p className="mt-1.5 flex items-center justify-center gap-1 text-sm text-[#A8472F]">
-                                <span aria-hidden>⚠</span>{otpError}
+                                <span aria-hidden>⚠</span>
+                                {otpError}
                             </p>
                         )}
                     </div>
@@ -2155,7 +2150,7 @@ function StepBody({
                         type="button"
                         onClick={onVerifyOtp}
                         disabled={verifyingOtp || otpCode.length !== 6}
-                        className="bg-[#1E4D4A] px-6 text-white shadow-sm transition hover:bg-[#163F3C] disabled:opacity-60 min-h-[48px] rounded-[10px] text-[15px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
+                        className="min-h-[48px] rounded-[10px] bg-[#1E4D4A] px-6 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60"
                     >
                         {verifyingOtp ? 'Verifying…' : 'Verify & Continue'}
                     </button>
@@ -2199,18 +2194,8 @@ function StepBody({
                     >
                         Not applicable
                     </ConsentItem>
-                    <FieldShell
-                        label="State / Country of licensure"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('license_states')}
-                    >
-                        <CheckGrid
-                            options={REGIONS}
-                            selected={d.license_states}
-                            onToggle={(v) => toggle('license_states', v)}
-                            columns={2}
-                        />
+                    <FieldShell label="State / Country of licensure" required hint="Select all that apply." error={fieldError('license_states')}>
+                        <CheckGrid options={REGIONS} selected={d.license_states} onToggle={(v) => toggle('license_states', v)} columns={2} />
                         {/* "Other" — same design as the form, no background box */}
                         <OtherCheckboxField
                             checked={d.license_states.includes('__other__')}
@@ -2218,7 +2203,7 @@ function StepBody({
                             onToggle={() => {
                                 const other = '__other__';
                                 const next = d.license_states.includes(other)
-                                    ? d.license_states.filter(v => v !== other)
+                                    ? d.license_states.filter((v) => v !== other)
                                     : [...d.license_states, other];
                                 set('license_states', next);
                             }}
@@ -2244,7 +2229,7 @@ function StepBody({
                             file={d.verification_document}
                             accept=".pdf,.jpg,.jpeg,.png"
                             onChange={(f) => {
-                                const validFile = (f && f instanceof File) ? f : null;
+                                const validFile = f && f instanceof File ? f : null;
                                 set('verification_document', validFile);
                             }}
                         />
@@ -2272,16 +2257,18 @@ function StepBody({
                             return (
                                 <div
                                     key={category}
-                                    className={`overflow-hidden rounded-xl border transition ${totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'
-                                        }`}
+                                    className={`overflow-hidden rounded-xl border transition ${
+                                        totalSelected > 0 ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'
+                                    }`}
                                 >
                                     {/* Accordion header */}
                                     <button
                                         type="button"
                                         aria-expanded={isOpen}
                                         onClick={() => setOpenCat((prev) => (prev === category ? '' : category))}
-                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
-                                            }`}
+                                        className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition ${
+                                            isOpen ? 'bg-[#1E4D4A]/5' : 'bg-[#FAFAF6] hover:bg-[#1E4D4A]/5'
+                                        }`}
                                     >
                                         <span className="flex items-center gap-2.5">
                                             <span className="text-sm font-semibold text-[#2C2C2C]">{category}</span>
@@ -2293,8 +2280,7 @@ function StepBody({
                                         </span>
                                         <svg
                                             viewBox="0 0 24 24"
-                                            className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''
-                                                }`}
+                                            className={`h-4 w-4 flex-shrink-0 text-[#1E4D4A] transition-transform ${isOpen ? 'rotate-180' : ''}`}
                                             fill="none"
                                             stroke="currentColor"
                                             strokeWidth={2}
@@ -2319,19 +2305,19 @@ function StepBody({
                                                     type="button"
                                                     role="checkbox"
                                                     aria-checked={custom.checked}
-                                                    onClick={() =>
-                                                        onCustomSupportChange(category, 'checked', !custom.checked)
-                                                    }
-                                                    className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${custom.checked
-                                                        ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
-                                                        : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
-                                                        }`}
+                                                    onClick={() => onCustomSupportChange(category, 'checked', !custom.checked)}
+                                                    className={`flex w-full items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-left text-sm transition ${
+                                                        custom.checked
+                                                            ? 'border-[#1E4D4A] bg-[#1E4D4A]/8 text-[#1E4D4A]'
+                                                            : 'border-[#1E4D4A]/65 bg-white text-[#2C2C2C] hover:border-[#1E4D4A]'
+                                                    }`}
                                                 >
                                                     <span
-                                                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${custom.checked
-                                                            ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
-                                                            : 'border-[#1E4D4A]/65 bg-white'
-                                                            }`}
+                                                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+                                                            custom.checked
+                                                                ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white'
+                                                                : 'border-[#1E4D4A]/65 bg-white'
+                                                        }`}
                                                         aria-hidden
                                                     >
                                                         {custom.checked && (
@@ -2368,12 +2354,7 @@ function StepBody({
         /* ---------------- Step 5: Populations Served ----------------- */
         case 5:
             return (
-                <FieldShell
-                    label="Populations served"
-                    required
-                    hint="Select all that apply."
-                    error={fieldError('populations_served')}
-                >
+                <FieldShell label="Populations served" required hint="Select all that apply." error={fieldError('populations_served')}>
                     <CheckGrid
                         options={POPULATIONS_SERVED}
                         selected={d.populations_served}
@@ -2435,10 +2416,7 @@ function StepBody({
                         hint="List any relevant certifications or formal credentials you would like displayed on your profile."
                         error={fieldError('certifications')}
                     >
-                        <CertificationsInput
-                            values={d.certifications}
-                            onChange={(list) => set('certifications', list)}
-                        />
+                        <CertificationsInput values={d.certifications} onChange={(list) => set('certifications', list)} />
                     </FieldShell>
                 </>
             );
@@ -2475,9 +2453,7 @@ function StepBody({
                                 rows={4}
                                 placeholder="e.g. Ten years supporting Jamaican and Haitian families in South Florida and the UK…"
                             />
-                            <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
-                                {wordCount(d.caribbean_experience_details)} / 150 words
-                            </p>
+                            <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.caribbean_experience_details)} / 150 words</p>
                         </FieldShell>
                     )}
                     {/* ==== NEW: Identity-Affirming Care ==== */}
@@ -2497,25 +2473,11 @@ function StepBody({
                             ]}
                         />
                     </FieldShell>
-                    <FieldShell
-                        label="Languages spoken"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('languages')}
-                    >
-                        <CheckGrid
-                            options={LANGUAGES}
-                            selected={d.languages}
-                            onToggle={(v) => toggle('languages', v)}
-                            columns={2}
-                        />
+                    <FieldShell label="Languages spoken" required hint="Select all that apply." error={fieldError('languages')}>
+                        <CheckGrid options={LANGUAGES} selected={d.languages} onToggle={(v) => toggle('languages', v)} columns={2} />
                     </FieldShell>
                     {d.languages.includes('Other') && (
-                        <FieldShell
-                            label="Please specify other language(s)"
-                            required
-                            error={fieldError('languages_other')}
-                        >
+                        <FieldShell label="Please specify other language(s)" required error={fieldError('languages_other')}>
                             <TextInput
                                 value={d.languages_other}
                                 onChange={(v) => set('languages_other', v)}
@@ -2536,9 +2498,7 @@ function StepBody({
                             rows={5}
                             placeholder="Describe how culture, story, and lived experience shape your care…"
                         />
-                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">
-                            {wordCount(d.cultural_approach)} / 250 words
-                        </p>
+                        <p className="mt-1.5 text-right text-sm text-[#2C2C2C]/70">{wordCount(d.cultural_approach)} / 250 words</p>
                     </FieldShell>
                 </>
             );
@@ -2546,12 +2506,7 @@ function StepBody({
         case 8:
             return (
                 <>
-                    <FieldShell
-                        label="Service formats"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('service_formats')}
-                    >
+                    <FieldShell label="Service formats" required hint="Select all that apply." error={fieldError('service_formats')}>
                         <CheckGrid
                             options={SERVICE_FORMATS}
                             selected={d.service_formats}
@@ -2560,12 +2515,7 @@ function StepBody({
                         />
                     </FieldShell>
 
-                    <FieldShell
-                        label="Practice setting"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('practice_settings')}
-                    >
+                    <FieldShell label="Practice setting" required hint="Select all that apply." error={fieldError('practice_settings')}>
                         <CheckGrid
                             options={PRACTICE_SETTINGS}
                             selected={d.practice_settings}
@@ -2579,7 +2529,7 @@ function StepBody({
                             onToggle={() => {
                                 const other = '__other__';
                                 const next = d.practice_settings.includes(other)
-                                    ? d.practice_settings.filter(v => v !== other)
+                                    ? d.practice_settings.filter((v) => v !== other)
                                     : [...d.practice_settings, other];
                                 set('practice_settings', next);
                             }}
@@ -2613,19 +2563,14 @@ function StepBody({
                         hint="Optional. Select every region where you can offer telehealth."
                         error={fieldError('telehealth_regions')}
                     >
-                        <CheckGrid
-                            options={REGIONS}
-                            selected={d.telehealth_regions}
-                            onToggle={(v) => toggle('telehealth_regions', v)}
-                            columns={2}
-                        />
+                        <CheckGrid options={REGIONS} selected={d.telehealth_regions} onToggle={(v) => toggle('telehealth_regions', v)} columns={2} />
                         <OtherCheckboxField
                             checked={d.telehealth_regions.includes('__other__')}
                             text={d.telehealth_regions_other}
                             onToggle={() => {
                                 const other = '__other__';
                                 const next = d.telehealth_regions.includes(other)
-                                    ? d.telehealth_regions.filter(v => v !== other)
+                                    ? d.telehealth_regions.filter((v) => v !== other)
                                     : [...d.telehealth_regions, other];
                                 set('telehealth_regions', next);
                             }}
@@ -2640,12 +2585,7 @@ function StepBody({
         case 10:
             return (
                 <>
-                    <FieldShell
-                        label="Accepted payment methods"
-                        required
-                        hint="Select all that apply."
-                        error={fieldError('payment_methods')}
-                    >
+                    <FieldShell label="Accepted payment methods" required hint="Select all that apply." error={fieldError('payment_methods')}>
                         <CheckGrid
                             options={PAYMENT_METHODS}
                             selected={d.payment_methods}
@@ -2690,22 +2630,34 @@ function StepBody({
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[#2C2C2C]">Minimum fee</label>
-                                <MoneyInput value={d.fee_min} onChange={(v) => set('fee_min', v)} error={!!fieldError('fee_min')} placeholder="100" prefix={currencySymbol(d.fee_currency)} />
+                                <MoneyInput
+                                    value={d.fee_min}
+                                    onChange={(v) => set('fee_min', v)}
+                                    error={!!fieldError('fee_min')}
+                                    placeholder="100"
+                                    prefix={currencySymbol(d.fee_currency)}
+                                />
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[#2C2C2C]">Maximum fee</label>
-                                <MoneyInput value={d.fee_max} onChange={(v) => set('fee_max', v)} error={!!fieldError('fee_max')} placeholder="150" prefix={currencySymbol(d.fee_currency)} />
+                                <MoneyInput
+                                    value={d.fee_max}
+                                    onChange={(v) => set('fee_max', v)}
+                                    error={!!fieldError('fee_max')}
+                                    placeholder="150"
+                                    prefix={currencySymbol(d.fee_currency)}
+                                />
                             </div>
                         </div>
                         {fieldError('fee_currency') && (
-                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]"><span aria-hidden>⚠</span>{fieldError('fee_currency')}</p>
+                            <p className="mt-1.5 flex items-center gap-1 text-sm text-[#A8472F]">
+                                <span aria-hidden>⚠</span>
+                                {fieldError('fee_currency')}
+                            </p>
                         )}
                         {(d.fee_min || d.fee_max) && (
                             <p className="mt-2.5 text-sm text-[#2C2C2C]">
-                                Preview:{' '}
-                                <span className="font-semibold text-[#2C2C2C]">
-                                    {feePreview(d.fee_min, d.fee_max, d.fee_currency)}
-                                </span>
+                                Preview: <span className="font-semibold text-[#2C2C2C]">{feePreview(d.fee_min, d.fee_max, d.fee_currency)}</span>
                             </p>
                         )}
                     </FieldShell>
@@ -2767,12 +2719,7 @@ function StepBody({
                         </div>
                     )}
                     <FieldShell label="Phone number" required error={fieldError('phone')}>
-                        <PhoneInput
-                            value={d.phone}
-                            onChange={(v) => set('phone', v)}
-                            error={!!fieldError('phone')}
-                            defaultCountry={d.country}
-                        />
+                        <PhoneInput value={d.phone} onChange={(v) => set('phone', v)} error={!!fieldError('phone')} defaultCountry={d.country} />
                     </FieldShell>
                     <div>
                         <ConsentItem checked={d.show_phone} onChange={(v) => set('show_phone', v)}>
@@ -2790,15 +2737,8 @@ function StepBody({
                             placeholder="yourpractice.com"
                         />
                     </FieldShell>
-                    <FieldShell
-                        label="Social media links"
-                        hint="Optional. Add up to 5 links."
-                        error={fieldError('social_links')}
-                    >
-                        <SocialLinksInput
-                            value={d.social_links}
-                            onChange={(v) => set('social_links', v)}
-                        />
+                    <FieldShell label="Social media links" hint="Optional. Add up to 5 links." error={fieldError('social_links')}>
+                        <SocialLinksInput value={d.social_links} onChange={(v) => set('social_links', v)} />
                     </FieldShell>
                 </>
             );
@@ -2818,7 +2758,7 @@ function StepBody({
                             preview
                             allowedTypes={['jpg', 'jpeg', 'png']}
                             onChange={(f) => {
-                                const validFile = (f && f instanceof File) ? f : null;
+                                const validFile = f && f instanceof File ? f : null;
                                 set('profile_photo', validFile);
                             }}
                         />
@@ -2842,26 +2782,21 @@ function StepBody({
             return (
                 <FieldShell
                     label="Accessibility"
-                    hint={virtualOnly
-                        ? 'Optional. You offer virtual care only, so you can skip this section.'
-                        : 'Optional. Select all that apply. If you need an option not listed, check "Other" and specify.'}
+                    hint={
+                        virtualOnly
+                            ? 'Optional. You offer virtual care only, so you can skip this section.'
+                            : 'Optional. Select all that apply. If you need an option not listed, check "Other" and specify.'
+                    }
                     error={fieldError('accessibility')}
                 >
-                    <CheckGrid
-                        options={ACCESSIBILITY_OPTIONS}
-                        selected={d.accessibility}
-                        onToggle={(v) => toggle('accessibility', v)}
-                        columns={2}
-                    />
+                    <CheckGrid options={ACCESSIBILITY_OPTIONS} selected={d.accessibility} onToggle={(v) => toggle('accessibility', v)} columns={2} />
                     {/* "Other" — same design as the form, no background box */}
                     <OtherCheckboxField
                         checked={d.accessibility.includes('__other__')}
                         text={d.accessibility_other}
                         onToggle={() => {
                             const other = '__other__';
-                            const next = d.accessibility.includes(other)
-                                ? d.accessibility.filter(v => v !== other)
-                                : [...d.accessibility, other];
+                            const next = d.accessibility.includes(other) ? d.accessibility.filter((v) => v !== other) : [...d.accessibility, other];
                             set('accessibility', next);
                         }}
                         onTextChange={(v) => set('accessibility_other', v)}
@@ -2894,21 +2829,11 @@ function StepBody({
         case 16:
             return (
                 <div className="space-y-4">
-                    <p className="text-sm text-[#2C2C2C]">
-                        Please review and agree to each statement below to complete your application.
-                    </p>
-                    <ConsentItem
-                        checked={d.consent_accurate}
-                        onChange={(v) => set('consent_accurate', v)}
-                        error={fieldError('consent_accurate')}
-                    >
+                    <p className="text-sm text-[#2C2C2C]">Please review and agree to each statement below to complete your application.</p>
+                    <ConsentItem checked={d.consent_accurate} onChange={(v) => set('consent_accurate', v)} error={fieldError('consent_accurate')}>
                         I certify that the information provided is accurate.
                     </ConsentItem>
-                    <ConsentItem
-                        checked={d.consent_notify}
-                        onChange={(v) => set('consent_notify', v)}
-                        error={fieldError('consent_notify')}
-                    >
+                    <ConsentItem checked={d.consent_notify} onChange={(v) => set('consent_notify', v)} error={fieldError('consent_notify')}>
                         I agree to notify Bahali of any changes to my licensure or contact information.
                     </ConsentItem>
                     <ConsentItem
@@ -2916,14 +2841,9 @@ function StepBody({
                         onChange={(v) => set('consent_no_endorsement', v)}
                         error={fieldError('consent_no_endorsement')}
                     >
-                        I understand that inclusion in the Bahali Directory does not constitute
-                        endorsement by Bahali.
+                        I understand that inclusion in the Bahali Directory does not constitute endorsement by Bahali.
                     </ConsentItem>
-                    <ConsentItem
-                        checked={d.consent_public}
-                        onChange={(v) => set('consent_public', v)}
-                        error={fieldError('consent_public')}
-                    >
+                    <ConsentItem checked={d.consent_public} onChange={(v) => set('consent_public', v)} error={fieldError('consent_public')}>
                         I consent to Bahali displaying this information publicly.
                     </ConsentItem>
                 </div>
@@ -2936,7 +2856,11 @@ function StepBody({
 /*  File inputs & consent row                                          */
 /* ------------------------------------------------------------------ */
 function FileInput({
-    file, onChange, accept, preview = false, allowedTypes = [],
+    file,
+    onChange,
+    accept,
+    preview = false,
+    allowedTypes = [],
 }: {
     file: File | null;
     onChange: (f: File | null) => void;
@@ -2945,10 +2869,7 @@ function FileInput({
     allowedTypes?: string[];
 }) {
     const [fileError, setFileError] = useState('');
-    const previewUrl = useMemo(
-        () => (preview && file ? URL.createObjectURL(file) : null),
-        [preview, file]
-    );
+    const previewUrl = useMemo(() => (preview && file ? URL.createObjectURL(file) : null), [preview, file]);
     useEffect(() => {
         return () => {
             if (previewUrl) {
@@ -2959,10 +2880,7 @@ function FileInput({
     const validateFile = (f: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = f.name.split('.').pop()?.toLowerCase();
-        const isAllowed = allowedTypes.some(type =>
-            fileExtension === type.toLowerCase() ||
-            f.type.toLowerCase().includes(type.toLowerCase())
-        );
+        const isAllowed = allowedTypes.some((type) => fileExtension === type.toLowerCase() || f.type.toLowerCase().includes(type.toLowerCase()));
         if (!isAllowed) {
             return `Only ${allowedTypes.join(', ').toUpperCase()} files are allowed.`;
         }
@@ -2995,21 +2913,11 @@ function FileInput({
                         }}
                     />
                 </label>
-                {previewUrl && (
-                    <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover"
-                    />
-                )}
+                {previewUrl && <img src={previewUrl} alt="Preview" className="h-14 w-14 rounded-lg border border-[#E8D9B8] object-cover" />}
                 {file && (
                     <div className="flex items-center gap-2 text-sm text-[#2C2C2C]">
                         <span className="max-w-[180px] truncate">{file.name}</span>
-                        <button
-                            type="button"
-                            onClick={() => onChange(null)}
-                            className="text-[#A8472F] hover:underline"
-                        >
+                        <button type="button" onClick={() => onChange(null)} className="text-[#A8472F] hover:underline">
                             Remove
                         </button>
                     </div>
@@ -3025,7 +2933,10 @@ function FileInput({
     );
 }
 function MultiFileInput({
-    files, onChange, accept, allowedTypes = [],
+    files,
+    onChange,
+    accept,
+    allowedTypes = [],
 }: {
     files: File[];
     onChange: (files: File[]) => void;
@@ -3037,10 +2948,7 @@ function MultiFileInput({
     const validateFile = (file: File): string | null => {
         if (allowedTypes.length === 0) return null;
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
-        const isAllowed = allowedTypes.some(type =>
-            fileExtension === type.toLowerCase() ||
-            file.type.toLowerCase().includes(type.toLowerCase())
-        );
+        const isAllowed = allowedTypes.some((type) => fileExtension === type.toLowerCase() || file.type.toLowerCase().includes(type.toLowerCase()));
         if (!isAllowed) {
             return `${file.name}: Only ${allowedTypes.join(', ').toUpperCase()} allowed`;
         }
@@ -3082,7 +2990,7 @@ function MultiFileInput({
             {Object.keys(fileErrors).length > 0 && (
                 <div className="rounded-lg border border-[#C2543B]/30 bg-[#C2543B]/5 p-3">
                     {Object.values(fileErrors).map((error, idx) => (
-                        <p key={idx} className="flex items-center gap-1 text-sm text-[#A8472F] mb-1">
+                        <p key={idx} className="mb-1 flex items-center gap-1 text-sm text-[#A8472F]">
                             <span aria-hidden>⚠</span>
                             {error}
                         </p>
@@ -3111,15 +3019,15 @@ function MultiFileInput({
         </div>
     );
 }
-function SocialLinksInput({
-    value, onChange,
-}: {
-    value: string;
-    onChange: (v: string) => void;
-}) {
+function SocialLinksInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const MAX = 5;
     const makeRows = () => {
-        const parts = value ? value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean) : [];
+        const parts = value
+            ? value
+                  .split(/[\n,]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+            : [];
         const init = parts.length ? parts : [''];
         return init.map((v, i) => ({ id: i + 1, value: v }));
     };
@@ -3127,10 +3035,14 @@ function SocialLinksInput({
     const nextId = useRef(rows.length + 1);
     const sync = (next: { id: number; value: string }[]) => {
         setRows(next);
-        onChange(next.map((r) => r.value.trim()).filter(Boolean).join(', '));
+        onChange(
+            next
+                .map((r) => r.value.trim())
+                .filter(Boolean)
+                .join(', '),
+        );
     };
-    const updateAt = (id: number, v: string) =>
-        sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
+    const updateAt = (id: number, v: string) => sync(rows.map((r) => (r.id === id ? { ...r, value: v } : r)));
     const addField = () => {
         if (rows.length >= MAX) return;
         sync([...rows, { id: nextId.current++, value: '' }]);
@@ -3146,23 +3058,25 @@ function SocialLinksInput({
                         <input
                             type="text"
                             placeholder="Enter Platform Name"
-                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         <input
                             type="url"
                             value={row.value}
                             onChange={(e) => updateAt(row.id, e.target.value)}
                             placeholder="https://www.example.com"
-                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 outline-none transition focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
+                            className="w-full rounded-lg border border-[#1E4D4A]/65 bg-white px-3.5 py-2.5 text-[#2C2C2C] placeholder-[#2C2C2C]/70 transition outline-none focus:border-[#1E4D4A] focus:ring-4 focus:ring-[#1E4D4A]/25"
                         />
                         {isLast && rows.length < MAX && (
                             <button
                                 type="button"
                                 onClick={addField}
                                 aria-label="Add another link"
-                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none"
                             >
-                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                                </svg>
                             </button>
                         )}
                         {!isFirst && (
@@ -3172,7 +3086,9 @@ function SocialLinksInput({
                                 aria-label="Remove this link"
                                 className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] border border-[#1E4D4A]/65 text-[#A8472F] transition hover:border-[#C2543B] hover:bg-[#C2543B]/5"
                             >
-                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         )}
                     </div>
@@ -3182,7 +3098,10 @@ function SocialLinksInput({
     );
 }
 function ConsentItem({
-    checked, onChange, error, children,
+    checked,
+    onChange,
+    error,
+    children,
 }: {
     checked: boolean;
     onChange: (v: boolean) => void;
@@ -3194,16 +3113,18 @@ function ConsentItem({
             <button
                 type="button"
                 onClick={() => onChange(!checked)}
-                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${checked
-                    ? 'border-[#1E4D4A] bg-[#1E4D4A]/8'
-                    : error
-                        ? 'border-[#C2543B] bg-[#C2543B]/5'
-                        : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'
-                    }`}
+                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition ${
+                    checked
+                        ? 'border-[#1E4D4A] bg-[#1E4D4A]/8'
+                        : error
+                          ? 'border-[#C2543B] bg-[#C2543B]/5'
+                          : 'border-[#1E4D4A]/65 bg-white hover:border-[#1E4D4A]'
+                }`}
             >
                 <span
-                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
-                        }`}
+                    className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border transition ${
+                        checked ? 'border-[#1E4D4A] bg-[#1E4D4A] text-white' : 'border-[#1E4D4A]/65 bg-white'
+                    }`}
                     aria-hidden
                 >
                     {checked && (
@@ -3214,9 +3135,7 @@ function ConsentItem({
                 </span>
                 <span className="text-sm leading-snug text-[#2C2C2C]">{children}</span>
             </button>
-            {error && (
-                <p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>
-            )}
+            {error && <p className="mt-1 ml-1 text-sm text-[#A8472F]">{error}</p>}
         </div>
     );
 }

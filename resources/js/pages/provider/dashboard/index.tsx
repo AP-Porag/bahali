@@ -1,8 +1,6 @@
+import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import ProviderMenu from '@/components/provider/ProviderMenu'; // নতুন মেনু কম্পোনেন্ট
-import Footer from '@/components/Footer';
-import LandingFooter from '@/components/landing/LandingFooter';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -100,20 +98,18 @@ const STATUS_STYLES: Record<string, string> = {
 /* ------------------------------------------------------------------ */
 
 function initials(name = '') {
-    return name
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase())
-        .join('') || 'B';
+    return (
+        name
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((w) => w[0]?.toUpperCase())
+            .join('') || 'B'
+    );
 }
 
 function Badge({ text }: { text: string }) {
-    return (
-        <span className="inline-flex items-center rounded-full bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]">
-            {text}
-        </span>
-    );
+    return <span className="inline-flex items-center rounded-full bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]">{text}</span>;
 }
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -126,19 +122,11 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
     );
 }
 
-function SectionCard({
-    title,
-    children,
-    action,
-}: {
-    title: string;
-    children: React.ReactNode;
-    action?: React.ReactNode;
-}) {
+function SectionCard({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
     return (
         <div className="rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">{title}</h2>
+                <h2 className="text-[18px] leading-[1.2] font-semibold text-[#1E4D4A] md:text-[20px]">{title}</h2>
                 {action}
             </div>
             {children}
@@ -163,8 +151,7 @@ function BadgeList({ items }: { items?: string[] }) {
 
 function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] }) {
     // Never set on the server -> nothing is pre-selected, so the provider makes an explicit choice.
-    const initial: 'yes' | 'no' | '' =
-        provider.accepting_new_clients === true ? 'yes' : provider.accepting_new_clients === false ? 'no' : '';
+    const initial: 'yes' | 'no' | '' = provider.accepting_new_clients === true ? 'yes' : provider.accepting_new_clients === false ? 'no' : '';
     const [choice, setChoice] = useState<'yes' | 'no' | ''>(initial);
     const [saving, setSaving] = useState(false);
 
@@ -176,10 +163,10 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
     const currentStatusLabel = neverSet
         ? 'Not set yet'
         : expired
-            ? 'Needs reconfirming'
-            : provider.accepting_new_clients
-                ? 'Accepting new clients'
-                : 'Not accepting new clients';
+          ? 'Needs reconfirming'
+          : provider.accepting_new_clients
+            ? 'Accepting new clients'
+            : 'Not accepting new clients';
 
     const save = () => {
         if (saving || !choice) return;
@@ -204,7 +191,9 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                 onClick={() => setChoice(value)}
                 className="flex min-h-[48px] w-full items-center gap-3 rounded-[10px] px-2 py-1.5 text-left transition hover:bg-[#1E4D4A]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40"
             >
-                <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition ${active ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'}`}>
+                <span
+                    className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition ${active ? 'border-[#1E4D4A]' : 'border-[#1E4D4A]/65'}`}
+                >
                     {active && <span className="h-2.5 w-2.5 rounded-full bg-[#1E4D4A]" />}
                 </span>
                 <span className={`text-[15px] text-[#2C2C2C] ${active ? 'font-semibold' : ''}`}>{label}</span>
@@ -218,8 +207,19 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
             <div>
                 {(neverSet || expired || dueSoon) && (
                     <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#E8D9B8] bg-[#E8D9B8]/40 px-4 py-3 text-sm text-[#2C2C2C]">
-                        <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#1E4D4A]" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#1E4D4A]"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.8}
+                            aria-hidden
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
+                            />
                         </svg>
                         <span>
                             {neverSet && (
@@ -231,20 +231,24 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                             {expired && (
                                 <>
                                     <span className="block font-semibold">Please reconfirm your availability.</span>
-                                    It wasn't reconfirmed in the last 60 days, so your listing now shows “Contact to confirm availability”. Choose an answer below and save.
+                                    It wasn't reconfirmed in the last 60 days, so your listing now shows “Contact to confirm availability”. Choose an
+                                    answer below and save.
                                 </>
                             )}
                             {dueSoon && (
                                 <>
                                     <span className="block font-semibold">Time to reconfirm your availability.</span>
-                                    Please save your answer by {provider.availability_next_reminder}, otherwise your listing will show “Contact to confirm availability”.
+                                    Please save your answer by {provider.availability_next_reminder}, otherwise your listing will show “Contact to
+                                    confirm availability”.
                                 </>
                             )}
                         </span>
                     </div>
                 )}
-                <h2 className="text-[18px] font-semibold leading-[1.2] text-[#1E4D4A] md:text-[20px]">Are you currently accepting new clients?</h2>
-                <p className="mt-1 text-sm text-[#2C2C2C]/75">This shows on your public listing. Please reconfirm periodically so it stays accurate.</p>
+                <h2 className="text-[18px] leading-[1.2] font-semibold text-[#1E4D4A] md:text-[20px]">Are you currently accepting new clients?</h2>
+                <p className="mt-1 text-sm text-[#2C2C2C]/75">
+                    This shows on your public listing. Please reconfirm periodically so it stays accurate.
+                </p>
                 <div className="mt-4 space-y-1">
                     <Radio value="yes" label="Yes, I am accepting new clients" />
                     <Radio value="no" label="No, I am not currently accepting new clients" />
@@ -253,14 +257,27 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
                     type="button"
                     onClick={save}
                     disabled={saving || !choice}
-                    className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
+                    className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[10px] bg-[#1E4D4A] px-5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60 sm:w-auto sm:min-w-[220px]"
                 >
                     {saving ? (
                         <>
-                            <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M21 12a9 9 0 1 1-6.2-8.5" /></svg>
+                            <svg
+                                className="animate-spin"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.4"
+                                aria-hidden
+                            >
+                                <path d="M21 12a9 9 0 1 1-6.2-8.5" />
+                            </svg>
                             Saving…
                         </>
-                    ) : 'Save availability'}
+                    ) : (
+                        'Save availability'
+                    )}
                 </button>
             </div>
 
@@ -269,7 +286,9 @@ function AvailabilityPanel({ provider }: { provider: DashboardProps['provider'] 
 
             {/* right — status information */}
             <div className="rounded-xl bg-[#FAFAF6] p-4">
-                <p className="text-sm font-semibold text-[#2C2C2C]">Status Information <span className="font-normal text-[#2C2C2C]/70">(shown to provider)</span></p>
+                <p className="text-sm font-semibold text-[#2C2C2C]">
+                    Status Information <span className="font-normal text-[#2C2C2C]/70">(shown to provider)</span>
+                </p>
                 <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-3">
                         <dt className="text-[#2C2C2C]/75">Current status:</dt>
@@ -315,15 +334,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
     const professionalTitles = provider.professional_title || [];
 
     return (
-        <>
-            <Head title="Provider Dashboard" />
-
-            <div className="min-h-screen bg-[#FAFAF6] font-body text-[#2C2C2C]">
-                {/* Top navigation — আলাদা কম্পোনেন্ট */}
-                <ProviderMenu />
-
-                {/* Main content */}
-                <main className="px-[6%] py-6 max-[371px]:px-[4%]">
+        <ConnectLayout page="account" title="Provider dashboard">
+            {/* bc-plain: keeps the Connect reference styles away from this Tailwind dashboard. */}
+            <div className="bc-plain font-body bg-[#FAFAF6] text-[#2C2C2C]">
+                {/* Main content — same width as the Connect header, so it lines up with the logo */}
+                <div className="mx-auto max-w-[1260px] px-9 py-6 max-[1100px]:px-7 max-[600px]:px-5">
                     {/* Welcome header */}
                     <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#E8D9B8] bg-white p-5 shadow-sm sm:p-6">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -333,6 +348,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                         src={provider.profile_photo}
                                         alt={provider.organization_name}
                                         className="h-14 w-14 rounded-xl object-cover"
+                                        // Photo file missing (e.g. after migrate:fresh --seed) → show the placeholder instead of a broken image.
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = '/images/dummy-profile.jpg';
+                                        }}
                                     />
                                 ) : (
                                     <img
@@ -342,25 +362,43 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                     />
                                 )}
                                 <div>
-                                    <h1 className="font-display text-[24px] font-semibold leading-[1.15] text-[#1E4D4A] md:text-[28px]">
+                                    <h1 className="font-display text-[24px] leading-[1.15] font-semibold text-[#1E4D4A] md:text-[28px]">
                                         Welcome back, {provider.organization_name}
                                     </h1>
                                     <p className="text-sm text-[#2C2C2C]/75">
-                                        {[professionalTitles.join(', '), provider.city, provider.country]
-                                            .filter(Boolean)
-                                            .join(' · ') || 'Manage your provider profile'}
+                                        {[professionalTitles.join(', '), provider.city, provider.country].filter(Boolean).join(' · ') ||
+                                            'Manage your provider profile'}
                                     </p>
                                 </div>
                             </div>
-                            <span className={`inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1 text-sm font-semibold ${statusChip}`}>
-                                <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-                                {status.label}
-                            </span>
+                            <div className="flex flex-col items-start gap-3 sm:items-end">
+                                <span
+                                    className={`inline-flex items-center gap-1.5 self-start rounded-full px-3 py-1 text-sm font-semibold sm:self-end ${statusChip}`}
+                                >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+                                    {status.label}
+                                </span>
+                                {/* Account actions */}
+                                <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                                    <Link
+                                        href={links.editProfile}
+                                        className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#1E4D4A] px-4 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none sm:flex-none"
+                                    >
+                                        Edit profile
+                                    </Link>
+                                    <Link
+                                        as="button"
+                                        method="post"
+                                        href="/logout"
+                                        className="inline-flex min-h-[44px] flex-1 cursor-pointer items-center justify-center rounded-[10px] border border-[#1E4D4A] bg-white px-4 text-[15px] font-semibold text-[#1E4D4A] transition hover:bg-[#1E4D4A]/5 focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none sm:flex-none"
+                                    >
+                                        Log out
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
 
-                        <p className="mt-2 rounded-lg bg-[#FAFAF6] px-4 py-3 text-[15px] text-[#2C2C2C]">
-                            {status.description}
-                        </p>
+                        <p className="mt-2 rounded-lg bg-[#FAFAF6] px-4 py-3 text-[15px] text-[#2C2C2C]">{status.description}</p>
 
                         {provider.review_note && (
                             <p className="mt-2 rounded-lg border border-[#E8D9B8] bg-[#E8D9B8]/40 px-4 py-3 text-sm text-[#2C2C2C]">
@@ -402,19 +440,19 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Professional Details">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Professional Titles</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Professional Titles</h3>
                                     <BadgeList items={professionalTitles} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Treatment Approaches</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Treatment Approaches</h3>
                                     <BadgeList items={treatmentApproaches} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Specialized Training</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Specialized Training</h3>
                                     <BadgeList items={specializedTraining} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Certifications</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Certifications</h3>
                                     <BadgeList items={certifications} />
                                 </div>
                             </div>
@@ -423,11 +461,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Areas of Support & Populations">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Areas of Support</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Areas of Support</h3>
                                     <BadgeList items={areasOfSupport} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Populations Served</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Populations Served</h3>
                                     <BadgeList items={populationsServed} />
                                 </div>
                             </div>
@@ -436,7 +474,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Languages & Cultural Identity">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Languages</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Languages</h3>
                                     <BadgeList items={languages} />
                                 </div>
                                 <InfoRow label="Caribbean Identity" value={provider.caribbean_identity} />
@@ -447,11 +485,11 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Service Information">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Service Formats</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Service Formats</h3>
                                     <BadgeList items={serviceFormats} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Practice Settings</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Practice Settings</h3>
                                     <BadgeList items={practiceSettings} />
                                 </div>
                                 <InfoRow label="Session Format" value={stats.sessionFormat} />
@@ -461,20 +499,18 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Location & Telehealth">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Address</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Address</h3>
                                     {provider.hide_address ? (
                                         <p className="text-sm text-[#2C2C2C]/75">Hidden from public view</p>
                                     ) : (
                                         <p className="text-sm text-[#2C2C2C]">
-                                            {[provider.address, provider.city, provider.state_province, provider.country]
-                                                .filter(Boolean)
-                                                .join(', ')}
+                                            {[provider.address, provider.city, provider.state_province, provider.country].filter(Boolean).join(', ')}
                                         </p>
                                     )}
                                 </div>
                                 <InfoRow label="Multiple Locations" value={provider.multiple_locations} />
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Telehealth Regions</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Telehealth Regions</h3>
                                     <BadgeList items={telehealthRegions} />
                                 </div>
                             </div>
@@ -483,7 +519,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                         <SectionCard title="Payment & Insurance">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">Payment Methods</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">Payment Methods</h3>
                                     <BadgeList items={paymentMethods} />
                                 </div>
                                 <InfoRow label="Insurance Plans" value={provider.insurance_plans} />
@@ -508,15 +544,14 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                 <InfoRow label="License Number" value={provider.license_number} />
                                 <InfoRow label="License Status" value={provider.license_status} />
                                 <div>
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-[#2C2C2C]/75">License States/Countries</h3>
+                                    <h3 className="text-sm font-semibold tracking-wide text-[#2C2C2C]/75 uppercase">License States/Countries</h3>
                                     <BadgeList items={licenseStates} />
                                 </div>
                             </dl>
                         </SectionCard>
                     </div>
-                </main>
-                <LandingFooter />
+                </div>
             </div>
-        </>
+        </ConnectLayout>
     );
 }

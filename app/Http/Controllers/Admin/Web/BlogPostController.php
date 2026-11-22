@@ -9,6 +9,8 @@ use App\Services\Web\BlogRenderer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -93,7 +95,7 @@ class BlogPostController extends Controller
     public function uploadImage(Request $request): JsonResponse
     {
         $request->validate(['image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096']]);
-        $path = $request->file('image')->store('blog', 'public');
+        $path = $this->storeImage($request->file('image'));
 
         return response()->json(['url' => '/storage/' . $path]);
     }
@@ -141,6 +143,11 @@ class BlogPostController extends Controller
             'published_at.required' => 'Choose when the article should be published.',
         ]);
 
+        // The form sends the date in UTC (ISO 8601) → convert to the app timezone before saving or comparing.
+        if (! empty($data['published_at'])) {
+            $data['published_at'] = Carbon::parse($data['published_at'])->setTimezone(config('app.timezone'));
+        }
+
         // Scheduled must be in the future; publishing now fills in the real time.
         if ($data['status'] === 'scheduled' && now()->gte($data['published_at'])) {
             throw ValidationException::withMessages(['published_at' => 'Choose a future date and time, or set the status to Published.']);
@@ -153,7 +160,7 @@ class BlogPostController extends Controller
             $oldSlug = $post->exists ? $post->getOriginal('slug') : null;
 
             if ($request->hasFile('image_file')) {
-                $data['image'] = $request->file('image_file')->store('blog', 'public');
+                $data['image'] = $this->storeImage($request->file('image_file'));
             } elseif ($request->boolean('remove_image')) {
                 $data['image'] = null;
                 $data['image_alt'] = null;
@@ -209,7 +216,7 @@ class BlogPostController extends Controller
                 'seo_title'        => $post->seo_title ?? '',
                 'seo_description'  => $post->seo_description ?? '',
                 'status'           => $post->status ?? 'draft',
-                'published_at'     => $post->published_at?->format('Y-m-d\TH:i') ?? '',
+                'published_at'     => $post->published_at?->toIso8601String() ?? '', // shown in the admin's own timezone by the form
                 'live'             => $post->exists && $post->isPublic(),
             ],
             'categories'  => collect(BlogPost::CATEGORY_LABELS)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values(),
@@ -217,5 +224,22 @@ class BlogPostController extends Controller
             'otherPosts'  => BlogPost::where('id', '!=', $post->id ?? 0)->orderBy('title')->get(['id', 'title', 'status'])
                 ->map(fn ($p) => ['id' => $p->id, 'title' => $p->title, 'status' => BlogPost::STATUSES[$p->status] ?? $p->status]),
         ];
+    }
+
+    /**
+     * Save an uploaded photo to storage/app/public/blog and return "blog/<file>".
+     * Uses move() like ProviderService::storeUpload(): on some Windows/Laragon setups store()
+     * fails with "Path cannot be empty" because the temporary upload has no real path.
+     */
+    private function storeImage(UploadedFile $file): string
+    {
+        $dir = storage_path('app/public/blog');
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $filename = $file->hashName();
+        $file->move($dir, $filename);
+
+        return 'blog/' . $filename;
     }
 }

@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ProviderSeeder::class,
             ProviderSupportAreaSeeder::class,
+            BlogPostSeeder::class
         ]);
 
         // Public directory filter dropdowns are cached — refresh after seeding
