@@ -41,6 +41,10 @@ interface SharedProps {
 /* "For Providers" disclosure — click/tap, Down Arrow, Escape returns focus, outside click closes. */
 function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: boolean }) {
     const [open, setOpen] = useState(false);
+    // Dashboard and Edit profile both use page="account" — the address decides which menu item is current.
+    const path = usePage().url.split('?')[0];
+    const onDashboard = path.startsWith(URLS.account);
+    const onEditProfile = path.startsWith(URLS.editProfile);
     const root = useRef<HTMLDivElement>(null);
     const trigger = useRef<HTMLButtonElement>(null);
     const firstLink = useRef<HTMLAnchorElement>(null);
@@ -93,16 +97,29 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                 <span className="provider-chevron" aria-hidden="true" />
             </button>
             <div id="provider-nav-links" className="provider-nav-links" hidden={!open}>
-                <Link ref={firstLink} href={URLS.providers} aria-current={page === 'providers' ? 'page' : undefined} onClick={() => setOpen(false)}>
-                    Join Bahali Connect
-                </Link>
+                {/* Not shown inside the provider account (dashboard, edit profile) — the provider has already joined. */}
+                {page !== 'account' && (
+                    <Link
+                        ref={firstLink}
+                        href={URLS.providers}
+                        aria-current={page === 'providers' ? 'page' : undefined}
+                        onClick={() => setOpen(false)}
+                    >
+                        Join Bahali Connect
+                    </Link>
+                )}
                 {/* Existing account system: provider login, or the provider account links once signed in. */}
                 {signedIn ? (
                     <>
-                        <Link href={URLS.account} aria-current={page === 'account' ? 'page' : undefined} onClick={() => setOpen(false)}>
+                        <Link
+                            ref={page === 'account' ? firstLink : undefined}
+                            href={URLS.account}
+                            aria-current={onDashboard ? 'page' : undefined}
+                            onClick={() => setOpen(false)}
+                        >
                             My dashboard
                         </Link>
-                        <Link href={URLS.editProfile} onClick={() => setOpen(false)}>
+                        <Link href={URLS.editProfile} aria-current={onEditProfile ? 'page' : undefined} onClick={() => setOpen(false)}>
                             Edit profile
                         </Link>
                         <Link as="button" method="post" href={URLS.logout} className="provider-nav-logout" onClick={() => setOpen(false)}>
