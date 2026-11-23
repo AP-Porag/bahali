@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Mail\ConnectMessageReceived;
 use App\Models\ConnectMessage;
+use App\Services\Web\ConnectContentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -31,43 +32,49 @@ class ConnectController extends Controller
         'Other concern',
     ];
 
+    /** Page text from Admin → CMS → Website Pages (defaults = the approved wording). */
+    public function __construct(private ConnectContentService $content)
+    {
+    }
+
     public function about(): Response
     {
-        return Inertia::render('connect/About');
+        return Inertia::render('connect/About', ['content' => $this->content->getContent('about')]);
     }
 
     public function howItWorks(): Response
     {
-        return Inertia::render('connect/HowItWorks');
+        return Inertia::render('connect/HowItWorks', ['content' => $this->content->getContent('how')]);
     }
 
     public function forProviders(): Response
     {
-        return Inertia::render('connect/ForProviders');
+        return Inertia::render('connect/ForProviders', ['content' => $this->content->getContent('providers')]);
     }
 
     public function urgentHelp(): Response
     {
-        return Inertia::render('connect/UrgentHelp');
+        return Inertia::render('connect/UrgentHelp', ['content' => $this->content->getContent('urgent')]);
     }
 
     public function spotlight(): Response
     {
-        return Inertia::render('connect/SpotlightPolicy');
+        return Inertia::render('connect/SpotlightPolicy', ['content' => $this->content->getContent('spotlight')]);
     }
 
     /** privacy | terms | directory | accessibility */
     public function policy(string $kind): Response
     {
-        return Inertia::render('connect/Policy', ['kind' => $kind]);
+        return Inertia::render('connect/Policy', ['kind' => $kind, 'content' => $this->content->getContent($kind)]);
     }
 
     public function contact(Request $request): Response
     {
         return Inertia::render('connect/Support', [
-            'report' => false,
-            'topic'  => in_array($request->query('topic'), self::TOPICS, true) ? $request->query('topic') : 'directory',
-            'sent'   => (bool) session('connect_message_sent'),
+            'report'  => false,
+            'topic'   => in_array($request->query('topic'), self::TOPICS, true) ? $request->query('topic') : 'directory',
+            'sent'    => (bool) session('connect_message_sent'),
+            'content' => $this->content->getContent('contact'),
         ]);
     }
 
@@ -77,6 +84,7 @@ class ConnectController extends Controller
             'report'  => true,
             'profile' => mb_substr((string) $request->query('profile', ''), 0, 500),
             'sent'    => (bool) session('connect_message_sent'),
+            'content' => $this->content->getContent('report'),
         ]);
     }
 

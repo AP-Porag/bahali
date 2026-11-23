@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 import { CONNECT_URLS as URLS } from '@/components/connect/links';
 import SearchForm from '@/components/connect/SearchForm';
 import { type ConnectCountry, type ConnectFilters, type ConnectTopic } from '@/components/connect/types';
@@ -19,101 +20,83 @@ export interface ReadingCard {
     minutes: number;
 }
 
-const FAQS: [string, string][] = [
-    [
-        'Is Bahali Connect free to use?',
-        'Yes. It is always free to search the directory, read profiles and contact providers directly. Only providers can create an account. Providers may charge for their own services.',
-    ],
-    [
-        'How do I choose a provider?',
-        'Start with what matters most to you. You might want someone who understands your background, speaks your preferred language or offers sessions you can afford. If a profile feels like a good fit, you can reach out and ask, “What would it be like to work with you?”',
-    ],
-    [
-        'Can I find virtual support?',
-        'Yes. Choose the country or territory where you will be during your sessions, then select virtual support. Before booking, check with the provider that they offer virtual sessions in that location.',
-    ],
-    [
-        'How do I contact a provider?',
-        'You will find contact details on each profile. You can reach out to ask questions before deciding whether to arrange a meeting. You and the provider agree on any appointment directly.',
-    ],
-    ['What if I cannot find a match?', 'Try fewer filters or a related area of support. Your selected location stays the same until you change it.'],
-];
-
 interface Props {
     countries: ConnectCountry[];
     topics: ConnectTopic[];
     filters: ConnectFilters;
     reading?: ReadingCard[];
+    content?: ConnectContent;
 }
 
-export default function Home({ countries, topics, filters, reading = [] }: Props) {
+export default function Home({ countries, topics, filters, reading = [], content }: Props) {
+    const t = reader(content);
+    const faqs = [1, 2, 3, 4, 5].map((n) => [t(`faq${n}.q`), t(`faq${n}.a`)]).filter(([q]) => q);
+
     return (
-        <ConnectLayout
-            page="home"
-            title="Find support. Feel understood."
-            description="Find mental health and emotional wellness providers serving Caribbean communities and the diaspora. Search is free."
-        >
+        <ConnectLayout page="home" title={t('seo.title')} description={t('seo.description')}>
             <section className="hero">
                 <div className="hero-grid wrap">
                     <div className="hero-copy">
-                        <p className="eyebrow">SUPPORT STARTS WITH CONNECTION</p>
+                        <p className="eyebrow">{t('hero.eyebrow')}</p>
                         <h1>
-                            Find support.
-                            <br />
-                            Feel <em>understood.</em>
+                            <Rich text={t('hero.title')} />
                         </h1>
                         <p className="lead">
-                            Explore providers offering mental health care and community support for Caribbean communities and the diaspora.
+                            <Rich text={t('hero.lead')} />
                         </p>
                         <p className="hero-note">
-                            For you, your family or someone you care about. It is okay to ask for support, even if you are not sure where to start.
+                            <Rich text={t('hero.note')} />
                         </p>
                     </div>
                     <div className="hero-art">
                         <img
-                            src="/images/connect/support-conversation.jpg"
-                            alt="Two women in conversation, with one listening attentively."
+                            src={t('hero.image')}
+                            alt={t('hero.image_alt')}
                             width="1600"
                             height="859"
                         />
                     </div>
                 </div>
                 <div className="wrap search-wrap" id="search">
-                    <SearchForm countries={countries} topics={topics} filters={filters} />
+                    <SearchForm countries={countries} topics={topics} filters={filters} text={content} />
                 </div>
             </section>
 
             <div className="intro-strip wrap">
-                <span>Free to browse</span>
-                <span>Search without sharing your name.</span>
-                <span>Contact providers directly</span>
+                <span>{t('strip.item1')}</span>
+                <span>{t('strip.item2')}</span>
+                <span>{t('strip.item3')}</span>
             </div>
 
             <section className="section wrap how how-home" id="how">
                 <div className="how-heading">
-                    <p className="eyebrow">HOW BAHALI CONNECT WORKS</p>
-                    <h2>A clearer path to support.</h2>
+                    <p className="eyebrow">{t('how.eyebrow')}</p>
+                    <h2>
+                        <Rich text={t('how.title')} />
+                    </h2>
                 </div>
                 <div className="steps">
                     {[
-                        ['01', 'Find options', 'Choose your location and what you would like help with.'],
-                        ['02', 'Explore profiles', 'Compare services, languages, fees and meeting options at your own pace.'],
-                        ['03', 'Make a connection', 'Reach out to ask about availability and next steps.'],
+                        ['01', t('how.step1.title'), t('how.step1.body')],
+                        ['02', t('how.step2.title'), t('how.step2.body')],
+                        ['03', t('how.step3.title'), t('how.step3.body')],
                     ].map(([n, t, b]) => (
                         <div className="step" key={n}>
                             <span className="step-number">{n}</span>
                             <div>
                                 <h3>{t}</h3>
-                                <p>{b}</p>
+                                <p>
+                                    <Rich text={b} />
+                                </p>
                             </div>
                         </div>
                     ))}
                 </div>
                 <figure className="community-photo">
-                    <figcaption>Support can begin with a conversation.</figcaption>
+                    <figcaption>{t('how.caption')}</figcaption>
                     <img
-                        src="/images/connect/community-connection.jpg"
-                        alt="Two older women smiling together on a bench."
+                        src={t('how.image')}
+                        alt={t('how.image_alt')}
                         width="1400"
                         height="934"
                         loading="lazy"
@@ -124,37 +107,37 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
             <section className="options-section" id="about">
                 <div className="wrap">
                     <div className="options-top">
-                        <p className="eyebrow">UNDERSTANDING YOUR OPTIONS</p>
+                        <p className="eyebrow">{t('options.eyebrow')}</p>
                         <h2>
-                            Different needs.
-                            <br />
-                            Different ways to find support.
+                            <Rich text={t('options.title')} />
                         </h2>
-                        <p>Support can take different forms. Explore what each provider offers and choose whom you would like to learn more about.</p>
+                        <p>
+                            <Rich text={t('options.body')} />
+                        </p>
                     </div>
                     <div className="option-grid">
                         {[
-                            ['Clinical & counseling support', 'Explore therapy, counseling and assessment services.'],
-                            ['Community-based support', 'Explore peer, pastoral and other community-based emotional wellness support.'],
-                        ].map(([t, b]) => (
-                            <div key={t}>
-                                <h3>{t}</h3>
-                                <p>{b}</p>
+                            [t('options.card1.title'), t('options.card1.body')],
+                            [t('options.card2.title'), t('options.card2.body')],
+                        ].map(([title, b], n) => (
+                            <div key={n}>
+                                <h3>{title}</h3>
+                                <p>
+                                    <Rich text={b} />
+                                </p>
                             </div>
                         ))}
                     </div>
                     <details className="review-details">
                         <summary>
-                            What do the profile badges mean? <span aria-hidden="true">＋</span>
+                            {t('badges.summary')} <span aria-hidden="true">＋</span>
                         </summary>
                         <div>
                             <p>
-                                Profile review means Bahali has reviewed a listing. Optional credential verification is in development. Only profiles
-                                with a credential independently confirmed by Bahali will receive the “Credentials verified” badge. Caribbean
-                                experience is provider-reported. A badge does not guarantee that a provider is the right fit for you.
+                                <Rich text={t('badges.body')} />
                             </p>
                             <Link className="light-link" href={URLS.directory}>
-                                Understand the profile badges
+                                {t('badges.link')}
                             </Link>
                         </div>
                     </details>
@@ -167,17 +150,21 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
                     <div className="wrap">
                         <div className="editorial-section-heading">
                             <div>
-                                <p className="eyebrow">A LITTLE READING. A LITTLE REASSURANCE.</p>
-                                <h2>Start with understanding.</h2>
+                                <p className="eyebrow">{t('reading.eyebrow')}</p>
+                                <h2>
+                                    <Rich text={t('reading.title')} />
+                                </h2>
                             </div>
-                            <Link href={URLS.blog}>Explore the blog</Link>
+                            <Link href={URLS.blog}>{t('reading.link')}</Link>
                         </div>
                         <div className="home-reading-grid">
                             {reading.map((a) => (
                                 <article className="blog-card journal-card" key={a.slug}>
                                     <div className="journal-card-meta">
                                         <p className="eyebrow">{a.category}</p>
-                                        <span>{a.minutes} min read</span>
+                                        <span>
+                                            {a.minutes} {t('reading.minutes')}
+                                        </span>
                                     </div>
                                     <h3>
                                         <Link href={`${URLS.blog}/${a.slug}`}>{a.title}</Link>
@@ -185,7 +172,8 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
                                     <p className="blog-card-summary">{a.excerpt}</p>
                                     <div className="blog-card-bottom">
                                         <Link href={`${URLS.blog}/${a.slug}`}>
-                                            Read the story<span className="sr-only">: {a.title}</span>
+                                            {t('reading.more')}
+                                            <span className="sr-only">: {a.title}</span>
                                         </Link>
                                     </div>
                                 </article>
@@ -197,23 +185,27 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
 
             <section className="section wrap provider-band">
                 <div>
-                    <p className="eyebrow">FOR PROVIDERS</p>
-                    <h2>Help your community find support.</h2>
-                    <p>Join a directory that welcomes eligible clinical and community-based providers from all backgrounds.</p>
-                    <p className="bold-note">No directory listing fee.</p>
+                    <p className="eyebrow">{t('providers.eyebrow')}</p>
+                    <h2>
+                        <Rich text={t('providers.title')} />
+                    </h2>
+                    <p>
+                        <Rich text={t('providers.body')} />
+                    </p>
+                    <p className="bold-note">{t('providers.note')}</p>
                     <div className="button-row">
                         <Link className="button" href={URLS.providers}>
-                            Join Bahali Connect
+                            {t('providers.button')}
                         </Link>
                         <a className="text-button" href={URLS.login}>
-                            Provider login
+                            {t('providers.login')}
                         </a>
                     </div>
                 </div>
                 <figure className="connect-photo" style={{ ['--photo-ratio' as string]: '4 / 3' }}>
                     <img
-                        src="/images/connect/providers-in-community.jpg"
-                        alt="Two women talking over coffee in a relaxed seating area."
+                        src={t('providers.image')}
+                        alt={t('providers.image_alt')}
                         width="1400"
                         height="1050"
                         loading="lazy"
@@ -224,21 +216,24 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
             <section className="faq-section">
                 <div className="wrap faq-grid">
                     <div>
-                        <p className="eyebrow">A LITTLE MORE CLARITY</p>
+                        <p className="eyebrow">{t('faq.eyebrow')}</p>
                         <h2>
-                            Questions?
-                            <br /> Start here.
+                            <Rich text={t('faq.title')} />
                         </h2>
-                        <p>Finding support should feel easier.</p>
+                        <p>
+                            <Rich text={t('faq.body')} />
+                        </p>
                     </div>
                     <div>
-                        {FAQS.map(([q, a]) => (
+                        {faqs.map(([q, a]) => (
                             <details name="connect-faq" key={q}>
                                 <summary>
                                     {q}
                                     <span aria-hidden="true">＋</span>
                                 </summary>
-                                <p>{a}</p>
+                                <p>
+                                    <Rich text={a} />
+                                </p>
                             </details>
                         ))}
                     </div>
@@ -246,8 +241,10 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
             </section>
 
             <section className="closing wrap">
-                <p className="eyebrow">BAHALI CONNECT</p>
-                <h2>You do not need all the answers to begin.</h2>
+                <p className="eyebrow">{t('closing.eyebrow')}</p>
+                <h2>
+                    <Rich text={t('closing.title')} />
+                </h2>
                 <button
                     type="button"
                     className="button"
@@ -256,7 +253,7 @@ export default function Home({ countries, topics, filters, reading = [] }: Props
                         document.getElementById('home-country')?.focus({ preventScroll: true });
                     }}
                 >
-                    Find support
+                    {t('closing.button')}
                 </button>
             </section>
         </ConnectLayout>

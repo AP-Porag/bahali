@@ -1,7 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
-export type ContentFieldType = 'text' | 'textarea' | 'image';
+export type ContentFieldType = 'text' | 'textarea' | 'image' | 'markdown';
 
 export interface ContentField {
     key: string;
@@ -10,6 +10,8 @@ export interface ContentField {
     value: string;
     group?: string | null;
     hint?: string | null;
+    /** Optional per-field limit (Connect website pages); otherwise 5000 for textarea, 255 for text. */
+    maxLength?: number | null;
 }
 
 export interface ContentSection {
@@ -35,8 +37,9 @@ interface FormData {
 
 export default function ContentEditModal({ field, sectionTitle, updateUrl, onClose, onSaved }: Props) {
     const isImage = field.type === 'image';
-    const isTextarea = field.type === 'textarea';
-    const maxLength = isTextarea ? 5000 : 255;
+    const isMarkdown = field.type === 'markdown';
+    const isTextarea = field.type === 'textarea' || isMarkdown;
+    const maxLength = field.maxLength ?? (isTextarea ? 5000 : 255);
 
     const form = useForm<FormData>({
         key: field.key,
@@ -101,7 +104,7 @@ export default function ContentEditModal({ field, sectionTitle, updateUrl, onClo
             {/* Panel */}
             <form
                 onSubmit={submit}
-                className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-[#E7E0D2] bg-white shadow-2xl"
+                className={`relative w-full ${isMarkdown ? 'max-w-4xl' : 'max-w-xl'} overflow-hidden rounded-2xl border border-[#E7E0D2] bg-white shadow-2xl`}
             >
                 {/* Header */}
                 <div className="border-b border-[#EFEAE0] px-7 pb-5 pt-6">
@@ -176,11 +179,11 @@ export default function ContentEditModal({ field, sectionTitle, updateUrl, onClo
                                 <textarea
                                     id="content-value"
                                     autoFocus
-                                    rows={6}
+                                    rows={isMarkdown ? 18 : 6}
                                     maxLength={maxLength}
                                     value={form.data.value}
                                     onChange={(e) => form.setData('value', e.target.value)}
-                                    className="mt-2 block w-full resize-y rounded-xl border border-[#E3D9C4] bg-[#FBF8F2] px-4 py-3 text-[15px] leading-relaxed text-[#1F2A2E] outline-none transition placeholder:text-[#9AA6A4] focus:border-[#0E7C7B] focus:bg-white focus:ring-4 focus:ring-[#0E7C7B]/10"
+                                    className={`mt-2 block w-full resize-y rounded-xl border border-[#E3D9C4] bg-[#FBF8F2] px-4 py-3 ${isMarkdown ? 'font-mono text-[13px]' : 'text-[15px]'} leading-relaxed text-[#1F2A2E] outline-none transition placeholder:text-[#9AA6A4] focus:border-[#0E7C7B] focus:bg-white focus:ring-4 focus:ring-[#0E7C7B]/10`}
                                 />
                             ) : (
                                 <input

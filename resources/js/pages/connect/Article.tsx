@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState, type MouseEvent } from 'react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, fill, reader, type ConnectContent } from '@/components/connect/content';
 import { CONNECT_URLS as URLS } from '@/components/connect/links';
 
 import { ArticleCard, type BlogCard } from './Blog';
@@ -47,7 +48,8 @@ interface Post {
 
 const modified = (e: MouseEvent) => e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0;
 
-export default function Article({ post, related }: { post: Post; related: BlogCard[] }) {
+export default function Article({ post, related, content }: { post: Post; related: BlogCard[]; content?: ConnectContent }) {
+    const t = reader(content);
     const [copied, setCopied] = useState('');
     const [tocOpen] = useState(() => typeof window === 'undefined' || window.matchMedia('(min-width: 701px)').matches);
 
@@ -79,9 +81,9 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
             const url = new URL(window.location.href);
             url.hash = '';
             await navigator.clipboard.writeText(url.href);
-            setCopied('Article link copied.');
+            setCopied(t('article.copied'));
         } catch {
-            setCopied('Copy the article address from your browser to share it.');
+            setCopied(t('article.copy_failed'));
         }
     };
 
@@ -97,9 +99,9 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                 <section className="story-cover">
                     <div className="wrap">
                         <div className="story-masthead">
-                            <span>THE BAHALI CONNECT BLOG</span>
+                            <span>{t('masthead.label')}</span>
                             <Link href={URLS.blog} preserveScroll>
-                                Back to the collection
+                                {t('article.back')}
                             </Link>
                         </div>
                         <div className="story-cover-grid">
@@ -112,20 +114,22 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                                 <div className="story-author-monogram" aria-hidden="true">
                                     {post.authorInitials}
                                 </div>
-                                <p className="eyebrow">WRITTEN BY</p>
-                                <p className="story-author-name">{post.authorName || 'Bahali Connect'}</p>
-                                <p className="story-author-role">{post.authorRole || 'Bahali Connect'}</p>
+                                <p className="eyebrow">{t('article.written_by')}</p>
+                                <p className="story-author-name">{post.authorName || t('article.default_author')}</p>
+                                <p className="story-author-role">{post.authorRole || t('article.default_author')}</p>
                                 <div className="story-publication">
                                     <time dateTime={post.publishedAt}>{post.publishedLabel}</time>
-                                    <span>{post.minutes} min read</span>
+                                    <span>
+                                        {post.minutes} {t('card.minutes')}
+                                    </span>
                                 </div>
                                 {post.reviewerName && (
                                     <p className="story-pace">
-                                        Reviewed by {post.reviewerName}
+                                        {fill(t('article.reviewed_by'), { name: post.reviewerName })}
                                         {post.reviewedAt ? `, ${post.reviewedAt}` : ''}.
                                     </p>
                                 )}
-                                <p className="story-pace">Read at your own pace.</p>
+                                <p className="story-pace">{t('article.pace')}</p>
                             </aside>
                         </div>
                     </div>
@@ -136,7 +140,7 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                         {post.sections.length > 0 && (
                             <details className="story-toc" open={tocOpen}>
                                 <summary>
-                                    <span>In this article</span>
+                                    <span>{t('article.toc')}</span>
                                     <span className="contents-chevron" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none">
                                             <path d="m6 9 6 6 6-6" />
@@ -154,7 +158,7 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                         )}
                         <div className="story-share">
                             <button type="button" onClick={copyLink}>
-                                Copy article link
+                                {t('article.copy')}
                             </button>
                             <p role="status">{copied}</p>
                         </div>
@@ -162,7 +166,7 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                             <div className="story-margin-note">
                                 <span aria-hidden="true">“</span>
                                 <blockquote>{post.marginQuote}</blockquote>
-                                <p>A thought to keep close</p>
+                                <p>{t('article.quote_label')}</p>
                             </div>
                         )}
                     </aside>
@@ -184,8 +188,10 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                         ))}
                         <div className="story-next-step">
                             <div>
-                                <p className="eyebrow">{post.provider ? 'JOIN THE COMMUNITY' : 'WHEN YOU ARE READY'}</p>
-                                <h2>{post.provider ? 'Help your community find your work.' : 'A next step, at your pace.'}</h2>
+                                <p className="eyebrow">{post.provider ? t('next.provider_eyebrow') : t('next.eyebrow')}</p>
+                                <h2>
+                                    <Rich text={post.provider ? t('next.provider_title') : t('next.title')} />
+                                </h2>
                             </div>
                             {ctaInternal ? (
                                 <Link href={post.ctaUrl} className="button">
@@ -202,7 +208,7 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                             <p>{post.signoff}</p>
                             <p className="story-signature">{post.signature}</p>
                             <p>
-                                <em>Bahali Connect is an initiative of Bahali Inc.</em>
+                                <Rich text={t('article.footer')} />
                             </p>
                         </div>
                     </article>
@@ -212,10 +218,12 @@ export default function Article({ post, related }: { post: Post; related: BlogCa
                     <section className="wrap story-related">
                         <div className="editorial-section-heading">
                             <div>
-                                <p className="eyebrow">KEEP EXPLORING</p>
-                                <h2>A little more understanding.</h2>
+                                <p className="eyebrow">{t('related.eyebrow')}</p>
+                                <h2>
+                                    <Rich text={t('related.title')} />
+                                </h2>
                             </div>
-                            <Link href={URLS.blog}>Explore the collection</Link>
+                            <Link href={URLS.blog}>{t('related.link')}</Link>
                         </div>
                         <div className="blog-card-grid">
                             {related.map((b) => (

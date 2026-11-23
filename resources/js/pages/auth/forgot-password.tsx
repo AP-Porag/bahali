@@ -1,7 +1,8 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 
 /**
  * Provider password reset request — Bahali Connect design (reference: /provider/login/ → "Forgot password?").
@@ -9,6 +10,8 @@ import ConnectLayout from '@/components/connect/ConnectLayout';
  */
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    // Text from Admin → CMS → Website Pages → Login & Password (shared by HandleInertiaRequests).
+    const t = reader(usePage<{ connectAuth?: ConnectContent }>().props.connectAuth);
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
@@ -20,38 +23,41 @@ export default function ForgotPassword({ status }: { status?: string }) {
     };
 
     return (
-        <ConnectLayout
-            page="providers"
-            title="Reset your password"
-            description="Request a link to reset the password for your Bahali Connect provider account."
-        >
+        <ConnectLayout page="providers" title={t('forgot.seo_title')} description={t('forgot.seo_description')}>
             <section className="auth-layout wrap">
                 <div className="auth-intro">
-                    <p className="eyebrow">BAHALI CONNECT FOR PROVIDERS</p>
-                    <h1>Welcome back.</h1>
-                    <p className="lead">Return to your application or manage your published profile.</p>
+                    <p className="eyebrow">{t('intro.eyebrow')}</p>
+                    <h1>
+                        <Rich text={t('intro.title')} />
+                    </h1>
+                    <p className="lead">
+                        <Rich text={t('intro.lead')} />
+                    </p>
                     <aside className="provider-appreciation">
-                        <h2>Thank you for the work you do.</h2>
+                        <h2>
+                            <Rich text={t('thanks.title')} />
+                        </h2>
                         <p>
-                            Your care, time and experience matter. We are grateful you are part of Bahali Connect’s effort to make support easier to
-                            find across Caribbean communities and the diaspora.
+                            <Rich text={t('thanks.body')} />
                         </p>
                     </aside>
                 </div>
 
                 <form className="auth-card" onSubmit={submit} noValidate>
-                    <h2>Reset your password</h2>
-                    <p>Enter the email address associated with your provider account.</p>
+                    <h2>{t('forgot.title')}</h2>
+                    <p>
+                        <Rich text={t('forgot.intro')} />
+                    </p>
 
                     <label htmlFor="email">
-                        Email address
+                        {t('forgot.email_label')}
                         <input
                             id="email"
                             name="email"
                             type="email"
                             required
                             autoComplete="email"
-                            placeholder="you@example.com"
+                            placeholder={t('forgot.email_placeholder')}
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             aria-invalid={!!errors.email}
@@ -65,7 +71,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
 
                     <button className="button" type="submit" disabled={processing} aria-busy={processing}>
-                        {processing ? 'Sending…' : 'Send reset link'}
+                        {processing ? t('forgot.busy') : t('forgot.button')}
                     </button>
 
                     {status && (
@@ -75,7 +81,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
 
                     <Link as="button" type="button" className="text-button" href={route('login')}>
-                        Back to login
+                        {t('forgot.back')}
                     </Link>
                 </form>
             </section>

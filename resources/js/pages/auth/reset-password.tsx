@@ -1,7 +1,8 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 
 /**
  * Provider "choose a new password" page (opened from the reset email) — Bahali Connect design,
@@ -21,6 +22,8 @@ interface ResetPasswordForm {
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
+    // Text from Admin → CMS → Website Pages → Login & Password (shared by HandleInertiaRequests).
+    const t = reader(usePage<{ connectAuth?: ConnectContent }>().props.connectAuth);
     const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm>({
         token: token,
         email: email,
@@ -36,28 +39,35 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     };
 
     return (
-        <ConnectLayout page="providers" title="Choose a new password" description="Choose a new password for your Bahali Connect provider account.">
+        <ConnectLayout page="providers" title={t('reset.seo_title')} description={t('reset.seo_description')}>
             <section className="auth-layout wrap">
                 <div className="auth-intro">
-                    <p className="eyebrow">BAHALI CONNECT FOR PROVIDERS</p>
-                    <h1>Welcome back.</h1>
-                    <p className="lead">Return to your application or manage your published profile.</p>
+                    <p className="eyebrow">{t('intro.eyebrow')}</p>
+                    <h1>
+                        <Rich text={t('intro.title')} />
+                    </h1>
+                    <p className="lead">
+                        <Rich text={t('intro.lead')} />
+                    </p>
                     <aside className="provider-appreciation">
-                        <h2>Thank you for the work you do.</h2>
+                        <h2>
+                            <Rich text={t('thanks.title')} />
+                        </h2>
                         <p>
-                            Your care, time and experience matter. We are grateful you are part of Bahali Connect’s effort to make support easier to
-                            find across Caribbean communities and the diaspora.
+                            <Rich text={t('thanks.body')} />
                         </p>
                     </aside>
                 </div>
 
                 <form className="auth-card" onSubmit={submit} noValidate>
-                    <h2>Choose a new password</h2>
-                    <p>Please enter your new password below.</p>
+                    <h2>{t('reset.title')}</h2>
+                    <p>
+                        <Rich text={t('reset.intro')} />
+                    </p>
 
                     {/* Email comes from the reset link and can't be changed here. */}
                     <label htmlFor="email">
-                        Email address
+                        {t('reset.email_label')}
                         <input
                             id="email"
                             name="email"
@@ -78,14 +88,14 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     )}
 
                     <label htmlFor="password">
-                        New password
+                        {t('reset.password_label')}
                         <input
                             id="password"
                             name="password"
                             type="password"
                             required
                             autoComplete="new-password"
-                            placeholder="Enter a new password"
+                            placeholder={t('reset.password_placeholder')}
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             aria-invalid={!!errors.password}
@@ -99,14 +109,14 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     )}
 
                     <label htmlFor="password_confirmation">
-                        Confirm new password
+                        {t('reset.confirm_label')}
                         <input
                             id="password_confirmation"
                             name="password_confirmation"
                             type="password"
                             required
                             autoComplete="new-password"
-                            placeholder="Re-enter the new password"
+                            placeholder={t('reset.confirm_placeholder')}
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             aria-invalid={!!errors.password_confirmation}
@@ -120,13 +130,13 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     )}
 
                     <button className="button" type="submit" disabled={processing} aria-busy={processing}>
-                        {processing ? 'Saving…' : 'Reset password'}
+                        {processing ? t('reset.busy') : t('reset.button')}
                     </button>
 
                     <p className="auth-switch">
-                        Remembered your password?{' '}
+                        {t('reset.switch')}{' '}
                         <Link as="button" type="button" className="text-button" href={route('login')}>
-                            Back to login
+                            {t('reset.back')}
                         </Link>
                     </p>
                 </form>

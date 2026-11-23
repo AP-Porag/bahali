@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlogPost;
 use App\Models\BlogPostRedirect;
 use App\Services\Web\BlogRenderer;
+use App\Services\Web\ConnectContentService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +17,7 @@ use Inertia\Response;
  */
 class BlogController extends Controller
 {
-    public function __construct(private BlogRenderer $renderer)
+    public function __construct(private BlogRenderer $renderer, private ConnectContentService $content)
     {
     }
 
@@ -31,6 +32,7 @@ class BlogController extends Controller
             'posts'         => $posts->map(fn (BlogPost $p) => $this->card($p, true))->values(),
             'featured'      => $featured ? $this->card($featured) + ['authorName' => $featured->author_name, 'authorRole' => $this->shortRole($featured->author_role)] : null,
             'providerStory' => $providerStory ? $this->card($providerStory) : null,
+            'content'       => $this->content->getContent('blog'),
         ]);
     }
 
@@ -78,6 +80,7 @@ class BlogController extends Controller
                 'seoDescription' => $post->seo_description ?: $post->summary,
             ],
             'related' => $this->related($post, $provider),
+            'content' => $this->content->getContent('blog'), // fixed article text (CMS → Website Pages → Blog page)
         ]);
     }
 

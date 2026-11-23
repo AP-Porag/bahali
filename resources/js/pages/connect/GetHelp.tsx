@@ -1,8 +1,9 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
 import { SearchSelect } from '@/components/connect/SearchSelect';
+import { Rich, fill, reader, type ConnectContent } from '@/components/connect/content';
 import { CONNECT_URLS as URLS } from '@/components/connect/links';
 import { subregionLabel, subregionsOf, type ConnectCountry, type ConnectFilters, type ConnectTopic } from '@/components/connect/types';
 
@@ -16,6 +17,7 @@ interface Props {
     countries: ConnectCountry[];
     topics: ConnectTopic[];
     filters: ConnectFilters;
+    content?: ConnectContent;
 }
 
 const isPhone = () => window.matchMedia('(max-width:850px)').matches;
@@ -29,7 +31,8 @@ const focusLocation = () => {
     });
 };
 
-export default function GetHelp({ countries, topics, filters }: Props) {
+export default function GetHelp({ countries, topics, filters, content }: Props) {
+    const t = reader(content);
     const [showAll, setShowAll] = useState(false);
     const [query, setQuery] = useState('');
     const [chosen, setChosen] = useState(filters.topic);
@@ -47,7 +50,7 @@ export default function GetHelp({ countries, topics, filters }: Props) {
     const submit = (e: FormEvent) => {
         e.preventDefault();
         if (!all && !place) {
-            setError('Choose where you would receive support, or explore across all locations.');
+            setError(t('location.error'));
             document.getElementById('help-country')?.focus();
             return;
         }
@@ -59,40 +62,36 @@ export default function GetHelp({ countries, topics, filters }: Props) {
     };
 
     return (
-        <ConnectLayout
-            page="help"
-            title="Get Help"
-            description="You do not need a diagnosis or the perfect words. Start with a concern, or explore all support options."
-        >
+        <ConnectLayout page="help" title={t('seo.title')} description={t('seo.description')}>
             <section className="page-intro help-intro">
                 <div className="wrap">
-                    <p className="eyebrow">GET HELP</p>
+                    <p className="eyebrow">{t('intro.eyebrow')}</p>
                     <h1>
-                        What would you like
-                        <br />
-                        <em>support with?</em>
+                        <Rich text={t('intro.title')} />
                     </h1>
-                    <p className="lead">You do not need a diagnosis or the perfect words. Start with a concern, or explore all support options.</p>
+                    <p className="lead">
+                        <Rich text={t('intro.lead')} />
+                    </p>
                 </div>
             </section>
 
             <section className="wrap help-layout">
                 <div>
                     <label className="discovery-search" htmlFor="topic-search">
-                        Find an area of support
+                        {t('topics.search_label')}
                         <input
                             id="topic-search"
                             type="search"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Try depression, worry or caregiver stress"
+                            placeholder={t('topics.search_placeholder')}
                         />
                     </label>
                     <div className="topic-results" aria-live="polite">
                         {list.length ? (
-                            <p className="small muted">Choose a topic, or continue without one.</p>
+                            <p className="small muted">{t('topics.hint')}</p>
                         ) : (
-                            <p>No matching topic yet. Try a shorter phrase, or explore all support options.</p>
+                            <p>{t('topics.none')}</p>
                         )}
                     </div>
                     <button
@@ -104,29 +103,29 @@ export default function GetHelp({ countries, topics, filters }: Props) {
                             focusLocation();
                         }}
                     >
-                        Explore all support options
+                        {t('topics.all')}
                     </button>
                     <div className="topic-list">
-                        {list.map((t) => (
+                        {list.map((topic) => (
                             <button
                                 type="button"
-                                className={'topic-option ' + (chosen === t.name ? 'selected' : '')}
-                                aria-pressed={chosen === t.name}
-                                key={t.name}
+                                className={'topic-option ' + (chosen === topic.name ? 'selected' : '')}
+                                aria-pressed={chosen === topic.name}
+                                key={topic.name}
                                 onClick={() => {
-                                    setChosen(t.name);
+                                    setChosen(topic.name);
                                     focusLocation();
                                 }}
                             >
-                                <span className="topic-title">{t.name}</span>
-                                <span>{t.description}</span>
-                                <span className="topic-select">{chosen === t.name ? 'Selected' : 'Select topic'}</span>
+                                <span className="topic-title">{topic.name}</span>
+                                <span>{topic.description}</span>
+                                <span className="topic-select">{chosen === topic.name ? t('topics.selected') : t('topics.select')}</span>
                             </button>
                         ))}
                     </div>
                     {!q && (
                         <button type="button" className="text-button topic-expand" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
-                            {showAll ? 'Show fewer areas of support' : `See all ${topics.length} areas of support`}
+                            {showAll ? t('topics.fewer') : fill(t('topics.more'), { count: topics.length })}
                         </button>
                     )}
                 </div>
@@ -141,16 +140,18 @@ export default function GetHelp({ countries, topics, filters }: Props) {
                                 document.querySelector('.discovery-search')?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
                             }}
                         >
-                            Change topic
+                            {t('location.change')}
                         </button>
                     )}
-                    <p className="eyebrow">YOUR NEXT STEP</p>
+                    <p className="eyebrow">{t('location.eyebrow')}</p>
                     <h2 id="help-location-heading" tabIndex={-1}>
-                        {chosen ? 'Support with ' + chosen.toLowerCase() : 'Explore your options'}
+                        {chosen ? fill(t('location.title_topic'), { topic: chosen.toLowerCase() }) : t('location.title')}
                     </h2>
-                    <p>Choose where you would receive support. You can refine by language, type of service and virtual options on the results page.</p>
+                    <p>
+                        <Rich text={t('location.body')} />
+                    </p>
                     <form onSubmit={submit} noValidate>
-                        <label htmlFor="help-country">Country or territory</label>
+                        <label htmlFor="help-country">{t('location.country_label')}</label>
                         <SearchSelect
                             id="help-country"
                             disabled={all}
@@ -163,8 +164,8 @@ export default function GetHelp({ countries, topics, filters }: Props) {
                                 setError('');
                             }}
                             options={countries.map((c) => c.name)}
-                            placeholder="Select a location"
-                            searchPlaceholder="Search countries and territories"
+                            placeholder={t('location.country_placeholder')}
+                            searchPlaceholder={t('location.country_search')}
                         />
                         {error && (
                             <p id="help-country-error" className="error" role="alert">
@@ -173,19 +174,19 @@ export default function GetHelp({ countries, topics, filters }: Props) {
                         )}
                         {!all && place && regions.length > 0 && (
                             <label htmlFor="help-region">
-                                {subregionLabel(countries, place)} <span className="small muted">(optional)</span>
+                                {subregionLabel(countries, place)} <span className="small muted">{t('location.optional')}</span>
                                 <SearchSelect
                                     id="help-region"
                                     value={region}
                                     onChange={setRegion}
                                     options={regions.map((r) => r.name)}
-                                    allLabel={`All areas in ${place}`}
-                                    searchPlaceholder={`Search ${subregionLabel(countries, place).toLowerCase()}`}
+                                    allLabel={fill(t('location.region_all'), { place })}
+                                    searchPlaceholder={fill(t('location.region_search'), { area: subregionLabel(countries, place).toLowerCase() })}
                                 />
                             </label>
                         )}
                         <details className="all-location-choice">
-                            <summary>Explore across all locations</summary>
+                            <summary>{t('all.summary')}</summary>
                             <label className="check-label">
                                 <input
                                     type="checkbox"
@@ -195,27 +196,32 @@ export default function GetHelp({ countries, topics, filters }: Props) {
                                         setError('');
                                     }}
                                 />
-                                Show profiles in all locations
+                                {t('all.checkbox')}
                             </label>
                             <p className="small">
-                                This is a directory-wide view. A listing does not mean the provider can offer services where you are. Choose a location to
-                                narrow your options.
+                                <Rich text={t('all.note')} />
                             </p>
                         </details>
                         <button className="button" type="submit" disabled={busy}>
-                            {busy ? 'Finding support…' : chosen ? 'Find support for this concern' : 'Find support'}
+                            {busy ? t('submit.busy') : chosen ? t('submit.topic') : t('submit.default')}
                         </button>
-                        <p className="small muted">Free to search. Accounts are only for providers.</p>
+                        <p className="small muted">
+                            <Rich text={t('submit.note')} />
+                        </p>
                         <p className="help-urgent-link">
-                            Looking for crisis support? <Link href={URLS.urgent}>Visit Urgent Help</Link>.
+                            <Rich text={t('submit.urgent')} />
                         </p>
                     </form>
                 </aside>
             </section>
 
             <section className="wrap help-reassurance">
-                <h2>A first look is a step forward.</h2>
-                <p>You can read profiles, ask questions and take time to decide. You do not have to contact anyone before you feel ready.</p>
+                <h2>
+                    <Rich text={t('reassurance.title')} />
+                </h2>
+                <p>
+                    <Rich text={t('reassurance.body')} />
+                </p>
             </section>
         </ConnectLayout>
     );

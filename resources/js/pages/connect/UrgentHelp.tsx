@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 import { CONNECT_URLS as URLS, HELPLINE_URL } from '@/components/connect/links';
 
 /**
@@ -8,68 +9,70 @@ import { CONNECT_URLS as URLS, HELPLINE_URL } from '@/components/connect/links';
  * not a Bahali-maintained phone list. Update "Page last checked" only after a real review
  * (quarterly: main link + Jamaica/Haiti listings) — LEGAL_AND_SUPPORT.md.
  */
-export default function UrgentHelp() {
+export default function UrgentHelp({ content }: { content?: ConnectContent }) {
+    const t = reader(content);
+
     return (
-        <ConnectLayout
-            page="urgent"
-            title="Urgent Help"
-            description="If you or someone else is in immediate danger, contact local emergency services now or go to the nearest hospital emergency department."
-        >
+        <ConnectLayout page="urgent" title={t('seo.title')} description={t('seo.description')}>
             <section className="page-intro">
                 <div className="wrap">
-                    <p className="eyebrow">SUPPORT WHEN YOU NEED IT</p>
-                    <h1>Urgent Help</h1>
+                    <p className="eyebrow">{t('intro.eyebrow')}</p>
+                    <h1>
+                        <Rich text={t('intro.title')} />
+                    </h1>
                     <p className="lead">
-                        <strong>
-                            If you or someone else is in immediate danger, contact local emergency services now or go to the nearest hospital emergency
-                            department.
-                        </strong>
+                        <Rich text={t('intro.lead')} />
                     </p>
                 </div>
             </section>
             <article className="wrap urgent-content section">
                 <section>
-                    <h2>Find support now</h2>
+                    <h2>
+                        <Rich text={t('now.title')} />
+                    </h2>
                     <p>
-                        You deserve support during difficult moments. Helplines can offer a place to talk, receive emotional support and consider your next
-                        steps.
+                        <Rich text={t('now.p1')} />
                     </p>
                     <p>
                         <a className="button" href={HELPLINE_URL}>
-                            Find a helpline
+                            {t('now.button')}
                         </a>
                     </p>
                     <p>
-                        Choose the country where the person needing help is <strong>physically located right now</strong>. This may be different from their
-                        home country or where you live.
+                        <Rich text={t('now.p2')} />
                     </p>
-                    <p>Check each service’s listing for its hours, available languages and ways to get in touch.</p>
                     <p>
-                        If no suitable helpline is listed, contact a local health service for guidance.{' '}
-                        <strong>If there is immediate danger, contact local emergency services or go to the nearest emergency department.</strong>
+                        <Rich text={t('now.p3')} />
                     </p>
-                </section>
-                <section>
-                    <h2>About Bahali Connect</h2>
                     <p>
-                        Bahali Connect helps you find providers for ongoing care and support. <strong>We do not provide emergency care.</strong> Our email
-                        and contact forms are not monitored for urgent assistance. Please use the options above if you need help now.
+                        <Rich text={t('now.p4')} />
                     </p>
                 </section>
                 <section>
-                    <h2>Finding ongoing support</h2>
+                    <h2>
+                        <Rich text={t('about.title')} />
+                    </h2>
                     <p>
-                        When you are ready to explore ongoing support, Bahali Connect can help you find providers offering services in your location and
-                        preferred language.
+                        <Rich text={t('about.body')} />
+                    </p>
+                </section>
+                <section>
+                    <h2>
+                        <Rich text={t('ongoing.title')} />
+                    </h2>
+                    <p>
+                        <Rich text={t('ongoing.body')} />
                     </p>
                     <Link href={URLS.help} className="button">
-                        Find ongoing support
+                        {t('ongoing.button')}
                     </Link>
                 </section>
                 <div className="small muted">
-                    <p>Bahali Connect is a service of Bahali Inc. Find A Helpline is an independent service that Bahali does not operate.</p>
                     <p>
-                        Page last checked: <time dateTime="2026-11-18">November 18, 2026</time>
+                        <Rich text={t('footer.note')} />
+                    </p>
+                    <p>
+                        {t('footer.checked_label')} <time dateTime={t('footer.checked_iso')}>{t('footer.checked_date')}</time>
                     </p>
                 </div>
             </article>

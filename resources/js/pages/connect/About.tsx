@@ -1,81 +1,71 @@
 import { Link } from '@inertiajs/react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 import { BAHALI_URL, CONNECT_URLS as URLS } from '@/components/connect/links';
 
 /* About Connect (reference src.jsx → AboutPage). Introduction photograph: 16:10 (IMAGE_GUIDE.md). */
-export default function About() {
+export default function About({ content }: { content?: ConnectContent }) {
+    const t = reader(content);
+
     return (
-        <ConnectLayout
-            page="about"
-            title="About Connect"
-            description="Bahali Connect makes mental health care and community support easier to find for Caribbean communities and the diaspora."
-        >
+        <ConnectLayout page="about" title={t('seo.title')} description={t('seo.description')}>
             <section className="page-intro">
                 <div className="wrap about-image-intro">
                     <div>
-                        <p className="eyebrow">ABOUT BAHALI CONNECT</p>
+                        <p className="eyebrow">{t('intro.eyebrow')}</p>
                         <h1>
-                            Connection rooted
-                            <br />
-                            in <em>understanding.</em>
+                            <Rich text={t('intro.title')} />
                         </h1>
                         <p className="lead">
-                            Bahali Connect makes mental health care and community support easier to find for Caribbean communities and the diaspora.
+                            <Rich text={t('intro.lead')} />
                         </p>
                     </div>
                     <figure className="connect-photo" style={{ ['--photo-ratio' as string]: '16 / 10' }}>
-                        <img
-                            src="/images/connect/everyday-connection.jpg"
-                            alt="Two women sitting on the grass, talking and smiling at each other."
-                            width="1600"
-                            height="1000"
-                        />
+                        <img src={t('intro.image')} alt={t('intro.image_alt')} width="1600" height="1000" />
                     </figure>
                 </div>
             </section>
 
             <section className="section wrap editorial">
-                <h2>Why we created Bahali Connect</h2>
+                <h2>
+                    <Rich text={t('why.title')} />
+                </h2>
                 <p>
-                    If you have been taught to keep personal struggles to yourself or feel you should manage on your own, asking for support can feel
-                    unfamiliar. You deserve care, and seeking it is a sign of strength.
+                    <Rich text={t('why.p1')} />
                 </p>
                 <p>
-                    We created Bahali Connect as part of Bahali’s mission to reduce mental health stigma and improve access to care and support.
-                    Bringing provider information into one place makes it easier to explore your options and reach out when you are ready.
+                    <Rich text={t('why.p2')} />
                 </p>
                 <p>
-                    We welcome providers from all backgrounds. If you would like to find someone with experience supporting Caribbean individuals or
-                    families, you can read how providers describe that work in their own words.
+                    <Rich text={t('why.p3')} />
                 </p>
-                <h2>What a profile can tell you</h2>
+                <h2>
+                    <Rich text={t('profile.title')} />
+                </h2>
                 <p>
-                    Each profile tells you who the provider supports, what they offer and how to reach them. Details such as languages spoken, fees and
-                    options for meeting in person or virtually can help you decide whom you would like to contact.
+                    <Rich text={t('profile.p1')} />
                 </p>
                 <p>
-                    <strong>Profile Reviewed</strong> means Bahali reviewed the profile for inclusion in the directory. It does not mean Bahali
-                    independently verified the provider’s credentials.
+                    <Rich text={t('profile.p2')} />
                 </p>
-                <Link href={URLS.directory}>What the profile badges mean</Link>
-                <h2>A service of Bahali</h2>
+                <Link href={URLS.directory}>{t('profile.link')}</Link>
+                <h2>
+                    <Rich text={t('bahali.title')} />
+                </h2>
                 <p>
-                    Bahali Connect is a service of Bahali, a nonprofit working to make conversations about mental health more open and support more
-                    accessible.
+                    <Rich text={t('bahali.body')} />
                 </p>
-                <h3>Our mission</h3>
+                <h3>{t('bahali.mission_title')}</h3>
                 <p>
-                    To promote emotional well-being, reduce mental health stigma and improve access to culturally grounded resources, care and support
-                    across Caribbean communities and the diaspora.
+                    <Rich text={t('bahali.mission')} />
                 </p>
-                <h3>Our vision</h3>
+                <h3>{t('bahali.vision_title')}</h3>
                 <p>
-                    A future where Caribbean communities and the global diaspora can speak openly about mental health and access the care and support
-                    they need.
+                    <Rich text={t('bahali.vision')} />
                 </p>
                 <a href={BAHALI_URL} target="_blank" rel="noreferrer">
-                    Visit Bahali.org
+                    {t('bahali.link')}
                 </a>
             </section>
         </ConnectLayout>

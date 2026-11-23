@@ -6,7 +6,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, LayoutGrid, Plus, StepBack, Type, Tag, List, FileStack, CircleOff, Ban, ShieldAlert, CircleSlash, Clock3, BadgeCheck, CircleX, User, X } from 'lucide-react';
 import AppLogo from './app-logo';
-import { LayoutTemplate, FileText, HeartHandshake, Search, Contact, Newspaper } from 'lucide-react';
+import { LayoutTemplate, FileText, HeartHandshake, Search, Contact, Newspaper, Files } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
     {
@@ -53,8 +53,15 @@ const mainNavItems: NavItem[] = [
         children: [
             {
                 title: 'Home',
-                href: '/admin/web/join-the-circle',
+                href: '/admin/web/home',
                 icon: HeartHandshake,
+            },
+            {
+                // Get Help, About, How it works, For Providers, Urgent Help, Contact, Report, Blog page,
+                // policy pages, header & footer, login pages.
+                title: 'Website Pages',
+                href: '/admin/web/pages',
+                icon: Files,
             },
             {
                 title: 'Provider Search',

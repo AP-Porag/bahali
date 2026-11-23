@@ -7,6 +7,7 @@ use App\Models\BlogPost;
 use App\Models\DirectorySearch;
 use App\Services\Provider\ProviderService;
 use App\Services\Web\BlogRenderer;
+use App\Services\Web\ConnectContentService;
 use App\Services\Web\ProviderDirectoryPageService;
 use App\Services\Web\ProviderProfilePageService;
 use App\Support\ConnectTaxonomy;
@@ -57,6 +58,7 @@ class FindSupportController extends Controller
         return Inertia::render('connect/Home', $this->vocabulary($providers) + [
             'filters' => $this->searchFormFilters(),
             'reading' => $this->homeReading($renderer),
+            'content' => app(ConnectContentService::class)->getContent('home'), // Admin → CMS → Home
         ]);
     }
 
@@ -79,7 +81,10 @@ class FindSupportController extends Controller
 
     public function getHelp(ProviderService $providers): Response
     {
-        return Inertia::render('connect/GetHelp', $this->vocabulary($providers) + ['filters' => $this->searchFormFilters()]);
+        return Inertia::render('connect/GetHelp', $this->vocabulary($providers) + [
+            'filters' => $this->searchFormFilters(),
+            'content' => app(ConnectContentService::class)->getContent('help'), // Admin → CMS → Website Pages → Get Help
+        ]);
     }
 
     /** POST /find-support — Home / Get Help search (concern + location), then the directory with a clean address. */

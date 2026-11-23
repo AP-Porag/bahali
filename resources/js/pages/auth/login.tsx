@@ -1,7 +1,8 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
 import { CONNECT_URLS as URLS } from '@/components/connect/links';
 
 /**
@@ -21,6 +22,8 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    // Text from Admin → CMS → Website Pages → Login & Password (shared by HandleInertiaRequests).
+    const t = reader(usePage<{ connectAuth?: ConnectContent }>().props.connectAuth);
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
         password: '',
@@ -36,27 +39,28 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     };
 
     return (
-        <ConnectLayout
-            page="providers"
-            title="Provider login"
-            description="Log in to return to your application or manage your published Bahali Connect profile."
-        >
+        <ConnectLayout page="providers" title={t('login.seo_title')} description={t('login.seo_description')}>
             <section className="auth-layout wrap">
                 <div className="auth-intro">
-                    <p className="eyebrow">BAHALI CONNECT FOR PROVIDERS</p>
-                    <h1>Welcome back.</h1>
-                    <p className="lead">Return to your application or manage your published profile.</p>
+                    <p className="eyebrow">{t('intro.eyebrow')}</p>
+                    <h1>
+                        <Rich text={t('intro.title')} />
+                    </h1>
+                    <p className="lead">
+                        <Rich text={t('intro.lead')} />
+                    </p>
                     <aside className="provider-appreciation">
-                        <h2>Thank you for the work you do.</h2>
+                        <h2>
+                            <Rich text={t('thanks.title')} />
+                        </h2>
                         <p>
-                            Your care, time and experience matter. We are grateful you are part of Bahali Connect’s effort to make support easier to
-                            find across Caribbean communities and the diaspora.
+                            <Rich text={t('thanks.body')} />
                         </p>
                     </aside>
                 </div>
 
                 <form className="auth-card" onSubmit={submit} noValidate>
-                    <h2>Provider login</h2>
+                    <h2>{t('login.title')}</h2>
 
                     {status && (
                         <div className="form-success" role="status">
@@ -65,7 +69,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     )}
 
                     <label htmlFor="email">
-                        Email address
+                        {t('login.email_label')}
                         <input
                             id="email"
                             name="email"
@@ -85,7 +89,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     )}
 
                     <label htmlFor="password">
-                        Password
+                        {t('login.password_label')}
                         <input
                             id="password"
                             name="password"
@@ -105,19 +109,19 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     )}
 
                     <button className="button" type="submit" disabled={processing} aria-busy={processing}>
-                        {processing ? 'Logging in…' : 'Log in to my account'}
+                        {processing ? t('login.busy') : t('login.button')}
                     </button>
 
                     {canResetPassword && (
                         <Link as="button" type="button" className="text-button" href={route('password.request')}>
-                            Forgot password?
+                            {t('login.forgot')}
                         </Link>
                     )}
 
                     <p className="auth-switch">
-                        New to Bahali Connect?{' '}
+                        {t('login.switch')}{' '}
                         <Link as="button" type="button" className="text-button" href={URLS.signup}>
-                            Apply to join
+                            {t('login.apply')}
                         </Link>
                     </p>
                 </form>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import FooterCredit from '@/components/madbrain';
 import '../../../css/connect.css';
 
+import { Rich, fill, reader, type ConnectContent } from './content';
 import Icon from './Icon';
 import { BAHALI_URL, RESOURCE_HUB_URL, CONNECT_URLS as URLS } from './links';
 
@@ -35,11 +36,13 @@ export type ConnectPage =
 
 interface SharedProps {
     auth?: { user?: { role?: string } | null };
+    /** Header & footer text from Admin → CMS → Website Pages (shared by HandleInertiaRequests). */
+    connectLayout?: ConnectContent;
     [key: string]: unknown;
 }
 
 /* "For Providers" disclosure — click/tap, Down Arrow, Escape returns focus, outside click closes. */
-function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: boolean }) {
+function ProviderNavigation({ page, signedIn, t }: { page: ConnectPage; signedIn: boolean; t: (key: string) => string }) {
     const [open, setOpen] = useState(false);
     // Dashboard and Edit profile both use page="account" — the address decides which menu item is current.
     const path = usePage().url.split('?')[0];
@@ -93,7 +96,7 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                     }
                 }}
             >
-                For Providers
+                {t('nav.providers')}
                 <span className="provider-chevron" aria-hidden="true" />
             </button>
             <div id="provider-nav-links" className="provider-nav-links" hidden={!open}>
@@ -105,7 +108,7 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                         aria-current={page === 'providers' ? 'page' : undefined}
                         onClick={() => setOpen(false)}
                     >
-                        Join Bahali Connect
+                        {t('nav.join')}
                     </Link>
                 )}
                 {/* Existing account system: provider login, or the provider account links once signed in. */}
@@ -117,40 +120,41 @@ function ProviderNavigation({ page, signedIn }: { page: ConnectPage; signedIn: b
                             aria-current={onDashboard ? 'page' : undefined}
                             onClick={() => setOpen(false)}
                         >
-                            My dashboard
+                            {t('nav.dashboard')}
                         </Link>
                         <Link href={URLS.editProfile} aria-current={onEditProfile ? 'page' : undefined} onClick={() => setOpen(false)}>
-                            Edit profile
+                            {t('nav.edit')}
                         </Link>
                         <Link as="button" method="post" href={URLS.logout} className="provider-nav-logout" onClick={() => setOpen(false)}>
-                            Log out
+                            {t('nav.logout')}
                         </Link>
                     </>
                 ) : (
-                    <a href={URLS.login}>Provider login</a>
+                    <a href={URLS.login}>{t('nav.login')}</a>
                 )}
             </div>
         </div>
     );
 }
 
+/* [page, CMS label key, address] — labels: Admin → CMS → Website Pages → Header & Footer. */
 const MAIN_NAV: [ConnectPage, string, string][] = [
-    ['results', 'Browse providers', URLS.browse],
-    ['how', 'How it works', URLS.how],
-    ['about', 'About Connect', URLS.about],
-    ['blog', 'Blog', URLS.blog],
-    ['contact', 'Contact', URLS.contact],
+    ['results', 'nav.browse', URLS.browse],
+    ['how', 'nav.how', URLS.how],
+    ['about', 'nav.about', URLS.about],
+    ['blog', 'nav.blog', URLS.blog],
+    ['contact', 'nav.contact', URLS.contact],
 ];
 
 const LEGAL_LINKS: [string, string][] = [
-    [URLS.urgent, 'Urgent Help'],
-    [URLS.privacy, 'Privacy Policy'],
-    [URLS.terms, 'Terms of Use'],
-    [URLS.directory, 'Directory & Verification'],
-    [URLS.spotlight, 'Spotlight Policy'],
-    [URLS.accessibility, 'Accessibility'],
-    [URLS.contact, 'Contact'],
-    [URLS.report, 'Report a concern'],
+    [URLS.urgent, 'legal.urgent'],
+    [URLS.privacy, 'legal.privacy'],
+    [URLS.terms, 'legal.terms'],
+    [URLS.directory, 'legal.directory'],
+    [URLS.spotlight, 'legal.spotlight'],
+    [URLS.accessibility, 'legal.accessibility'],
+    [URLS.contact, 'legal.contact'],
+    [URLS.report, 'legal.report'],
 ];
 
 export default function ConnectLayout({
@@ -165,7 +169,8 @@ export default function ConnectLayout({
     description?: string;
     children: ReactNode;
 }) {
-    const { auth } = usePage<SharedProps>().props;
+    const { auth, connectLayout } = usePage<SharedProps>().props;
+    const t = reader(connectLayout);
     const signedIn = !!auth?.user;
     const [mobile, setMobile] = useState(false);
 
@@ -188,42 +193,42 @@ export default function ConnectLayout({
         return () => window.removeEventListener('keydown', closeMenu);
     }, []);
 
-    const pageTitle = page === 'home' ? 'Find support. Feel understood. | Bahali Connect' : `${title} | Bahali Connect`;
+    const pageTitle = `${title} | Bahali Connect`;
 
     return (
         <div className="bc-connect">
             <Head title={pageTitle}>{description ? <meta head-key="description" name="description" content={description} /> : null}</Head>
 
             <a className="skip-link" href="#main-content">
-                Skip to content
+                {t('header.skip')}
             </a>
 
             <header>
                 <div className="site-topline" aria-hidden="true" />
                 <div className="wrap header-inner">
                     <div className="brand">
-                        <Link className="brand-home brand-logo-link" href={URLS.home} aria-label="Bahali Connect home">
-                            <img className="brand-logo" src="/images/Bahali_p.png" alt="Bahali" width="3290" height="1426" />
+                        <Link className="brand-home brand-logo-link" href={URLS.home} aria-label={t('header.home_label')}>
+                            <img className="brand-logo" src={t('header.logo')} alt={t('header.logo_alt')} width="3290" height="1426" />
                         </Link>
                     </div>
 
                     <nav id="main-navigation" className={mobile ? 'open' : ''} aria-label="Main navigation">
                         {MAIN_NAV.map(([key, label, href]) => (
                             <Link key={key} href={href} aria-current={page === key ? 'page' : undefined} onClick={() => setMobile(false)}>
-                                {label}
+                                {t(label)}
                             </Link>
                         ))}
-                        <ProviderNavigation page={page} signedIn={signedIn} />
+                        <ProviderNavigation page={page} signedIn={signedIn} t={t} />
                     </nav>
 
                     <div className="header-actions">
                         <Link className="button" href={URLS.help} aria-current={page === 'help' ? 'page' : undefined}>
-                            Get Help
+                            {t('header.button')}
                         </Link>
                         <button
                             type="button"
                             className="menu-button"
-                            aria-label={mobile ? 'Close navigation' : 'Open navigation'}
+                            aria-label={mobile ? t('header.menu_close') : t('header.menu_open')}
                             aria-controls="main-navigation"
                             aria-expanded={mobile}
                             onClick={() => setMobile(!mobile)}
@@ -241,61 +246,63 @@ export default function ConnectLayout({
             <footer id="footer">
                 <div className="wrap footer-top">
                     <div>
-                        <a className="bahali-footer-logo" href={BAHALI_URL} target="_blank" rel="noreferrer" aria-label="Bahali — visit Bahali.org">
-                            <img src="/images/connect/bahali-logo-white.png" alt="Bahali" width="600" height="213" loading="lazy" />
+                        <a className="bahali-footer-logo" href={BAHALI_URL} target="_blank" rel="noreferrer" aria-label={t('footer.logo_label')}>
+                            <img src={t('footer.logo')} alt={t('footer.logo_alt')} width="600" height="213" loading="lazy" />
                         </a>
-                        <p>A service of Bahali, a nonprofit supporting emotional wellness across Caribbean communities and the diaspora.</p>
+                        <p>
+                            <Rich text={t('footer.about')} />
+                        </p>
                         <a href={BAHALI_URL} target="_blank" rel="noreferrer">
-                            Visit Bahali.org
+                            {t('footer.bahali_link')}
                         </a>
                     </div>
                     <div className="footer-nav-column">
-                        <h3>Explore</h3>
+                        <h3>{t('footer.explore_title')}</h3>
                         <ul className="footer-link-group">
                             <li>
-                                <Link href={URLS.help}>Get Help</Link>
+                                <Link href={URLS.help}>{t('footer.explore_help')}</Link>
                             </li>
                             <li>
-                                <Link href={URLS.browse}>Browse providers</Link>
+                                <Link href={URLS.browse}>{t('footer.explore_browse')}</Link>
                             </li>
                             <li>
-                                <Link href={URLS.blog}>Blog</Link>
+                                <Link href={URLS.blog}>{t('footer.explore_blog')}</Link>
                             </li>
                         </ul>
                     </div>
                     <div className="footer-nav-column">
-                        <h3>For providers</h3>
+                        <h3>{t('footer.providers_title')}</h3>
                         <ul className="footer-link-group">
                             <li>
-                                <Link href={URLS.providers}>Join the directory</Link>
+                                <Link href={URLS.providers}>{t('footer.providers_join')}</Link>
                             </li>
                             <li>
-                                <a href={signedIn ? URLS.account : URLS.login}>{signedIn ? 'My provider account' : 'Provider login'}</a>
+                                <a href={signedIn ? URLS.account : URLS.login}>{signedIn ? t('footer.providers_account') : t('footer.providers_login')}</a>
                             </li>
                         </ul>
                     </div>
                     <div className="footer-note">
                         <h3>
-                            Because every mind
-                            <br />
-                            deserves peace.
+                            <Rich text={t('footer.note_title')} />
                         </h3>
                         <a className="footer-resource" href={RESOURCE_HUB_URL} target="_blank" rel="noreferrer">
-                            Explore emotional wellness resources <span className="sr-only"> (opens in a new tab)</span>
+                            {t('footer.resource')} <span className="sr-only"> (opens in a new tab)</span>
                         </a>
-                        <p>Provider services and fees vary. Contact providers directly to discuss your needs.</p>
+                        <p>
+                            <Rich text={t('footer.fees')} />
+                        </p>
                     </div>
                 </div>
                 <div className="wrap footer-bottom">
                     {/* © line + technology partner credit (same font, size and colour; link #FF5619) */}
                     <div className="footer-copyright-row">
-                        <span>© {new Date().getFullYear()} Bahali Inc. All rights reserved.</span>
+                        <span>{fill(t('footer.copyright'), { year: new Date().getFullYear() })}</span>
                         <FooterCredit text="Technology Partner" />
                     </div>
                     <nav className="legal-links" aria-label="Legal and support">
                         {LEGAL_LINKS.map(([href, label]) => (
                             <Link href={href} key={href}>
-                                {label}
+                                {t(label)}
                             </Link>
                         ))}
                     </nav>

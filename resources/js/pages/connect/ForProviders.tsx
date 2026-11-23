@@ -1,107 +1,87 @@
 import { Link } from '@inertiajs/react';
 
 import ConnectLayout from '@/components/connect/ConnectLayout';
-import { CONNECT_URLS as URLS, DIRECTORY_EMAIL } from '@/components/connect/links';
+import { Rich, reader, type ConnectContent } from '@/components/connect/content';
+import { CONNECT_URLS as URLS } from '@/components/connect/links';
 
 /**
  * For Providers — recruitment page (reference src.jsx → Providers).
  * "Start your application" opens the existing provider application (account, email code, review).
  * Hero photograph: the approved "providers in community" image, reused from the homepage (4:3).
  */
-export default function ForProviders() {
+export default function ForProviders({ content }: { content?: ConnectContent }) {
+    const t = reader(content);
+
     return (
-        <ConnectLayout
-            page="providers"
-            title="For providers"
-            description="Share your services with Caribbean communities and the diaspora. Free to apply. Free to list an approved profile."
-        >
+        <ConnectLayout page="providers" title={t('seo.title')} description={t('seo.description')}>
             <section className="provider-hero wrap provider-hero-grid">
                 <div>
-                    <p className="eyebrow">FOR CLINICAL AND COMMUNITY PROVIDERS</p>
+                    <p className="eyebrow">{t('hero.eyebrow')}</p>
                     <h1>
-                        Make your support
-                        <br />
-                        <em>easier to find.</em>
+                        <Rich text={t('hero.title')} />
                     </h1>
                     <p className="lead">
-                        Share your services with Caribbean communities and the diaspora. Give someone looking for support a clear way to learn about your
-                        work and reach you directly.
+                        <Rich text={t('hero.lead')} />
                     </p>
                     <p>
-                        <strong>Free to apply. Free to list an approved profile.</strong>
+                        <Rich text={t('hero.note')} />
                     </p>
                     <div className="button-row">
                         <a className="button" href={URLS.signup}>
-                            Start your application
+                            {t('hero.button')}
                         </a>
                         <a className="text-button" href={URLS.login}>
-                            Provider login
+                            {t('hero.login')}
                         </a>
                     </div>
                 </div>
                 <figure className="connect-photo" style={{ ['--photo-ratio' as string]: '4 / 3' }}>
-                    <img
-                        src="/images/connect/providers-in-community.jpg"
-                        alt="Two women talking over coffee in a relaxed seating area."
-                        width="1400"
-                        height="1050"
-                    />
+                    <img src={t('hero.image')} alt={t('hero.image_alt')} width="1400" height="1050" />
                 </figure>
             </section>
 
             <section className="wrap benefits">
-                <div>
-                    <h3>Describe your work</h3>
-                    <p>Describe who you support, what you offer and what a first meeting with you might be like.</p>
-                </div>
-                <div>
-                    <h3>Show where you are available</h3>
-                    <p>List the communities you serve and explain whether you meet in person, virtually or both.</p>
-                </div>
-                <div>
-                    <h3>Connect directly</h3>
-                    <p>Share your contact details so those seeking support can reach you with questions.</p>
-                </div>
+                {[1, 2, 3].map((n) => (
+                    <div key={n}>
+                        <h3>{t(`benefit${n}.title`)}</h3>
+                        <p>
+                            <Rich text={t(`benefit${n}.body`)} />
+                        </p>
+                    </div>
+                ))}
             </section>
 
             <section className="section wrap provider-details">
                 <div>
-                    <p className="eyebrow">PROVIDER ELIGIBILITY</p>
-                    <h2>Who can apply?</h2>
+                    <p className="eyebrow">{t('eligibility.eyebrow')}</p>
+                    <h2>
+                        <Rich text={t('eligibility.title')} />
+                    </h2>
                     <p>
-                        We welcome applications from providers offering clinical care, counseling, pastoral care, peer support, allied health services or
-                        community-based emotional support. Eligibility depends on your role and the services you offer.
+                        <Rich text={t('eligibility.p1')} />
                     </p>
                     <p>
-                        Providers from all backgrounds are welcome to apply. If you have experience supporting Caribbean individuals, families or
-                        communities, you can describe that work in your own words.
+                        <Rich text={t('eligibility.p2')} />
                     </p>
-                    <h3>Do I need credential verification?</h3>
+                    <h3>{t('eligibility.question')}</h3>
                     <p>
-                        No. We are developing an optional credential verification service. Only that service will carry a fee, and you will see the amount
-                        before you decide.
+                        <Rich text={t('eligibility.answer')} />
                     </p>
                 </div>
                 <div className="application-steps">
-                    <h3>How to join</h3>
+                    <h3>{t('join.title')}</h3>
                     {[
-                        ['1', 'Create your provider account', 'Save your progress and come back when you are ready.'],
-                        [
-                            '2',
-                            'Tell us about your work',
-                            'Describe your services, who you support and where you are available. Choose the contact details you would like to share on your profile.',
-                        ],
-                        [
-                            '3',
-                            'Submit your application for review',
-                            'The Bahali team reviews your application and may ask for more information. Once approved, your profile appears in the directory.',
-                        ],
-                    ].map(([n, t, b]) => (
+                        ['1', t('join.step1.title'), t('join.step1.body')],
+                        ['2', t('join.step2.title'), t('join.step2.body')],
+                        ['3', t('join.step3.title'), t('join.step3.body')],
+                    ].map(([n, title, b]) => (
                         <div className="step" key={n}>
                             <span className="step-number">{n}</span>
                             <div>
-                                <h3>{t}</h3>
-                                <p>{b}</p>
+                                <h3>{title}</h3>
+                                <p>
+                                    <Rich text={b} />
+                                </p>
                             </div>
                         </div>
                     ))}
@@ -109,27 +89,28 @@ export default function ForProviders() {
             </section>
 
             <section className="wrap provider-spotlight-summary" aria-labelledby="spotlight-summary-heading">
-                <p className="eyebrow">SHARING YOUR WORK</p>
-                <h2 id="spotlight-summary-heading">Provider spotlights</h2>
+                <p className="eyebrow">{t('spotlight.eyebrow')}</p>
+                <h2 id="spotlight-summary-heading">
+                    <Rich text={t('spotlight.title')} />
+                </h2>
                 <p>
-                    From time to time, we feature providers to help readers learn about different services and approaches. Selection considers relevance
-                    to readers, current profile information and a range of roles and locations. There is no charge or paid preference, and credential
-                    verification does not influence selection. Participation is optional and requires permission.
+                    <Rich text={t('spotlight.body')} />
                 </p>
-                <Link href={URLS.spotlight}>Read the Provider Spotlight Policy</Link>
+                <Link href={URLS.spotlight}>{t('spotlight.link')}</Link>
             </section>
 
             <section className="closing wrap">
-                <h2>Ready to join Bahali Connect?</h2>
+                <h2>
+                    <Rich text={t('closing.title')} />
+                </h2>
                 <p>
-                    Be part of Bahali’s mission to reduce mental health stigma and improve access to care and support. Let your profile be a starting
-                    point for someone seeking support in the communities you serve.
+                    <Rich text={t('closing.body')} />
                 </p>
                 <a className="button" href={URLS.signup}>
-                    Start your application
+                    {t('closing.button')}
                 </a>
                 <p>
-                    Questions before you apply? Email <a href={`mailto:${DIRECTORY_EMAIL}`}>{DIRECTORY_EMAIL}</a>.
+                    <Rich text={t('closing.email')} />
                 </p>
             </section>
         </ConnectLayout>

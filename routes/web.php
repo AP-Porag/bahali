@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\Web\BlogPostController as AdminBlogPostController
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Controllers\Admin\Web\ProviderDirectoryPageController;
 use App\Http\Controllers\Admin\Web\ProviderProfilePageController;
+use App\Http\Controllers\Admin\Web\ConnectContentController;
 use App\Http\Controllers\Admin\Dashboard\AdminDashboardController;
 use Inertia\Inertia;
 
@@ -165,6 +166,17 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::post('/web/provider-profile', [ProviderProfilePageController::class, 'update'])->name('provider-profile-page.update');
 });
 
+
+/*
+| Bahali Connect website text (CMS → Home / Website Pages) — administrators only.
+*/
+Route::middleware(['auth', 'verified', EnsureUserIsAdmin::class])->prefix('admin/web')->name('admin.connect-content.')->group(function () {
+    Route::get('/home', [ConnectContentController::class, 'edit'])->defaults('page', 'home')->name('home');
+    Route::get('/pages', [ConnectContentController::class, 'index'])->name('index');
+    Route::get('/pages/{page}', [ConnectContentController::class, 'edit'])->where('page', '[a-z]+')->name('edit');
+    Route::post('/pages/{page}', [ConnectContentController::class, 'update'])->where('page', '[a-z]+')->name('update');
+    Route::post('/pages/{page}/reset', [ConnectContentController::class, 'reset'])->where('page', '[a-z]+')->name('reset');
+});
 
 /*
 | Bahali Connect blog CMS — administrators only (provider accounts get 403).

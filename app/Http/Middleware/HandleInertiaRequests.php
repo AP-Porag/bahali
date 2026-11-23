@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Provider;
 use App\Services\Provider\ProviderService;
+use App\Services\Web\ConnectContentService;
 use App\Utils\GlobalConstant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -59,6 +60,12 @@ class HandleInertiaRequests extends Middleware
                     'suspended' => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_SUSPENDED)->count(),
                     'inactive'  => Provider::where('status', GlobalConstant::VERIFICATION_STATUS_INACTIVE)->count(),
                 ]
+                : null,
+            // Bahali Connect header & footer text (Admin → CMS → Website Pages → Header & Footer) — public pages only.
+            'connectLayout' => fn() => $request->is('admin', 'admin/*') ? null : app(ConnectContentService::class)->getContent('layout'),
+            // Provider login / forgot password / reset password text (… → Login & Password).
+            'connectAuth' => fn() => $request->routeIs('login', 'password.request', 'password.reset')
+                ? app(ConnectContentService::class)->getContent('auth')
                 : null,
         ]);
     }
