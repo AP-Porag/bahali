@@ -146,7 +146,7 @@ class ConnectContentSchema
                 self::f('options.card2.title', 'Title', 'Community-based support', 'text', null, 'Card 2'),
                 self::f('options.card2.body', 'Text', 'Explore peer, pastoral and other community-based emotional wellness support.', 'textarea', $h, 'Card 2'),
                 self::f('badges.summary', 'Question', 'What do the profile badges mean?', 'text', null, 'Profile badges'),
-                self::f('badges.body', 'Answer', 'Profile review means Bahali has reviewed a listing. Optional credential verification is in development. Only profiles with a credential independently confirmed by Bahali will receive the “Credentials verified” badge. Caribbean experience is provider-reported. A badge does not guarantee that a provider is the right fit for you.', 'textarea', $h, 'Profile badges'),
+                self::f('badges.body', 'Answer', 'Profile review means Bahali Connect has reviewed a listing. Optional credential verification is in development. Only profiles with a credential independently confirmed by Bahali Connect will receive the “Credentials verified” badge. Caribbean experience is provider-reported. A badge does not guarantee that a provider is the right fit for you.', 'textarea', $h, 'Profile badges'),
                 self::f('badges.link', 'Link Text', 'Understand the profile badges', 'text', null, 'Profile badges'),
             ]),
             self::section('reading', 'Reading', 'Blog articles marked "Show on homepage" (the section hides when there are none).', [
@@ -154,7 +154,7 @@ class ConnectContentSchema
                 self::f('reading.title', 'Heading', 'Start with understanding.', 'text', $h),
                 self::f('reading.link', 'Blog Link Text', 'Explore the blog'),
                 self::f('reading.minutes', 'Reading Time Label', 'min read'),
-                self::f('reading.more', 'Card Link Text', 'Read the story'),
+                self::f('reading.more', 'Card Link Text', 'Read article'),
             ]),
             self::section('providers', 'For Providers', 'Provider invitation band.', [
                 self::f('providers.eyebrow', 'Eyebrow', 'FOR PROVIDERS'),
@@ -215,7 +215,7 @@ class ConnectContentSchema
             self::section('profile', 'What a Profile Can Tell You', null, [
                 self::f('profile.title', 'Heading', 'What a profile can tell you', 'text', $h),
                 self::f('profile.p1', 'Paragraph 1', 'Each profile tells you who the provider supports, what they offer and how to reach them. Details such as languages spoken, fees and options for meeting in person or virtually can help you decide whom you would like to contact.', 'textarea', $h),
-                self::f('profile.p2', 'Paragraph 2', '**Profile Reviewed** means Bahali reviewed the profile for inclusion in the directory. It does not mean Bahali independently verified the provider’s credentials.', 'textarea', $h),
+                self::f('profile.p2', 'Paragraph 2', '**Profile Reviewed** means Bahali Connect reviewed the profile for inclusion in the directory. It does not mean Bahali Connect independently verified the provider’s credentials.', 'textarea', $h),
                 self::f('profile.link', 'Link Text (to Directory & Verification)', 'What the profile badges mean'),
             ]),
             self::section('bahali', 'A Service of Bahali', 'Mission, vision and the link to Bahali.org.', [
@@ -323,7 +323,7 @@ class ConnectContentSchema
                 self::f('join.step2.title', 'Title', 'Tell us about your work', 'text', null, 'Step 2'),
                 self::f('join.step2.body', 'Text', 'Describe your services, who you support and where you are available. Choose the contact details you would like to share on your profile.', 'textarea', $h, 'Step 2'),
                 self::f('join.step3.title', 'Title', 'Submit your application for review', 'text', null, 'Step 3'),
-                self::f('join.step3.body', 'Text', 'The Bahali team reviews your application and may ask for more information. Once approved, your profile appears in the directory.', 'textarea', $h, 'Step 3'),
+                self::f('join.step3.body', 'Text', 'The Bahali Connect team reviews your application and may ask for more information. Once approved, your profile appears in the directory.', 'textarea', $h, 'Step 3'),
             ]),
             self::section('spotlight', 'Provider Spotlights', 'Summary with a link to the Spotlight Policy.', [
                 self::f('spotlight.eyebrow', 'Eyebrow', 'SHARING YOUR WORK'),
@@ -404,7 +404,7 @@ class ConnectContentSchema
                 self::f('topics.all', '"Explore All" Button', 'Explore all support options'),
                 self::f('topics.select', 'Topic Button', 'Select topic'),
                 self::f('topics.selected', 'Topic Button (chosen)', 'Selected'),
-                self::f('topics.more', '"See All" Button', 'See all {count} areas of support', 'text', '{count} is replaced with the number of topics.'),
+                self::f('topics.more', '"See All" Button', 'See all areas of support', 'text', 'Keep this without a number so it stays correct as areas of support are added.'),
                 self::f('topics.fewer', '"Show Fewer" Button', 'Show fewer areas of support'),
             ]),
             self::section('location', 'Your Next Step', 'Location panel on the right.', [
@@ -412,7 +412,7 @@ class ConnectContentSchema
                 self::f('location.eyebrow', 'Eyebrow', 'YOUR NEXT STEP'),
                 self::f('location.title', 'Heading (no topic)', 'Explore your options'),
                 self::f('location.title_topic', 'Heading (topic chosen)', 'Support with {topic}', 'text', '{topic} is replaced with the chosen topic.'),
-                self::f('location.body', 'Text', 'Choose where you would receive support. You can refine by language, type of service and virtual options on the results page.', 'textarea', $h),
+                self::f('location.body', 'Text', 'Select your location to find providers who serve your area. On the results page, narrow your search by language, type of service, or virtual support.', 'textarea', $h),
                 self::f('location.country_label', 'Location Label', 'Country or territory'),
                 self::f('location.country_placeholder', 'Location Placeholder', 'Select a location'),
                 self::f('location.country_search', 'Location Search Placeholder', 'Search countries and territories'),
@@ -517,7 +517,7 @@ class ConnectContentSchema
             ]),
             self::section('result', 'After Sending', 'Success and failure messages.', [
                 self::f('success.title', 'Success Heading', 'Thank you. Your concern has been received.'),
-                self::f('success.body', 'Success Text', 'Bahali’s administrative team will review it. If you asked for a reply, we will use the email address you gave.', 'textarea', $h),
+                self::f('success.body', 'Success Text', 'The Bahali Connect team will review it. If you asked for a reply, we will use the email address you gave.', 'textarea', $h),
                 ...self::supportErrorFields(),
             ]),
         ];
@@ -613,7 +613,7 @@ class ConnectContentSchema
                 self::f('library.article', 'Count Label (1)', 'article', 'text', null, 'Result count'),
                 self::f('library.articles', 'Count Label (2+)', 'articles', 'text', null, 'Result count'),
                 self::f('card.minutes', 'Reading Time Label', 'min read', 'text', null, 'Article cards'),
-                self::f('card.more', 'Card Link Text', 'Read the story', 'text', null, 'Article cards'),
+                self::f('card.more', 'Card Link Text', 'Read article', 'text', null, 'Article cards'),
             ]),
             self::section('empty', 'No Results', 'Shown when no article matches.', [
                 self::f('empty.title', 'Heading', 'Let us try another way.'),
@@ -934,10 +934,12 @@ MD;
         $h = self::FORMAT_HINT;
 
         return [
-            self::section('header', 'Header', 'Logo, Get Help button and accessibility labels.', [
-                self::f('header.logo', 'Logo', '/images/Bahali_p.png', 'image', 'Wide PNG logo with a transparent background.'),
-                self::f('header.logo_alt', 'Logo description (alt text)', 'Bahali'),
-                self::f('header.home_label', 'Logo Link Label (screen readers)', 'Bahali Connect home'),
+            self::section('header', 'Header', 'Bahali Connect wordmark, "A service of Bahali" link, Get Help button and accessibility labels.', [
+                self::f('header.wordmark', 'Wordmark (regular)', 'Bahali'),
+                self::f('header.wordmark_bold', 'Wordmark (bold)', 'Connect'),
+                self::f('header.endorsement', '"A service of Bahali" Link Text', 'A SERVICE OF BAHALI', 'text', 'Small link under the wordmark. It opens Bahali.org.'),
+                self::f('header.endorsement_label', '"A service of Bahali" Link Label (screen readers)', 'A service of Bahali — visit Bahali.org in a new tab'),
+                self::f('header.home_label', 'Wordmark Link Label (screen readers)', 'Bahali Connect home'),
                 self::f('header.button', 'Get Help Button', 'Get Help'),
                 self::f('header.skip', '"Skip to content" Link', 'Skip to content'),
                 self::f('header.menu_open', 'Mobile Menu Label (open)', 'Open navigation'),
@@ -960,7 +962,7 @@ MD;
                 self::f('footer.logo', 'Bahali Logo (white)', '/images/connect/bahali-logo-white.png', 'image', 'White logo on a transparent background (about 600×213).', 'About Bahali'),
                 self::f('footer.logo_alt', 'Logo description (alt text)', 'Bahali', 'text', null, 'About Bahali'),
                 self::f('footer.logo_label', 'Logo Link Label (screen readers)', 'Bahali — visit Bahali.org', 'text', null, 'About Bahali'),
-                self::f('footer.about', 'Text', 'A service of Bahali, a nonprofit supporting emotional wellness across Caribbean communities and the diaspora.', 'textarea', $h, 'About Bahali'),
+                self::f('footer.about', 'Text', 'Bahali Connect is a service of Bahali, a nonprofit supporting emotional wellness across Caribbean communities and the diaspora.', 'textarea', $h, 'About Bahali'),
                 self::f('footer.bahali_link', 'Link Text', 'Visit Bahali.org', 'text', null, 'About Bahali'),
                 self::f('footer.explore_title', 'Heading', 'Explore', 'text', null, 'Explore column'),
                 self::f('footer.explore_help', 'Get Help Link', 'Get Help', 'text', null, 'Explore column'),

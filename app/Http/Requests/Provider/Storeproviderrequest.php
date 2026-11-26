@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Provider;
 
 use App\Support\AreasOfSupport;
+use App\Support\ProviderEntryCategory;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class StoreProviderRequest extends FormRequest
                 'community_program'
             ])],
             'organization_name' => ['required', 'string', 'max:255'],
-            'credentials' => ['nullable', 'string', 'max:255'],
+            'credentials' => ['nullable', 'string', 'max:255', ProviderEntryCategory::credentialRule()], // degrees, licences, certifications only
             'professional_title' => ['required', 'array', 'min:1'],
             'professional_title.*' => ['string', 'max:255'],
             'professional_title_other' => [
@@ -67,13 +68,13 @@ class StoreProviderRequest extends FormRequest
             'populations_served.*' => ['string', 'max:255'],
 
             // Step 6 — Professional Expertise
-            'treatment_approaches' => ['nullable', 'array'],
+            'treatment_approaches' => ['nullable', 'array', ProviderEntryCategory::methodListRule()],
             'treatment_approaches.*' => ['string', 'max:255'],
             'treatment_approaches_other' => ['nullable', 'string', 'max:255'], // ✅ added
-            'specialized_training' => ['nullable', 'array'],
+            'specialized_training' => ['nullable', 'array', ProviderEntryCategory::methodListRule()],
             'specialized_training.*' => ['string', 'max:255'],
             'specialized_training_other' => ['nullable', 'string', 'max:255'], // ✅ added
-            'certifications' => ['nullable', 'array'],
+            'certifications' => ['nullable', 'array', ProviderEntryCategory::credentialListRule()],
             'certifications.*' => ['string', 'max:255'],
 
             // Step 7 — Cultural & Language

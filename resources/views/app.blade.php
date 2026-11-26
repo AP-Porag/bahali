@@ -27,14 +27,14 @@
         <meta name="description" content="{{ $lpDescription }}">
 
         <meta property="og:type" content="website">
-        <meta property="og:site_name" content="Bahali Provider Directory">
+        <meta property="og:site_name" content="Bahali Connect">
         <meta property="og:title" content="{{ $lpShareTitle }}">
         <meta property="og:description" content="{{ $lpShareDescription }}">
         <meta property="og:url" content="{{ rtrim(config('app.url'), '/') . request()->getPathInfo() }}">
         <meta property="og:image" content="{{ $lpShareImage }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" content="Bahali Provider Directory: {{ $lpShareTitle }}">
+        <meta property="og:image:alt" content="Bahali Connect: {{ $lpShareTitle }}">
 
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $lpShareTitle }}">
@@ -52,6 +52,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- Bahali Connect (resources/css/connect.css): DM Serif Display + Source Sans 3, Allura for the article signature -->
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 
     @routes
     @viteReactRefresh

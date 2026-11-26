@@ -33,7 +33,7 @@ class ProviderDirectoryPageService extends BaseService
                 'title' => 'SEO & Meta',
                 'description' => 'Browser tab title for the provider directory.',
                 'fields' => [
-                    self::field('seo.title', 'Page Title', 'text', 'Find the right support — Bahali'),
+                    self::field('seo.title', 'Page Title', 'text', 'Find the right support — Bahali Connect'),
                 ],
             ],
             [
@@ -65,7 +65,7 @@ class ProviderDirectoryPageService extends BaseService
                 'description' => 'Safety notice shown when a search contains crisis keywords.',
                 'fields' => [
                     self::field('crisis.title', 'Notice Heading', 'textarea', 'If you’re in immediate danger, please contact your local emergency services or a crisis line right away.'),
-                    self::field('crisis.body', 'Notice Text', 'textarea', 'Bahali is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.'),
+                    self::field('crisis.body', 'Notice Text', 'textarea', 'Bahali Connect is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.'),
                 ],
             ],
             [

@@ -49,7 +49,7 @@ class ProviderReviewOutcome extends Notification
             'intro'        => [],
             'statusRows'   => [],
             'note'         => $this->note,
-            'noteLabel'    => 'Note from the Bahali team',
+            'noteLabel'    => 'Note from the Bahali Connect team',
             'actionUrl'    => null,
             'actionText'   => null,
             'beforeAction' => [],   // text that belongs right above the button
@@ -58,13 +58,13 @@ class ProviderReviewOutcome extends Notification
 
         switch ($this->status) {
             case ProviderService::STATUS_NEEDS_CORRECTION:
-                $subject = 'Action needed: please update your Bahali profile';
+                $subject = 'Action needed: please update your Bahali Connect profile';
                 $data = array_merge($data, [
                     'eyebrow'      => 'Action needed',
                     'eyebrowColor' => '#B7791F',
                     'heading'      => 'A few updates are needed',
                     'preheader'    => 'A few things on your profile need to be updated before review can continue.',
-                    'intro'        => ['Thank you for submitting your profile to the Bahali Provider Directory. Before we can continue, a few things need to be updated:'],
+                    'intro'        => ['Thank you for submitting your profile to Bahali Connect. Before we can continue, a few things need to be updated:'],
                     'note'         => $this->note ?: 'Please review your profile for missing or unclear information.',
                     'noteLabel'    => 'What to update',
                     'actionUrl'    => $editUrl,
@@ -74,7 +74,7 @@ class ProviderReviewOutcome extends Notification
                 break;
 
             case ProviderService::STATUS_PENDING_VERIFICATION:
-                $subject = 'Your Bahali profile passed the initial review';
+                $subject = 'Your Bahali Connect profile passed the initial review';
                 $data = array_merge($data, [
                     'heading'   => 'Your profile passed the initial review',
                     'preheader' => 'Your profile has moved to verification.',
@@ -87,19 +87,19 @@ class ProviderReviewOutcome extends Notification
                 break;
 
             case GlobalConstant::VERIFICATION_STATUS_APPROVED:
-                $subject = 'Your Bahali profile is now live';
+                $subject = 'Your Bahali Connect profile is now live';
                 $data = array_merge($data, [
                     'eyebrow'    => 'Approved',
                     'heading'    => 'Your profile is now live',
-                    'preheader'  => 'Your profile is now visible in the Bahali Provider Directory.',
-                    'intro'      => ['Your profile has been verified and approved, and is now visible in the Bahali Provider Directory.'],
+                    'preheader'  => 'Your profile is now visible on Bahali Connect.',
+                    'intro'      => ['Your profile has been reviewed and approved, and is now visible on Bahali Connect.'],
                     'actionUrl'  => $editUrl,
                     'actionText' => 'View or update my profile',
                 ]);
                 break;
 
             case GlobalConstant::VERIFICATION_STATUS_REJECTED:
-                $subject = 'Update on your Bahali profile submission';
+                $subject = 'Update on your Bahali Connect profile submission';
                 $reconsider = null;
                 if ($support) {
                     $mailSubject = rawurlencode('Reconsideration request — ' . ($this->provider->organization_name ?: 'provider profile'));
@@ -108,7 +108,7 @@ class ProviderReviewOutcome extends Notification
                 $data = array_merge($data, [
                     'heading'    => 'Update on your profile submission',
                     'preheader'  => 'We were not able to accept your profile.',
-                    'intro'      => ['We were not able to accept your profile for the Bahali Provider Directory.'],
+                    'intro'      => ['We were not able to accept your profile for Bahali Connect.'],
                     'statusRows' => [['label' => 'Reason', 'value' => $this->reasonLabel ?: 'See the note below.']],
                     'actionUrl'  => $reconsider,
                     'actionText'   => 'Request reconsideration',
@@ -117,7 +117,7 @@ class ProviderReviewOutcome extends Notification
                 break;
 
             default: // suspended / inactive
-                $subject = 'Update on your Bahali listing';
+                $subject = 'Update on your Bahali Connect listing';
                 $statusLabel = ucfirst(str_replace('_', ' ', $this->status));
                 $data = array_merge($data, [
                     'heading'    => 'Your listing status has changed',

@@ -38,7 +38,7 @@ Bahali Connect was created to make mental health and emotional wellness support 
 
 ## Why the first step matters
 
-In my years as a psychologist and clinical social worker, I have heard the same story many times. Someone is ready to talk to a professional, but they do not know where to start. They wonder whether the person they find will understand their family, their faith, their culture or the way they speak. Sometimes that uncertainty is enough to put the search off for another day, another month or another year.
+In my work as a psychologist and clinical social worker, I often hear from people who are ready to talk to a professional but do not know where to start. They wonder whether the person they find will understand their family, their faith, their culture or the way they speak. Sometimes that uncertainty is enough to put the search off for another day, another month or another year.
 
 Some of us grew up hearing that strength meant keeping personal struggles private and carrying on. These messages can make it difficult to speak about what we are experiencing or ask for help. But being strong does not mean you have to carry everything alone.
 

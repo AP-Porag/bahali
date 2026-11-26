@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Provider;
 
+use App\Support\ProviderEntryCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProviderRequest extends FormRequest
@@ -17,7 +18,7 @@ class UpdateProviderRequest extends FormRequest
         return [
             'provider_type'        => ['nullable', 'string', 'max:255'],
             'organization_name'    => ['required', 'string', 'max:255'],
-            'credentials'          => ['nullable', 'string', 'max:255'],
+            'credentials'          => ['nullable', 'string', 'max:255', ProviderEntryCategory::credentialRule()], // degrees, licences, certifications only
             'professional_title'   => ['nullable', 'array'],
             'professional_title.*' => ['string', 'max:255'],
 
@@ -75,9 +76,9 @@ class UpdateProviderRequest extends FormRequest
             'telehealth_regions'   => ['nullable', 'array'],
             'accessibility'        => ['nullable', 'array'],
             'practice_settings'    => ['nullable', 'array'],
-            'treatment_approaches' => ['nullable', 'array'],
-            'specialized_training' => ['nullable', 'array'],
-            'certifications'       => ['nullable', 'array'],
+            'treatment_approaches' => ['nullable', 'array', ProviderEntryCategory::methodListRule()],
+            'specialized_training' => ['nullable', 'array', ProviderEntryCategory::methodListRule()],
+            'certifications'       => ['nullable', 'array', ProviderEntryCategory::credentialListRule()],
             'areas_of_support'     => ['nullable', 'array'],
         ];
     }

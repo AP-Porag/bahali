@@ -25,8 +25,8 @@ export function isCredentialsVerified(providerType?: ProviderType | null, licenc
 /* Explanation behind the "Profile Reviewed" info icon — reflects the provider's actual review status. */
 export function reviewExplanation(providerType?: ProviderType | null, licenceVerified?: boolean | null): string {
     const reviewed = providerType === 'individual'
-        ? 'Bahali reviewed the information this provider submitted — including their professional details, credentials and contact information — before publishing this profile.'
-        : 'Bahali reviewed the information this organization submitted — including its services, location and contact information — before publishing this profile.';
+        ? 'Bahali Connect reviewed the information this provider submitted — including their professional details, credentials and contact information — before publishing this profile.'
+        : 'Bahali Connect reviewed the information this organization submitted — including its services, location and contact information — before publishing this profile.';
 
     let licence: string;
     if (isCredentialsVerified(providerType, licenceVerified)) {
@@ -155,7 +155,7 @@ interface ReviewProps {
 
 export function ProfileReviewedBadge({ providerType, licenceVerified }: ReviewProps) {
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E4D4A]/65 bg-[#FAFAF6] px-3 py-1 text-sm font-medium text-[#2C2C2C]">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#234B52] bg-[#FAFAF6] px-3 py-1 text-[16px] font-medium text-[#234B52]">
             <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M2.5 10S5 5 10 5s7.5 5 7.5 5-2.5 5-7.5 5-7.5-5-7.5-5Z" />
                 <circle cx="10" cy="10" r="2.25" />
@@ -171,7 +171,7 @@ export function ProfileReviewedBadge({ providerType, licenceVerified }: ReviewPr
 export function CredentialsVerifiedBadge() {
     const maskId = `award-cut-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E4D4A]/25 bg-[#1E4D4A]/10 px-3 py-1 text-sm font-semibold tracking-wide text-[#1E4D4A]">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#1E4D4A]/25 bg-[#1E4D4A]/10 px-3 py-1 text-[16px] font-semibold tracking-wide text-[#1E4D4A]">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 flex-shrink-0" fill="currentColor" aria-hidden="true">
                 <defs>
                     <mask id={maskId}>
@@ -199,7 +199,7 @@ export function CredentialsVerifiedBadge() {
 export function CaribbeanExperienceBadge() {
     return (
         <span
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#E8D9B8] bg-[#E8D9B8]/40 px-3 py-1 text-sm font-medium text-[#2C2C2C]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#C89B4B] bg-[#F6ECD5] px-3 py-1 text-[16px] font-medium text-[#5B431B]"
             style={{ letterSpacing: '0.01em' }}
         >
             {CARIBBEAN_BADGE_LABEL}
@@ -237,9 +237,15 @@ export function ProviderBadgeRow({ providerType, licenceVerified, caribbeanExper
  */
 export function feeWithCurrency(fee: string | null | undefined = '', currency: string = 'USD'): string {
     if (!fee) return '';
+    fee = groupThousands(fee);                           // "$8000" → "$8,000"
     if (/\b[A-Z]{3}\b/.test(fee)) return fee;           // currency code already present
     if (!/(^|[^A-Za-z])\$/.test(fee)) return fee;        // symbol already says which currency (US$, JA$, £, €)
     return /\s\/\s/.test(fee) ? fee.replace(/\s\/\s/, ` ${currency} / `) : `${fee} ${currency}`;
+}
+
+/* Thousands separators for amounts in display text: "JA$5000–JA$8000" → "JA$5,000–JA$8,000" (decimals kept). */
+export function groupThousands(text: string): string {
+    return text.replace(/(^|[^\d.,])(\d{4,})(?=(\.\d+)?(?!\d))/g, (_m, before: string, digits: string) => before + digits.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
 }
 
 /* Reduced-cost wording — says whether it applies to the displayed fee or to other offerings */

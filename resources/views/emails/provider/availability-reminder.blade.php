@@ -59,7 +59,7 @@
         <p style="margin:0 0 14px; font-size:14px; color:#5B6B6E;">{{ $paragraph }}</p>
     @endforeach
 
-    <p style="margin:22px 0 0; color:#16302F;">Warm regards,<br>The Bahali team</p>
+    <p style="margin:22px 0 0; color:#16302F;">Warm regards,<br>The Bahali Connect team</p>
 
     {{-- Link fallback --}}
     <p
@@ -70,5 +70,5 @@
 @endsection
 
 @section('footer')
-    <p style="margin:0;">You're receiving this because you have a provider listing on the Bahali Provider Directory.</p>
+    <p style="margin:0;">You're receiving this because you have a provider listing on Bahali Connect.</p>
 @endsection

@@ -19,14 +19,14 @@ export type SelectOption = string | { value: string; label: string };
 const norm = (options: SelectOption[]) => options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o));
 
 const trigger = (active: boolean, invalid?: boolean) =>
-    'flex h-12 w-full items-center justify-between gap-2 rounded-[7px] border bg-white px-3.5 text-left text-[15px] font-normal leading-tight tracking-normal text-[#243638] outline-none transition focus:border-[#176B68] focus:ring-2 focus:ring-[#176B68]/20 focus-visible:border-[#176B68] focus-visible:ring-2 focus-visible:ring-[#176B68]/20 disabled:cursor-not-allowed disabled:bg-[#F3F5F4] disabled:opacity-70 ' +
+    'flex h-12 w-full items-center justify-between gap-2 rounded-[7px] border bg-white px-3.5 text-left text-[17px] font-normal leading-tight tracking-normal text-[#243638] outline-none transition focus:border-[#176B68] focus:ring-2 focus:ring-[#176B68]/20 focus-visible:border-[#176B68] focus-visible:ring-2 focus-visible:ring-[#176B68]/20 disabled:cursor-not-allowed disabled:bg-[#F3F5F4] disabled:opacity-70 ' +
     (invalid ? 'border-[#A94332]' : active ? 'border-[#176B68]' : 'border-[#176B68]/65');
 
 const panel =
     "w-[var(--radix-popover-trigger-width)] min-w-[220px] overflow-hidden rounded-[10px] border border-[#176B68]/40 bg-white p-0 font-['Source_Sans_3',Arial,sans-serif] text-[#243638] shadow-[0_12px_32px_-12px_rgba(35,75,82,0.35)]";
 
 const item =
-    'flex min-h-[40px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[15px] text-[#243638] data-[selected=true]:bg-[#E8F3F0] data-[selected=true]:text-[#176B68]';
+    'flex min-h-[40px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[17px] text-[#243638] data-[selected=true]:bg-[#E8F3F0] data-[selected=true]:text-[#176B68]';
 
 function List({
     options,
@@ -45,9 +45,9 @@ function List({
 }) {
     return (
         <Command className="bg-white [&_[data-slot=command-input-wrapper]]:border-[#D6E1DD]" filter={(value, search) => (value.toLowerCase().includes(search.trim().toLowerCase()) ? 1 : 0)}>
-            <CommandInput placeholder={searchPlaceholder} className="h-11 text-[15px] placeholder:text-[#526664]/70" />
+            <CommandInput placeholder={searchPlaceholder} className="h-11 text-[17px] placeholder:text-[#526664]/70" />
             <CommandList className="max-h-[280px] p-1">
-                <CommandEmpty className="px-3 py-6 text-center text-[15px] text-[#526664]">No matches found.</CommandEmpty>
+                <CommandEmpty className="px-3 py-6 text-center text-[17px] text-[#526664]">No matches found.</CommandEmpty>
                 <CommandGroup>
                     {allLabel && onAll && (
                         <CommandItem value={'__all__ ' + allLabel} onSelect={onAll} className={item}>

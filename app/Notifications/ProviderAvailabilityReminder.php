@@ -37,12 +37,12 @@ class ProviderAvailabilityReminder extends Notification
         $url  = url('/provider/dashboard');
 
         if ($this->neverSet) {
-            $subject = 'Are you accepting new clients? Let visitors know on Bahali';
+            $subject = 'Are you accepting new clients? Let visitors know on Bahali Connect';
             $data = [
                 'preheader'  => 'One click: tell visitors whether you are accepting new clients.',
                 'heading'    => 'Are you accepting new clients?',
                 'intro'      => [
-                    'Your Bahali listing does not show whether you are accepting new clients yet, so visitors currently see "Contact to confirm availability".',
+                    'Your Bahali Connect listing does not show whether you are accepting new clients yet, so visitors currently see "Contact to confirm availability".',
                     'It takes one click to choose "Yes" or "No".',
                 ],
                 'statusRows' => [],
@@ -55,7 +55,7 @@ class ProviderAvailabilityReminder extends Notification
                 ? 'accepting new clients'
                 : 'not currently accepting new clients';
 
-            $subject = 'Please reconfirm your availability on Bahali';
+            $subject = 'Please reconfirm your availability on Bahali Connect';
             $data = [
                 'preheader'  => $this->expired
                     ? 'Your listing now shows "Contact to confirm availability".'

@@ -18,6 +18,7 @@ import {
     hasReducedCost,
 } from '@/constants/fees';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import { credentialProblem, isConcernNotMethod, misplacedCredential, splitCredentials } from '@/lib/credentialEntries';
 import { phoneError } from '@/lib/phone';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -1303,6 +1304,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 if (d.professional_title.length === 0) e.professional_title = 'Please select at least one professional title.';
                 if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
                     e.professional_title_other = 'Please specify your title.';
+                {
+                    // Credentials = degrees, licenses and certifications only (methods / concerns go to their own sections).
+                    const problem = credentialProblem(splitCredentials(d.credentials));
+                    if (problem) e.credentials = problem;
+                }
                 break;
             case 1:
                 if (!d.email.trim()) e.email = 'Email address is required.';
@@ -1341,6 +1347,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     if (custom.checked) {
                         if (custom.text.trim() === '') {
                             customErrors.push(`Please specify the custom area for "${cat}".`);
+                        } else if (misplacedCredential(custom.text) === 'approach') {
+                            customErrors.push(`“${custom.text.trim()}” is a therapeutic method, not an area of support. Select it under Treatment Approaches (step “Professional Expertise”).`);
                         } else {
                             customCount++;
                         }
@@ -1363,6 +1371,17 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 }
                 if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim()) {
                     e.specialized_training_other = 'Please specify your other training.';
+                }
+                // Concerns belong under Areas of Support; certifications list = credentials only.
+                if (d.treatment_approaches.includes('Other (specify)') && isConcernNotMethod(d.treatment_approaches_other)) {
+                    e.treatment_approaches_other = `“${d.treatment_approaches_other.trim()}” is a concern you support, not a therapeutic method. Select it under Areas of Support.`;
+                }
+                if (d.specialized_training.includes('Other Specialized Training') && isConcernNotMethod(d.specialized_training_other)) {
+                    e.specialized_training_other = `“${d.specialized_training_other.trim()}” is a concern you support, not a training. Select it under Areas of Support.`;
+                }
+                {
+                    const problem = credentialProblem(d.certifications);
+                    if (problem) e.certifications = problem;
                 }
                 break;
             }
@@ -1437,7 +1456,7 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                 break;
             case 16:
                 if (!d.consent_accurate) e.consent_accurate = 'Please confirm the information is accurate.';
-                if (!d.consent_notify) e.consent_notify = 'Please agree to notify Bahali of changes.';
+                if (!d.consent_notify) e.consent_notify = 'Please agree to notify Bahali Connect of changes.';
                 if (!d.consent_no_endorsement) e.consent_no_endorsement = 'Please acknowledge this is not an endorsement.';
                 if (!d.consent_public) e.consent_public = 'Please consent to public display of your listing.';
                 break;
@@ -1770,8 +1789,8 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                             Thank you for joining the circle
                         </h1>
                         <p className="mt-3 text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Your application has been received. Our team will review your details and reach out about your listing in the Bahali
-                            Provider Directory.
+                            Your application has been received. Our team will review your details and reach out about your listing on Bahali
+                            Connect.
                         </p>
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <a
@@ -1799,11 +1818,11 @@ export default function ProviderRegistration({ errors: serverErrors, countries }
                     <div className="mb-8">
                         <p className="text-sm font-semibold tracking-[0.18em] text-[#1E4D4A] uppercase">Join the directory</p>
                         <h1 className="font-display mt-2 text-[38px] leading-[1.1] font-semibold text-[#1E4D4A] md:text-[48px]">
-                            Become a Bahali wellness provider
+                            Become a Bahali Connect provider
                         </h1>
                         <p className="mt-2 max-w-2xl text-[17px] leading-[1.6] text-[#2C2C2C] md:text-[18px]">
-                            Your profile helps Caribbean individuals and families find care that understands their culture, experiences, and
-                            community. Complete each section below. Every step must be completed before you can continue.
+                            Your profile helps Caribbean individuals and families learn about your services and experience before reaching out.
+                            Complete each section below. Every step must be completed before you can continue.
                         </p>
                     </div>
                     <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
@@ -2037,7 +2056,7 @@ function StepBody({
                             placeholder="Dr. Jane Doe, PsyD or Harmony Counseling Center"
                         />
                     </FieldShell>
-                    <FieldShell label="Credentials / License" hint="Examples: PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC" error={fieldError('credentials')}>
+                    <FieldShell label="Credentials / License" hint="Degrees, licenses and certifications only — for example PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC. Therapy methods go under Professional Expertise; the concerns you help with go under Areas of Support." error={fieldError('credentials')}>
                         <TextInput value={d.credentials} onChange={(v) => set('credentials', v)} placeholder="PsyD, LCSW…" />
                     </FieldShell>
                     <FieldShell label="Professional title(s)" required hint="Select all that apply." error={fieldError('professional_title')}>
@@ -2242,7 +2261,7 @@ function StepBody({
                 <FieldShell
                     label="Areas of support"
                     required
-                    hint="Expand each category and select every area where you have experience and expertise. Your selections appear on your public profile and are used as searchable filters in the directory. There is no limit to the number of selections. You may also specify additional areas using the 'Other' option under each category."
+                    hint="Select the concerns you help people with (for example Postpartum Anxiety or Grief & Loss) — therapy methods go under Professional Expertise. Expand each category and select every area where you have experience and expertise. Your selections appear on your public profile and are used as searchable filters in the directory. There is no limit to the number of selections. You may also specify additional areas using the 'Other' option under each category."
                     error={fieldError('areas_of_support')}
                 >
                     <div className="space-y-2.5">
@@ -2369,7 +2388,7 @@ function StepBody({
                 <>
                     <FieldShell
                         label="Treatment Approaches"
-                        hint="Which approaches do you use in your work? Select all that apply. (Optional)"
+                        hint="Which therapeutic methods do you use in your work (for example CBT or Cognitive Processing Therapy)? Select all that apply. (Optional)"
                         error={fieldError('treatment_approaches')}
                     >
                         <CheckGrid
@@ -2413,7 +2432,7 @@ function StepBody({
                     </FieldShell>
                     <FieldShell
                         label="Certifications & Credentials (Optional)"
-                        hint="List any relevant certifications or formal credentials you would like displayed on your profile."
+                        hint="Degrees, licenses and certifications only (for example PMH-C, CCTP, EMDR Certified Therapist). Therapy methods belong under Treatment Approaches or Specialized Training; the concerns you help with belong under Areas of Support."
                         error={fieldError('certifications')}
                     >
                         <CertificationsInput values={d.certifications} onChange={(list) => set('certifications', list)} />
@@ -2687,7 +2706,7 @@ function StepBody({
                             <div>
                                 <p className="text-sm font-semibold text-[#2C2C2C]">Contact person</p>
                                 <p className="mt-0.5 text-sm text-[#2C2C2C]">
-                                    Organizations need a named person Bahali and visitors can reach about this listing.
+                                    Organizations need a named person Bahali Connect and visitors can reach about this listing.
                                 </p>
                             </div>
                             <FieldShell label="Full name" required error={fieldError('contact_person_name')}>
@@ -2706,7 +2725,7 @@ function StepBody({
                                         placeholder="e.g. Pastoral Care Coordinator"
                                     />
                                 </FieldShell>
-                                <FieldShell label="Email" hint="Optional. Only Bahali sees this." error={fieldError('contact_person_email')}>
+                                <FieldShell label="Email" hint="Optional. Only the Bahali Connect team sees this." error={fieldError('contact_person_email')}>
                                     <TextInput
                                         value={d.contact_person_email}
                                         onChange={(v) => set('contact_person_email', v)}
@@ -2726,7 +2745,7 @@ function StepBody({
                             Show my phone number on my public profile
                         </ConsentItem>
                         <p className="mt-1.5 text-sm text-[#2C2C2C]">
-                            Untick to keep your number private. Bahali will still use it to contact you about your listing.
+                            Untick to keep your number private. Bahali Connect will still use it to contact you about your listing.
                         </p>
                     </div>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>
@@ -2834,17 +2853,17 @@ function StepBody({
                         I certify that the information provided is accurate.
                     </ConsentItem>
                     <ConsentItem checked={d.consent_notify} onChange={(v) => set('consent_notify', v)} error={fieldError('consent_notify')}>
-                        I agree to notify Bahali of any changes to my licensure or contact information.
+                        I agree to notify Bahali Connect of any changes to my licensure or contact information.
                     </ConsentItem>
                     <ConsentItem
                         checked={d.consent_no_endorsement}
                         onChange={(v) => set('consent_no_endorsement', v)}
                         error={fieldError('consent_no_endorsement')}
                     >
-                        I understand that inclusion in the Bahali Directory does not constitute endorsement by Bahali.
+                        I understand that inclusion in Bahali Connect does not constitute endorsement by Bahali.
                     </ConsentItem>
                     <ConsentItem checked={d.consent_public} onChange={(v) => set('consent_public', v)} error={fieldError('consent_public')}>
-                        I consent to Bahali displaying this information publicly.
+                        I consent to Bahali Connect displaying this information publicly.
                     </ConsentItem>
                 </div>
             );

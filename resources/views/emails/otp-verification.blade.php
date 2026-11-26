@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification — Bahali</title>
+    <title>Email Verification — Bahali Connect</title>
     <style>
         * {
             margin: 0;
@@ -226,14 +226,14 @@
         <div class="email-container">
             <!-- Header -->
             <div class="email-header">
-                <h1>Bahali</h1>
+                <h1>Bahali Connect</h1>
                 <p>Provider Directory</p>
             </div>
 
             <!-- Content -->
             <div class="email-content">
                 <h2>Email Verification</h2>
-                <p>Thank you for registering with Bahali. To complete your application and join our provider directory,
+                <p>Thank you for registering with Bahali Connect. To complete your application and join our provider directory,
                     please verify your email address using the code below:</p>
 
                 <!-- OTP Code -->
@@ -253,11 +253,11 @@
                 <div class="divider"></div>
 
                 <p style="font-size: 14px; color: #9AA6A4;">If you didn't request this verification code or didn't
-                    register with Bahali, please disregard this email. Your account will remain inactive if not verified
+                    register with Bahali Connect, please disregard this email. Your account will remain inactive if not verified
                     within 10 minutes.</p>
 
                 <div class="disclaimer">
-                    For security reasons, never share this code with anyone. Bahali staff will never ask you for this
+                    For security reasons, never share this code with anyone. The Bahali Connect team will never ask you for this
                     code via email or phone.
                 </div>
             </div>
@@ -266,7 +266,7 @@
             <div class="email-footer">
                 <p>Need help? <a href="https://bahali.org/contact">Contact our support team</a></p>
                 <div class="footer-brand">
-                    Bahali
+                    Bahali Connect
                 </div>
                 <p style="margin-top: 12px; font-size: 12px;">
                     {{ config('app.name') }} &copy; {{ date('Y') }} | <a href="https://bahali.org/privacy">Privacy

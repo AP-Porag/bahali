@@ -4,7 +4,7 @@ import { SearchMultiSelect, SearchSelect } from '@/components/connect/SearchSele
 import ConnectLayout from '@/components/connect/ConnectLayout';
 import { AREAS_OF_SUPPORT_GROUPS, COMMON_SUPPORT_AREAS, ALL_SUPPORT_AREAS } from '@/constants/supportAreas';
 import { HelpCircle } from 'lucide-react';
-import { ProviderBadgeRow, displayName, initials, feeWithCurrency, reducedCostLabel } from '@/components/provider/ProviderBadges';
+import { ProviderBadgeRow, displayName, initials, feeWithCurrency, groupThousands, reducedCostLabel } from '@/components/provider/ProviderBadges';
 
 /**
  * Bahali Connect — Find support / Browse providers (GET /find-support).
@@ -201,7 +201,7 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
                         <div className="flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
                             {selected.map((a) => (
                                 <button key={a} type="button" onClick={() => onToggle(a)} aria-label={`Remove ${a}`}
-                                    className="inline-flex items-center gap-1 rounded-full bg-[#176B68] px-2.5 py-1 text-sm font-medium text-white transition hover:bg-[#125450] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40">
+                                    className="inline-flex items-center gap-1 rounded-full border border-[#91B7B0] bg-[#E4F0ED] px-3 py-1 text-[17px] font-medium text-[#1B5F5C] transition hover:bg-[#D3E6E1] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40">
                                     {a}
                                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
                                 </button>
@@ -272,7 +272,7 @@ function AllAreasPanel({ selected = [], onToggle, onClear, onClose }) {
 function AvailabilityBadge({ availability }) {
     if (availability === 'accepting') {
         return (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#176B68]/10 px-3 py-1 text-sm font-semibold text-[#176B68] ring-1 ring-inset ring-[#176B68]/20">
+            <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-[#176B68]/10 px-3 py-1 text-[16px] font-semibold text-[#176B68] ring-1 ring-inset ring-[#176B68]/20">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M9 12.75 11.25 15 15 9.75m6 2.25a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Accepting new clients
             </span>
@@ -280,7 +280,7 @@ function AvailabilityBadge({ availability }) {
     }
     if (availability === 'not_accepting') {
         return (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3E6D5] px-3 py-1 text-sm font-semibold text-[#243638] ring-1 ring-inset ring-[#D6E1DD]">
+            <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-[#F3E6D5] px-3 py-1 text-[16px] font-semibold text-[#243638] ring-1 ring-inset ring-[#D6E1DD]">
                 <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#F3E6D5]">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden><path d="M6 12h12" strokeLinecap="round" /></svg>
                 </span>
@@ -289,8 +289,8 @@ function AvailabilityBadge({ availability }) {
         );
     }
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3E6D5]/15 px-3 py-1 text-sm font-semibold text-[#243638] ring-1 ring-inset ring-[#D6E1DD]/40">
-            <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#F3E6D5]/40">
+        <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-[#D4DCD8] bg-[#F3F4F1] px-3 py-1 text-[16px] font-semibold text-[#344547]">
+            <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full">
                 <HelpCircle className="h-3 w-3" strokeWidth={2.4} aria-hidden />
             </span>
             Availability unknown
@@ -356,14 +356,14 @@ function ProviderCard({ p, selectedAreas = [], onOpen }) {
     const extraPopulations = Math.max(0, populations.length - shownPopulations.length);
 
     return (
-        <article className="flex flex-col gap-5 rounded-2xl border border-[#D6E1DD] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition hover:border-[#D6E1DD] hover:shadow-[0_10px_30px_-12px_rgba(30,77,74,0.2)] sm:flex-row">
+        <article className="grid grid-cols-1 gap-5 rounded-2xl border border-[#D6E1DD] bg-white p-5 shadow-[0_1px_2px_rgba(20,20,20,0.04)] transition hover:border-[#D6E1DD] hover:shadow-[0_10px_30px_-12px_rgba(30,77,74,0.2)] sm:grid-cols-[9rem_minmax(0,1fr)] xl:grid-cols-[9rem_minmax(0,1fr)_380px] xl:gap-6">
             {showPhoto ? (
                 <img src={p.photo} alt={name} onError={() => setImgError(true)} className="h-44 w-full flex-shrink-0 rounded-xl object-cover ring-1 ring-black/5 sm:h-40 sm:w-36" />
             ) : (
                 <div aria-hidden className="flex h-44 w-full flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#176B68] to-[#176B68] text-3xl font-normal text-white/90 ring-1 ring-black/5 sm:h-40 sm:w-36" style={SERIF}>{initials(p.name)}</div>
             )}
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
                 {/* Badges — same rules and wording as the expanded profile header */}
                 <ProviderBadgeRow
                     className="mb-3.5"
@@ -402,7 +402,7 @@ function ProviderCard({ p, selectedAreas = [], onOpen }) {
                             {specialties.map((s) => {
                                 const matched = selectedAreas.includes(s);
                                 return (
-                                    <span key={s} className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${matched ? 'bg-[#176B68] text-white' : 'bg-[#F3E6D5] text-[#243638]'}`}>{s}</span>
+                                    <span key={s} className={`inline-flex items-center rounded-full border px-3 py-1 text-[17px] font-medium leading-snug ${matched ? 'border-[#91B7B0] bg-[#E4F0ED] text-[#1B5F5C]' : 'border-[#D9A18F] bg-[#F8E7DF] text-[#5A332C]'}`}>{s}</span>
                                 );
                             })}
                         </div>
@@ -410,7 +410,7 @@ function ProviderCard({ p, selectedAreas = [], onOpen }) {
                 )}
             </div>
 
-            <div className="flex w-full flex-shrink-0 flex-col gap-2.5 border-t border-[#D6E1DD] pt-4 sm:w-52 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
+            <div className="flex w-full min-w-0 flex-col gap-2.5 border-t border-[#D6E1DD] pt-4 sm:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
                 <AvailabilityBadge availability={p.availability} />
 
                 {/* Fee — wallet icon, না থাকলে mail icon */}
@@ -465,7 +465,7 @@ function ProviderCard({ p, selectedAreas = [], onOpen }) {
                 <Link
                     href={`/provider-profile/${p.id}`}
                     onClick={() => onOpen?.(p.id)}
-                    className="mt-1 inline-flex items-center justify-center gap-1.5 bg-[#176B68] px-4 text-white transition hover:bg-[#125450] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40 min-h-[48px] rounded-[7px] text-[15px] font-semibold"
+                    className="mt-1 inline-flex items-center justify-center gap-1.5 bg-[#176B68] px-4 text-white transition hover:bg-[#125450] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40 min-h-[48px] rounded-[7px] text-[18px] font-semibold sm:self-start sm:px-8 xl:self-stretch xl:px-4"
                     aria-label={`View profile for ${p.name}`}
                 >
                     View profile
@@ -618,7 +618,7 @@ function RefinePanel({ f, patch, onKeyword, filterOptions }) {
 
 /* Default page text & image — shown until the admin changes them (keep in sync with ProviderDirectoryPageService::schema()). */
 const DEFAULT_CONTENT = {
-    'seo.title': 'Find the right support — Bahali',
+    'seo.title': 'Find the right support — Bahali Connect',
     'hero.image': '/images/find-support-hero.jpg',
     'hero.image_alt': 'A man talks calmly with a support provider in a bright room.',
     'hero.eyebrow': 'Find culturally grounded care',
@@ -630,7 +630,7 @@ const DEFAULT_CONTENT = {
     'search.areas_hint': 'Select one or more.',
     'search.button': 'Find providers',
     'crisis.title': 'If you’re in immediate danger, please contact your local emergency services or a crisis line right away.',
-    'crisis.body': 'Bahali is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.',
+    'crisis.body': 'Bahali Connect is a directory to help you find a provider — it is not an emergency service and cannot provide crisis support.',
     'empty.title': 'We didn’t find an exact match for your selections',
     'empty.body': 'Try one of these adjustments — each keeps your other filters in place.',
 };
@@ -847,7 +847,7 @@ export default function Directory({
         if (f.city) chips.push({ key: 'city', label: f.city, clear: () => patch({ city: '' }) });
         if (f.include_virtual) chips.push({ key: 'virtual', label: 'Virtual', clear: () => patch({ include_virtual: false }) });
         f.areas.forEach((a) => chips.push({ key: `area:${a}`, label: a, clear: () => removeArea(a) }));
-        if (f.fee_min || f.fee_max) chips.push({ key: 'price', label: `$${f.fee_min || '0'}–$${f.fee_max || '∞'}`, clear: () => patch({ fee_min: '', fee_max: '' }) });
+        if (f.fee_min || f.fee_max) chips.push({ key: 'price', label: `$${f.fee_min ? groupThousands(String(f.fee_min)) : '0'}–$${f.fee_max ? groupThousands(String(f.fee_max)) : '∞'}`, clear: () => patch({ fee_min: '', fee_max: '' }) });
         if (f.payment) chips.push({ key: 'payment', label: PAYMENT_LABEL[f.payment], clear: () => patch({ payment: '', insurer: '' }) });
         if (f.insurer) chips.push({ key: 'insurer', label: f.insurer, clear: () => patch({ insurer: '' }) });
         f.language.forEach((l) => chips.push({ key: `lang:${l}`, label: l, clear: () => patch({ language: f.language.filter((x) => x !== l) }) }));
@@ -1002,7 +1002,7 @@ export default function Directory({
                                         const active = chip.areas.every((a) => f.areas.includes(a));
                                         return (
                                             <button key={chip.label} type="button" aria-pressed={active} onClick={() => toggleAreas(chip.areas)}
-                                                className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40 focus-visible:ring-offset-1 md:inline-flex md:w-auto md:gap-1.5 md:rounded-full md:border-[1.5px] md:py-2 md:text-sm ${active ? 'border-[#176B68] bg-[#B7C7C0]/15 text-[#176B68] ring-1 ring-inset ring-[#176B68] md:bg-[#176B68] md:text-white md:shadow-[0_4px_12px_-4px_rgba(30,77,74,0.55)] md:ring-0' : 'border-[#D6E1DD] bg-[#FAFAF6] text-[#243638] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#176B68] hover:bg-white hover:text-[#176B68]'}`}>
+                                                className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40 focus-visible:ring-offset-1 md:inline-flex md:w-auto md:gap-1.5 md:rounded-full md:border-[1.5px] md:py-2 md:text-[17px] ${active ? 'border-[#91B7B0] bg-[#E4F0ED] text-[#1B5F5C] ring-1 ring-inset ring-[#91B7B0] md:ring-0' : 'border-[#D6E1DD] bg-[#FAFAF6] text-[#243638] shadow-[0_1px_2px_rgba(20,20,20,0.06)] hover:border-[#176B68] hover:bg-white hover:text-[#176B68]'}`}>
                                                 {/* Mobile: checkbox-style indicator */}
                                                 <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded border-2 transition md:hidden ${active ? 'border-[#176B68] bg-[#176B68] text-white' : 'border-[#176B68]/65 bg-white'}`} aria-hidden>
                                                     {active && <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path d="M7.6 13.4 4.2 10l-1.2 1.2 4.6 4.6 9-9L15.4 5.6z" /></svg>}
@@ -1065,7 +1065,7 @@ export default function Directory({
                         {hasAnySelection && (
                             <div className="mb-4 flex flex-wrap items-center gap-2">
                                 {activeChips.map((c) => (
-                                    <button key={c.key} onClick={c.clear} className="group inline-flex items-center gap-1.5 rounded-full border border-[#B7C7C0] bg-[#176B68]/10 px-3 py-1 text-sm font-medium text-[#176B68] transition hover:bg-[#176B68]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40" aria-label={`Remove ${c.label}`}>
+                                    <button key={c.key} onClick={c.clear} className="group inline-flex items-center gap-1.5 rounded-full border border-[#91B7B0] bg-[#E4F0ED] px-3 py-1 text-[17px] font-medium text-[#1B5F5C] transition hover:bg-[#D3E6E1] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#176B68]/40" aria-label={`Remove ${c.label}`}>
                                         {c.label}
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
                                     </button>

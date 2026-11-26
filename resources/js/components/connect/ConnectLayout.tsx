@@ -206,10 +206,17 @@ export default function ConnectLayout({
             <header>
                 <div className="site-topline" aria-hidden="true" />
                 <div className="wrap header-inner">
+                    {/* Text wordmark "Bahali Connect•" + "A service of Bahali" link (no Bahali logo in the main navigation). */}
                     <div className="brand">
-                        <Link className="brand-home brand-logo-link" href={URLS.home} aria-label={t('header.home_label')}>
-                            <img className="brand-logo" src={t('header.logo')} alt={t('header.logo_alt')} width="3290" height="1426" />
-                        </Link>
+                        <span>
+                            <Link className="brand-name brand-home" href={URLS.home} aria-label={t('header.home_label')}>
+                                {t('header.wordmark')} <b>{t('header.wordmark_bold')}</b>
+                                <i aria-hidden="true">•</i>
+                            </Link>
+                            <a className="endorsement" href={BAHALI_URL} target="_blank" rel="noreferrer" aria-label={t('header.endorsement_label')}>
+                                {t('header.endorsement')}
+                            </a>
+                        </span>
                     </div>
 
                     <nav id="main-navigation" className={mobile ? 'open' : ''} aria-label="Main navigation">

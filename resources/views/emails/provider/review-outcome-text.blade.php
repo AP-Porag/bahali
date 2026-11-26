@@ -23,4 +23,4 @@ Hello {!! $name !!},
     {!! $paragraph !!}
 @endforeach
 Warm regards,
-The Bahali team
+The Bahali Connect team

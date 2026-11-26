@@ -74,7 +74,7 @@ export function ArticleCard({ a, fromCollection = false }: { a: BlogCard; fromCo
             <p className="blog-card-summary">{a.summary}</p>
             <div className="blog-card-bottom">
                 <Link href={articleUrl(a.slug)} onClick={onClick}>
-                    {t('card.more') || 'Read the story'}
+                    {t('card.more') || 'Read article'}
                     <span className="sr-only">: {a.title}</span>
                 </Link>
             </div>

@@ -18,6 +18,7 @@ import {
     hasReducedCost,
 } from '@/constants/fees';
 import { AREAS_OF_SUPPORT_GROUPS } from '@/constants/supportAreas';
+import { credentialProblem, isConcernNotMethod, misplacedCredential, splitCredentials } from '@/lib/credentialEntries';
 import { phoneError } from '@/lib/phone';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -951,6 +952,11 @@ export default function ProviderProfileEdit({
                 if (d.professional_title.length === 0) e.professional_title = 'Please select at least one professional title.';
                 if (d.professional_title.includes('Other (specify)') && !d.professional_title_other.trim())
                     e.professional_title_other = 'Please specify your title.';
+                {
+                    // Credentials = degrees, licenses and certifications only (methods / concerns go to their own sections).
+                    const problem = credentialProblem(splitCredentials(d.credentials));
+                    if (problem) e.credentials = problem;
+                }
                 break;
             case 1:
                 if (!d.short_bio.trim()) e.short_bio = 'A short bio is required.';
@@ -975,6 +981,8 @@ export default function ProviderProfileEdit({
                     const c = customSupportAreas[cat];
                     if (c.checked) {
                         if (c.text.trim() === '') customErrors.push(`Please specify the custom area for "${cat}".`);
+                        else if (misplacedCredential(c.text) === 'approach')
+                            customErrors.push(`“${c.text.trim()}” is a therapeutic method, not an area of support. Select it under Treatment Approaches (step “Professional Expertise”).`);
                         else customCount++;
                     }
                 }
@@ -990,6 +998,15 @@ export default function ProviderProfileEdit({
                     e.treatment_approaches_other = 'Please specify your other approach.';
                 if (d.specialized_training.includes('Other Specialized Training') && !d.specialized_training_other.trim())
                     e.specialized_training_other = 'Please specify your other training.';
+                // Concerns belong under Areas of Support; certifications list = credentials only.
+                if (d.treatment_approaches.includes('Other (specify)') && isConcernNotMethod(d.treatment_approaches_other))
+                    e.treatment_approaches_other = `“${d.treatment_approaches_other.trim()}” is a concern you support, not a therapeutic method. Select it under Areas of Support.`;
+                if (d.specialized_training.includes('Other Specialized Training') && isConcernNotMethod(d.specialized_training_other))
+                    e.specialized_training_other = `“${d.specialized_training_other.trim()}” is a concern you support, not a training. Select it under Areas of Support.`;
+                {
+                    const problem = credentialProblem(d.certifications);
+                    if (problem) e.certifications = problem;
+                }
                 break;
             case 6:
                 if (!d.caribbean_experience) e.caribbean_experience = 'Please choose Yes or Not yet.';
@@ -1413,7 +1430,7 @@ function StepBody({
                             placeholder="Dr. Jane Doe, PsyD or Harmony Counseling Center"
                         />
                     </FieldShell>
-                    <FieldShell label="Credentials / License" hint="Examples: PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC" error={fieldError('credentials')}>
+                    <FieldShell label="Credentials / License" hint="Degrees, licenses and certifications only — for example PhD, PsyD, MD, LCSW, LMHC, PMHNP-BC. Therapy methods go under Professional Expertise; the concerns you help with go under Areas of Support." error={fieldError('credentials')}>
                         <TextInput value={d.credentials} onChange={(v) => set('credentials', v)} placeholder="PsyD, LCSW…" />
                     </FieldShell>
                     <FieldShell label="Professional title(s)" required hint="Select all that apply." error={fieldError('professional_title')}>
@@ -1551,7 +1568,7 @@ function StepBody({
                 <FieldShell
                     label="Areas of support"
                     required
-                    hint="Expand each category and select every area where you have expertise. You may also add custom areas via 'Other'."
+                    hint="Select the concerns you help people with (for example Postpartum Anxiety or Grief & Loss) — therapy methods go under Professional Expertise. Expand each category and select every area where you have expertise. You may also add custom areas via 'Other'."
                     error={fieldError('areas_of_support')}
                 >
                     <div className="space-y-2.5">
@@ -1634,7 +1651,11 @@ function StepBody({
         case 5:
             return (
                 <>
-                    <FieldShell label="Treatment Approaches" hint="Select all that apply. (Optional)" error={fieldError('treatment_approaches')}>
+                    <FieldShell
+                        label="Treatment Approaches"
+                        hint="Therapeutic methods you use in your work (for example CBT or Cognitive Processing Therapy). Select all that apply. (Optional)"
+                        error={fieldError('treatment_approaches')}
+                    >
                         <CheckGrid
                             options={TREATMENT_APPROACHES}
                             selected={d.treatment_approaches}
@@ -1672,7 +1693,7 @@ function StepBody({
                     </FieldShell>
                     <FieldShell
                         label="Certifications & Credentials (Optional)"
-                        hint="List any relevant certifications you would like displayed."
+                        hint="Degrees, licenses and certifications only (for example PMH-C, CCTP, EMDR Certified Therapist). Therapy methods belong under Treatment Approaches or Specialized Training; the concerns you help with belong under Areas of Support."
                         error={fieldError('certifications')}
                     >
                         <CertificationsInput values={d.certifications} onChange={(list) => set('certifications', list)} />
@@ -1930,7 +1951,7 @@ function StepBody({
                             <div>
                                 <p className="text-sm font-semibold text-[#2C2C2C]">Contact person</p>
                                 <p className="mt-0.5 text-sm text-[#2C2C2C]">
-                                    Organizations need a named person Bahali and visitors can reach about this listing.
+                                    Organizations need a named person Bahali Connect and visitors can reach about this listing.
                                 </p>
                             </div>
                             <FieldShell label="Full name" required error={fieldError('contact_person_name')}>
@@ -1949,7 +1970,7 @@ function StepBody({
                                         placeholder="e.g. Pastoral Care Coordinator"
                                     />
                                 </FieldShell>
-                                <FieldShell label="Email" hint="Optional. Only Bahali sees this." error={fieldError('contact_person_email')}>
+                                <FieldShell label="Email" hint="Optional. Only the Bahali Connect team sees this." error={fieldError('contact_person_email')}>
                                     <TextInput
                                         value={d.contact_person_email}
                                         onChange={(v) => set('contact_person_email', v)}
@@ -1969,7 +1990,7 @@ function StepBody({
                             Show my phone number on my public profile
                         </ConsentItem>
                         <p className="mt-1.5 text-sm text-[#2C2C2C]">
-                            Untick to keep your number private. Bahali will still use it to contact you about your listing.
+                            Untick to keep your number private. Bahali Connect will still use it to contact you about your listing.
                         </p>
                     </div>
                     <FieldShell label="Website" hint="Optional." error={fieldError('website')}>

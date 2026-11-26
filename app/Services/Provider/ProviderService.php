@@ -2,6 +2,8 @@
 
 namespace App\Services\Provider;
 
+use App\Support\AreasOfSupport;
+use App\Support\ProviderEntryCategory;
 use App\Models\Provider;
 use App\Services\BaseService;
 use App\Utils\GlobalConstant;
@@ -315,6 +317,22 @@ class ProviderService extends BaseService
     {
         $flags = [];
 
+        // Entries typed under Credentials that are really a therapy method, training or a concern.
+        $credentialEntries = array_merge(
+            ProviderEntryCategory::splitCredentials($p->credentials),
+            array_filter($this->toArray($p->certifications), 'is_string')
+        );
+        foreach ($credentialEntries as $entry) {
+            $category = ProviderEntryCategory::misplacedCredential($entry);
+            if ($category) {
+                $flags[] = [
+                    'field'   => 'credentials',
+                    'message' => ProviderEntryCategory::message(trim($entry), $category)
+                        . ' On the public profile it is shown in that section, not under Credentials.',
+                ];
+            }
+        }
+
         $range = $this->yearsBucketRange((string) $p->years_experience);
         if (! $range) {
             return $flags;
@@ -619,11 +637,30 @@ class ProviderService extends BaseService
             return null;
         }
 
+        // Credentials show degrees, licences and certifications only. A therapy method or a concern typed
+        // under Credentials is shown in its own section instead (Treatment Approaches / Training / Areas of Support).
+        $sorted = ProviderEntryCategory::sortForProfile($p->credentials, $this->toArray($p->certifications));
+        $supportAreas = $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
+            'category' => $cat,
+            'areas'    => $rows->pluck('area')->filter()->values(),
+        ])->values();
+        foreach ($sorted['areas'] as $area) {
+            $category = AreasOfSupport::categoryFor($area) ?? 'Other areas of support';
+            $index = $supportAreas->search(fn($g) => $g['category'] === $category);
+            if ($index === false) {
+                $supportAreas->push(['category' => $category, 'areas' => collect([$area])]);
+            } elseif (! $supportAreas[$index]['areas']->contains($area)) {
+                $group = $supportAreas[$index];
+                $group['areas'] = $group['areas']->push($area)->values();
+                $supportAreas->put($index, $group);
+            }
+        }
+
         return [
             'id'              => $p->id,
             'name'            => $p->organization_name,
             'title'           => $this->displayTitle($p),
-            'credentials'     => $p->credentials,
+            'credentials'     => $sorted['credentials'],
             'photo'           => $p->profile_photo ? Storage::url($p->profile_photo) : null,
             'additionalPhotos' => collect($this->toArray($p->additional_photos))
                 ->map(fn($path) => Storage::url($path))->values()->all(),
@@ -645,18 +682,16 @@ class ProviderService extends BaseService
             'culturallyAffirming' => $p->culturally_affirming,    // ← যোগ করুন
             'lgbtqAffirming'      => $p->lgbtq_affirming,         // ← যোগ করুন
             'providerType' => $p->provider_type,
-            'licenceVerified' => (bool) $p->licence_verified,
+            // "Credentials verified" only after the Bahali Connect team has completed the licence check (individuals only).
+            'licenceVerified' => $p->provider_type === 'individual' && (bool) $p->licence_verified,
             // One question drives the "Caribbean support experience" badge and the Approach tab section.
             'caribbeanExperience'        => self::isYes($p->caribbean_experience),
             'caribbeanExperienceDetails' => self::caribbeanExperienceDetails($p->caribbean_experience, $p->caribbean_experience_details),
-            'supportAreas'    => $p->supportAreas->groupBy('category')->map(fn($rows, $cat) => [
-                'category' => $cat,
-                'areas'    => $rows->pluck('area')->filter()->values(),
-            ])->values(),
+            'supportAreas'    => $supportAreas,
             'populations'         => $this->toArray($p->populations_served),
-            'treatmentApproaches' => $this->toArray($p->treatment_approaches),
-            'specializedTraining' => $this->toArray($p->specialized_training),
-            'certifications'      => $this->toArray($p->certifications),
+            'treatmentApproaches' => array_values(array_unique(array_merge($this->toArray($p->treatment_approaches), $sorted['approaches']))),
+            'specializedTraining' => array_values(array_unique(array_merge($this->toArray($p->specialized_training), $sorted['training']))),
+            'certifications'      => $sorted['certifications'],
             'accessibility'       => $this->toArray($p->accessibility),
             'payment' => [
                 'methods'   => $this->toArray($p->payment_methods),
@@ -931,7 +966,7 @@ class ProviderService extends BaseService
         return [
             'id'          => $p->id,
             'name'        => $p->organization_name,
-            'credentials' => $p->credentials,
+            'credentials' => ProviderEntryCategory::sortForProfile($p->credentials, [])['credentials'], // degrees / licences only
             'title'       => $this->displayTitle($p),
             'providerType' => $p->provider_type,
             'photo'       => $p->profile_photo ? Storage::url($p->profile_photo) : null,
@@ -960,9 +995,9 @@ class ProviderService extends BaseService
             // Availability — 3 states (guide §5.1): accepting | not_accepting | unknown
             'availability' => $this->availabilityState($p),
 
-            // Verification indicator — approved profiles are Bahali-verified.
-            'verified'     => true,
-            'licenceVerified' => (bool) $p->licence_verified,
+            // Verification indicator — only after the licence check is completed (approval alone is not verification).
+            'verified'     => $p->provider_type === 'individual' && (bool) $p->licence_verified,
+            'licenceVerified' => $p->provider_type === 'individual' && (bool) $p->licence_verified,
 
             'caribbeanExperience' => self::isYes($p->caribbean_experience),
         ];
@@ -1174,6 +1209,26 @@ class ProviderService extends BaseService
         $data = array_merge($data, self::extraColumns($request));
 
         $data['status'] = GlobalConstant::VERIFICATION_STATUS_PENDING;
+
+        // "Credentials verified" belongs to the details that were checked. If the provider changes their
+        // credentials or licence details (or uploads a new document), the check has to be done again.
+        $licenceChanged = $request->hasFile('verification_document');
+        foreach (['credentials', 'license_number', 'license_status'] as $field) {
+            if (array_key_exists($field, $data) && trim((string) $data[$field]) !== trim((string) $provider->{$field})) {
+                $licenceChanged = true;
+            }
+        }
+        $oldStates = $this->toArray($provider->license_states);
+        $newStates = $data['license_states'];
+        sort($oldStates);
+        sort($newStates);
+        if ($oldStates !== $newStates) {
+            $licenceChanged = true;
+        }
+        if ($licenceChanged && $provider->licence_verified) {
+            $data['licence_verified'] = 0;
+        }
+
         // Availability (guide §5) — stamp confirmation time so the 60-day
         // freshness window resets on every profile save.
         $data['availability_confirmed_at'] = now();

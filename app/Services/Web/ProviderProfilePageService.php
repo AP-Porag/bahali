@@ -51,8 +51,8 @@ class ProviderProfilePageService extends BaseService
                 'title' => 'Contact Panel',
                 'description' => 'Text in the contact box, the mobile contact popup and the mobile contact bar.',
                 'fields' => [
-                    self::field('contact.disclaimer', 'Contact Box Disclaimer', 'textarea', 'Bahali does not manage appointments or communications between you and the provider.'),
-                    self::field('contact.modal_intro', 'Mobile Popup Intro', 'textarea', 'Reach the provider directly. Bahali does not manage appointments or communications between you and the provider.'),
+                    self::field('contact.disclaimer', 'Contact Box Disclaimer', 'textarea', 'Bahali Connect does not manage appointments or communications between you and the provider.'),
+                    self::field('contact.modal_intro', 'Mobile Popup Intro', 'textarea', 'Reach the provider directly. Bahali Connect does not manage appointments or communications between you and the provider.'),
                     self::field('contact.empty', 'No Contact Method Text', 'text', "This provider hasn't listed a contact method yet."),
                     self::field('contact.mobile_button', 'Mobile Button Text', 'text', 'Contact provider'),
                 ],
@@ -63,7 +63,7 @@ class ProviderProfilePageService extends BaseService
                 'description' => 'Small safety note under the contact options.',
                 'fields' => [
                     self::field('crisis.label', 'Bold Label', 'text', 'Please note.'),
-                    self::field('crisis.body', 'Note Text', 'textarea', 'If you are in crisis or need immediate support, contact your local emergency services or a crisis helpline. Bahali is not an emergency service.'),
+                    self::field('crisis.body', 'Note Text', 'textarea', 'If you are in crisis or need immediate support, contact your local emergency services or a crisis helpline. Bahali Connect is not an emergency service.'),
                 ],
             ],
             [

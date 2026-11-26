@@ -121,12 +121,12 @@ const DEFAULT_CONTENT: Record<string, string> = {
     'page.eyebrow': 'Provider profile',
     'availability.accepting_note': 'This information is provided by the provider.',
     'availability.unknown_note': 'Contact the provider directly to confirm current availability.',
-    'contact.disclaimer': 'Bahali does not manage appointments or communications between you and the provider.',
-    'contact.modal_intro': 'Reach the provider directly. Bahali does not manage appointments or communications between you and the provider.',
+    'contact.disclaimer': 'Bahali Connect does not manage appointments or communications between you and the provider.',
+    'contact.modal_intro': 'Reach the provider directly. Bahali Connect does not manage appointments or communications between you and the provider.',
     'contact.empty': "This provider hasn't listed a contact method yet.",
     'contact.mobile_button': 'Contact provider',
     'crisis.label': 'Please note.',
-    'crisis.body': 'If you are in crisis or need immediate support, contact your local emergency services or a crisis helpline. Bahali is not an emergency service.',
+    'crisis.body': 'If you are in crisis or need immediate support, contact your local emergency services or a crisis helpline. Bahali Connect is not an emergency service.',
     'fees.no_fee': 'Contact provider for fee information',
     'fees.insurance_note': 'Coverage varies by plan — confirm directly with the provider.',
 };
@@ -244,15 +244,13 @@ function AvailabilityBox({ availability, confirmedAt }: { availability?: Availab
         );
     }
     return (
-        <div className="rounded-xl border border-[#D6E1DD]/40 bg-[#F3E6D5]/12 p-4">
-            <p className="text-sm font-semibold uppercase tracking-wide text-[#243638]">Current availability</p>
-            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#243638]">
-                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[#F3E6D5]">
-                    <HelpCircle className="h-3 w-3 text-white" strokeWidth={2.6} aria-hidden />
-                </span>
+        <div className="rounded-xl border border-[#D4DCD8] bg-[#F3F4F1] p-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#344547]">Current availability</p>
+            <p className="mt-1.5 flex items-center gap-2 font-semibold text-[#344547]">
+                <HelpCircle className="h-4 w-4 flex-shrink-0" strokeWidth={2.2} aria-hidden />
                 Availability unknown
             </p>
-            <p className="mt-0.5 text-sm text-[#243638]">{txt('availability.unknown_note')}</p>
+            <p className="mt-0.5 text-sm text-[#344547]">{txt('availability.unknown_note')}</p>
         </div>
     );
 }
@@ -540,7 +538,14 @@ export default function ProviderProfile({ provider, content = {} }: { provider: 
                         {supportAreas.map((g) => (
                             <div key={g.category} className="mb-4 break-inside-avoid last:mb-0">
                                 <SubLabel>{g.category}</SubLabel>
-                                <CategoryList items={g.areas} />
+                                {/* Areas of support = soft coral chips (same meaning as on the search cards) */}
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {g.areas.map((area) => (
+                                        <li key={area} className="inline-flex rounded-full border border-[#D9A18F] bg-[#F8E7DF] px-3 py-1 text-[17px] font-medium leading-snug text-[#5A332C]">
+                                            {area}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         ))}
                     </div>

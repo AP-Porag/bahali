@@ -58,7 +58,7 @@
                     <tr>
                         <td align="center" style="padding:0 0 22px;">
                             <a href="{{ url('/') }}"
-                                style="text-decoration:none; font-family:Fraunces, 'Playfair Display', Georgia, serif; font-size:26px; font-weight:600; color:#0E7C7B; letter-spacing:-0.3px;">Bahali</a>
+                                style="text-decoration:none; font-family:Fraunces, 'Playfair Display', Georgia, serif; font-size:26px; font-weight:600; color:#0E7C7B; letter-spacing:-0.3px;">Bahali Connect</a>
                         </td>
                     </tr>
 
@@ -75,7 +75,7 @@
                         <td align="center"
                             style="padding:24px 24px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:12px; line-height:1.6; color:#8A9795;">
                             @yield('footer')
-                            <p style="margin:10px 0 0;">&copy; {{ date('Y') }} Bahali Provider Directory</p>
+                            <p style="margin:10px 0 0;">&copy; {{ date('Y') }} Bahali Connect · a service of Bahali</p>
                         </td>
                     </tr>
                 </table>

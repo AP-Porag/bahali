@@ -69,7 +69,7 @@
         <p style="margin:0 0 14px; font-size:14px; color:#5B6B6E;">{{ $paragraph }}</p>
     @endforeach
 
-    <p style="margin:22px 0 0; color:#16302F;">Warm regards,<br>The Bahali team</p>
+    <p style="margin:22px 0 0; color:#16302F;">Warm regards,<br>The Bahali Connect team</p>
 
     {{-- Link fallback (web links only — not for mailto:) --}}
     @if ($actionUrl && !str_starts_with($actionUrl, 'mailto:'))
@@ -87,6 +87,6 @@
 @endsection
 
 @section('footer')
-    <p style="margin:0;">You're receiving this because you submitted a provider profile to the Bahali Provider Directory.
+    <p style="margin:0;">You're receiving this because you submitted a provider profile to Bahali Connect.
     </p>
 @endsection
