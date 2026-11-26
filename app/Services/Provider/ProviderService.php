@@ -318,18 +318,20 @@ class ProviderService extends BaseService
         $flags = [];
 
         // Entries typed under Credentials that are really a therapy method, training or a concern.
-        $credentialEntries = array_merge(
-            ProviderEntryCategory::splitCredentials($p->credentials),
-            array_filter($this->toArray($p->certifications), 'is_string')
-        );
-        foreach ($credentialEntries as $entry) {
-            $category = ProviderEntryCategory::misplacedCredential($entry);
-            if ($category) {
-                $flags[] = [
-                    'field'   => 'credentials',
-                    'message' => ProviderEntryCategory::message(trim($entry), $category)
-                        . ' On the public profile it is shown in that section, not under Credentials.',
-                ];
+        $credentialEntries = [
+            'credentials'    => ProviderEntryCategory::splitCredentials($p->credentials),            // "Credentials / License"
+            'certifications' => array_filter($this->toArray($p->certifications), 'is_string'),  // "Certifications & credentials"
+        ];
+        foreach ($credentialEntries as $field => $entries) {
+            foreach ($entries as $entry) {
+                $category = ProviderEntryCategory::misplacedCredential($entry);
+                if ($category) {
+                    $flags[] = [
+                        'field'   => $field,
+                        'message' => ProviderEntryCategory::message(trim($entry), $category)
+                            . ' On the public profile it is shown in that section, not under Credentials.',
+                    ];
+                }
             }
         }
 
@@ -338,16 +340,17 @@ class ProviderService extends BaseService
             return $flags;
         }
 
+        // field = where the conflicting text lives, so the admin page highlights that text (not always the bio).
         $texts = [
-            'biography'                        => (string) $p->short_bio,
-            'Caribbean experience description' => (string) $p->caribbean_experience_details,
+            'short_bio'                    => ['biography', (string) $p->short_bio],
+            'caribbean_experience_details' => ['Caribbean experience description', (string) $p->caribbean_experience_details],
         ];
 
-        foreach ($texts as $label => $text) {
+        foreach ($texts as $field => [$label, $text]) {
             $claim = $this->conflictingYearsClaim($text, $range);
             if ($claim !== null) {
                 $flags[] = [
-                    'field'   => 'years_experience',
+                    'field'   => $field,
                     'message' => sprintf(
                         'The %s mentions "%s", but Years of experience is set to "%s". Please confirm which is correct before publishing.',
                         $label,

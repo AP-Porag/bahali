@@ -7039,7 +7039,7 @@
     margin: 0;
     font-size: inherit;
     white-space: nowrap;
-    /* color: #ff5619; */
+    color: #e1eae8;
 }
 @media (max-width: 700px) {
     .bc-connect .footer-bottom > .footer-copyright-row:where(:not(.bc-plain *)) {
@@ -7260,4 +7260,26 @@
     max-height: min(620px, 80vh);
     object-fit: cover;
     object-position: 50% 25%;
+}
+
+/* Header: Bahali emblem left of the "Bahali Connect" wordmark (client review 26 Nov) */
+.bc-connect .brand .brand-emblem:where(:not(.bc-plain *)) {
+    display: block;
+    flex: none;
+    line-height: 0;
+}
+.bc-connect .brand .brand-emblem img:where(:not(.bc-plain *)) {
+    display: block;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+@media (max-width: 600px) {
+    .bc-connect .brand:where(:not(.bc-plain *)) {
+        gap: 8px;
+    }
+    .bc-connect .brand .brand-emblem img:where(:not(.bc-plain *)) {
+        width: 36px;
+        height: 36px;
+    }
 }

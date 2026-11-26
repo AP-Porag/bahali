@@ -828,6 +828,7 @@ class ProviderDirectoryController extends Controller
                 'languages' => $provider->languages,
                 'languages_other' => $provider->languages_other,
                 'cultural_approach' => $provider->cultural_approach,
+                'lgbtq_affirming' => $provider->lgbtq_affirming, // 'yes' | 'no' | null — public profile + directory filter
 
 
                 'treatment_approaches' => $provider->treatment_approaches,
@@ -853,6 +854,9 @@ class ProviderDirectoryController extends Controller
                 'payment_methods' => $provider->payment_methods,
                 'insurance_plans' => $provider->insurance_plans,
                 'fee_range' => $provider->fee_range,
+                // Shown on the public profile — the admin checks them too.
+                'fee_currency' => $provider->fee_currency ?: 'USD',
+                'reduced_cost_scope' => $provider->reduced_cost_scope,
 
                 // Contact
                 'contact_person_name' => $provider->contact_person_name,

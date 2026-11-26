@@ -206,8 +206,11 @@ export default function ConnectLayout({
             <header>
                 <div className="site-topline" aria-hidden="true" />
                 <div className="wrap header-inner">
-                    {/* Text wordmark "Bahali Connect•" + "A service of Bahali" link (no Bahali logo in the main navigation). */}
+                    {/* Bahali emblem (icon only, never the full Bahali logo) + wordmark "Bahali Connect•" + "A service of Bahali" link. */}
                     <div className="brand">
+                        <Link className="brand-emblem" href={URLS.home} tabIndex={-1} aria-hidden="true">
+                            <img src={t('header.emblem') || '/images/bahali-icon.png'} alt="" width={48} height={48} />
+                        </Link>
                         <span>
                             <Link className="brand-name brand-home" href={URLS.home} aria-label={t('header.home_label')}>
                                 {t('header.wordmark')} <b>{t('header.wordmark_bold')}</b>
@@ -284,7 +287,9 @@ export default function ConnectLayout({
                                 <Link href={URLS.providers}>{t('footer.providers_join')}</Link>
                             </li>
                             <li>
-                                <a href={signedIn ? URLS.account : URLS.login}>{signedIn ? t('footer.providers_account') : t('footer.providers_login')}</a>
+                                <a href={signedIn ? URLS.account : URLS.login}>
+                                    {signedIn ? t('footer.providers_account') : t('footer.providers_login')}
+                                </a>
                             </li>
                         </ul>
                     </div>

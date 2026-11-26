@@ -54,11 +54,36 @@ export default function GetHelp({ countries, topics, filters, content }: Props) 
             document.getElementById('help-country')?.focus();
             return;
         }
+        showResults(chosen);
+    };
+
+    const showResults = (topic: string) =>
         router.post(
             URLS.results,
-            { country: all ? '' : place, region: all ? '' : region, topic: chosen, virtual: false, language: '', role: '' },
+            { country: all ? '' : place, region: all ? '' : region, topic, virtual: false, language: '', role: '' },
             { onStart: () => setBusy(true), onFinish: () => setBusy(false) },
         );
+
+    /* "Explore all support options" — continue without a topic.
+       Phones: move to the location panel (reference behaviour).
+       Desktop: the panel is already beside the list, so open the location picker,
+       or go straight to the results when a location is already chosen. */
+    const exploreAll = () => {
+        setChosen('');
+        setQuery('');
+        if (isPhone()) {
+            focusLocation();
+            return;
+        }
+        if (all || place) {
+            showResults('');
+            return;
+        }
+        requestAnimationFrame(() => {
+            const picker = document.getElementById('help-country');
+            picker?.focus();
+            picker?.click();
+        });
     };
 
     return (
@@ -88,21 +113,9 @@ export default function GetHelp({ countries, topics, filters, content }: Props) 
                         />
                     </label>
                     <div className="topic-results" aria-live="polite">
-                        {list.length ? (
-                            <p className="small muted">{t('topics.hint')}</p>
-                        ) : (
-                            <p>{t('topics.none')}</p>
-                        )}
+                        {list.length ? <p className="small muted">{t('topics.hint')}</p> : <p>{t('topics.none')}</p>}
                     </div>
-                    <button
-                        type="button"
-                        className="text-button"
-                        onClick={() => {
-                            setChosen('');
-                            setQuery('');
-                            focusLocation();
-                        }}
-                    >
+                    <button type="button" className="text-button" onClick={exploreAll}>
                         {t('topics.all')}
                     </button>
                     <div className="topic-list">
@@ -125,7 +138,9 @@ export default function GetHelp({ countries, topics, filters, content }: Props) 
                     </div>
                     {!q && (
                         <button type="button" className="text-button topic-expand" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
-                            {showAll ? t('topics.fewer') : fill(t('topics.more'), { count: topics.length })}
+                            {/* No number in this link, so the wording stays right as areas of support are added
+                                (an older CMS value with "{count}" has the placeholder removed). */}
+                            {showAll ? t('topics.fewer') : t('topics.more').replace(/\s*\{count\}/g, '')}
                         </button>
                     )}
                 </div>
@@ -137,7 +152,9 @@ export default function GetHelp({ countries, topics, filters, content }: Props) 
                             className="text-button help-change-topic"
                             onClick={() => {
                                 document.getElementById('topic-search')?.focus();
-                                document.querySelector('.discovery-search')?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+                                document
+                                    .querySelector('.discovery-search')
+                                    ?.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
                             }}
                         >
                             {t('location.change')}

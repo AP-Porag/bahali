@@ -1,5 +1,5 @@
 import ConnectLayout from '@/components/connect/ConnectLayout';
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
 /* ------------------------------------------------------------------ */
@@ -379,7 +379,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                     {status.label}
                                 </span>
                                 {/* Account actions */}
-                                <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+                                {/* <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
                                     <Link
                                         href={links.editProfile}
                                         className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#1E4D4A] px-4 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#163F3C] focus-visible:ring-2 focus-visible:ring-[#1E4D4A]/40 focus-visible:ring-offset-2 focus-visible:outline-none sm:flex-none"
@@ -394,7 +394,7 @@ export default function ProviderDashboard({ provider, status, completeness, stat
                                     >
                                         Log out
                                     </Link>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 

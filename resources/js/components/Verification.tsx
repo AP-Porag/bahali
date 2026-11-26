@@ -2,6 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useRef, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { VERIFICATION_STATUS } from '@/utils/constants';
+import { feeWithCurrency } from '@/components/provider/ProviderBadges';
+import { REDUCED_COST_SCOPES, hasReducedCost } from '@/constants/fees';
 /**
  * Bahali Provider Directory — Admin Verification Review
  * ------------------------------------------------------------------
@@ -60,6 +62,7 @@ interface ProviderData {
     languages?: string[];
     languages_other?: string;
     cultural_approach?: string;
+    lgbtq_affirming?: string | null; // 'yes' | 'no'
     // Service
     service_formats?: string[];
     practice_settings?: string[];
@@ -77,6 +80,8 @@ interface ProviderData {
     payment_methods?: string[];
     insurance_plans?: string;
     fee_range?: string | null;
+    fee_currency?: string | null;
+    reduced_cost_scope?: 'this_service' | 'other_offerings' | null;
     // Contact
     contact_person_name?: string | null;
     contact_person_role?: string | null;
@@ -157,6 +162,7 @@ const SAMPLE: ProviderData = {
     caribbean_experience: 'yes',
     languages: ['English', 'Jamaican Patois'],
     languages_other: '',
+    lgbtq_affirming: 'yes',
     cultural_approach:
         'Culture isn’t a footnote in my practice — it’s the ground we stand on. I weave Caribbean family structures, faith, and migration realities into the care I offer.',
     service_formats: ['In-Person', 'Virtual'],
@@ -171,6 +177,8 @@ const SAMPLE: ProviderData = {
     payment_methods: ['Self-Pay', 'Sliding Scale', 'Insurance Accepted'],
     insurance_plans: 'Aetna, Blue Cross Blue Shield, Cigna',
     fee_range: '$100–$150 / session',
+    fee_currency: 'USD',
+    reduced_cost_scope: 'this_service',
     phone: '+1 (876) 555-0142',
     website: 'https://example.com',
     social_links: 'https://instagram.com/example, https://facebook.com/example',
@@ -224,11 +232,15 @@ const STEPS = [
 ] as const;
 const TOTAL_STEPS = STEPS.length;
 /* Which review section each flagged field lives in (used to jump to it and mark the stepper). */
-const FLAG_STEP: Record<string, number> = { years_experience: 1, short_bio: 1 };
-/* Rows to highlight for each flag — a years conflict involves both the answer and the bio. */
+const FLAG_STEP: Record<string, number> = { years_experience: 1, short_bio: 1, caribbean_experience_details: 6, credentials: 0, certifications: 5 };
+/* Rows to highlight for each flag — a years conflict involves the Years answer and the text that contradicts it
+   (the bio, or the Caribbean experience description), so only that text is marked. */
 const FLAG_FIELDS: Record<string, string[]> = {
     years_experience: ['years_experience', 'short_bio'],
     short_bio: ['years_experience', 'short_bio'],
+    caribbean_experience_details: ['years_experience', 'caribbean_experience_details'],
+    credentials: ['credentials'],       // a therapy method / concern typed under "Credentials / License"
+    certifications: ['certifications'], // … or under "Certifications & credentials"
 };
 const DECISION_STEP = TOTAL_STEPS - 1;
 /* Review workflow: Submitted → Needs correction / Pending verification / Rejected → Approved (published). */
@@ -535,7 +547,7 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
                 <DL>
                     <Row label="Provider type">{lbl(PROVIDER_TYPE_LABELS, p.provider_type)}</Row>
                     <Row label="Provider or Organization Name">{p.organization_name}</Row>
-                    <Row label="Credentials / License">{p.credentials}</Row>
+                    <Row label="Credentials / License" highlight={flagged.has('credentials')}>{p.credentials}</Row>
                     <Row label="Professional title">
                         <Pills items={p.professional_title} />
                     </Row>
@@ -575,7 +587,7 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
                 <DL>
                     <Row label="Treatment approaches"><Pills items={p.treatment_approaches} /></Row>
                     <Row label="Specialized training"><Pills items={p.specialized_training} /></Row>
-                    <Row label="Certifications & credentials"><Pills items={p.certifications} /></Row>
+                    <Row label="Certifications & credentials" highlight={flagged.has('certifications')}><Pills items={p.certifications} /></Row>
                 </DL>
             );
         case 6:
@@ -584,11 +596,12 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
                     <Row label="Experience supporting Caribbean individuals, families, or communities?">
                         {p.caribbean_experience ? (p.caribbean_experience === 'yes' ? 'Yes' : 'Not yet') : undefined}
                     </Row>
-                    {p.caribbean_experience === 'yes' && (
-                        <Row label="Caribbean experience — provider description">
+                    {(p.caribbean_experience === 'yes' || flagged.has('caribbean_experience_details')) && (
+                        <Row label="Caribbean experience — provider description" highlight={flagged.has('caribbean_experience_details')}>
                             {p.caribbean_experience_details ? <p className="leading-relaxed text-[#3A4B49]">{p.caribbean_experience_details}</p> : undefined}
                         </Row>
                     )}
+                    <Row label="Offers LGBTQIA+ affirming care?">{lbl(YESNO_LABELS, p.lgbtq_affirming ?? undefined)}</Row>
                     <Row label="Languages spoken"><Pills items={p.languages} /></Row>
                     <Row label="Cultural approach">
                         {p.cultural_approach ? <p className="leading-relaxed text-[#3A4B49]">{p.cultural_approach}</p> : undefined}
@@ -628,7 +641,16 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
                 <DL>
                     <Row label="Accepted payment methods"><Pills items={p.payment_methods} /></Row>
                     <Row label="Insurance plans accepted">{p.insurance_plans}</Row>
-                    <Row label="Session fee range">{p.fee_range}</Row>
+                    {/* Same text as the public card and profile, e.g. "$8,000 JMD / session" */}
+                    <Row label="Session fee range">{p.fee_range ? feeWithCurrency(p.fee_range, p.fee_currency || 'USD') : undefined}</Row>
+                    <Row label="Fee currency">{p.fee_currency || undefined}</Row>
+                    {hasReducedCost(p.payment_methods ?? []) && (
+                        <Row label="Does the reduced-cost option apply to the fee shown?">
+                            {p.reduced_cost_scope
+                                ? REDUCED_COST_SCOPES.find((o) => o.value === p.reduced_cost_scope)?.label ?? p.reduced_cost_scope
+                                : <span className="text-[#9A6B12]">Not specified — the profile will say “ask which services qualify”</span>}
+                        </Row>
+                    )}
                 </DL>
             );
         case 10:
@@ -687,7 +709,7 @@ function ReviewBody({ step, p, onViewDoc, flagged = new Set<string>() }: { step:
             return (
                 <DL>
                     <Row label="Information is accurate"><YesNoBadge value={p.consent_accurate} /></Row>
-                    <Row label="Will notify Bahali of changes"><YesNoBadge value={p.consent_notify} /></Row>
+                    <Row label="Will notify Bahali Connect of changes"><YesNoBadge value={p.consent_notify} /></Row>
                     <Row label="Understands this is not an endorsement"><YesNoBadge value={p.consent_no_endorsement} /></Row>
                     <Row label="Consents to public display"><YesNoBadge value={p.consent_public} /></Row>
                 </DL>
@@ -725,8 +747,9 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], r
     const topRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const current = STATUS_META[p.status ?? ''] ?? STATUS_META[p.verification_status] ?? STATUS_META.pending;
-    const flaggedSteps = new Set(reviewFlags.map((f) => FLAG_STEP[f.field]).filter((i) => i !== undefined));
     const flaggedFields = new Set(reviewFlags.flatMap((f) => FLAG_FIELDS[f.field] ?? [f.field]));
+    // Every section that holds a highlighted row gets the amber dot (a years conflict marks About and the text's own section).
+    const flaggedSteps = new Set([...flaggedFields].map((f) => FLAG_STEP[f]).filter((i) => i !== undefined));
     const progress = Math.round(((step + 1) / TOTAL_STEPS) * 100);
     const scrollTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     const goTo = (i: number) => {
@@ -894,6 +917,7 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], r
                                                     <p className="mt-0.5 text-xs text-[#6B7A78]">
                                                         Mark as verified only after confirming the licence number, status and issuing authority
                                                         (e.g. Florida Board of Psychology, Jamaica Psychology Board). Unverified credentials alone are not a reason for rejection.
+                                                        If the provider later changes their credentials or licence details, this goes back to Unverified automatically.
                                                     </p>
                                                     <div className="mt-3 flex flex-wrap gap-2.5" role="radiogroup" aria-label="Credential verification">
                                                         {[
@@ -915,6 +939,11 @@ export default function ProviderVerificationShow({ provider, reviewFlags = [], r
                                                             </button>
                                                         ))}
                                                     </div>
+                                                    {licenceVerified && !p.license_number && !p.verification_document && (
+                                                        <p className="mt-2 text-xs font-medium text-[#9A6B12]">
+                                                            No licence number or document was submitted — only mark Verified after you have confirmed the credential with the issuing authority.
+                                                        </p>
+                                                    )}
                                                     {Boolean(p.licence_verified) !== licenceVerified && (
                                                         <button
                                                             type="button"

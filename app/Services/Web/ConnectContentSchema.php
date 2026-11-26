@@ -934,7 +934,8 @@ MD;
         $h = self::FORMAT_HINT;
 
         return [
-            self::section('header', 'Header', 'Bahali Connect wordmark, "A service of Bahali" link, Get Help button and accessibility labels.', [
+            self::section('header', 'Header', 'Bahali emblem, Bahali Connect wordmark, "A service of Bahali" link, Get Help button and accessibility labels.', [
+                self::f('header.emblem', 'Bahali Emblem', '/images/bahali-icon.png', 'image', 'Small round emblem left of the wordmark. Square image, at least 120×120. Use the emblem only, not the full Bahali logo.'),
                 self::f('header.wordmark', 'Wordmark (regular)', 'Bahali'),
                 self::f('header.wordmark_bold', 'Wordmark (bold)', 'Connect'),
                 self::f('header.endorsement', '"A service of Bahali" Link Text', 'A SERVICE OF BAHALI', 'text', 'Small link under the wordmark. It opens Bahali.org.'),
