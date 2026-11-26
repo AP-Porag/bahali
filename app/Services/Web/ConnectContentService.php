@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Bahali Connect website text (Admin → CMS → Home / Website Pages).
  * Same storage and behaviour as ProviderDirectoryPageService: page_contents rows (page = "connect-{page}"),
- * defaults from ConnectContentSchema, cached per page until an editor saves.
+ * defaults from ConnectContentSchema. Only the saved values are cached (until an editor saves); the defaults are
+ * merged on every request, so a deploy that adds a field or changes a default shows it without `cache:clear`.
  */
 class ConnectContentService
 {
@@ -54,20 +55,18 @@ class ConnectContentService
             return [];
         }
 
-        return Cache::rememberForever(self::cacheKey($page), function () use ($page) {
-            $defaults = collect(self::fields($page))
-                ->mapWithKeys(fn (array $field) => [$field['key'] => $field['default']])
-                ->all();
+        $defaults = collect(self::fields($page))
+            ->mapWithKeys(fn (array $field) => [$field['key'] => $field['default']])
+            ->all();
 
-            $saved = PageContent::query()
-                ->where('page', self::storagePage($page))
-                ->whereIn('key', array_keys($defaults))
-                ->pluck('value', 'key')
-                ->filter(fn ($value) => $value !== null && $value !== '')
-                ->all();
+        $saved = Cache::rememberForever(self::cacheKey($page), fn () => PageContent::query()
+            ->where('page', self::storagePage($page))
+            ->pluck('value', 'key')
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->all());
 
-            return array_merge($defaults, $saved);
-        });
+        // Saved values for fields that no longer exist in the schema are ignored.
+        return array_merge($defaults, array_intersect_key($saved, $defaults));
     }
 
     /** Admin view: sections with the current value (and default) on each field. */
@@ -159,6 +158,7 @@ class ConnectContentService
 
     private static function cacheKey(string $page): string
     {
-        return 'page_content_connect_' . $page;
+        // "saved_": this cache holds only the editor's saved values (older caches held the merged text).
+        return 'page_content_connect_saved_' . $page;
     }
 }

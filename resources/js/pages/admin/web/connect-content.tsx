@@ -216,6 +216,8 @@ export default function ConnectContent({ page, pages, sections }: Props) {
 function FieldRow({ field, onEdit, onReset }: { field: Field; onEdit: () => void; onReset: () => void }) {
     const [broken, setBroken] = useState(false);
     const changed = field.value !== field.default;
+    // Logos and the round emblem are shown whole (not cropped) in the small preview.
+    const isMark = /(^|\.)(logo|emblem)$/.test(field.key);
 
     return (
         <div className="flex items-start justify-between gap-6 border-b border-[#EFEAE0] py-4 last:border-b-0">
@@ -226,9 +228,9 @@ function FieldRow({ field, onEdit, onReset }: { field: Field; onEdit: () => void
                 </p>
 
                 {field.type === 'image' ? (
-                    <div className="mt-2 h-20 w-32 overflow-hidden rounded-lg bg-[#E3D9C4] ring-1 ring-[#E7E0D2]">
+                    <div className={`mt-2 h-20 w-32 overflow-hidden rounded-lg ring-1 ring-[#E7E0D2] ${field.key === 'footer.logo' ? 'bg-[#234B52]' : isMark ? 'bg-white' : 'bg-[#E3D9C4]'}`}>
                         {!broken ? (
-                            <img src={field.value} alt={field.label} onError={() => setBroken(true)} className="h-full w-full object-cover" />
+                            <img src={field.value} alt={field.label} onError={() => setBroken(true)} className={`h-full w-full ${isMark ? 'object-contain p-2' : 'object-cover'}`} />
                         ) : (
                             <span className="flex h-full items-center justify-center text-xs text-[#6B7A78]">No image</span>
                         )}

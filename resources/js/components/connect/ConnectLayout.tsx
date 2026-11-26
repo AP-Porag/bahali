@@ -100,8 +100,8 @@ function ProviderNavigation({ page, signedIn, t }: { page: ConnectPage; signedIn
                 <span className="provider-chevron" aria-hidden="true" />
             </button>
             <div id="provider-nav-links" className="provider-nav-links" hidden={!open}>
-                {/* Not shown inside the provider account (dashboard, edit profile) — the provider has already joined. */}
-                {page !== 'account' && (
+                {/* Not shown once a provider is signed in (on every page) — the provider has already joined. */}
+                {!signedIn && (
                     <Link
                         ref={firstLink}
                         href={URLS.providers}
@@ -114,12 +114,7 @@ function ProviderNavigation({ page, signedIn, t }: { page: ConnectPage; signedIn
                 {/* Existing account system: provider login, or the provider account links once signed in. */}
                 {signedIn ? (
                     <>
-                        <Link
-                            ref={page === 'account' ? firstLink : undefined}
-                            href={URLS.account}
-                            aria-current={onDashboard ? 'page' : undefined}
-                            onClick={() => setOpen(false)}
-                        >
+                        <Link ref={firstLink} href={URLS.account} aria-current={onDashboard ? 'page' : undefined} onClick={() => setOpen(false)}>
                             {t('nav.dashboard')}
                         </Link>
                         <Link href={URLS.editProfile} aria-current={onEditProfile ? 'page' : undefined} onClick={() => setOpen(false)}>
